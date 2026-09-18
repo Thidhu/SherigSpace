@@ -5,6 +5,17 @@
 export const SUPABASE_URL = 'https://kgqlcjdjdhssactfezwi.supabase.co';
 export const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncWxjamRqZGhzc2FjdGZlendpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTE2MzQsImV4cCI6MjA5NTAyNzYzNH0.6hJpg9Zput8wnuDfq7wzb5dRC2KkuRmkmaz870U0Lto';
 
+// ── Google Drive upload (used only by admin.html) ──
+// Replace with YOUR OWN OAuth Client ID from Google Cloud Console
+// (APIs & Services → Credentials → Create OAuth client ID → Web application).
+// See DRIVE_SETUP.md for the full one-time setup walkthrough.
+export const GOOGLE_CLIENT_ID = '409297862405-81tfjtld0pu6pm9ld3b3drpk206o89i9.apps.googleusercontent.com';
+
+// Optional: paste a Google Drive folder ID here to upload everything into
+// one specific folder (e.g. a folder called "SherigSpace Uploads") instead
+// of the root of your Drive. Leave as '' to upload to Drive's root.
+export const GOOGLE_DRIVE_FOLDER_ID = '';
+
 // Escape any string before dropping it into innerHTML. Every field that
 // came from the database (titles, descriptions, comments, etc.) must be
 // passed through this before being rendered, since anyone able to write
