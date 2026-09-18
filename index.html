@@ -4,17 +4,17 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SherigSpace</title>
-<link href="https://fonts.googleapis.com/css2?family=Jomolhari&family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-@font-face{font-family:'DDC Joyig';src:url('DDC_Joyig.ttf') format('truetype'),url('DDC_Joyig.otf') format('opentype');font-weight:normal;font-style:normal;font-display:swap}
+@font-face{font-family:'ThinWangTJoyig';src:url('ThinWangTJoyig-Regular.ttf') format('truetype');font-weight:normal;font-style:normal;font-display:swap}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--gold:#c9a84c;--gold-light:#e8c97a;--font-en:'DM Sans',sans-serif;--font-dz:'Jomolhari','DDC Joyig','Noto Serif Tibetan',sans-serif}
+:root{--gold:#c9a84c;--gold-light:#e8c97a;--font-en:'DM Sans',sans-serif;--font-dz:'ThinWangTJoyig','Noto Serif Tibetan',sans-serif}
 [data-theme="dark"]{--bg:#0f1623;--surface:#1a2340;--card-bg:#192035;--card-border:#2a3556;--border:rgba(201,168,76,0.18);--text:#e8e4dc;--text2:#9aa3b8;--nav-bg:rgba(13,18,30,0.97);--section-alt:#131c2e;--footer-bg:#080d14;--hero1:#0f1623;--hero2:#1a2340;--hero3:#1a2f50;--navy:#1a2340;--navy-light:#253056;--input-bg:#202b4a}
 [data-theme="light"]{--bg:#f8f5ef;--surface:#ffffff;--card-bg:#f8f5ef;--card-border:#e5dece;--border:rgba(201,168,76,0.25);--text:#1a2340;--text2:#6b7280;--nav-bg:rgba(26,35,64,0.97);--section-alt:#f1ede6;--footer-bg:#111827;--hero1:#1a2340;--hero2:#253056;--hero3:#1e3a5f;--navy:#1a2340;--navy-light:#253056;--input-bg:#e8e3da}
 html{scroll-behavior:smooth}
 body{font-family:var(--font-en);background:var(--bg);color:var(--text);overflow-x:hidden;transition:background .35s,color .35s}
 [data-lang="dz"] h1,[data-lang="dz"] h2,[data-lang="dz"] h3,[data-lang="dz"] h4,[data-lang="dz"] p,[data-lang="dz"] span:not(.t-icon),[data-lang="dz"] a,[data-lang="dz"] li,[data-lang="dz"] button{font-family:var(--font-dz)!important;line-height:2;letter-spacing:0}
-[data-lang="dz"] .hero-title,[data-lang="dz"] .section-title{font-family:'Jomolhari',sans-serif!important;line-height:1.8}
+[data-lang="dz"] .hero-title,[data-lang="dz"] .section-title{font-family:'ThinWangTJoyig',sans-serif!important;line-height:1.8}
 nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:68px;border-bottom:1px solid var(--border);gap:1rem}
 .nav-logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold);text-decoration:none;flex-shrink:0}
 .nav-links{display:flex;gap:1.8rem;list-style:none}
@@ -24,7 +24,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);bac
 .nav-right{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
 .lang-toggle{display:flex;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:20px;overflow:hidden}
 .lang-btn{padding:4px 9px;font-size:.73rem;font-weight:600;color:rgba(255,255,255,.5);background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s;line-height:1.4}
-.lang-btn[data-lang-btn="dz"]{font-family:'Jomolhari',sans-serif;font-size:.78rem}
+.lang-btn[data-lang-btn="dz"]{font-family:'ThinWangTJoyig',sans-serif;font-size:.78rem}
 .lang-btn.on{background:var(--gold);color:#1a2340;border-radius:18px}
 .theme-toggle{width:42px;height:22px;background:rgba(255,255,255,.1);border:1px solid var(--border);border-radius:11px;position:relative;cursor:pointer;flex-shrink:0}
 .theme-toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:var(--gold);border-radius:50%;transition:transform .3s}
@@ -43,6 +43,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);bac
 .udrop-sep{height:1px;background:var(--border);margin:.2rem 0}
 .login-btn{padding:6px 14px;background:var(--gold);border:none;border-radius:3px;color:#1a2340;font-size:.8rem;font-weight:700;cursor:pointer;font-family:var(--font-en);transition:background .2s;text-decoration:none;display:inline-block}
 .login-btn:hover{background:var(--gold-light)}
+.hamburger{display:none;width:30px;height:24px;flex-direction:column;justify-content:space-between;cursor:pointer;background:none;border:none;padding:0;flex-shrink:0}
+.hamburger span{display:block;height:2px;width:100%;background:var(--gold);border-radius:2px;transition:transform .25s,opacity .25s}
+.hamburger.open span:nth-child(1){transform:translateY(11px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-11px) rotate(-45deg)}
+.mobile-nav{display:none;position:fixed;top:68px;left:0;right:0;z-index:199;background:var(--nav-bg);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);flex-direction:column;padding:.5rem 5% 1rem}
+.mobile-nav.open{display:flex}
+.mobile-nav a{color:rgba(255,255,255,.85);text-decoration:none;font-size:.92rem;font-weight:500;padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.mobile-nav a:last-child{border-bottom:none}
 #home{min-height:100vh;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 60%,var(--hero3) 100%);display:flex;align-items:center;padding:100px 5% 60px;position:relative;overflow:hidden}
 #home::before{content:'';position:absolute;top:-80px;right:-80px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.12) 0%,transparent 70%);pointer-events:none}
 #home::after{content:'';position:absolute;bottom:-60px;left:10%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.07) 0%,transparent 70%);pointer-events:none}
@@ -109,12 +118,12 @@ section{padding:80px 5%}
 .blog-date{font-size:.76rem;color:var(--gold);font-weight:500;margin-bottom:.4rem}
 .comments-wrap{margin-top:1rem}
 .comments-wrap h4{font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:.75rem}
-.comment-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.75rem}
+.comment-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.75rem;max-height:180px;overflow-y:auto}
 .comment-item{background:var(--section-alt);border-radius:4px;padding:.7rem .9rem;font-size:.82rem}
 .comment-author{font-weight:600;color:var(--gold);font-size:.75rem;margin-bottom:.2rem}
-.comment-text{color:var(--text2);line-height:1.5}
+.comment-text{color:var(--text2);line-height:1.5;word-break:break-word}
 .comment-form{display:flex;gap:.5rem;margin-top:.5rem}
-.comment-form input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font-en);font-size:.83rem;padding:7px 10px;outline:none;transition:border-color .2s}
+.comment-form input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font-en);font-size:.83rem;padding:7px 10px;outline:none;transition:border-color .2s;min-width:0}
 .comment-form input:focus{border-color:var(--gold)}
 .comment-form button{padding:7px 14px;background:var(--gold);border:none;border-radius:4px;color:#1a2340;font-weight:600;font-size:.8rem;cursor:pointer;font-family:var(--font-en);white-space:nowrap}
 .comment-login-note{font-size:.78rem;color:var(--text2)}
@@ -157,7 +166,7 @@ footer .gold{color:var(--gold)}
 .fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
 .fade-in.visible{opacity:1;transform:translateY(0)}
 @media(max-width:768px){.hero-inner,.about-inner{grid-template-columns:1fr;gap:2.5rem}.hero-stats{flex-direction:row;flex-wrap:wrap}.stat-card{flex:1;min-width:110px}}
-@media(max-width:560px){.nav-links{display:none}}
+@media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}}
 </style>
 </head>
 <body>
@@ -178,8 +187,17 @@ footer .gold{color:var(--gold)}
     </div>
     <div class="theme-toggle" id="themeToggle"><span class="t-icon moon">🌙</span><span class="t-icon sun">☀️</span></div>
     <div id="nav-auth"></div>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </nav>
+<div class="mobile-nav" id="mobileNav">
+  <a href="#home">Home</a>
+  <a href="#lessons">Lessons</a>
+  <a href="#resources">Resources</a>
+  <a href="#videos">Videos</a>
+  <a href="#blog">Articles</a>
+  <a href="#about">About</a>
+</div>
 
 <!-- HERO -->
 <section id="home">
@@ -291,9 +309,8 @@ footer .gold{color:var(--gold)}
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
 
-const SUPABASE_URL = 'https://kgqlcjdjdhssactfezwi.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncWxjamRqZGhzc2FjdGZlendpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTE2MzQsImV4cCI6MjA5NTAyNzYzNH0.6hJpg9Zput8wnuDfq7wzb5dRC2KkuRmkmaz870U0Lto';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const html = document.documentElement;
@@ -305,19 +322,34 @@ const EMOJIS=['📖','🌱','🛠️','💡','🎯','🔬'];
 function lang(){ return html.getAttribute('data-lang'); }
 function session(){ try{ return JSON.parse(localStorage.getItem('edu_session')||'null') }catch{ return null } }
 
+// ── MOBILE NAV ──
+const hamburger = document.getElementById('hamburger');
+const mobileNav  = document.getElementById('mobileNav');
+hamburger.addEventListener('click', ()=>{
+  hamburger.classList.toggle('open');
+  mobileNav.classList.toggle('open');
+});
+mobileNav.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=>{
+  hamburger.classList.remove('open'); mobileNav.classList.remove('open');
+}));
+
 // ── AUTH NAV ──
 function renderNav(){
   const s = session();
   const el = document.getElementById('nav-auth');
   const joinBtn = document.getElementById('hero-join-btn');
   if(s){
-    const initials = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const initials = esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const adminLink = s.role === 'admin'
+      ? `<a class="udrop-item" href="admin.html">🛠️ Admin Panel</a><div class="udrop-sep"></div>`
+      : '';
     el.innerHTML=`<div class="user-btn" tabindex="0">
       <div class="user-avatar">${initials}</div>
-      <span>${s.name.split(' ')[0]}</span>
+      <span>${esc(s.name.split(' ')[0])}</span>
       <div class="user-dropdown">
         <a class="udrop-item" onclick="openProfile()">👤 My Profile</a>
         <div class="udrop-sep"></div>
+        ${adminLink}
         <a class="udrop-item danger" onclick="logout()">🔒 Log Out</a>
       </div>
     </div>`;
@@ -338,16 +370,16 @@ window.logout = async function(){
 window.openProfile = async function(){
   const s = session(); if(!s) return;
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', s.id).single();
-  const joined = profile?.joined_at ? new Date(profile.joined_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '—';
   document.getElementById('profile-body').innerHTML=`
-    <div class="profile-avatar">${s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
-    <div class="profile-name">${s.name}</div>
-    <div class="profile-email">${s.email}</div>
-    <div class="profile-class">📚 ${profile?.class_grade || 'Member'}</div>
+    <div class="profile-avatar">${esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+    <div class="profile-name">${esc(s.name)}</div>
+    <div class="profile-email">${esc(s.email)}</div>
+    <div class="profile-class">📚 ${esc(profile?.class_grade || 'Member')}</div>
     <div class="profile-stat">
-      <div class="pstat"><div class="pn">${new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div><div class="pl">Joined</div></div>
-      <div class="pstat"><div class="pn">${profile?.role||'user'}</div><div class="pl">Role</div></div>
+      <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
+      <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
     </div>
+    ${profile?.role === 'admin' ? `<a href="admin.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:4px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🛠️ Open Admin Panel</a>` : ''}
     <button onclick="logout()" style="width:100%;padding:10px;background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);border-radius:4px;color:#e05c5c;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer">🔒 Log Out</button>`;
   document.getElementById('profile-modal').classList.add('open');
 };
@@ -371,18 +403,22 @@ async function renderLessons(){
   const { data: items } = await supabase.from('lessons').select('*').order('created_at',{ascending:false});
   const g = document.getElementById('lessons-grid');
   if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>No lessons yet</p></div>`; return; }
-  const s = session();
   g.innerHTML = items.map(l => {
     const icon = ICONS[l.subject]||'📖';
     const title = lang()==='dz' && l.dz ? l.dz : l.title;
-    return `<div class="lesson-card fade-in" ${l.url?`onclick="window.open('${l.url}','_blank')"`:''}>
+    const url = safeUrl(l.url);
+    return `<div class="lesson-card fade-in" data-url="${esc(url)}">
       <div class="lesson-icon">${icon}</div>
-      <div class="badge">${l.subject||'General'}</div>
-      <h3>${title}</h3>
-      <p>${l.desc||''}</p>
-      <div class="lesson-meta">${l.duration?`<span>⏱ ${l.duration}</span>`:''} ${l.slides?`<span>📄 ${l.slides}</span>`:''} ${l.level?`<span>🎯 ${l.level}</span>`:''}</div>
+      <div class="badge">${esc(l.subject||'General')}</div>
+      <h3>${esc(title)}</h3>
+      <p>${esc(l.description||'')}</p>
+      <div class="lesson-meta">${l.duration?`<span>⏱ ${esc(l.duration)}</span>`:''} ${l.slides?`<span>📄 ${esc(l.slides)}</span>`:''} ${l.level?`<span>🎯 ${esc(l.level)}</span>`:''}</div>
     </div>`;
   }).join('');
+  g.querySelectorAll('.lesson-card').forEach(card=>{
+    const url = card.getAttribute('data-url');
+    if(url) card.addEventListener('click', ()=>window.open(url,'_blank','noopener'));
+  });
 }
 
 // ── RENDER RESOURCES ──
@@ -395,12 +431,21 @@ async function renderResources(){
     const icon = RICONS[r.rtype]||'📁';
     const title = lang()==='dz' && r.dz ? r.dz : r.title;
     const locked = !s;
-    return `<div class="resource-card fade-in" onclick="${s&&r.url?`window.open('${r.url}','_blank')`:`window.location='login.html'`}">
+    const url = safeUrl(r.url);
+    return `<div class="resource-card fade-in" data-url="${esc(url)}" data-locked="${locked}">
       <div class="resource-icon">${icon}</div>
-      <div class="resource-info"><h4>${title}</h4><p>${r.desc||''}</p><div class="resource-type">${r.rtype||''}${r.size?' · '+r.size:''}</div></div>
+      <div class="resource-info"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.rtype||'')}${r.filesize?' · '+esc(r.filesize):''}</div></div>
       ${locked?`<div class="locked-overlay"><span>🔒</span><p>Sign in to download</p><a href="login.html">Log in →</a></div>`:''}
     </div>`;
   }).join('');
+  g.querySelectorAll('.resource-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const locked = card.getAttribute('data-locked')==='true';
+      const url = card.getAttribute('data-url');
+      if(locked) window.location='login.html';
+      else if(url) window.open(url,'_blank','noopener');
+    });
+  });
 }
 
 // ── RENDER VIDEOS ──
@@ -411,26 +456,69 @@ async function renderVideos(){
   g.innerHTML = items.map(v => {
     const title = lang()==='dz' && v.dz ? v.dz : v.title;
     const icon = ICONS[v.subject]||'🎬';
-    return `<a class="video-card fade-in" ${v.url?`href="${v.url}" target="_blank"`:''}>
+    const url = safeUrl(v.url);
+    return `<a class="video-card fade-in" ${url?`href="${esc(url)}" target="_blank" rel="noopener"`:''}>
       <div class="video-thumb">${icon}<div class="play-btn">▶</div></div>
-      <div class="video-body"><h3>${title}</h3><p>${v.desc||''}</p><div class="video-meta">${v.duration?`<span>⏱ ${v.duration}</span>`:''} ${v.subject?`<span>📚 ${v.subject}</span>`:''}</div></div>
+      <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''} ${v.subject?`<span>📚 ${esc(v.subject)}</span>`:''}</div></div>
     </a>`;
   }).join('');
 }
 
-// ── RENDER ARTICLES ──
+// ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
   const { data: items } = await supabase.from('articles').select('*').order('created_at',{ascending:false});
   const g = document.getElementById('blog-grid');
   if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>No articles yet</p></div>`; return; }
+  const s = session();
   g.innerHTML = items.map((a,i) => {
     const title = lang()==='dz' && a.dz ? a.dz : a.title;
-    const date = a.date ? new Date(a.date).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '';
-    return `<div class="blog-card fade-in" ${a.url?`onclick="window.open('${a.url}','_blank')"`:''} style="cursor:pointer">
+    const date = a.article_date ? new Date(a.article_date).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '';
+    const url = safeUrl(a.url);
+    return `<div class="blog-card fade-in">
       <div class="blog-thumb" style="background:${GRADS[i%3]}">${EMOJIS[i%6]}</div>
-      <div class="blog-body"><div class="blog-date">${date}</div><h3>${title}</h3><p>${a.desc||''}</p></div>
+      <div class="blog-body">
+        <div class="blog-date">${esc(date)}</div>
+        <h3 ${url?`style="cursor:pointer" data-url="${esc(url)}"`:''}>${esc(title)}</h3>
+        <p>${esc(a.description||'')}</p>
+        <div class="comments-wrap" data-article="${esc(a.id)}">
+          <h4>💬 Comments</h4>
+          <div class="comment-list">Loading…</div>
+          ${s
+            ? `<form class="comment-form" onsubmit="return false"><input class="comment-input" maxlength="500" placeholder="Add a comment…"/><button type="submit">Post</button></form>`
+            : `<p class="comment-login-note">Sign in to leave a comment. <a href="login.html">Log in →</a></p>`}
+        </div>
+      </div>
     </div>`;
   }).join('');
+  g.querySelectorAll('.blog-body h3[data-url]').forEach(h=>{
+    h.addEventListener('click', ()=>window.open(h.getAttribute('data-url'),'_blank','noopener'));
+  });
+  g.querySelectorAll('.comments-wrap').forEach(wrap=>loadComments(wrap, s));
+}
+
+async function loadComments(wrap, s){
+  const articleId = wrap.getAttribute('data-article');
+  const listEl = wrap.querySelector('.comment-list');
+  const { data: comments, error } = await supabase.from('comments').select('*').eq('article_id', articleId).order('created_at',{ascending:true});
+  if(error){ listEl.innerHTML = `<p class="comment-login-note">Comments unavailable right now.</p>`; return; }
+  listEl.innerHTML = comments?.length
+    ? comments.map(c=>`<div class="comment-item"><div class="comment-author">${esc(c.author_name)}</div><div class="comment-text">${esc(c.body)}</div></div>`).join('')
+    : `<p class="comment-login-note" style="opacity:.7">No comments yet — be the first!</p>`;
+  const form = wrap.querySelector('.comment-form');
+  if(form){
+    form.addEventListener('submit', async ()=>{
+      const input = form.querySelector('.comment-input');
+      const text = input.value.trim();
+      if(!text || !s) return;
+      const btn = form.querySelector('button');
+      btn.disabled = true;
+      const { error: insErr } = await supabase.from('comments').insert({
+        article_id: articleId, author_id: s.id, author_name: s.name, body: text
+      });
+      btn.disabled = false;
+      if(!insErr){ input.value=''; loadComments(wrap, s); }
+    });
+  }
 }
 
 async function renderAll(){
@@ -476,26 +564,25 @@ window.addEventListener('scroll',()=>{
   nls.forEach(a=>{ a.style.color=a.getAttribute('href')==='#'+cur?'var(--gold)':''; });
 });
 
-// ── SYNC SUPABASE SESSION → localStorage on page load ──
-(async ()=>{
+// ── SYNC SUPABASE SESSION → localStorage on load AND on change ──
+async function syncSessionAndRender(){
   const { data } = await supabase.auth.getSession();
   if(data.session){
     const uid = data.session.user.id;
     const { data: profile } = await supabase.from('profiles').select('*').eq('id',uid).single();
     if(profile){
       localStorage.setItem('edu_session', JSON.stringify({
-        id: uid,
-        name: profile.name,
-        email: profile.email,
-        role: profile.role,
-        class_grade: profile.class_grade
+        id: uid, name: profile.name, email: profile.email,
+        role: profile.role, class_grade: profile.class_grade
       }));
     }
   } else {
     localStorage.removeItem('edu_session');
   }
   renderAll();
-})();
+}
+supabase.auth.onAuthStateChange(()=>{ syncSessionAndRender(); });
+syncSessionAndRender();
 </script>
 </body>
 </html>
