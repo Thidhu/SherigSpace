@@ -29,6 +29,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);bac
 .theme-toggle{width:42px;height:22px;background:rgba(255,255,255,.1);border:1px solid var(--border);border-radius:11px;position:relative;cursor:pointer;flex-shrink:0}
 .theme-toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:var(--gold);border-radius:50%;transition:transform .3s}
 [data-theme="light"] .theme-toggle::after{transform:translateX(20px)}
+.admin-lock{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,.1);border:1px solid var(--border);color:var(--gold);text-decoration:none;font-size:.9rem;flex-shrink:0;transition:background .2s}
+.admin-lock:hover{background:rgba(201,168,76,.2)}
 .t-icon{position:absolute;top:50%;transform:translateY(-50%);font-size:.62rem;pointer-events:none;transition:opacity .3s}
 .t-icon.moon{left:4px}.t-icon.sun{right:4px;opacity:0}
 [data-theme="light"] .t-icon.moon{opacity:0}[data-theme="light"] .t-icon.sun{opacity:1}
@@ -186,6 +188,7 @@ footer .gold{color:var(--gold)}
       <button class="lang-btn"    data-lang-btn="dz">རྫོང་</button>
     </div>
     <div class="theme-toggle" id="themeToggle"><span class="t-icon moon">🌙</span><span class="t-icon sun">☀️</span></div>
+    <a class="admin-lock" href="admin.html" title="Admin">🔐</a>
     <div id="nav-auth"></div>
     <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
@@ -197,6 +200,7 @@ footer .gold{color:var(--gold)}
   <a href="#videos">Videos</a>
   <a href="#blog">Articles</a>
   <a href="#about">About</a>
+  <a href="admin.html">🔐 Admin</a>
 </div>
 
 <!-- HERO -->
@@ -407,8 +411,9 @@ async function renderLessons(){
     const icon = ICONS[l.subject]||'📖';
     const title = lang()==='dz' && l.dz ? l.dz : l.title;
     const url = safeUrl(l.url);
+    const thumb = safeUrl(l.thumbnail_url);
     return `<div class="lesson-card fade-in" data-url="${esc(url)}">
-      <div class="lesson-icon">${icon}</div>
+      ${thumb ? `<img src="${esc(thumb)}" style="width:100%;height:130px;object-fit:cover;border-radius:5px;margin-bottom:1rem"/>` : `<div class="lesson-icon">${icon}</div>`}
       <div class="badge">${esc(l.subject||'General')}</div>
       <h3>${esc(title)}</h3>
       <p>${esc(l.description||'')}</p>
@@ -432,8 +437,9 @@ async function renderResources(){
     const title = lang()==='dz' && r.dz ? r.dz : r.title;
     const locked = !s;
     const url = safeUrl(r.url);
+    const thumb = safeUrl(r.thumbnail_url);
     return `<div class="resource-card fade-in" data-url="${esc(url)}" data-locked="${locked}">
-      <div class="resource-icon">${icon}</div>
+      ${thumb ? `<img src="${esc(thumb)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0"/>` : `<div class="resource-icon">${icon}</div>`}
       <div class="resource-info"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.rtype||'')}${r.filesize?' · '+esc(r.filesize):''}</div></div>
       ${locked?`<div class="locked-overlay"><span>🔒</span><p>Sign in to download</p><a href="login.html">Log in →</a></div>`:''}
     </div>`;
@@ -457,8 +463,9 @@ async function renderVideos(){
     const title = lang()==='dz' && v.dz ? v.dz : v.title;
     const icon = ICONS[v.subject]||'🎬';
     const url = safeUrl(v.url);
+    const thumb = safeUrl(v.thumbnail_url);
     return `<a class="video-card fade-in" ${url?`href="${esc(url)}" target="_blank" rel="noopener"`:''}>
-      <div class="video-thumb">${icon}<div class="play-btn">▶</div></div>
+      <div class="video-thumb" ${thumb?`style="background:url('${esc(thumb)}') center/cover"`:''}>${thumb?'':icon}<div class="play-btn">▶</div></div>
       <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''} ${v.subject?`<span>📚 ${esc(v.subject)}</span>`:''}</div></div>
     </a>`;
   }).join('');
@@ -474,8 +481,9 @@ async function renderArticles(){
     const title = lang()==='dz' && a.dz ? a.dz : a.title;
     const date = a.article_date ? new Date(a.article_date).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '';
     const url = safeUrl(a.url);
+    const thumb = safeUrl(a.thumbnail_url);
     return `<div class="blog-card fade-in">
-      <div class="blog-thumb" style="background:${GRADS[i%3]}">${EMOJIS[i%6]}</div>
+      <div class="blog-thumb" style="${thumb?`background:url('${esc(thumb)}') center/cover`:`background:${GRADS[i%3]}`}">${thumb?'':EMOJIS[i%6]}</div>
       <div class="blog-body">
         <div class="blog-date">${esc(date)}</div>
         <h3 ${url?`style="cursor:pointer" data-url="${esc(url)}"`:''}>${esc(title)}</h3>
