@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Admin — SherigSpace</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--surface:#192035;--surface2:#202b4a;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--red:#e05c5c;--green:#4caf84;--blue:#5c8de0}
@@ -91,6 +92,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .info-box h4{font-size:.9rem;font-weight:600;color:var(--gold);margin-bottom:.3rem}
 .info-box p{font-size:.8rem;color:var(--text2);line-height:1.6}
 .info-box code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:3px;font-size:.78rem}
+.upload-row{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.upload-status{font-size:.78rem;color:var(--text2)}
+.upload-status.ok{color:var(--green)}
+.upload-status.err{color:var(--red)}
+.thumb-preview img{max-width:110px;max-height:110px;border-radius:5px;border:1px solid var(--border);object-fit:cover;display:block;margin-top:.5rem}
+.irow-thumb{width:38px;height:38px;border-radius:5px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+.irow-left{display:flex;align-items:center;gap:.7rem}
 @media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -202,7 +210,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { SUPABASE_URL, SUPABASE_KEY, esc } from './config.js';
+import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
+import { uploadFileToDrive } from './drive-upload.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -266,12 +275,12 @@ async function renderAll(){
     { data: U, count: uc },
     { data: AN, count: anc }
   ] = await Promise.all([
-    supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false}),
-    supabase.from('resources').select('*',{count:'exact'}).order('created_at',{ascending:false}),
-    supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false}),
-    supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false}),
+    supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('resources').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
-    supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false})
+    supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false})
   ]);
 
   document.getElementById('d-stats').innerHTML =
@@ -318,7 +327,8 @@ function row(item,type){
     video:`${item.subject||'—'} · ${item.duration||'—'}`,
     article:`${item.article_date||'—'} · ${item.category||'—'}`
   }[type]||'';
-  return `<div class="irow"><div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
+  const thumb = item.thumbnail_url ? `<img class="irow-thumb" src="${esc(item.thumbnail_url)}"/>` : '';
+  return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
 }
 
 // ── FORM ──
@@ -348,6 +358,21 @@ function isValidUrl(u){
   try{ const p = new URL(u); return p.protocol==='http:'||p.protocol==='https:'; }catch{ return false; }
 }
 
+function imageUploadField(v){
+  const thumb = v('thumbnail_url');
+  return `
+    <div class="field">
+      <label>Attach File (optional) — image, PDF, slides, doc, video…</label>
+      <div class="upload-row">
+        <input type="file" id="f-imagefile" style="display:none" onchange="handleFilePick(event)"/>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('f-imagefile').click()">📤 Upload to Google Drive</button>
+        <span class="upload-status" id="upload-status"></span>
+      </div>
+      <div class="thumb-preview" id="thumb-preview">${thumb?`<img src="${esc(thumb)}" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'upload-status',textContent:'📄 File attached (no preview available)'}))"/>`:''}</div>
+      <input type="hidden" id="f-thumbnail_url" value="${esc(thumb)}"/>
+    </div>`;
+}
+
 function buildForm(type,d={}){
   const v=k=>d[k]||'';
   if(type==='lesson') return`
@@ -356,18 +381,21 @@ function buildForm(type,d={}){
     <div class="row2"><div class="field"><label>Duration</label><input id="f-duration" placeholder="e.g. 45 min" value="${esc(v('duration'))}"/></div><div class="field"><label>Slides / Pages</label><input id="f-slides" placeholder="e.g. 12 slides" value="${esc(v('slides'))}"/></div></div>
     <div class="field"><label>Description</label><textarea id="f-description" placeholder="What will students learn?">${esc(v('description'))}</textarea></div>
     <div class="field"><label>File or Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${imageUploadField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="སློབ་ཚན་གྱི་མིང་" value="${esc(v('dz'))}"/></div>`;
   if(type==='resource') return`
     <div class="field"><label>Resource Title *</label><input id="f-title" placeholder="e.g. Algebra Worksheet Pack" value="${esc(v('title'))}"/></div>
     <div class="row2"><div class="field"><label>File Type</label><select id="f-rtype"><option value="">-- Select --</option>${sel(RTYPES,v('rtype'))}</select></div><div class="field"><label>File Size</label><input id="f-filesize" placeholder="e.g. 2.4 MB" value="${esc(v('filesize'))}"/></div></div>
     <div class="field"><label>Description</label><textarea id="f-description" placeholder="What does this contain?">${esc(v('description'))}</textarea></div>
     <div class="field"><label>Download / Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${imageUploadField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="ཡིག་ཆའི་མིང་" value="${esc(v('dz'))}"/></div>`;
   if(type==='video') return`
     <div class="field"><label>Video Title *</label><input id="f-title" placeholder="e.g. Coding Basics Part 1" value="${esc(v('title'))}"/></div>
     <div class="field"><label>YouTube / Video URL *</label><input id="f-url" placeholder="https://youtube.com/watch?v=..." value="${esc(v('url'))}"/></div>
     <div class="row2"><div class="field"><label>Subject</label><select id="f-subject"><option value="">-- Select --</option>${sel(SUBJECTS,v('subject'))}</select></div><div class="field"><label>Duration</label><input id="f-duration" placeholder="e.g. 12:30" value="${esc(v('duration'))}"/></div></div>
     <div class="field"><label>Description</label><textarea id="f-description" placeholder="What will students learn?">${esc(v('description'))}</textarea></div>
+    ${imageUploadField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="བརྙན་ཐམས་ཀྱི་མིང་" value="${esc(v('dz'))}"/></div>`;
   if(type==='announce') return`
     <div class="field"><label>Message *</label><textarea id="f-message" placeholder="e.g. 🎉 New lessons added! Check out Class 6 Mathematics." style="min-height:90px">${esc(v('message'))}</textarea></div>
@@ -384,8 +412,29 @@ function buildForm(type,d={}){
     <div class="row2"><div class="field"><label>Date</label><input id="f-article_date" type="date" value="${esc(v('article_date'))}"/></div><div class="field"><label>Category</label><input id="f-category" placeholder="e.g. Pedagogy" value="${esc(v('category'))}"/></div></div>
     <div class="field"><label>Summary</label><textarea id="f-description" placeholder="Short summary...">${esc(v('description'))}</textarea></div>
     <div class="field"><label>Article Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${imageUploadField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="རྩོམ་ཡིག་གི་མིང་" value="${esc(v('dz'))}"/></div>`;
 }
+
+window.handleFilePick = async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('upload-status');
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Uploading… (a Google consent popup may appear the first time)';
+  try{
+    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
+    document.getElementById('f-thumbnail_url').value = result.thumbnailUrl;
+    const urlField = document.getElementById('f-url');
+    if(urlField && !urlField.value.trim()) urlField.value = result.viewUrl;
+    document.getElementById('thumb-preview').innerHTML = `<img src="${esc(result.thumbnailUrl)}" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'upload-status',textContent:'📄 File attached (no preview available)'}))"/>`;
+    statusEl.textContent = `Uploaded "${result.name}" ✓`;
+    statusEl.className = 'upload-status ok';
+  }catch(err){
+    statusEl.textContent = 'Upload failed: ' + err.message;
+    statusEl.className = 'upload-status err';
+  }
+};
 
 window.saveItem = async function(){
   const isAnnounce = _type === 'announce';
@@ -406,7 +455,7 @@ window.saveItem = async function(){
   const table = isAnnounce ? 'announcements' : _type + 's';
   const base = isAnnounce
     ? { message: fv('f-message') }
-    : { title: fv('f-title'), dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url') };
+    : { title: fv('f-title'), dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url'), thumbnail_url: fv('f-thumbnail_url') };
   const extra = {
     lesson:   { subject: fv('f-subject'), level: fv('f-level'), duration: fv('f-duration'), slides: fv('f-slides') },
     resource: { rtype: fv('f-rtype'), filesize: fv('f-filesize') },
