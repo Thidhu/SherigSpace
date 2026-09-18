@@ -15,14 +15,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .gate-icon{font-size:2.5rem;margin-bottom:.75rem}
 .gate-card h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold);margin-bottom:.3rem}
 .gate-card p{font-size:.83rem;color:var(--text2);margin-bottom:1.5rem}
-.gate-card input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.95rem;padding:11px 13px;outline:none;text-align:center;letter-spacing:.15em;transition:border-color .2s;margin-bottom:.75rem}
-.gate-card input:focus{border-color:var(--gold)}
-.gate-card input::placeholder{letter-spacing:0;color:rgba(255,255,255,.25)}
-.gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s}
+.gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s;text-decoration:none;display:inline-block}
 .gate-btn:hover{background:var(--gold-light)}
-.gate-err{font-size:.8rem;color:#f09090;margin-top:.6rem;min-height:1.1rem}
-.gate-hint{font-size:.75rem;color:var(--text2);margin-top:1rem}
-.gate-hint span{color:var(--gold);font-weight:600}
+.gate-err{font-size:.85rem;color:#f09090;margin-top:1rem}
+.gate-spin{font-size:.85rem;color:var(--text2)}
 .layout{display:flex;min-height:100vh}
 .sidebar{width:220px;flex-shrink:0;background:#131c2e;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
 .logo{padding:1.4rem 1.5rem;border-bottom:1px solid var(--border)}
@@ -33,6 +29,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .sitem:hover{color:var(--text);background:rgba(255,255,255,.04)}
 .sitem.on{color:var(--gold);background:rgba(201,168,76,.07);border-left-color:var(--gold)}
 .sfoot{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.6rem}
+.sfoot-user{font-size:.76rem;color:var(--text2);padding:0 .1rem;word-break:break-all}
 .sfoot a,.sfoot button{display:block;text-align:center;padding:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:4px;color:var(--gold);font-size:.8rem;text-decoration:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;width:100%}
 .sfoot a:hover,.sfoot button:hover{background:rgba(201,168,76,.2)}
 .sfoot button.logout{background:rgba(224,92,92,.1);border-color:rgba(224,92,92,.25);color:var(--red)}
@@ -90,27 +87,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;background:var(--surface);border:1px solid var(--green);border-left:3px solid var(--green);border-radius:5px;padding:11px 16px;font-size:.86rem;transform:translateY(16px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.err{border-color:var(--red);border-left-color:var(--red)}
-.pwd-box{background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1.5rem}
-.pwd-box h4{font-size:.9rem;font-weight:600;color:var(--gold);margin-bottom:.3rem}
-.pwd-box p{font-size:.8rem;color:var(--text2);margin-bottom:1rem}
-.pwd-row{display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap}
-.pwd-row .field{flex:1;min-width:160px}
-.pwd-row .btn{white-space:nowrap;height:38px}
+.info-box{background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1.5rem}
+.info-box h4{font-size:.9rem;font-weight:600;color:var(--gold);margin-bottom:.3rem}
+.info-box p{font-size:.8rem;color:var(--text2);line-height:1.6}
+.info-box code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:3px;font-size:.78rem}
 @media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- ADMIN GATE -->
+<!-- ACCESS GATE (real auth check happens in JS; this is just the loading/denied UI) -->
 <div id="gate">
   <div class="gate-card">
-    <div class="gate-icon">🔐</div>
-    <h2>Admin Access</h2>
-    <p>This area is restricted. Enter your admin password to continue.</p>
-    <input id="gate-input" type="password" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') checkGate()"/>
-    <button class="gate-btn" onclick="checkGate()">Unlock Admin</button>
+    <div class="gate-icon" id="gate-icon">🔐</div>
+    <h2 id="gate-title">Checking access…</h2>
+    <p id="gate-text">Verifying your admin session.</p>
+    <div class="gate-spin" id="gate-spin">One moment…</div>
+    <a class="gate-btn" id="gate-btn" href="login.html" style="display:none">Go to Login</a>
     <div class="gate-err" id="gate-err"></div>
-    <p class="gate-hint">Default password: <span>admin1234</span><br>Change it inside Settings after login.</p>
   </div>
 </div>
 
@@ -129,8 +123,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="sitem"     onclick="go('settings')">⚙️ &nbsp;Settings</div>
     </nav>
     <div class="sfoot">
+      <div class="sfoot-user" id="sfoot-user"></div>
       <a href="index.html" target="_blank">↗ View Website</a>
-      <button class="logout" onclick="lockAdmin()">🔒 Lock Admin</button>
+      <button class="logout" onclick="logoutAdmin()">🔒 Log Out</button>
     </div>
   </aside>
 
@@ -173,17 +168,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
     </div>
 
     <div class="page" id="p-settings">
-      <div class="phead"><div><div class="ptitle">Settings</div><div class="psub">Manage your admin password and site info</div></div></div>
-      <div class="pwd-box">
-        <h4>🔑 Change Admin Password</h4>
-        <p>Update the password used to access this admin panel.</p>
-        <div class="pwd-row">
-          <div class="field"><label>Current Password</label><input id="pwd-cur" type="password" placeholder="Current password"/></div>
-          <div class="field"><label>New Password</label><input id="pwd-new" type="password" placeholder="New password (min 6 chars)"/></div>
-          <div class="field"><label>Confirm New</label><input id="pwd-confirm" type="password" placeholder="Repeat new password"/></div>
-          <button class="btn btn-gold" onclick="changePassword()">Update</button>
-        </div>
-        <div id="pwd-msg" style="font-size:.8rem;margin-top:.6rem;min-height:1rem"></div>
+      <div class="phead"><div><div class="ptitle">Settings</div><div class="psub">Manage your site info and admin access</div></div></div>
+      <div class="info-box">
+        <h4>🔑 Admin Access</h4>
+        <p>Admin access is now controlled by your Supabase <code>profiles.role</code> column instead of a shared password — anyone logged in with <code>role = 'admin'</code> can reach this panel, and everyone else is redirected. To grant or revoke admin access for someone, update their <code>role</code> in the Users tab's underlying table (or directly in the Supabase dashboard). Make sure your Row Level Security policies also check this role before allowing writes — a client-side check alone doesn't stop direct API calls.</p>
       </div>
       <div class="card">
         <div class="card-head"><h3>Site Information</h3></div>
@@ -214,40 +202,49 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { SUPABASE_URL, SUPABASE_KEY, esc } from './config.js';
 
-const SUPABASE_URL = 'https://kgqlcjdjdhssactfezwi.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncWxjamRqZGhzc2FjdGZlendpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTE2MzQsImV4cCI6MjA5NTAyNzYzNH0.6hJpg9Zput8wnuDfq7wzb5dRC2KkuRmkmaz870U0Lto';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── ADMIN GATE ──
-const DEFAULT_PASS = 'admin1234';
-function getAdminPass(){ return localStorage.getItem('edu_adminpass')||DEFAULT_PASS; }
-
-window.checkGate = function(){
-  const v = document.getElementById('gate-input').value;
-  if(v === getAdminPass()){
-    sessionStorage.setItem('edu_admin_auth','1');
-    document.getElementById('gate').classList.add('hide');
-    renderAll();
-    loadSettings();
-  } else {
-    document.getElementById('gate-err').textContent = 'Incorrect password. Try again.';
-    document.getElementById('gate-input').value = '';
-    setTimeout(()=>document.getElementById('gate-err').textContent='', 2500);
+// ── REAL ACCESS CHECK ──
+// Access is decided by Supabase Auth + profiles.role, not a client-side
+// password. This still doesn't replace RLS — see the SQL policies
+// shipped alongside this file — but it stops the admin UI itself from
+// opening for anyone who isn't actually an admin.
+async function checkAccess(){
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session){
+    document.getElementById('gate-icon').textContent = '🔒';
+    document.getElementById('gate-title').textContent = 'Please log in';
+    document.getElementById('gate-text').textContent = "You'll need to log in with an admin account to view this page.";
+    document.getElementById('gate-spin').style.display = 'none';
+    document.getElementById('gate-btn').style.display = 'inline-block';
+    return;
   }
-};
-document.getElementById('gate-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkGate(); });
-
-window.lockAdmin = function(){
-  sessionStorage.removeItem('edu_admin_auth');
-  location.reload();
-};
-
-if(sessionStorage.getItem('edu_admin_auth')==='1'){
+  const { data: profile, error } = await supabase.from('profiles').select('role,name,email').eq('id', session.user.id).single();
+  if(error || !profile || profile.role !== 'admin'){
+    document.getElementById('gate-icon').textContent = '⛔';
+    document.getElementById('gate-title').textContent = 'Access denied';
+    document.getElementById('gate-text').textContent = 'Your account does not have admin access.';
+    document.getElementById('gate-spin').style.display = 'none';
+    document.getElementById('gate-btn').textContent = 'Back to Site';
+    document.getElementById('gate-btn').href = 'index.html';
+    document.getElementById('gate-btn').style.display = 'inline-block';
+    return;
+  }
+  // Access granted
   document.getElementById('gate').classList.add('hide');
+  document.getElementById('sfoot-user').textContent = `${profile.name} · ${profile.email}`;
+  renderAll();
+  loadSettings();
 }
 
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+window.logoutAdmin = async function(){
+  await supabase.auth.signOut();
+  window.location.href = 'login.html';
+};
+
+checkAccess();
 
 // ── NAVIGATION ──
 window.go = function(p){
@@ -293,7 +290,7 @@ async function renderAll(){
   document.getElementById('l-videos').innerHTML    = V?.length ? V.map(i=>row(i,'video')).join('')    : empty('🎥','No videos yet. Click + Add Video!');
   document.getElementById('l-articles').innerHTML  = A?.length ? A.map(i=>row(i,'article')).join('')  : empty('✍️','No articles yet. Click + Add Article!');
   document.getElementById('l-announce').innerHTML  = AN?.length
-    ? AN.map(a=>`<div class="irow"><div><div class="iname">${esc(a.emoji||'📢')} ${esc(a.message||'')}</div><div class="imeta">${a.active?'✅ Active':'❌ Hidden'}${a.link_label?' · '+esc(a.link_label):''}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('announce','${a.id}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('announce','${a.id}')">✕</button></div></div>`).join('')
+    ? AN.map(a=>`<div class="irow"><div><div class="iname">${esc(a.emoji||'📢')} ${esc(a.message||'')}</div><div class="imeta">${a.active?'✅ Active':'❌ Hidden'}${a.link_label?' · '+esc(a.link_label):''}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('announce','${esc(a.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('announce','${esc(a.id)}')">✕</button></div></div>`).join('')
     : empty('📢','No announcements yet. Click + New Announcement!');
   renderUsers(U||[]);
 }
@@ -306,8 +303,8 @@ function renderUsers(U){
       <td>${esc(u.name)}</td>
       <td>${esc(u.email)}</td>
       <td>${esc(u.class_grade||'—')}</td>
-      <td><span class="role-badge role-${u.role}">${u.role}</span></td>
-      <td>${u.joined_at ? new Date(u.joined_at).toLocaleDateString() : '—'}</td>
+      <td><span class="role-badge role-${esc(u.role)}">${esc(u.role)}</span></td>
+      <td>${u.joined_at ? esc(new Date(u.joined_at).toLocaleDateString()) : '—'}</td>
     </tr>`).join('')}</tbody>
   </table>`;
 }
@@ -321,7 +318,7 @@ function row(item,type){
     video:`${item.subject||'—'} · ${item.duration||'—'}`,
     article:`${item.article_date||'—'} · ${item.category||'—'}`
   }[type]||'';
-  return `<div class="irow"><div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${item.id}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${item.id}')">✕</button></div></div>`;
+  return `<div class="irow"><div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
 }
 
 // ── FORM ──
@@ -334,10 +331,11 @@ window.openForm = async function(type, id=null){
   _type=type; _id=id;
   let item = {};
   if(id){
-    const { data } = await supabase.from(type+'s').select('*').eq('id',id).single();
+    const table = type === 'announce' ? 'announcements' : type + 's';
+    const { data } = await supabase.from(table).select('*').eq('id',id).single();
     item = data || {};
   }
-  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article'}[type];
+  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement'}[type];
   document.getElementById('m-body').innerHTML = buildForm(type,item);
   document.getElementById('overlay').classList.add('open');
 };
@@ -345,6 +343,10 @@ window.openForm = async function(type, id=null){
 window.closeForm = function(){ document.getElementById('overlay').classList.remove('open'); _type=null; _id=null; };
 function sel(opts,val){ return opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join(''); }
 function fv(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+function isValidUrl(u){
+  if(!u) return true; // empty is allowed, required-ness is checked separately
+  try{ const p = new URL(u); return p.protocol==='http:'||p.protocol==='https:'; }catch{ return false; }
+}
 
 function buildForm(type,d={}){
   const v=k=>d[k]||'';
@@ -386,23 +388,30 @@ function buildForm(type,d={}){
 }
 
 window.saveItem = async function(){
-  const title = fv('f-title');
-  if(!title){ toast('Please enter a title.', true); return; }
+  const isAnnounce = _type === 'announce';
+
+  if(isAnnounce){
+    if(!fv('f-message')){ toast('Please enter a message.', true); return; }
+  } else {
+    if(!fv('f-title')){ toast('Please enter a title.', true); return; }
+    if(_type==='video' && !fv('f-url')){ toast('Please enter a video URL.', true); return; }
+  }
+  // Validate any URL field before saving so a bad link can't reach the public site
+  const urlField = isAnnounce ? fv('f-link_url') : fv('f-url');
+  if(urlField && !isValidUrl(urlField)){ toast('Please enter a valid http(s):// URL.', true); return; }
 
   const saveBtn = document.getElementById('save-btn');
   saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
 
-  const table = _type === 'announce' ? 'announcements' : _type + 's';
-  // Announcements use 'message' not 'title'
-  const isAnnounce = _type === 'announce';
+  const table = isAnnounce ? 'announcements' : _type + 's';
   const base = isAnnounce
     ? { message: fv('f-message') }
-    : { title, dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url') };
+    : { title: fv('f-title'), dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url') };
   const extra = {
     lesson:   { subject: fv('f-subject'), level: fv('f-level'), duration: fv('f-duration'), slides: fv('f-slides') },
     resource: { rtype: fv('f-rtype'), filesize: fv('f-filesize') },
     video:    { subject: fv('f-subject'), duration: fv('f-duration') },
-    article:  { article_date: fv('f-article_date'), category: fv('f-category') },
+    article:  { article_date: fv('f-article_date') || null, category: fv('f-category') },
     announce: { emoji: fv('f-emoji'), active: fv('f-active') === 'true', link_label: fv('f-link_label'), link_url: fv('f-link_url') }
   }[_type] || {};
 
@@ -443,7 +452,7 @@ function toast(msg, isErr=false){
 
 document.getElementById('overlay').addEventListener('click', e=>{ if(e.target===document.getElementById('overlay')) closeForm(); });
 
-// ── SETTINGS ──
+// ── SETTINGS (site display info only — not security-sensitive) ──
 window.loadSettings = function(){
   const s = JSON.parse(localStorage.getItem('edu_settings')||'{}');
   document.getElementById('s-sitename').value = s.sitename||'SherigSpace';
@@ -459,28 +468,6 @@ window.saveSettings = function(){
   }));
   toast('Settings saved! ✓');
 };
-
-window.changePassword = function(){
-  const cur = document.getElementById('pwd-cur').value;
-  const nw  = document.getElementById('pwd-new').value;
-  const cf  = document.getElementById('pwd-confirm').value;
-  const msg = document.getElementById('pwd-msg');
-  if(cur !== getAdminPass()){ msg.style.color='#f09090'; msg.textContent='Current password is incorrect.'; return; }
-  if(nw.length < 6){ msg.style.color='#f09090'; msg.textContent='New password must be at least 6 characters.'; return; }
-  if(nw !== cf){ msg.style.color='#f09090'; msg.textContent='Passwords do not match.'; return; }
-  localStorage.setItem('edu_adminpass', nw);
-  msg.style.color='#7ed9b0'; msg.textContent='Password changed successfully!';
-  document.getElementById('pwd-cur').value='';
-  document.getElementById('pwd-new').value='';
-  document.getElementById('pwd-confirm').value='';
-  setTimeout(()=>msg.textContent='', 3000);
-};
-
-// ── INIT ──
-if(sessionStorage.getItem('edu_admin_auth')==='1'){
-  renderAll();
-  loadSettings();
-}
 </script>
 </body>
 </html>
