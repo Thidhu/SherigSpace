@@ -404,7 +404,7 @@ async function loadStats(){
 
 // ── RENDER LESSONS ──
 async function renderLessons(){
-  const { data: items } = await supabase.from('lessons').select('*').order('created_at',{ascending:false});
+  const { data: items } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
   const g = document.getElementById('lessons-grid');
   if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>No lessons yet</p></div>`; return; }
   g.innerHTML = items.map(l => {
@@ -413,7 +413,7 @@ async function renderLessons(){
     const url = safeUrl(l.url);
     const thumb = safeUrl(l.thumbnail_url);
     return `<div class="lesson-card fade-in" data-url="${esc(url)}">
-      ${thumb ? `<img src="${esc(thumb)}" style="width:100%;height:130px;object-fit:cover;border-radius:5px;margin-bottom:1rem"/>` : `<div class="lesson-icon">${icon}</div>`}
+      ${thumb ? `<img src="${esc(thumb)}" style="width:100%;height:130px;object-fit:cover;border-radius:5px;margin-bottom:1rem" onerror="this.outerHTML='<div class=\\'lesson-icon\\'>${icon}</div>'"/>` : `<div class="lesson-icon">${icon}</div>`}
       <div class="badge">${esc(l.subject||'General')}</div>
       <h3>${esc(title)}</h3>
       <p>${esc(l.description||'')}</p>
@@ -428,7 +428,7 @@ async function renderLessons(){
 
 // ── RENDER RESOURCES ──
 async function renderResources(){
-  const { data: items } = await supabase.from('resources').select('*').order('created_at',{ascending:false});
+  const { data: items } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
   const g = document.getElementById('resources-grid');
   const s = session();
   if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📁</div><p>No resources yet</p></div>`; return; }
@@ -439,7 +439,9 @@ async function renderResources(){
     const url = safeUrl(r.url);
     const thumb = safeUrl(r.thumbnail_url);
     return `<div class="resource-card fade-in" data-url="${esc(url)}" data-locked="${locked}">
-      ${thumb ? `<img src="${esc(thumb)}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0"/>` : `<div class="resource-icon">${icon}</div>`}
+      ${thumb
+        ? `<img src="${esc(thumb)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.outerHTML='<div class=\\'resource-icon\\'>${icon}</div>'"/>`
+        : `<div class="resource-icon">${icon}</div>`}
       <div class="resource-info"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.rtype||'')}${r.filesize?' · '+esc(r.filesize):''}</div></div>
       ${locked?`<div class="locked-overlay"><span>🔒</span><p>Sign in to download</p><a href="login.html">Log in →</a></div>`:''}
     </div>`;
@@ -456,7 +458,7 @@ async function renderResources(){
 
 // ── RENDER VIDEOS ──
 async function renderVideos(){
-  const { data: items } = await supabase.from('videos').select('*').order('created_at',{ascending:false});
+  const { data: items } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
   const g = document.getElementById('videos-grid');
   if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>No videos yet</p></div>`; return; }
   g.innerHTML = items.map(v => {
@@ -473,7 +475,7 @@ async function renderVideos(){
 
 // ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
-  const { data: items } = await supabase.from('articles').select('*').order('created_at',{ascending:false});
+  const { data: items } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
   const g = document.getElementById('blog-grid');
   if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>No articles yet</p></div>`; return; }
   const s = session();
