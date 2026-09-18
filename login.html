@@ -49,8 +49,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .strength{height:3px;border-radius:2px;margin-top:4px;background:var(--border);overflow:hidden}
 .strength-bar{height:100%;width:0;border-radius:2px;transition:width .3s,background .3s}
 
-/* Admin access link at bottom */
-.admin-link{display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.75rem;border-top:1px solid rgba(201,168,76,.1);font-size:.78rem;color:var(--text2);cursor:pointer;transition:color .2s}
+/* Admin access link at bottom — now just a normal link, the real check happens on admin.html */
+.admin-link{display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.75rem;border-top:1px solid rgba(201,168,76,.1);font-size:.78rem;color:var(--text2);text-decoration:none;transition:color .2s}
 .admin-link:hover{color:var(--gold)}
 .admin-link .lock-icon{font-size:.9rem}
 
@@ -68,9 +68,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .modal-actions .btn{margin-top:0}
 .btn-cancel{background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.1)}
 .btn-cancel:hover{background:rgba(255,255,255,.13);transform:none}
-
-/* Admin badge on modal */
-.admin-badge{display:inline-flex;align-items:center;gap:.35rem;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.25);color:var(--gold);font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem}
 
 footer{position:relative;z-index:1;text-align:center;padding:1.2rem;font-size:.78rem;color:rgba(255,255,255,.25)}
 footer span{color:var(--gold)}
@@ -156,11 +153,13 @@ footer span{color:var(--gold)}
       </form>
 
     </div>
-    <!-- Admin access link -->
-    <div class="admin-link" onclick="openAdminModal()">
+    <!-- Admin access: just a normal link now. admin.html itself checks
+         Supabase Auth + profiles.role and redirects anyone who isn't an
+         admin — there is no separate password to guess here anymore. -->
+    <a class="admin-link" href="admin.html">
       <span class="lock-icon">🔐</span>
       Admin Access
-    </div>
+    </a>
   </div>
 </div>
 
@@ -181,34 +180,13 @@ footer span{color:var(--gold)}
   </div>
 </div>
 
-<!-- ADMIN LOGIN MODAL -->
-<div id="adminModal" class="modal">
-  <div class="modal-box">
-    <div class="admin-badge">🔐 Admin Panel</div>
-    <h2>Admin Access</h2>
-    <p class="modal-text">Enter your admin password to open the admin dashboard.</p>
-    <div id="admin-msg" class="msg"></div>
-    <div class="modal-field">
-      <label>Admin Password</label>
-      <input id="adm-pass" type="password" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') checkAdminAndGo()"/>
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="checkAdminAndGo()">Unlock &amp; Open Admin</button>
-      <button class="btn btn-cancel" onclick="closeAdminModal()">Cancel</button>
-    </div>
-    <p style="font-size:.73rem;color:rgba(255,255,255,.25);text-align:center;margin-top:1rem">Default password: admin1234 · Change it inside Settings</p>
-  </div>
-</div>
-
 <footer>© 2026 <span>SherigSpace</span></footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const { createClient } = supabase;
-const sb = createClient(
-  'https://kgqlcjdjdhssactfezwi.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncWxjamRqZGhzc2FjdGZlendpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTE2MzQsImV4cCI6MjA5NTAyNzYzNH0.6hJpg9Zput8wnuDfq7wzb5dRC2KkuRmkmaz870U0Lto'
-);
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
+
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showMsg(id, msg, type){
   const el = document.getElementById(id);
@@ -220,14 +198,14 @@ function setBtn(id, loading, label){
   b.disabled = loading;
   b.textContent = loading ? 'Please wait…' : label;
 }
-function switchTab(t){
+window.switchTab = function(t){
   document.querySelectorAll('.tab').forEach((el,i)=>
     el.classList.toggle('on',(t==='login'&&i===0)||(t==='signup'&&i===1))
   );
   document.getElementById('f-login').classList.toggle('on', t==='login');
   document.getElementById('f-signup').classList.toggle('on', t==='signup');
-}
-function checkStrength(v){
+};
+window.checkStrength = function(v){
   const bar = document.getElementById('sbar');
   let score = 0;
   if(v.length>=6) score++;
@@ -237,10 +215,10 @@ function checkStrength(v){
   if(/[^A-Za-z0-9]/.test(v)) score++;
   bar.style.width = [0,20,40,65,85,100][score]+'%';
   bar.style.background = ['#e05c5c','#e05c5c','#e8a84c','#c9a84c','#4caf84','#4caf84'][score];
-}
+};
 
 // ── GOOGLE LOGIN ──
-async function doGoogleLogin(){
+window.doGoogleLogin = async function(){
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
@@ -249,13 +227,11 @@ async function doGoogleLogin(){
     if(error) throw error;
   } catch(err){
     showMsg('login-msg', '❌ ' + err.message, 'err');
-    document.getElementById('f-login').classList.add('on');
-    document.getElementById('f-signup').classList.remove('on');
     switchTab('login');
   }
-}
+};
 
-async function doSignup(e){
+window.doSignup = async function(e){
   e.preventDefault();
   const name  = document.getElementById('s-name').value.trim();
   const email = document.getElementById('s-email').value.trim().toLowerCase();
@@ -273,6 +249,8 @@ async function doSignup(e){
     if(error) throw error;
     const uid = data.user?.id || data.session?.user?.id;
     if(!uid){ showMsg('signup-msg','✅ Check your email to confirm, then log in.','ok'); return; }
+    // role is intentionally always 'user' here — admin status is granted
+    // separately in the database, never chosen by the signup form itself.
     const { error: pe } = await sb.from('profiles').upsert({ id: uid, name, email, class_grade: cls, role: 'user' });
     if(pe) throw pe;
     showMsg('signup-msg','✅ Account created! Redirecting…','ok');
@@ -282,9 +260,9 @@ async function doSignup(e){
   } finally {
     setBtn('signup-btn', false, 'Create Account');
   }
-}
+};
 
-async function doLogin(e){
+window.doLogin = async function(e){
   e.preventDefault();
   const email = document.getElementById('l-email').value.trim().toLowerCase();
   const pass  = document.getElementById('l-pass').value;
@@ -305,12 +283,12 @@ async function doLogin(e){
   } finally {
     setBtn('login-btn', false, 'Log In');
   }
-}
+};
 
 // ── FORGOT PASSWORD ──
-function openForgotPassword(){ document.getElementById('forgotModal').classList.add('show'); }
-function closeForgotPassword(){ document.getElementById('forgotModal').classList.remove('show'); }
-async function sendReset(){
+window.openForgotPassword = function(){ document.getElementById('forgotModal').classList.add('show'); };
+window.closeForgotPassword = function(){ document.getElementById('forgotModal').classList.remove('show'); };
+window.sendReset = async function(){
   const email = document.getElementById('fp-email').value.trim().toLowerCase();
   if(!email) return showMsg('forgot-msg','Please enter your email.','err');
   try {
@@ -321,38 +299,11 @@ async function sendReset(){
   } catch(err){
     showMsg('forgot-msg','❌ ' + err.message,'err');
   }
-}
+};
 
-// ── ADMIN MODAL ──
-const DEFAULT_ADMIN_PASS = 'admin1234';
-function getAdminPass(){ return localStorage.getItem('edu_adminpass') || DEFAULT_ADMIN_PASS; }
-
-function openAdminModal(){
-  document.getElementById('admin-msg').className = 'msg';
-  document.getElementById('admin-msg').textContent = '';
-  document.getElementById('adm-pass').value = '';
-  document.getElementById('adminModal').classList.add('show');
-  setTimeout(() => document.getElementById('adm-pass').focus(), 100);
-}
-function closeAdminModal(){ document.getElementById('adminModal').classList.remove('show'); }
-
-function checkAdminAndGo(){
-  const pass = document.getElementById('adm-pass').value;
-  if(pass === getAdminPass()){
-    sessionStorage.setItem('edu_admin_auth', '1');
-    window.location.href = 'admin.html';
-  } else {
-    showMsg('admin-msg', '❌ Incorrect password. Try again.', 'err');
-    document.getElementById('adm-pass').value = '';
-    setTimeout(() => { document.getElementById('admin-msg').className = 'msg'; document.getElementById('admin-msg').textContent = ''; }, 2500);
-  }
-}
-
-// Close modals on backdrop click
-['forgotModal','adminModal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', e => {
-    if(e.target.id === id) document.getElementById(id).classList.remove('show');
-  });
+// Close modal on backdrop click
+document.getElementById('forgotModal').addEventListener('click', e => {
+  if(e.target.id === 'forgotModal') document.getElementById('forgotModal').classList.remove('show');
 });
 
 // Auto redirect if already logged in
