@@ -14,8 +14,7 @@ export const GOOGLE_CLIENT_ID = '409297862405-81tfjtld0pu6pm9ld3b3drpk206o89i9.a
 // Optional: paste a Google Drive folder ID here to upload everything into
 // one specific folder (e.g. a folder called "SherigSpace Uploads") instead
 // of the root of your Drive. Leave as '' to upload to Drive's root.
-export const GOOGLE_DRIVE_FOLDER_ID = 'https://drive.google.com/drive/folders/1jwhfD--6LaIMlzT452ebRqMOBnPXxoSo?usp=drive_link';
-
+export const GOOGLE_DRIVE_FOLDER_ID = '1jwhfD--6LaIMlzT452ebRqMOBnPXxoSo';
 // Escape any string before dropping it into innerHTML. Every field that
 // came from the database (titles, descriptions, comments, etc.) must be
 // passed through this before being rendered, since anyone able to write
