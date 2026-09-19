@@ -273,18 +273,24 @@ async function renderAll(){
     { data: V, count: vc },
     { data: A, count: ac },
     { data: U, count: uc },
-    { data: AN, count: anc }
+    { data: AN, count: anc },
+    { count: visitCount }
   ] = await Promise.all([
     supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('resources').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
-    supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false})
+    supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('page_views').select('*',{count:'exact',head:true})
   ]);
 
+  const totalDownloads = [L,R,V,A].reduce((sum, arr) =>
+    sum + (arr||[]).reduce((s,i)=>s+(i.download_count||0), 0), 0);
+
   document.getElementById('d-stats').innerHTML =
-    stat(lc||0,'Lessons')+stat(rc||0,'Resources')+stat(vc||0,'Videos')+stat(uc||0,'Members');
+    stat(lc||0,'Lessons')+stat(rc||0,'Resources')+stat(vc||0,'Videos')+stat(uc||0,'Members')
+    + stat(visitCount||0,'Site Visits') + stat(totalDownloads,'Total Downloads');
   document.getElementById('c-lessons').textContent   = lc||0;
   document.getElementById('c-resources').textContent = rc||0;
   document.getElementById('c-videos').textContent    = vc||0;
@@ -328,7 +334,8 @@ function row(item,type){
     article:`${item.article_date||'—'} · ${item.category||'—'}`
   }[type]||'';
   const thumb = item.thumbnail_url ? `<img class="irow-thumb" src="${esc(item.thumbnail_url)}"/>` : '';
-  return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
+  const downloads = `⬇ ${item.download_count||0}`;
+  return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)} · ${downloads}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
 }
 
 // ── FORM ──
