@@ -137,8 +137,11 @@ section{padding:80px 5%}
 #about{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%)}
 .about-inner{max-width:1100px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
 .about-avatar-wrap{position:relative}
-.about-avatar{width:100%;max-width:360px;aspect-ratio:1;background:rgba(255,255,255,.05);border:2px solid rgba(201,168,76,.3);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:5rem;gap:.5rem}
+.about-avatar{width:100%;max-width:360px;aspect-ratio:1;background:rgba(255,255,255,.05);border:2px solid rgba(201,168,76,.75);border-radius:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 18px 45px rgba(0,0,0,.28),0 0 0 8px rgba(201,168,76,.06);position:relative}
+.about-profile-photo{width:100%;height:100%;display:block;object-fit:cover;object-position:center top}
 .about-avatar-label{font-size:.85rem;color:rgba(255,255,255,.4);letter-spacing:.08em}
+.about-signature{font-family:'Playfair Display',serif;font-size:1.65rem;font-style:italic;color:var(--gold-light);text-align:center;margin-top:1rem}
+.about-role{font-size:.72rem;letter-spacing:.18em;color:rgba(255,255,255,.72);text-align:center;margin-top:.35rem}
 .about-accent{position:absolute;bottom:-16px;right:-16px;width:80px;height:80px;border:2px solid var(--gold);border-radius:4px;opacity:.4}
 #about .section-label{color:var(--gold-light)}
 #about .section-title{color:#fff}
@@ -172,7 +175,7 @@ footer .gold{color:var(--gold)}
 .fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
 .fade-in.visible{opacity:1;transform:translateY(0)}
 @media(max-width:768px){.hero-inner,.about-inner{grid-template-columns:1fr;gap:2.5rem}.hero-stats{flex-direction:row;flex-wrap:wrap}.stat-card{flex:1;min-width:110px}}
-@media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}}
+@media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}.about-avatar{max-width:320px;margin:auto}.about-signature{font-size:1.4rem}.about-role{font-size:.62rem;letter-spacing:.12em}}
 </style>
 </head>
 <body>
@@ -292,8 +295,12 @@ footer .gold{color:var(--gold)}
 <section id="about">
   <div class="about-inner">
     <div class="about-avatar-wrap fade-in">
-      <div class="about-avatar">🎓<span class="about-avatar-label" data-en="The Sunshine (ཁྲི་གདུགས)" data-dz="ཁྲི་གདུགས།">The Sunshine</span></div>
+      <div class="about-avatar">
+        <img src="profile.jpg" alt="Thinley Wangchuk" class="about-profile-photo">
+      </div>
       <div class="about-accent"></div>
+      <div class="about-signature">Thinley Wangchuk</div>
+      <div class="about-role">TEACHER&nbsp;&nbsp;•&nbsp;&nbsp;CREATOR&nbsp;&nbsp;•&nbsp;&nbsp;LIFELONG LEARNER</div>
     </div>
     <div class="fade-in">
       <p class="section-label"  data-en="✦ About Me" data-dz="✦ ང་རའི་སྐོར།">✦ About Me</p>
