@@ -77,9 +77,13 @@ section{padding:80px 5%}
 .section-title{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,3.5vw,2.7rem);font-weight:700;color:var(--text);line-height:1.2;margin-bottom:.8rem;transition:color .35s}
 .section-desc{color:var(--text2);font-size:1rem;line-height:1.75;max-width:560px;margin-bottom:3rem;transition:color .35s}
 .divider{width:48px;height:3px;background:var(--gold);border-radius:2px;margin:1rem 0 1.5rem}
+.class-tabs{display:flex;flex-wrap:wrap;gap:.5rem}
+.class-tab{padding:7px 16px;border-radius:20px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text2);font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.class-tab:hover{border-color:var(--gold);color:var(--gold)}
+.class-tab.active{background:var(--gold);border-color:var(--gold);color:var(--navy)}
 #lessons{background:var(--surface);transition:background .35s}
 .lessons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
-.lesson-card{background:var(--card-bg);border:1px solid var(--card-border);border-top:3px solid var(--gold);border-radius:5px;padding:1.8rem;transition:transform .2s,box-shadow .2s,background .35s;cursor:pointer}
+.lesson-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-top:3px solid var(--gold);border-radius:5px;padding:1.8rem;transition:transform .2s,box-shadow .2s,background .35s;cursor:pointer;overflow:hidden}
 .lesson-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
 .lesson-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--navy),var(--navy-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:1rem}
 .lesson-card h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:.5rem;transition:color .35s}
@@ -101,7 +105,7 @@ section{padding:80px 5%}
 .locked-overlay a{font-size:.75rem;color:var(--gold);font-weight:600;text-decoration:none;border-bottom:1px solid rgba(201,168,76,.3)}
 #videos{background:var(--surface);transition:background .35s}
 .videos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
-.video-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;display:block}
+.video-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;display:block}
 .video-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
 .video-thumb{height:160px;background:linear-gradient(135deg,#1a2340,#253056);display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative}
 .play-btn{position:absolute;width:48px;height:48px;background:rgba(201,168,76,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;padding-left:3px}
@@ -223,6 +227,15 @@ footer .gold{color:var(--gold)}
   </div>
 </section>
 
+<!-- CLASS PICKER — the TLM Store's classwise browsing bar -->
+<section id="class-picker-section" style="padding:2rem 5% 0">
+  <div class="inner">
+    <p class="section-label">✦ TLM Store</p>
+    <h2 class="section-title" style="font-size:1.5rem;margin-bottom:1rem">Browse by Class</h2>
+    <div id="class-tabs" class="class-tabs"></div>
+  </div>
+</section>
+
 <!-- LESSONS -->
 <section id="lessons">
   <div class="inner">
@@ -321,6 +334,14 @@ footer .gold{color:var(--gold)}
   </div>
 </div>
 
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal-box" style="max-width:440px">
+    <div class="modal-head"><h3>🔒 Unlock Premium Content</h3><button class="modal-close" onclick="closePaymentModal()">✕</button></div>
+    <div class="modal-body" id="payment-modal-body"></div>
+  </div>
+</div>
+
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
@@ -332,6 +353,31 @@ const ICONS={Mathematics:'📐',Science:'🌍','Language Arts':'✍️',History:
 const RICONS={PDF:'📄',DOCX:'📝',Image:'🗺️','Video Link':'🎥',Spreadsheet:'📊',Presentation:'🖥️',Other:'📁'};
 const GRADS=['linear-gradient(135deg,#1a2340,#253056)','linear-gradient(135deg,#1e3a5f,#1a2340)','linear-gradient(135deg,#253056,#1e3a5f)'];
 const EMOJIS=['📖','🌱','🛠️','💡','🎯','🔬'];
+const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
+let selectedClass = localStorage.getItem('edu_selected_class') || 'All Classes';
+
+function renderClassTabs(){
+  const wrap = document.getElementById('class-tabs');
+  wrap.innerHTML = CLASS_LEVELS.map(c =>
+    `<button class="class-tab${c===selectedClass?' active':''}" data-class="${esc(c)}">${c==='All Classes'?'All':esc(c)}</button>`
+  ).join('');
+  wrap.querySelectorAll('.class-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      selectedClass = btn.getAttribute('data-class');
+      localStorage.setItem('edu_selected_class', selectedClass);
+      renderClassTabs();
+      renderLessons(); renderResources(); renderVideos(); renderArticles();
+    });
+  });
+}
+
+// An item matches the current class filter if it's tagged "All Classes"
+// (general material) or matches the picked class exactly.
+function matchesClass(item){
+  if(selectedClass === 'All Classes') return true;
+  const c = item.class_level || 'All Classes';
+  return c === selectedClass || c === 'All Classes';
+}
 
 function lang(){ return html.getAttribute('data-lang'); }
 function session(){ try{ return JSON.parse(localStorage.getItem('edu_session')||'null') }catch{ return null } }
@@ -426,6 +472,89 @@ window.closeVideoModal = function(){
 };
 document.getElementById('video-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('video-modal')) closeVideoModal(); });
 
+// ── PREMIUM / PAYMENT SYSTEM ──
+let siteSettings = {};
+let myPurchases = {}; // "type:id" -> 'pending' | 'approved'
+
+async function loadSiteSettings(){
+  const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+  siteSettings = data || {};
+}
+
+async function loadMyPurchases(){
+  myPurchases = {};
+  const s = session();
+  if(!s) return;
+  const { data } = await supabase.from('purchases').select('item_type,item_id,status').eq('user_id', s.id);
+  (data||[]).forEach(p=>{ myPurchases[`${p.item_type}:${p.item_id}`] = p.status; });
+}
+
+// Returns 'free' | 'approved' | 'pending' | 'locked-anon' | 'locked-pay'
+function accessState(type, item){
+  if(!item.is_premium) return 'free';
+  const s = session();
+  if(!s) return 'locked-anon';
+  const st = myPurchases[`${type}:${item.id}`];
+  if(st === 'approved') return 'approved';
+  if(st === 'pending') return 'pending';
+  return 'locked-pay';
+}
+
+function lockOverlayHtml(state, item){
+  const price = item.price != null ? `Nu. ${item.price}` : 'Paid';
+  if(state === 'pending') return `<div class="locked-overlay"><span>⏳</span><p>Payment under review</p></div>`;
+  if(state === 'locked-anon') return `<div class="locked-overlay"><span>🔒</span><p>${esc(price)} — sign in to unlock</p><a href="login.html">Log in →</a></div>`;
+  if(state === 'locked-pay') return `<div class="locked-overlay" style="cursor:pointer"><span>🔒</span><p>${esc(price)} — tap to unlock</p></div>`;
+  return '';
+}
+
+window.openPaymentModal = function(type, id, title, price){
+  const body = document.getElementById('payment-modal-body');
+  const qr = safeUrl(siteSettings.qr_image_url);
+  body.innerHTML = `
+    <p style="font-size:.9rem;color:var(--text2);margin-bottom:1rem">Unlock <strong style="color:var(--text)">${esc(title)}</strong> for <strong style="color:var(--gold)">Nu. ${esc(price)}</strong>. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.</p>
+    ${qr ? `<img src="${esc(qr)}" style="width:100%;max-width:220px;display:block;margin:0 auto 1rem;border-radius:6px;border:1px solid var(--border)"/>` : ''}
+    <div style="background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;margin-bottom:1rem;font-size:.85rem;line-height:1.8">
+      ${siteSettings.bank_name?`<div><strong>Bank/App:</strong> ${esc(siteSettings.bank_name)}</div>`:''}
+      ${siteSettings.account_name?`<div><strong>Account Name:</strong> ${esc(siteSettings.account_name)}</div>`:''}
+      ${siteSettings.account_number?`<div><strong>Account Number:</strong> ${esc(siteSettings.account_number)}</div>`:''}
+    </div>
+    <div class="field">
+      <label style="font-size:.76rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">Upload Payment Screenshot</label>
+      <input type="file" id="proof-file" accept="image/*" style="margin-top:.4rem"/>
+    </div>
+    <p id="proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
+    <button class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${type}','${id}',${JSON.stringify(price)})">Submit for Review</button>
+  `;
+  document.getElementById('payment-modal').classList.add('open');
+};
+window.closePaymentModal = function(){ document.getElementById('payment-modal').classList.remove('open'); };
+document.getElementById('payment-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('payment-modal')) closePaymentModal(); });
+
+window.submitPaymentProof = async function(type, id, price){
+  const s = session();
+  if(!s){ window.location='login.html'; return; }
+  const fileInput = document.getElementById('proof-file');
+  const file = fileInput.files[0];
+  const statusEl = document.getElementById('proof-status');
+  if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red,#e05c5c)'; return; }
+  statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
+  try{
+    const path = `${s.id}/${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file);
+    if(upErr) throw upErr;
+    const { error: insErr } = await supabase.from('purchases').insert({
+      user_id: s.id, item_type: type, item_id: id, price, proof_path: path, status: 'pending'
+    });
+    if(insErr) throw insErr;
+    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = '#7ed9b0';
+    myPurchases[`${type}:${id}`] = 'pending';
+    setTimeout(()=>{ closePaymentModal(); renderAll(); }, 1200);
+  }catch(err){
+    statusEl.textContent = 'Failed: ' + err.message; statusEl.style.color = 'var(--red,#e05c5c)';
+  }
+};
+
 // ── LOAD STATS (live from Supabase) ──
 async function loadStats(){
   const [{ count: lCount }, { count: vCount }, { count: uCount }] = await Promise.all([
@@ -440,55 +569,70 @@ async function loadStats(){
 
 // ── RENDER LESSONS ──
 async function renderLessons(){
-  const { data: items } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('lessons-grid');
-  if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>No lessons yet</p></div>`; return; }
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>No lessons for ${esc(selectedClass)} yet</p></div>`; return; }
   g.innerHTML = items.map(l => {
     const icon = ICONS[l.subject]||'📖';
     const title = lang()==='dz' && l.dz ? l.dz : l.title;
     const url = safeUrl(l.url);
     const thumb = safeUrl(l.thumbnail_url);
-    return `<div class="lesson-card fade-in" data-url="${esc(url)}" data-id="${esc(l.id)}">
+    const state = accessState('lessons', l);
+    return `<div class="lesson-card fade-in" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}">
       ${thumb ? `<img src="${esc(thumb)}" style="width:100%;height:130px;object-fit:cover;border-radius:5px;margin-bottom:1rem" onerror="this.outerHTML='<div class=\\'lesson-icon\\'>${icon}</div>'"/>` : `<div class="lesson-icon">${icon}</div>`}
       <div class="badge">${esc(l.subject||'General')}</div>
       <h3>${esc(title)}</h3>
       <p>${esc(l.description||'')}</p>
-      <div class="lesson-meta">${l.duration?`<span>⏱ ${esc(l.duration)}</span>`:''} ${l.slides?`<span>📄 ${esc(l.slides)}</span>`:''} ${l.level?`<span>🎯 ${esc(l.level)}</span>`:''}</div>
+      <div class="lesson-meta">${l.duration?`<span>⏱ ${esc(l.duration)}</span>`:''} ${l.slides?`<span>📄 ${esc(l.slides)}</span>`:''} ${l.level?`<span>🎯 ${esc(l.level)}</span>`:''} ${l.class_level && l.class_level!=='All Classes'?`<span>🎓 ${esc(l.class_level)}</span>`:''}</div>
+      ${lockOverlayHtml(state, l)}
     </div>`;
   }).join('');
   g.querySelectorAll('.lesson-card').forEach(card=>{
     const url = card.getAttribute('data-url');
     const id = card.getAttribute('data-id');
-    if(url) card.addEventListener('click', ()=>{ trackOpen('lessons', id); window.open(url,'_blank','noopener'); });
+    const state = card.getAttribute('data-state');
+    card.addEventListener('click', ()=>{
+      if(state === 'locked-pay') openPaymentModal('lessons', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+      else if(state === 'pending' || state === 'locked-anon') return; // overlay handles it (or nothing to do)
+      else if(url){ trackOpen('lessons', id); window.open(url,'_blank','noopener'); }
+    });
   });
 }
 
 // ── RENDER RESOURCES ──
 async function renderResources(){
-  const { data: items } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('resources-grid');
   const s = session();
-  if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📁</div><p>No resources yet</p></div>`; return; }
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📁</div><p>No resources for ${esc(selectedClass)} yet</p></div>`; return; }
   g.innerHTML = items.map(r => {
     const icon = RICONS[r.rtype]||'📁';
     const title = lang()==='dz' && r.dz ? r.dz : r.title;
-    const locked = !s;
+    const loginLocked = !s;
     const url = safeUrl(r.url);
     const thumb = safeUrl(r.thumbnail_url);
-    return `<div class="resource-card fade-in" data-url="${esc(url)}" data-locked="${locked}" data-id="${esc(r.id)}">
+    const state = loginLocked ? 'locked-anon' : accessState('resources', r);
+    const overlay = loginLocked
+      ? `<div class="locked-overlay"><span>🔒</span><p>Sign in to download</p><a href="login.html">Log in →</a></div>`
+      : lockOverlayHtml(state, r);
+    return `<div class="resource-card fade-in" data-url="${esc(url)}" data-state="${state}" data-id="${esc(r.id)}" data-title="${esc(title)}" data-price="${esc(r.price||0)}">
       ${thumb
         ? `<img src="${esc(thumb)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.outerHTML='<div class=\\'resource-icon\\'>${icon}</div>'"/>`
         : `<div class="resource-icon">${icon}</div>`}
-      <div class="resource-info"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.rtype||'')}${r.filesize?' · '+esc(r.filesize):''}</div></div>
-      ${locked?`<div class="locked-overlay"><span>🔒</span><p>Sign in to download</p><a href="login.html">Log in →</a></div>`:''}
+      <div class="resource-info"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.rtype||'')}${r.filesize?' · '+esc(r.filesize):''}${r.class_level && r.class_level!=='All Classes'?' · 🎓 '+esc(r.class_level):''}</div></div>
+      ${overlay}
     </div>`;
   }).join('');
   g.querySelectorAll('.resource-card').forEach(card=>{
     card.addEventListener('click', ()=>{
-      const locked = card.getAttribute('data-locked')==='true';
+      const state = card.getAttribute('data-state');
       const url = card.getAttribute('data-url');
       const id = card.getAttribute('data-id');
-      if(locked) window.location='login.html';
+      if(state === 'locked-anon') window.location='login.html';
+      else if(state === 'locked-pay') openPaymentModal('resources', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+      else if(state === 'pending') return;
       else if(url){ trackOpen('resources', id); window.open(url,'_blank','noopener'); }
     });
   });
@@ -496,40 +640,54 @@ async function renderResources(){
 
 // ── RENDER VIDEOS ──
 async function renderVideos(){
-  const { data: items } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('videos-grid');
-  if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>No videos yet</p></div>`; return; }
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>No videos for ${esc(selectedClass)} yet</p></div>`; return; }
   g.innerHTML = items.map(v => {
     const title = lang()==='dz' && v.dz ? v.dz : v.title;
     const icon = ICONS[v.subject]||'🎬';
     const url = safeUrl(v.url);
     const thumb = safeUrl(v.thumbnail_url);
-    return `<div class="video-card fade-in" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}">
-      <div class="video-thumb" ${thumb?`style="background:url('${esc(thumb)}') center/cover"`:''}>${thumb?'':icon}<div class="play-btn">▶</div></div>
-      <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''} ${v.subject?`<span>📚 ${esc(v.subject)}</span>`:''}</div></div>
+    const state = accessState('videos', v);
+    return `<div class="video-card fade-in" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}">
+      <div class="video-thumb" ${thumb && state!=='locked-anon' && state!=='locked-pay' ?`style="background:url('${esc(thumb)}') center/cover"`:''}>${thumb && state!=='locked-anon' && state!=='locked-pay'?'':icon}<div class="play-btn">▶</div></div>
+      <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''} ${v.subject?`<span>📚 ${esc(v.subject)}</span>`:''} ${v.class_level && v.class_level!=='All Classes'?`<span>🎓 ${esc(v.class_level)}</span>`:''}</div></div>
+      ${lockOverlayHtml(state, v)}
     </div>`;
   }).join('');
   g.querySelectorAll('.video-card').forEach(card=>{
-    card.addEventListener('click', ()=>openVideoModal(card.getAttribute('data-url'), card.getAttribute('data-id'), card.getAttribute('data-title')));
+    const state = card.getAttribute('data-state');
+    card.addEventListener('click', ()=>{
+      if(state === 'locked-anon') { window.location='login.html'; return; }
+      if(state === 'locked-pay') { openPaymentModal('videos', card.getAttribute('data-id'), card.getAttribute('data-title'), card.getAttribute('data-price')); return; }
+      if(state === 'pending') return;
+      openVideoModal(card.getAttribute('data-url'), card.getAttribute('data-id'), card.getAttribute('data-title'));
+    });
   });
 }
 
 // ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
-  const { data: items } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('blog-grid');
-  if(!items?.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>No articles yet</p></div>`; return; }
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>No articles for ${esc(selectedClass)} yet</p></div>`; return; }
   const s = session();
   g.innerHTML = items.map((a,i) => {
     const title = lang()==='dz' && a.dz ? a.dz : a.title;
     const date = a.article_date ? new Date(a.article_date).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '';
     const url = safeUrl(a.url);
     const thumb = safeUrl(a.thumbnail_url);
+    const state = accessState('articles', a);
+    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold);font-size:.78rem">🔒 Nu.${esc(a.price||0)} — log in</span>`
+                    : state==='locked-pay' ? ` <span style="color:var(--gold);font-size:.78rem;cursor:pointer" data-pay="1">🔒 Nu.${esc(a.price||0)} — tap to unlock</span>`
+                    : state==='pending' ? ` <span style="color:var(--text2);font-size:.78rem">⏳ Under review</span>` : '';
     return `<div class="blog-card fade-in">
       <div class="blog-thumb" style="${thumb?`background:url('${esc(thumb)}') center/cover`:`background:${GRADS[i%3]}`}">${thumb?'':EMOJIS[i%6]}</div>
       <div class="blog-body">
         <div class="blog-date">${esc(date)}</div>
-        <h3 ${url?`style="cursor:pointer" data-url="${esc(url)}" data-id="${esc(a.id)}"`:''}>${esc(title)}</h3>
+        <h3 data-state="${state}" data-url="${esc(url)}" data-id="${esc(a.id)}" data-title="${esc(title)}" data-price="${esc(a.price||0)}" style="${state==='free'||state==='approved'?'cursor:pointer':''}">${esc(title)}${priceTag}</h3>
         <p>${esc(a.description||'')}</p>
         <div class="comments-wrap" data-article="${esc(a.id)}">
           <h4>💬 Comments</h4>
@@ -541,8 +699,16 @@ async function renderArticles(){
       </div>
     </div>`;
   }).join('');
-  g.querySelectorAll('.blog-body h3[data-url]').forEach(h=>{
-    h.addEventListener('click', ()=>{ trackOpen('articles', h.getAttribute('data-id')); window.open(h.getAttribute('data-url'),'_blank','noopener'); });
+  g.querySelectorAll('.blog-body h3[data-state]').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      const state = h.getAttribute('data-state');
+      const id = h.getAttribute('data-id');
+      if(state === 'locked-anon'){ window.location='login.html'; return; }
+      if(state === 'locked-pay'){ openPaymentModal('articles', id, h.getAttribute('data-title'), h.getAttribute('data-price')); return; }
+      if(state === 'pending') return;
+      const url = h.getAttribute('data-url');
+      if(url){ trackOpen('articles', id); window.open(url,'_blank','noopener'); }
+    });
   });
   g.querySelectorAll('.comments-wrap').forEach(wrap=>loadComments(wrap, s));
 }
@@ -574,6 +740,8 @@ async function loadComments(wrap, s){
 
 async function renderAll(){
   renderNav();
+  renderClassTabs();
+  await Promise.all([loadSiteSettings(), loadMyPurchases()]);
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), loadStats()]);
   observeFadeIns();
 }
