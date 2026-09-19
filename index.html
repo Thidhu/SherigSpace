@@ -311,6 +311,16 @@ footer .gold{color:var(--gold)}
   </div>
 </div>
 
+<!-- VIDEO PLAYER MODAL -->
+<div class="modal-overlay" id="video-modal">
+  <div class="modal-box" style="max-width:900px;width:95%">
+    <div class="modal-head"><h3 id="video-modal-title">▶ Video</h3><button class="modal-close" onclick="closeVideoModal()">✕</button></div>
+    <div class="modal-body" style="padding:0">
+      <div id="video-embed-wrap" style="position:relative;padding-top:56.25%;height:0;overflow:hidden;background:#000"></div>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
@@ -390,6 +400,32 @@ window.openProfile = async function(){
 window.closeProfile = () => document.getElementById('profile-modal').classList.remove('open');
 document.getElementById('profile-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('profile-modal')) closeProfile(); });
 
+// ── VIDEO PLAYER MODAL ──
+// Plays YouTube links and Google Drive files right on the page using
+// each platform's own embeddable iframe — nobody has to leave the site.
+function getEmbedUrl(url){
+  if(!url) return null;
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+  if(yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0`;
+  const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(gd) return `https://drive.google.com/file/d/${gd[1]}/preview`;
+  return null;
+}
+window.openVideoModal = function(url, id, title){
+  trackOpen('videos', id);
+  const embed = getEmbedUrl(url);
+  if(!embed){ window.open(url,'_blank','noopener'); return; } // fallback: unrecognized host, just open it
+  document.getElementById('video-modal-title').textContent = title || '▶ Video';
+  document.getElementById('video-embed-wrap').innerHTML =
+    `<iframe src="${esc(embed)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  document.getElementById('video-modal').classList.add('open');
+};
+window.closeVideoModal = function(){
+  document.getElementById('video-modal').classList.remove('open');
+  document.getElementById('video-embed-wrap').innerHTML = ''; // stops playback
+};
+document.getElementById('video-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('video-modal')) closeVideoModal(); });
+
 // ── LOAD STATS (live from Supabase) ──
 async function loadStats(){
   const [{ count: lCount }, { count: vCount }, { count: uCount }] = await Promise.all([
@@ -412,7 +448,7 @@ async function renderLessons(){
     const title = lang()==='dz' && l.dz ? l.dz : l.title;
     const url = safeUrl(l.url);
     const thumb = safeUrl(l.thumbnail_url);
-    return `<div class="lesson-card fade-in" data-url="${esc(url)}">
+    return `<div class="lesson-card fade-in" data-url="${esc(url)}" data-id="${esc(l.id)}">
       ${thumb ? `<img src="${esc(thumb)}" style="width:100%;height:130px;object-fit:cover;border-radius:5px;margin-bottom:1rem" onerror="this.outerHTML='<div class=\\'lesson-icon\\'>${icon}</div>'"/>` : `<div class="lesson-icon">${icon}</div>`}
       <div class="badge">${esc(l.subject||'General')}</div>
       <h3>${esc(title)}</h3>
@@ -422,7 +458,8 @@ async function renderLessons(){
   }).join('');
   g.querySelectorAll('.lesson-card').forEach(card=>{
     const url = card.getAttribute('data-url');
-    if(url) card.addEventListener('click', ()=>window.open(url,'_blank','noopener'));
+    const id = card.getAttribute('data-id');
+    if(url) card.addEventListener('click', ()=>{ trackOpen('lessons', id); window.open(url,'_blank','noopener'); });
   });
 }
 
@@ -438,7 +475,7 @@ async function renderResources(){
     const locked = !s;
     const url = safeUrl(r.url);
     const thumb = safeUrl(r.thumbnail_url);
-    return `<div class="resource-card fade-in" data-url="${esc(url)}" data-locked="${locked}">
+    return `<div class="resource-card fade-in" data-url="${esc(url)}" data-locked="${locked}" data-id="${esc(r.id)}">
       ${thumb
         ? `<img src="${esc(thumb)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.outerHTML='<div class=\\'resource-icon\\'>${icon}</div>'"/>`
         : `<div class="resource-icon">${icon}</div>`}
@@ -450,8 +487,9 @@ async function renderResources(){
     card.addEventListener('click', ()=>{
       const locked = card.getAttribute('data-locked')==='true';
       const url = card.getAttribute('data-url');
+      const id = card.getAttribute('data-id');
       if(locked) window.location='login.html';
-      else if(url) window.open(url,'_blank','noopener');
+      else if(url){ trackOpen('resources', id); window.open(url,'_blank','noopener'); }
     });
   });
 }
@@ -466,11 +504,14 @@ async function renderVideos(){
     const icon = ICONS[v.subject]||'🎬';
     const url = safeUrl(v.url);
     const thumb = safeUrl(v.thumbnail_url);
-    return `<a class="video-card fade-in" ${url?`href="${esc(url)}" target="_blank" rel="noopener"`:''}>
+    return `<div class="video-card fade-in" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}">
       <div class="video-thumb" ${thumb?`style="background:url('${esc(thumb)}') center/cover"`:''}>${thumb?'':icon}<div class="play-btn">▶</div></div>
       <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''} ${v.subject?`<span>📚 ${esc(v.subject)}</span>`:''}</div></div>
-    </a>`;
+    </div>`;
   }).join('');
+  g.querySelectorAll('.video-card').forEach(card=>{
+    card.addEventListener('click', ()=>openVideoModal(card.getAttribute('data-url'), card.getAttribute('data-id'), card.getAttribute('data-title')));
+  });
 }
 
 // ── RENDER ARTICLES + COMMENTS ──
@@ -488,7 +529,7 @@ async function renderArticles(){
       <div class="blog-thumb" style="${thumb?`background:url('${esc(thumb)}') center/cover`:`background:${GRADS[i%3]}`}">${thumb?'':EMOJIS[i%6]}</div>
       <div class="blog-body">
         <div class="blog-date">${esc(date)}</div>
-        <h3 ${url?`style="cursor:pointer" data-url="${esc(url)}"`:''}>${esc(title)}</h3>
+        <h3 ${url?`style="cursor:pointer" data-url="${esc(url)}" data-id="${esc(a.id)}"`:''}>${esc(title)}</h3>
         <p>${esc(a.description||'')}</p>
         <div class="comments-wrap" data-article="${esc(a.id)}">
           <h4>💬 Comments</h4>
@@ -501,7 +542,7 @@ async function renderArticles(){
     </div>`;
   }).join('');
   g.querySelectorAll('.blog-body h3[data-url]').forEach(h=>{
-    h.addEventListener('click', ()=>window.open(h.getAttribute('data-url'),'_blank','noopener'));
+    h.addEventListener('click', ()=>{ trackOpen('articles', h.getAttribute('data-id')); window.open(h.getAttribute('data-url'),'_blank','noopener'); });
   });
   g.querySelectorAll('.comments-wrap').forEach(wrap=>loadComments(wrap, s));
 }
@@ -593,6 +634,23 @@ async function syncSessionAndRender(){
 }
 supabase.auth.onAuthStateChange(()=>{ syncSessionAndRender(); });
 syncSessionAndRender();
+
+// ── VISIT LOGGING ──
+// Logs one visit per browser session (not on every reload/anchor click)
+// so the admin panel's "Site Visits" count reflects sessions, not raw
+// page loads. Silently does nothing if it fails — never blocks the site.
+(function logVisitOnce(){
+  if(sessionStorage.getItem('edu_visit_logged')) return;
+  sessionStorage.setItem('edu_visit_logged','1');
+  supabase.from('page_views').insert({}).then(()=>{}, ()=>{});
+})();
+
+// ── DOWNLOAD / OPEN TRACKING ──
+// Fire-and-forget: never blocks or delays actually opening the file.
+window.trackOpen = function(table, id){
+  if(!id) return;
+  supabase.rpc('increment_downloads', { p_table: table, p_id: id }).then(()=>{}, ()=>{});
+};
 </script>
 </body>
 </html>
