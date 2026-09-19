@@ -127,6 +127,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="sitem"     onclick="go('videos')">🎥 &nbsp;Videos</div>
       <div class="sitem"     onclick="go('articles')">✍️ &nbsp;Articles</div>
       <div class="sitem"     onclick="go('announce')">📢 &nbsp;Announcements</div>
+      <div class="sitem"     onclick="go('payments')">💳 &nbsp;Payments</div>
       <div class="sitem"     onclick="go('users')">👥 &nbsp;Users</div>
       <div class="sitem"     onclick="go('settings')">⚙️ &nbsp;Settings</div>
     </nav>
@@ -170,6 +171,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="card"><div class="card-head"><h3>All Announcements</h3><span class="cbadge" id="c-announce">0</span></div><div id="l-announce"></div></div>
     </div>
 
+    <div class="page" id="p-payments">
+      <div class="phead"><div><div class="ptitle">Payments</div><div class="psub">Review payment proof screenshots and approve access to premium content</div></div></div>
+      <div class="card"><div class="card-head"><h3>Pending Review</h3><span class="cbadge" id="c-payments-pending">0</span></div><div id="l-payments-pending"></div></div>
+      <div class="card"><div class="card-head"><h3>Reviewed</h3></div><div id="l-payments-reviewed"></div></div>
+    </div>
+
     <div class="page" id="p-users">
       <div class="phead"><div><div class="ptitle">Users</div><div class="psub">People who have signed up to your site</div></div></div>
       <div class="card"><div class="card-head"><h3>All Users</h3><span class="cbadge" id="c-users">0</span></div><div id="l-users" style="overflow-x:auto;padding:.5rem 0"></div></div>
@@ -187,9 +194,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
           <div class="field"><label>Site Name</label><input id="s-sitename" placeholder="SherigSpace"/></div>
           <div class="field"><label>Your Name / Tagline</label><input id="s-tagline" placeholder="e.g. Passionate Educator · Bhutan"/></div>
           <div class="field"><label>Contact Email</label><input id="s-email" type="email" placeholder="your@email.com"/></div>
-          <button class="btn btn-gold" style="width:fit-content" onclick="saveSettings()">Save Settings</button>
         </div>
       </div>
+      <div class="card">
+        <div class="card-head"><h3>💳 Payment Info — shown to members on locked premium content</h3></div>
+        <div style="padding:1.4rem;display:flex;flex-direction:column;gap:1rem">
+          <div class="row2">
+            <div class="field"><label>Account Holder Name</label><input id="s-acctname" placeholder="e.g. Thinley Wangchuk"/></div>
+            <div class="field"><label>Account Number</label><input id="s-acctnum" placeholder="e.g. 000000000000"/></div>
+          </div>
+          <div class="field"><label>Bank / Mobile Banking Name</label><input id="s-bankname" placeholder="e.g. BOB Mobile, mPay, BhutanQR"/></div>
+          <div class="field">
+            <label>QR Code Image</label>
+            <div class="upload-row">
+              <input type="file" id="s-qrfile" accept="image/*" style="display:none" onchange="handleQrPick(event)"/>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('s-qrfile').click()">📤 Upload QR Code</button>
+              <span class="upload-status" id="qr-upload-status"></span>
+            </div>
+            <div class="thumb-preview" id="qr-preview"></div>
+            <input type="hidden" id="s-qrurl"/>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-gold" onclick="saveSettings()">Save Settings</button>
     </div>
   </main>
 </div>
@@ -260,7 +287,7 @@ window.go = function(p){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
   document.getElementById('p-'+p).classList.add('on');
-  const map={dash:'dashboard',lessons:'lessons',resources:'resources',videos:'videos',articles:'articles',users:'users',settings:'settings'};
+  const map={dash:'dashboard',lessons:'lessons',resources:'resources',videos:'videos',articles:'articles',payments:'payments',users:'users',settings:'settings'};
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
 };
@@ -308,7 +335,62 @@ async function renderAll(){
     ? AN.map(a=>`<div class="irow"><div><div class="iname">${esc(a.emoji||'📢')} ${esc(a.message||'')}</div><div class="imeta">${a.active?'✅ Active':'❌ Hidden'}${a.link_label?' · '+esc(a.link_label):''}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('announce','${esc(a.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('announce','${esc(a.id)}')">✕</button></div></div>`).join('')
     : empty('📢','No announcements yet. Click + New Announcement!');
   renderUsers(U||[]);
+  renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[]});
 }
+
+// ── PAYMENTS ──
+async function renderPayments(itemsByType){
+  const findItem = (type, id) => (itemsByType[type]||[]).find(i => i.id === id);
+
+  const { data: purchases } = await supabase
+    .from('purchases')
+    .select('*, profiles(name, email)')
+    .order('created_at', { ascending: false });
+
+  const pending  = (purchases||[]).filter(p => p.status === 'pending');
+  const reviewed = (purchases||[]).filter(p => p.status !== 'pending');
+
+  document.getElementById('c-payments-pending').textContent = pending.length;
+
+  const renderRow = (p) => {
+    const item = findItem(p.item_type, p.item_id);
+    const itemTitle = item ? item.title : '(item removed)';
+    const buyer = p.profiles ? `${esc(p.profiles.name)} (${esc(p.profiles.email)})` : 'Unknown member';
+    const statusBadge = p.status === 'approved' ? '✅ Approved' : p.status === 'rejected' ? '❌ Rejected' : '⏳ Pending';
+    return `<div class="irow">
+      <div><div class="iname">${esc(itemTitle)} — Nu.${esc(p.price||0)}</div>
+        <div class="imeta">${buyer} · ${esc(new Date(p.created_at).toLocaleString())} · ${statusBadge}</div>
+      </div>
+      <div class="ibtns">
+        <button class="btn btn-ghost btn-sm" onclick="viewProof('${esc(p.proof_path)}')">🖼 View Proof</button>
+        ${p.status==='pending' ? `
+          <button class="btn btn-edit btn-sm" onclick="reviewPurchase('${esc(p.id)}','approved')">✓ Approve</button>
+          <button class="btn btn-del btn-sm" onclick="reviewPurchase('${esc(p.id)}','rejected')">✕ Reject</button>
+        ` : ''}
+      </div>
+    </div>`;
+  };
+
+  document.getElementById('l-payments-pending').innerHTML = pending.length
+    ? pending.map(renderRow).join('') : empty('💳','No pending payments right now.');
+  document.getElementById('l-payments-reviewed').innerHTML = reviewed.length
+    ? reviewed.slice(0,50).map(renderRow).join('') : empty('📋','No reviewed payments yet.');
+}
+
+window.viewProof = async function(path){
+  if(!path){ toast('No proof file on this request.', true); return; }
+  const { data, error } = await supabase.storage.from('payment-proofs').createSignedUrl(path, 300);
+  if(error){ toast('Could not load proof: ' + error.message, true); return; }
+  window.open(data.signedUrl, '_blank', 'noopener');
+};
+
+window.reviewPurchase = async function(id, status){
+  if(!confirm(status === 'approved' ? 'Approve this payment and unlock access?' : 'Reject this payment request?')) return;
+  const { error } = await supabase.from('purchases').update({ status, reviewed_at: new Date().toISOString() }).eq('id', id);
+  if(error){ toast('Error: ' + error.message, true); return; }
+  toast(status === 'approved' ? 'Approved ✓' : 'Rejected');
+  renderAll();
+};
 
 function renderUsers(U){
   if(!U.length){ document.getElementById('l-users').innerHTML=empty('👥','No users signed up yet.'); return; }
@@ -335,13 +417,16 @@ function row(item,type){
   }[type]||'';
   const thumb = item.thumbnail_url ? `<img class="irow-thumb" src="${esc(item.thumbnail_url)}"/>` : '';
   const downloads = `⬇ ${item.download_count||0}`;
-  return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)} · ${downloads}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
+  const premiumTag = item.is_premium ? ` · <span style="color:var(--gold)">🔒 Nu.${esc(item.price||0)}</span>` : '';
+  const classTag = item.class_level && item.class_level !== 'All Classes' ? ` · <span style="color:var(--blue)">🎓 ${esc(item.class_level)}</span>` : '';
+  return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)} · ${downloads}${classTag}${premiumTag}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
 }
 
 // ── FORM ──
 const SUBJECTS=['Mathematics','Science','Language Arts','History','Technology','Social Studies','Arts','Physical Education','Other'];
 const LEVELS=['Beginner','Intermediate','Advanced'];
 const RTYPES=['PDF','DOCX','Image','Video Link','Spreadsheet','Presentation','Other'];
+const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
 let _type=null, _id=null;
 
 window.openForm = async function(type, id=null){
@@ -380,29 +465,57 @@ function imageUploadField(v){
     </div>`;
 }
 
+function classField(v){
+  const current = v('class_level') || 'All Classes';
+  return `
+    <div class="field"><label>Class</label>
+      <select id="f-class_level">${sel(CLASS_LEVELS, current)}</select>
+    </div>`;
+}
+
+function premiumField(v){
+  const isPremium = v('is_premium') === true || v('is_premium') === 'true';
+  return `
+    <div class="row2">
+      <div class="field"><label>Access</label>
+        <select id="f-is_premium" onchange="document.getElementById('price-field').style.display=this.value==='true'?'flex':'none'">
+          <option value="false"${!isPremium?' selected':''}>🔓 Free</option>
+          <option value="true"${isPremium?' selected':''}>🔒 Premium (paid)</option>
+        </select>
+      </div>
+      <div class="field" id="price-field" style="display:${isPremium?'flex':'none'}"><label>Price (Nu.)</label><input id="f-price" type="number" min="0" step="0.01" placeholder="e.g. 100" value="${esc(v('price'))}"/></div>
+    </div>`;
+}
+
 function buildForm(type,d={}){
-  const v=k=>d[k]||'';
+  const v=k=>d[k]!==undefined && d[k]!==null ? d[k] : '';
   if(type==='lesson') return`
     <div class="field"><label>Lesson Title *</label><input id="f-title" placeholder="e.g. Introduction to Algebra" value="${esc(v('title'))}"/></div>
     <div class="row2"><div class="field"><label>Subject</label><select id="f-subject"><option value="">-- Select --</option>${sel(SUBJECTS,v('subject'))}</select></div><div class="field"><label>Level</label><select id="f-level"><option value="">-- Select --</option>${sel(LEVELS,v('level'))}</select></div></div>
     <div class="row2"><div class="field"><label>Duration</label><input id="f-duration" placeholder="e.g. 45 min" value="${esc(v('duration'))}"/></div><div class="field"><label>Slides / Pages</label><input id="f-slides" placeholder="e.g. 12 slides" value="${esc(v('slides'))}"/></div></div>
     <div class="field"><label>Description</label><textarea id="f-description" placeholder="What will students learn?">${esc(v('description'))}</textarea></div>
     <div class="field"><label>File or Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${classField(v)}
     ${imageUploadField(v)}
+    ${premiumField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="སློབ་ཚན་གྱི་མིང་" value="${esc(v('dz'))}"/></div>`;
   if(type==='resource') return`
     <div class="field"><label>Resource Title *</label><input id="f-title" placeholder="e.g. Algebra Worksheet Pack" value="${esc(v('title'))}"/></div>
     <div class="row2"><div class="field"><label>File Type</label><select id="f-rtype"><option value="">-- Select --</option>${sel(RTYPES,v('rtype'))}</select></div><div class="field"><label>File Size</label><input id="f-filesize" placeholder="e.g. 2.4 MB" value="${esc(v('filesize'))}"/></div></div>
     <div class="field"><label>Description</label><textarea id="f-description" placeholder="What does this contain?">${esc(v('description'))}</textarea></div>
     <div class="field"><label>Download / Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${classField(v)}
     ${imageUploadField(v)}
+    ${premiumField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="ཡིག་ཆའི་མིང་" value="${esc(v('dz'))}"/></div>`;
   if(type==='video') return`
     <div class="field"><label>Video Title *</label><input id="f-title" placeholder="e.g. Coding Basics Part 1" value="${esc(v('title'))}"/></div>
     <div class="field"><label>YouTube / Video URL *</label><input id="f-url" placeholder="https://youtube.com/watch?v=..." value="${esc(v('url'))}"/></div>
     <div class="row2"><div class="field"><label>Subject</label><select id="f-subject"><option value="">-- Select --</option>${sel(SUBJECTS,v('subject'))}</select></div><div class="field"><label>Duration</label><input id="f-duration" placeholder="e.g. 12:30" value="${esc(v('duration'))}"/></div></div>
     <div class="field"><label>Description</label><textarea id="f-description" placeholder="What will students learn?">${esc(v('description'))}</textarea></div>
+    ${classField(v)}
     ${imageUploadField(v)}
+    ${premiumField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="བརྙན་ཐམས་ཀྱི་མིང་" value="${esc(v('dz'))}"/></div>`;
   if(type==='announce') return`
     <div class="field"><label>Message *</label><textarea id="f-message" placeholder="e.g. 🎉 New lessons added! Check out Class 6 Mathematics." style="min-height:90px">${esc(v('message'))}</textarea></div>
@@ -419,7 +532,9 @@ function buildForm(type,d={}){
     <div class="row2"><div class="field"><label>Date</label><input id="f-article_date" type="date" value="${esc(v('article_date'))}"/></div><div class="field"><label>Category</label><input id="f-category" placeholder="e.g. Pedagogy" value="${esc(v('category'))}"/></div></div>
     <div class="field"><label>Summary</label><textarea id="f-description" placeholder="Short summary...">${esc(v('description'))}</textarea></div>
     <div class="field"><label>Article Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${classField(v)}
     ${imageUploadField(v)}
+    ${premiumField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="རྩོམ་ཡིག་གི་མིང་" value="${esc(v('dz'))}"/></div>`;
 }
 
@@ -451,6 +566,7 @@ window.saveItem = async function(){
   } else {
     if(!fv('f-title')){ toast('Please enter a title.', true); return; }
     if(_type==='video' && !fv('f-url')){ toast('Please enter a video URL.', true); return; }
+    if(fv('f-is_premium')==='true' && !fv('f-price')){ toast('Please enter a price for premium content.', true); return; }
   }
   // Validate any URL field before saving so a bad link can't reach the public site
   const urlField = isAnnounce ? fv('f-link_url') : fv('f-url');
@@ -462,7 +578,12 @@ window.saveItem = async function(){
   const table = isAnnounce ? 'announcements' : _type + 's';
   const base = isAnnounce
     ? { message: fv('f-message') }
-    : { title: fv('f-title'), dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url'), thumbnail_url: fv('f-thumbnail_url') };
+    : {
+        title: fv('f-title'), dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url'), thumbnail_url: fv('f-thumbnail_url'),
+        class_level: fv('f-class_level') || 'All Classes',
+        is_premium: fv('f-is_premium') === 'true',
+        price: fv('f-is_premium') === 'true' && fv('f-price') ? Number(fv('f-price')) : null
+      };
   const extra = {
     lesson:   { subject: fv('f-subject'), level: fv('f-level'), duration: fv('f-duration'), slides: fv('f-slides') },
     resource: { rtype: fv('f-rtype'), filesize: fv('f-filesize') },
@@ -508,20 +629,51 @@ function toast(msg, isErr=false){
 
 document.getElementById('overlay').addEventListener('click', e=>{ if(e.target===document.getElementById('overlay')) closeForm(); });
 
-// ── SETTINGS (site display info only — not security-sensitive) ──
-window.loadSettings = function(){
-  const s = JSON.parse(localStorage.getItem('edu_settings')||'{}');
-  document.getElementById('s-sitename').value = s.sitename||'SherigSpace';
-  document.getElementById('s-tagline').value  = s.tagline||'';
-  document.getElementById('s-email').value    = s.email||'';
+// ── SETTINGS (now stored in the shared site_settings table, so it
+//    actually applies for every visitor — not just this browser) ──
+window.loadSettings = async function(){
+  const { data: s } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+  if(!s) return;
+  document.getElementById('s-sitename').value = s.sitename || 'SherigSpace';
+  document.getElementById('s-tagline').value  = s.tagline || '';
+  document.getElementById('s-email').value    = s.contact_email || '';
+  document.getElementById('s-acctname').value = s.account_name || '';
+  document.getElementById('s-acctnum').value  = s.account_number || '';
+  document.getElementById('s-bankname').value = s.bank_name || '';
+  document.getElementById('s-qrurl').value    = s.qr_image_url || '';
+  document.getElementById('qr-preview').innerHTML = s.qr_image_url ? `<img src="${esc(s.qr_image_url)}"/>` : '';
 };
 
-window.saveSettings = function(){
-  localStorage.setItem('edu_settings', JSON.stringify({
+window.handleQrPick = async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('qr-upload-status');
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Uploading…';
+  try{
+    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
+    document.getElementById('s-qrurl').value = result.thumbnailUrl;
+    document.getElementById('qr-preview').innerHTML = `<img src="${esc(result.thumbnailUrl)}"/>`;
+    statusEl.textContent = 'Uploaded ✓';
+    statusEl.className = 'upload-status ok';
+  }catch(err){
+    statusEl.textContent = 'Upload failed: ' + err.message;
+    statusEl.className = 'upload-status err';
+  }
+};
+
+window.saveSettings = async function(){
+  const { error } = await supabase.from('site_settings').update({
     sitename: document.getElementById('s-sitename').value,
-    tagline:  document.getElementById('s-tagline').value,
-    email:    document.getElementById('s-email').value
-  }));
+    tagline: document.getElementById('s-tagline').value,
+    contact_email: document.getElementById('s-email').value,
+    account_name: document.getElementById('s-acctname').value,
+    account_number: document.getElementById('s-acctnum').value,
+    bank_name: document.getElementById('s-bankname').value,
+    qr_image_url: document.getElementById('s-qrurl').value,
+    updated_at: new Date().toISOString()
+  }).eq('id', 1);
+  if(error){ toast('Error: ' + error.message, true); return; }
   toast('Settings saved! ✓');
 };
 </script>
