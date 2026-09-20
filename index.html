@@ -64,6 +64,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);bac
 .hero-desc{color:rgba(255,255,255,.65);font-size:1rem;line-height:1.8;margin-bottom:2.2rem;animation:fadeUp .8s .2s ease both}
 .hero-cta{display:flex;gap:1rem;flex-wrap:wrap;animation:fadeUp .8s .3s ease both}
 .btn-primary{background:var(--gold);color:var(--navy);padding:12px 26px;border-radius:3px;font-weight:600;font-size:.9rem;text-decoration:none;transition:background .2s,transform .15s;display:inline-block;border:none;cursor:pointer;font-family:var(--font-en)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
 .btn-primary:hover{background:var(--gold-light);transform:translateY(-2px)}
 .btn-outline{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:rgba(255,255,255,.85);padding:12px 26px;border-radius:3px;font-weight:500;font-size:.9rem;text-decoration:none;transition:border-color .2s,color .2s,transform .15s;display:inline-block}
 .btn-outline:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px)}
@@ -617,7 +618,7 @@ window.openPaymentModal = function(type, id, title, price){
       <input type="file" id="proof-file" accept="image/*" style="margin-top:.4rem"/>
     </div>
     <p id="proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
-    <button class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${type}','${id}',${JSON.stringify(price)})">Submit for Review</button>
+    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${esc(type)}','${esc(id)}',${Number(price)||0})">Submit for Review</button>
   `;
   document.getElementById('payment-modal').classList.add('open');
 };
@@ -630,7 +631,9 @@ window.submitPaymentProof = async function(type, id, price){
   const fileInput = document.getElementById('proof-file');
   const file = fileInput.files[0];
   const statusEl = document.getElementById('proof-status');
+  const submitBtn = document.getElementById('proof-submit-btn');
   if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red,#e05c5c)'; return; }
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
   statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
   try{
     // Supabase Storage keys only allow safe characters — spaces, colons
@@ -644,11 +647,13 @@ window.submitPaymentProof = async function(type, id, price){
       user_id: s.id, item_type: type, item_id: id, price, proof_path: path, status: 'pending'
     });
     if(insErr) throw insErr;
-    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = '#7ed9b0';
+    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = '#2e9e6b';
     myPurchases[`${type}:${id}`] = 'pending';
     setTimeout(()=>{ closePaymentModal(); renderAll(); }, 1200);
   }catch(err){
-    statusEl.textContent = 'Failed: ' + err.message; statusEl.style.color = 'var(--red,#e05c5c)';
+    console.error('Payment proof submit failed:', err);
+    statusEl.textContent = 'Failed: ' + (err && err.message ? err.message : 'please try again.'); statusEl.style.color = 'var(--red,#e05c5c)';
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit for Review'; }
   }
 };
 
