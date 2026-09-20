@@ -1,0 +1,76 @@
+<!-- ============================================================
+     PAYWALL GATE for tugofwar.sherigspace.com
+     Paste this block right after <body> (before your game's own
+     content/scripts). It hides everything behind a full-screen
+     overlay until the visitor is logged into SherigSpace AND has an
+     approved purchase for this exact item.
+
+     Uses the SAME Supabase project as sherigspace.com, so a purchase
+     approved in your Admin → Payments tab is recognized here too.
+     ============================================================ -->
+<div id="sherig-gate" style="position:fixed;inset:0;z-index:99999;background:#0f1623;color:#e8e4dc;display:flex;align-items:center;justify-content:center;font-family:sans-serif;text-align:center;padding:1rem">
+  <div style="max-width:380px">
+    <div id="sherig-gate-icon" style="font-size:2.5rem;margin-bottom:.75rem">🔒</div>
+    <h2 id="sherig-gate-title" style="color:#c9a84c;margin-bottom:.5rem">Checking access…</h2>
+    <p id="sherig-gate-text" style="color:#9aa3b8;font-size:.9rem;line-height:1.6">One moment…</p>
+    <a id="sherig-gate-btn" href="https://sherigspace.com/login.html" style="display:none;margin-top:1rem;padding:12px 24px;background:#c9a84c;color:#1a2340;border-radius:5px;text-decoration:none;font-weight:700">Go to SherigSpace</a>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+// ── Same project as sherigspace.com (copy exactly from your config.js) ──
+const SUPABASE_URL = 'https://kgqlcjdjdhssactfezwi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncWxjamRqZGhzc2FjdGZlendpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTE2MzQsImV4cCI6MjA5NTAyNzYzNH0.6hJpg9Zput8wnuDfq7wzb5dRC2KkuRmkmaz870U0Lto';
+
+// ── FILL THESE IN — find them in Supabase → Table Editor → resources
+//    (or videos), the row whose url points at tugofwar.sherigspace.com ──
+const ITEM_TYPE = 'resources'; // or 'videos' — whichever table this row is in
+const ITEM_ID   = 'PASTE-THE-ROW-ID-HERE';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function checkAccess(){
+  const gate = document.getElementById('sherig-gate');
+  const icon = document.getElementById('sherig-gate-icon');
+  const title = document.getElementById('sherig-gate-title');
+  const text = document.getElementById('sherig-gate-text');
+  const btn = document.getElementById('sherig-gate-btn');
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session){
+    icon.textContent = '🔒';
+    title.textContent = 'Please log in';
+    text.textContent = 'Log in with your SherigSpace account to access this.';
+    btn.style.display = 'inline-block';
+    btn.textContent = 'Log In';
+    btn.href = 'https://sherigspace.com/login.html';
+    return;
+  }
+
+  const { data: purchase } = await supabase
+    .from('purchases')
+    .select('status')
+    .eq('user_id', session.user.id)
+    .eq('item_type', ITEM_TYPE)
+    .eq('item_id', ITEM_ID)
+    .eq('status', 'approved')
+    .maybeSingle();
+
+  if(!purchase){
+    icon.textContent = '💳';
+    title.textContent = 'This is premium content';
+    text.textContent = 'Please unlock it from the SherigSpace Resources page first.';
+    btn.style.display = 'inline-block';
+    btn.textContent = 'Go Unlock It';
+    btn.href = 'https://sherigspace.com/index.html#resources';
+    return;
+  }
+
+  // Access granted — reveal the game.
+  gate.remove();
+}
+
+checkAccess();
+</script>
