@@ -296,22 +296,28 @@ window.go = function(p){
 // ── RENDER ALL ──
 async function renderAll(){
   const [
-    { data: L, count: lc },
-    { data: R, count: rc },
-    { data: V, count: vc },
-    { data: A, count: ac },
-    { data: U, count: uc },
-    { data: AN, count: anc },
+    { data: L, count: lc, error: lErr },
+    { data: R, count: rc, error: rErr },
+    { data: V, count: vc, error: vErr },
+    { data: A, count: ac, error: aErr },
+    { data: U, count: uc, error: uErr },
+    { data: AN, count: anc, error: anErr },
     { count: visitCount }
   ] = await Promise.all([
-    supabase.from('lessons_public').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
-    supabase.from('resources_public').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
-    supabase.from('videos_public').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
-    supabase.from('articles_public').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('resources').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
     supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('page_views').select('*',{count:'exact',head:true})
   ]);
+
+  // Surface load errors instead of silently showing "No lessons yet".
+  [['lessons',lErr],['resources',rErr],['videos',vErr],
+   ['articles',aErr],['profiles',uErr],['announcements',anErr]].forEach(([name,err])=>{
+    if(err){ console.error('Could not load '+name+':', err); toast('Could not load '+name+': '+err.message, true); }
+  });
 
   const totalDownloads = [L,R,V,A].reduce((sum, arr) =>
     sum + (arr||[]).reduce((s,i)=>s+(i.download_count||0), 0), 0);
@@ -477,7 +483,7 @@ window.openForm = async function(type, id=null){
   if(id){
     // Announcements have no url-masking concern; everything else reads
     // through the _public view so admin sees the real (unmasked) url.
-    const readTable = type === 'announce' ? 'announcements' : type + 's_public';
+    const readTable = type === 'announce' ? 'announcements' : type + 's';
     const { data } = await supabase.from(readTable).select('*').eq('id',id).single();
     item = data || {};
   }
