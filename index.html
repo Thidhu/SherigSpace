@@ -65,6 +65,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);bac
 .hero-cta{display:flex;gap:1rem;flex-wrap:wrap;animation:fadeUp .8s .3s ease both}
 .btn-primary{background:var(--gold);color:var(--navy);padding:12px 26px;border-radius:3px;font-weight:600;font-size:.9rem;text-decoration:none;transition:background .2s,transform .15s;display:inline-block;border:none;cursor:pointer;font-family:var(--font-en)}
 .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+
 .btn-primary:hover{background:var(--gold-light);transform:translateY(-2px)}
 .btn-outline{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:rgba(255,255,255,.85);padding:12px 26px;border-radius:3px;font-weight:500;font-size:.9rem;text-decoration:none;transition:border-color .2s,color .2s,transform .15s;display:inline-block}
 .btn-outline:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px)}
@@ -450,11 +451,14 @@ function renderClassTabs(){
     `<button class="class-tab${c===selectedClass?' active':''}" data-class="${esc(c)}">${c==='All Classes'?'All':esc(c)}</button>`
   ).join('');
   wrap.querySelectorAll('.class-tab').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       selectedClass = btn.getAttribute('data-class');
       localStorage.setItem('edu_selected_class', selectedClass);
       renderClassTabs();
-      renderLessons(); renderResources(); renderVideos(); renderArticles();
+      await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles()]);
+      // The freshly drawn cards start invisible (fade-in). Without this line
+      // they stayed invisible until the page was refreshed.
+      observeFadeIns();
     });
   });
 }
