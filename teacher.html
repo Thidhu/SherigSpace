@@ -228,7 +228,11 @@ window.submitTeacherProof = async function(){
   if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red)'; return; }
   statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
   try{
-    const path = `${me.id}/teacher-${Date.now()}-${file.name}`;
+    // Supabase Storage keys only allow safe characters — spaces, colons
+    // etc. in the original filename (e.g. "Screenshot ... 6.46.15 PM.png")
+    // cause an "Invalid key" error, so sanitize before building the path.
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${me.id}/teacher-${Date.now()}-${safeName}`;
     const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file);
     if(upErr) throw upErr;
     const { error: insErr } = await supabase.from('teacher_subscriptions').insert({
