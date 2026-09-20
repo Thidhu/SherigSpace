@@ -349,15 +349,28 @@ async function renderAll(){
 async function renderPayments(itemsByType){
   const findItem = (type, id) => (itemsByType[type]||[]).find(i => i.id === id);
 
-  const { data: purchases } = await supabase
-    .from('purchases')
-    .select('*, profiles(name, email)')
-    .order('created_at', { ascending: false });
-
-  const { data: teacherSubs } = await supabase
-    .from('teacher_subscriptions')
-    .select('*, profiles(name, email)')
-    .order('created_at', { ascending: false });
+  // Load requests, then look up the member names separately. (The old
+  // combined "purchases + profiles" query silently returned nothing whenever
+  // Supabase couldn't match the two tables, so real requests never appeared.)
+  const withProfiles = async (table, userCol) => {
+    const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
+    if(error){
+      console.error('Could not load ' + table + ':', error);
+      toast('Could not load ' + table + ': ' + error.message, true);
+      return [];
+    }
+    const rows = data || [];
+    const ids = [...new Set(rows.map(r => r[userCol]).filter(Boolean))];
+    const byId = {};
+    if(ids.length){
+      const { data: profs, error: pErr } = await supabase.from('profiles').select('id,name,email').in('id', ids);
+      if(pErr) console.error('Could not load member names:', pErr);
+      (profs || []).forEach(p => { byId[p.id] = p; });
+    }
+    return rows.map(r => ({ ...r, profiles: byId[r[userCol]] || null }));
+  };
+  const purchases = await withProfiles('purchases', 'user_id');
+  const teacherSubs = await withProfiles('teacher_subscriptions', 'teacher_id');
 
   const pending  = (purchases||[]).filter(p => p.status === 'pending');
   const reviewed = (purchases||[]).filter(p => p.status !== 'pending');
