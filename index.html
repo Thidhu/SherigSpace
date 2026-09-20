@@ -207,6 +207,7 @@ footer .gold{color:var(--gold)}
   <a href="#videos">Videos</a>
   <a href="#blog">Articles</a>
   <a href="#about">About</a>
+  <a href="teacher.html">🍎 Teacher Dashboard</a>
   <a href="admin.html">🔐 Admin</a>
 </div>
 
@@ -415,6 +416,7 @@ function renderNav(){
       <span>${esc(s.name.split(' ')[0])}</span>
       <div class="user-dropdown">
         <a class="udrop-item" onclick="openProfile()">👤 My Profile</a>
+        <a class="udrop-item" href="teacher.html">🍎 Teacher Dashboard</a>
         <div class="udrop-sep"></div>
         ${adminLink}
         <a class="udrop-item danger" onclick="logout()">🔒 Log Out</a>
@@ -446,6 +448,7 @@ window.openProfile = async function(){
       <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
       <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
     </div>
+    <a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:4px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🍎 Teacher Dashboard</a>
     ${profile?.role === 'admin' ? `<a href="admin.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:4px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🛠️ Open Admin Panel</a>` : ''}
     <button onclick="logout()" style="width:100%;padding:10px;background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);border-radius:4px;color:#e05c5c;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer">🔒 Log Out</button>`;
   document.getElementById('profile-modal').classList.add('open');
@@ -547,7 +550,11 @@ window.submitPaymentProof = async function(type, id, price){
   if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red,#e05c5c)'; return; }
   statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
   try{
-    const path = `${s.id}/${Date.now()}-${file.name}`;
+    // Supabase Storage keys only allow safe characters — spaces, colons
+    // etc. in the original filename cause an "Invalid key" error, so
+    // sanitize before building the path.
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${s.id}/${Date.now()}-${safeName}`;
     const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file);
     if(upErr) throw upErr;
     const { error: insErr } = await supabase.from('purchases').insert({
