@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Classroom — SherigSpace</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--surface:#192035;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--red:#e05c5c;--green:#4caf84}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
+#gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f1623,#1a2340,#1a2f50);display:flex;align-items:center;justify-content:center;padding:1rem}
+#gate.hide{display:none}
+.gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;max-width:380px;padding:2rem;text-align:center}
+.gate-icon{font-size:2.5rem;margin-bottom:.75rem}
+.gate-card h2{font-family:'Playfair Display',serif;color:var(--gold);margin-bottom:.4rem}
+.gate-card p{font-size:.85rem;color:var(--text2);margin-bottom:1.2rem}
+.gate-btn{padding:11px 20px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font-family:'DM Sans',sans-serif}
+nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;border-bottom:1px solid var(--border);background:#131c2e}
+.nav-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:1.2rem}
+.nav-right{display:flex;align-items:center;gap:1rem;font-size:.85rem;color:var(--text2)}
+.nav-right button{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.25);color:var(--red);padding:7px 14px;border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8rem}
+main{max-width:800px;margin:0 auto;padding:2rem 5%}
+.class-heading{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold);margin:1.6rem 0 .8rem}
+.class-heading:first-child{margin-top:0}
+.assign-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1rem}
+.assign-card.done{border-left-color:var(--green);opacity:.75}
+.assign-title{font-weight:600;font-size:.95rem;margin-bottom:.3rem}
+.assign-desc{font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:.7rem}
+.assign-meta{font-size:.76rem;color:var(--text2);margin-bottom:.8rem}
+.assign-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+.btn{padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
+.btn-gold{background:var(--gold);color:#1a2340}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-green{background:rgba(76,175,132,.15);border:1px solid rgba(76,175,132,.35);color:var(--green)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text2)}
+.empty .ei{font-size:2.5rem;margin-bottom:.75rem}
+.locked-note{font-size:.8rem;color:var(--gold);background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem .9rem;margin-bottom:.7rem}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-card" id="gate-inner">
+    <div class="gate-icon">🎓</div>
+    <h2>Checking access…</h2>
+    <p>One moment…</p>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <nav>
+    <div class="nav-logo">SherigSpace</div>
+    <div class="nav-right">
+      <span id="student-name">Student</span>
+      <button onclick="logout()">Log Out</button>
+    </div>
+  </nav>
+  <main id="assignments-wrap">
+    <div class="empty"><div class="ei">📋</div><p>Loading your assignments…</p></div>
+  </main>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { SUPABASE_URL, SUPABASE_KEY, esc } from './config.js';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+let me = null;
+
+const TYPE_ICON = { lessons:'📚', resources:'📁', videos:'🎥', articles:'✍️' };
+
+async function init(){
+  const { data: { session } } = await supabase.auth.getSession();
+  const gate = document.getElementById('gate-inner');
+  if(!session){
+    gate.innerHTML = `<div class="gate-icon">🔒</div><h2>Please log in</h2><p>Use the Student tab on the login page.</p><a class="gate-btn" href="login.html">Go to Login</a>`;
+    return;
+  }
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+  me = { id: session.user.id, name: profile?.name || 'Student' };
+
+  document.getElementById('gate').classList.add('hide');
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('student-name').textContent = me.name;
+  await renderAssignments();
+}
+
+window.logout = async function(){ await supabase.auth.signOut(); window.location.href = 'login.html'; };
+
+async function renderAssignments(){
+  const wrap = document.getElementById('assignments-wrap');
+
+  const { data: enrollments } = await supabase.from('class_students').select('class_id, classes(id,name)').eq('student_id', me.id);
+  if(!enrollments?.length){
+    wrap.innerHTML = `<div class="empty"><div class="ei">🏫</div><p>You're not enrolled in any class yet. Ask your teacher for a Class Code.</p></div>`;
+    return;
+  }
+
+  const classIds = enrollments.map(e=>e.class_id);
+  const { data: assignments } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
+  const { data: statuses } = await supabase.from('assignment_status').select('*').eq('student_id', me.id);
+  const statusMap = {};
+  (statuses||[]).forEach(s=>{ statusMap[s.assignment_id] = s.status; });
+
+  if(!assignments?.length){
+    wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>No assignments yet — check back soon!</p></div>`;
+    return;
+  }
+
+  // Group by class
+  const byClass = {};
+  enrollments.forEach(e=>{ byClass[e.class_id] = { name: e.classes?.name || 'Class', items: [] }; });
+  assignments.forEach(a=>{ if(byClass[a.class_id]) byClass[a.class_id].items.push(a); });
+
+  let html = '';
+  for(const classId of Object.keys(byClass)){
+    const group = byClass[classId];
+    if(!group.items.length) continue;
+    html += `<div class="class-heading">🏫 ${esc(group.name)}</div>`;
+    for(const a of group.items){
+      const done = statusMap[a.id] === 'done';
+      html += await renderAssignmentCard(a, done);
+    }
+  }
+  wrap.innerHTML = html || `<div class="empty"><div class="ei">📋</div><p>No assignments yet.</p></div>`;
+
+  wrap.querySelectorAll('[data-mark-done]').forEach(btn=>{
+    btn.addEventListener('click', ()=>markDone(btn.getAttribute('data-mark-done')));
+  });
+  wrap.querySelectorAll('[data-open-item]').forEach(btn=>{
+    btn.addEventListener('click', ()=>window.open(btn.getAttribute('data-open-item'), '_blank', 'noopener'));
+  });
+}
+
+async function renderAssignmentCard(a, done){
+  let title, desc, openUrl = null, lockedNote = '';
+
+  if(a.kind === 'custom'){
+    title = a.title;
+    desc = a.description || '';
+    openUrl = a.attachment_url || null;
+  } else {
+    const { data: item } = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
+    title = item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : '(content unavailable)';
+    desc = item?.description || '';
+    if(item){
+      if(item.is_premium && !item.url){
+        lockedNote = `<div class="locked-note">🔒 This is premium content — visit the <a href="index.html" style="color:var(--gold)">TLM Store</a> to unlock it first.</div>`;
+      } else {
+        openUrl = item.url;
+      }
+    }
+  }
+
+  return `<div class="assign-card ${done?'done':''}">
+    <div class="assign-title">${esc(title)}</div>
+    ${desc?`<div class="assign-desc">${esc(desc)}</div>`:''}
+    ${a.due_date?`<div class="assign-meta">📅 Due ${esc(a.due_date)}</div>`:''}
+    ${lockedNote}
+    <div class="assign-actions">
+      ${openUrl?`<button class="btn btn-gold" data-open-item="${esc(openUrl)}">Open</button>`:''}
+      ${done
+        ? `<button class="btn btn-green" disabled>✓ Completed</button>`
+        : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">Mark Complete</button>`}
+    </div>
+  </div>`;
+}
+
+window.markDone = async function(assignmentId){
+  const { error } = await supabase.from('assignment_status').upsert({
+    assignment_id: assignmentId, student_id: me.id, status: 'done', completed_at: new Date().toISOString()
+  }, { onConflict: 'assignment_id,student_id' });
+  if(error){ alert('Error: ' + error.message); return; }
+  renderAssignments();
+};
+
+init();
+</script>
+</body>
+</html>
