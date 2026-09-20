@@ -99,10 +99,13 @@ section{padding:80px 5%}
 .resource-info h4{font-weight:600;font-size:.93rem;color:var(--text);margin-bottom:.3rem;transition:color .35s}
 .resource-info p{font-size:.8rem;color:var(--text2);line-height:1.5;transition:color .35s}
 .resource-type{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin-top:.4rem;font-family:var(--font-en)!important}
-.locked-overlay{position:absolute;inset:0;background:rgba(15,22,35,.75);backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;border-radius:5px}
-.locked-overlay span{font-size:1.4rem}
-.locked-overlay p{font-size:.75rem;color:rgba(255,255,255,.7);text-align:center;padding:0 1rem}
-.locked-overlay a{font-size:.75rem;color:var(--gold);font-weight:600;text-decoration:none;border-bottom:1px solid rgba(201,168,76,.3)}
+/* Locked / premium items: details stay fully visible; the price sits in a bar along the bottom */
+.is-locked{padding-bottom:3.6rem!important}
+.lock-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.65rem 1rem;background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a2340;font-family:var(--font-en)!important;font-size:.8rem;font-weight:700;line-height:1.3!important;z-index:2}
+.lock-bar *{font-family:var(--font-en)!important;line-height:1.3!important;letter-spacing:0!important}
+.lock-bar .lb-cta{font-weight:600;font-size:.76rem;color:#1a2340;text-decoration:none;white-space:nowrap}
+.lock-bar a.lb-cta{border-bottom:1px solid rgba(26,35,64,.4)}
+.lock-bar.pending{background:var(--surface);color:var(--text2);border-top:1px solid var(--card-border)}
 #videos{background:var(--surface);transition:background .35s}
 .videos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
 .video-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;display:block}
@@ -511,12 +514,16 @@ function accessState(type, item){
 }
 
 function lockOverlayHtml(state, item){
+  if(state === 'free' || state === 'approved') return '';
   const price = item.price != null ? `Nu. ${item.price}` : 'Paid';
-  if(state === 'pending') return `<div class="locked-overlay"><span>⏳</span><p>Payment under review</p></div>`;
-  if(state === 'locked-anon') return `<div class="locked-overlay"><span>🔒</span><p>${esc(price)} — sign in to unlock</p><a href="login.html">Log in →</a></div>`;
-  if(state === 'locked-pay') return `<div class="locked-overlay" style="cursor:pointer"><span>🔒</span><p>${esc(price)} — tap to unlock</p></div>`;
+  const left = item.is_premium ? `🔒 ${esc(price)}` : '🔒 Sign in required';
+  if(state === 'pending') return `<div class="lock-bar pending"><span>⏳ Payment under review</span></div>`;
+  if(state === 'locked-anon') return `<div class="lock-bar"><span>${left}</span><a class="lb-cta" href="login.html">${item.is_premium ? 'Log in to unlock' : 'Log in to download'} →</a></div>`;
+  if(state === 'locked-pay') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">Tap to unlock →</span></div>`;
   return '';
 }
+// Adds the "leave room for the price bar" class to locked/pending cards.
+function lockCls(state){ return (state === 'free' || state === 'approved') ? '' : ' is-locked'; }
 
 window.openPaymentModal = function(type, id, title, price){
   const body = document.getElementById('payment-modal-body');
@@ -594,7 +601,7 @@ async function renderLessons(){
     const url = safeUrl(l.url);
     const thumb = safeUrl(l.thumbnail_url);
     const state = accessState('lessons', l);
-    return `<div class="lesson-card fade-in" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}">
+    return `<div class="lesson-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}">
       ${thumb ? `<img src="${esc(thumb)}" style="width:100%;height:130px;object-fit:cover;border-radius:5px;margin-bottom:1rem" onerror="this.outerHTML='<div class=\\'lesson-icon\\'>${icon}</div>'"/>` : `<div class="lesson-icon">${icon}</div>`}
       <div class="badge">${esc(l.subject||'General')}</div>
       <h3>${esc(title)}</h3>
@@ -609,7 +616,8 @@ async function renderLessons(){
     const state = card.getAttribute('data-state');
     card.addEventListener('click', ()=>{
       if(state === 'locked-pay') openPaymentModal('lessons', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
-      else if(state === 'pending' || state === 'locked-anon') return; // overlay handles it (or nothing to do)
+      else if(state === 'locked-anon'){ window.location='login.html'; return; }
+      else if(state === 'pending') return;
       else if(url){ trackOpen('lessons', id); window.open(url,'_blank','noopener'); }
     });
   });
@@ -630,10 +638,8 @@ async function renderResources(){
     const url = safeUrl(r.url);
     const thumb = safeUrl(r.thumbnail_url);
     const state = loginLocked ? 'locked-anon' : accessState('resources', r);
-    const overlay = loginLocked
-      ? `<div class="locked-overlay"><span>🔒</span><p>Sign in to download</p><a href="login.html">Log in →</a></div>`
-      : lockOverlayHtml(state, r);
-    return `<div class="resource-card fade-in" data-url="${esc(url)}" data-state="${state}" data-id="${esc(r.id)}" data-title="${esc(title)}" data-price="${esc(r.price||0)}">
+    const overlay = lockOverlayHtml(state, r);
+    return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(r.id)}" data-title="${esc(title)}" data-price="${esc(r.price||0)}">
       ${thumb
         ? `<img src="${esc(thumb)}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.outerHTML='<div class=\\'resource-icon\\'>${icon}</div>'"/>`
         : `<div class="resource-icon">${icon}</div>`}
@@ -667,8 +673,8 @@ async function renderVideos(){
     const url = safeUrl(v.url);
     const thumb = safeUrl(v.thumbnail_url);
     const state = accessState('videos', v);
-    return `<div class="video-card fade-in" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}">
-      <div class="video-thumb" ${thumb && state!=='locked-anon' && state!=='locked-pay' ?`style="background:url('${esc(thumb)}') center/cover"`:''}>${thumb && state!=='locked-anon' && state!=='locked-pay'?'':icon}<div class="play-btn">▶</div></div>
+    return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}">
+      <div class="video-thumb" ${thumb ?`style="background:url('${esc(thumb)}') center/cover"`:''}>${thumb?'':icon}<div class="play-btn">▶</div></div>
       <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''} ${v.subject?`<span>📚 ${esc(v.subject)}</span>`:''} ${v.class_level && v.class_level!=='All Classes'?`<span>🎓 ${esc(v.class_level)}</span>`:''}</div></div>
       ${lockOverlayHtml(state, v)}
     </div>`;
