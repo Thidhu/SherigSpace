@@ -204,6 +204,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
             <div class="field"><label>Account Number</label><input id="s-acctnum" placeholder="e.g. 000000000000"/></div>
           </div>
           <div class="field"><label>Bank / Mobile Banking Name</label><input id="s-bankname" placeholder="e.g. BOB Mobile, mPay, BhutanQR"/></div>
+          <div class="field"><label>Teacher Plan Price (Nu./month)</label><input id="s-teacherprice" type="number" min="0" step="0.01" placeholder="e.g. 300"/></div>
           <div class="field">
             <label>QR Code Image</label>
             <div class="upload-row">
@@ -303,10 +304,10 @@ async function renderAll(){
     { data: AN, count: anc },
     { count: visitCount }
   ] = await Promise.all([
-    supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
-    supabase.from('resources').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
-    supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
-    supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('lessons_public').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('resources_public').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('videos_public').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('articles_public').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
     supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('page_views').select('*',{count:'exact',head:true})
@@ -347,10 +348,17 @@ async function renderPayments(itemsByType){
     .select('*, profiles(name, email)')
     .order('created_at', { ascending: false });
 
+  const { data: teacherSubs } = await supabase
+    .from('teacher_subscriptions')
+    .select('*, profiles(name, email)')
+    .order('created_at', { ascending: false });
+
   const pending  = (purchases||[]).filter(p => p.status === 'pending');
   const reviewed = (purchases||[]).filter(p => p.status !== 'pending');
+  const teacherPending  = (teacherSubs||[]).filter(t => t.status === 'pending');
+  const teacherReviewed = (teacherSubs||[]).filter(t => t.status !== 'pending');
 
-  document.getElementById('c-payments-pending').textContent = pending.length;
+  document.getElementById('c-payments-pending').textContent = pending.length + teacherPending.length;
 
   const renderRow = (p) => {
     const item = findItem(p.item_type, p.item_id);
@@ -371,10 +379,30 @@ async function renderPayments(itemsByType){
     </div>`;
   };
 
-  document.getElementById('l-payments-pending').innerHTML = pending.length
-    ? pending.map(renderRow).join('') : empty('💳','No pending payments right now.');
-  document.getElementById('l-payments-reviewed').innerHTML = reviewed.length
-    ? reviewed.slice(0,50).map(renderRow).join('') : empty('📋','No reviewed payments yet.');
+  const renderTeacherRow = (t) => {
+    const buyer = t.profiles ? `${esc(t.profiles.name)} (${esc(t.profiles.email)})` : 'Unknown';
+    const statusBadge = t.status === 'approved' ? '✅ Approved' : t.status === 'rejected' ? '❌ Rejected' : '⏳ Pending';
+    return `<div class="irow">
+      <div><div class="iname">🍎 Teacher Plan — Nu.${esc(t.price||0)}</div>
+        <div class="imeta">${buyer} · ${esc(new Date(t.created_at).toLocaleString())} · ${statusBadge}</div>
+      </div>
+      <div class="ibtns">
+        <button class="btn btn-ghost btn-sm" onclick="viewProof('${esc(t.proof_path)}')">🖼 View Proof</button>
+        ${t.status==='pending' ? `
+          <button class="btn btn-edit btn-sm" onclick="reviewTeacherSub('${esc(t.id)}','approved')">✓ Approve</button>
+          <button class="btn btn-del btn-sm" onclick="reviewTeacherSub('${esc(t.id)}','rejected')">✕ Reject</button>
+        ` : ''}
+      </div>
+    </div>`;
+  };
+
+  const allPending = [...teacherPending.map(renderTeacherRow), ...pending.map(renderRow)];
+  const allReviewed = [...teacherReviewed.map(renderTeacherRow), ...reviewed.map(renderRow)];
+
+  document.getElementById('l-payments-pending').innerHTML = allPending.length
+    ? allPending.join('') : empty('💳','No pending payments right now.');
+  document.getElementById('l-payments-reviewed').innerHTML = allReviewed.length
+    ? allReviewed.slice(0,50).join('') : empty('📋','No reviewed payments yet.');
 }
 
 window.viewProof = async function(path){
@@ -387,6 +415,20 @@ window.viewProof = async function(path){
 window.reviewPurchase = async function(id, status){
   if(!confirm(status === 'approved' ? 'Approve this payment and unlock access?' : 'Reject this payment request?')) return;
   const { error } = await supabase.from('purchases').update({ status, reviewed_at: new Date().toISOString() }).eq('id', id);
+  if(error){ toast('Error: ' + error.message, true); return; }
+  toast(status === 'approved' ? 'Approved ✓' : 'Rejected');
+  renderAll();
+};
+
+window.reviewTeacherSub = async function(id, status){
+  if(!confirm(status === 'approved' ? 'Approve this teacher plan? This unlocks classroom creation for 1 month.' : 'Reject this request?')) return;
+  const update = { status, reviewed_at: new Date().toISOString() };
+  if(status === 'approved'){
+    update.started_at = new Date().toISOString();
+    const expires = new Date(); expires.setMonth(expires.getMonth() + 1);
+    update.expires_at = expires.toISOString();
+  }
+  const { error } = await supabase.from('teacher_subscriptions').update(update).eq('id', id);
   if(error){ toast('Error: ' + error.message, true); return; }
   toast(status === 'approved' ? 'Approved ✓' : 'Rejected');
   renderAll();
@@ -433,8 +475,10 @@ window.openForm = async function(type, id=null){
   _type=type; _id=id;
   let item = {};
   if(id){
-    const table = type === 'announce' ? 'announcements' : type + 's';
-    const { data } = await supabase.from(table).select('*').eq('id',id).single();
+    // Announcements have no url-masking concern; everything else reads
+    // through the _public view so admin sees the real (unmasked) url.
+    const readTable = type === 'announce' ? 'announcements' : type + 's_public';
+    const { data } = await supabase.from(readTable).select('*').eq('id',id).single();
     item = data || {};
   }
   document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement'}[type];
@@ -640,6 +684,7 @@ window.loadSettings = async function(){
   document.getElementById('s-acctname').value = s.account_name || '';
   document.getElementById('s-acctnum').value  = s.account_number || '';
   document.getElementById('s-bankname').value = s.bank_name || '';
+  document.getElementById('s-teacherprice').value = s.teacher_plan_price || '';
   document.getElementById('s-qrurl').value    = s.qr_image_url || '';
   document.getElementById('qr-preview').innerHTML = s.qr_image_url ? `<img src="${esc(s.qr_image_url)}"/>` : '';
 };
@@ -670,6 +715,7 @@ window.saveSettings = async function(){
     account_name: document.getElementById('s-acctname').value,
     account_number: document.getElementById('s-acctnum').value,
     bank_name: document.getElementById('s-bankname').value,
+    teacher_plan_price: document.getElementById('s-teacherprice').value ? Number(document.getElementById('s-teacherprice').value) : null,
     qr_image_url: document.getElementById('s-qrurl').value,
     updated_at: new Date().toISOString()
   }).eq('id', 1);
