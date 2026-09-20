@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"/>
+<link rel="manifest" href="site.webmanifest"/>
 <title>SherigSpace</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
@@ -137,11 +142,8 @@ section{padding:80px 5%}
 #about{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%)}
 .about-inner{max-width:1100px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
 .about-avatar-wrap{position:relative}
-.about-avatar{width:100%;max-width:360px;aspect-ratio:1;background:rgba(255,255,255,.05);border:2px solid rgba(201,168,76,.75);border-radius:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 18px 45px rgba(0,0,0,.28),0 0 0 8px rgba(201,168,76,.06);position:relative}
-.about-profile-photo{width:100%;height:100%;display:block;object-fit:cover;object-position:center top}
+.about-avatar{width:100%;max-width:360px;aspect-ratio:1;background:rgba(255,255,255,.05);border:2px solid rgba(201,168,76,.3);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:5rem;gap:.5rem}
 .about-avatar-label{font-size:.85rem;color:rgba(255,255,255,.4);letter-spacing:.08em}
-.about-signature{font-family:'Playfair Display',serif;font-size:1.65rem;font-style:italic;color:var(--gold-light);text-align:center;margin-top:1rem}
-.about-role{font-size:.72rem;letter-spacing:.18em;color:rgba(255,255,255,.72);text-align:center;margin-top:.35rem}
 .about-accent{position:absolute;bottom:-16px;right:-16px;width:80px;height:80px;border:2px solid var(--gold);border-radius:4px;opacity:.4}
 #about .section-label{color:var(--gold-light)}
 #about .section-title{color:#fff}
@@ -175,7 +177,7 @@ footer .gold{color:var(--gold)}
 .fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
 .fade-in.visible{opacity:1;transform:translateY(0)}
 @media(max-width:768px){.hero-inner,.about-inner{grid-template-columns:1fr;gap:2.5rem}.hero-stats{flex-direction:row;flex-wrap:wrap}.stat-card{flex:1;min-width:110px}}
-@media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}.about-avatar{max-width:320px;margin:auto}.about-signature{font-size:1.4rem}.about-role{font-size:.62rem;letter-spacing:.12em}}
+@media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}}
 </style>
 </head>
 <body>
@@ -192,7 +194,7 @@ footer .gold{color:var(--gold)}
   <div class="nav-right">
     <div class="lang-toggle">
       <button class="lang-btn on" data-lang-btn="en">EN</button>
-      <button class="lang-btn"    data-lang-btn="dz">རྫོང་ཁ།</button>
+      <button class="lang-btn"    data-lang-btn="dz">རྫོང་</button>
     </div>
     <div class="theme-toggle" id="themeToggle"><span class="t-icon moon">🌙</span><span class="t-icon sun">☀️</span></div>
     <a class="admin-lock" href="admin.html" title="Admin">🔐</a>
@@ -214,7 +216,7 @@ footer .gold{color:var(--gold)}
 <section id="home">
   <div class="hero-inner">
     <div>
-      <div class="hero-tag" data-en="✦ Welcome to My Teaching & Learning Space" data-dz="✦ ངའི་སློབ་སྟོན་གྱི་ཞིང་ཁམས་ནང་བྱོན་པ་ལེགས་སོ།">✦ Welcome to My Teaching & Learning Space</div>
+      <div class="hero-tag" data-en="✦ Welcome to My Teaching & Learning Space" data-dz="✦ ངའི་སློབ་སྟོན་གྱི་ཞིང་ཁབས་ནང་བྱོན་པ་ལེགས་སོ།">✦ Welcome to My Teaching & Learning Space</div>
       <h1 class="hero-title" data-en="Enhancing Dzongkha Learning through <span>Modern Digital Tools</span>" data-dz="དེང་སང་གློག་རིག་ཐོག་ <span>རྫོང་ཁ་ལྷབ་སྦྱང་ཡར་རྒྱས།</span>">Empowering Minds Through <span>Quality Education</span></h1>
       <p class="hero-desc" data-en="Browse lessons, download resources, watch videos, and join the learning community." data-dz="རྫོང་ཁའི་སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཕན་ཚུན་འབྲེལ་བའི་བརྙན་ཐུང་གི་བང་མཛོད།">Browse lessons, download resources, watch videos, and join the learning community.</p>
       <div class="hero-cta">
@@ -295,12 +297,8 @@ footer .gold{color:var(--gold)}
 <section id="about">
   <div class="about-inner">
     <div class="about-avatar-wrap fade-in">
-      <div class="about-avatar">
-        <img src="profile.jpg" alt="Thinley Wangchuk" class="about-profile-photo">
-      </div>
+      <div class="about-avatar">🎓<span class="about-avatar-label" data-en="The Sunshine (ཁྲི་གདུགས)" data-dz="ཁྲི་གདུགས།">The Sunshine</span></div>
       <div class="about-accent"></div>
-      <div class="about-signature">Thinley Wangchuk</div>
-      <div class="about-role">TEACHER&nbsp;&nbsp;•&nbsp;&nbsp;CREATOR&nbsp;&nbsp;•&nbsp;&nbsp;LIFELONG LEARNER</div>
     </div>
     <div class="fade-in">
       <p class="section-label"  data-en="✦ About Me" data-dz="✦ ང་རའི་སྐོར།">✦ About Me</p>
@@ -336,7 +334,7 @@ footer .gold{color:var(--gold)}
   <div class="modal-box" style="max-width:900px;width:95%">
     <div class="modal-head"><h3 id="video-modal-title">▶ Video</h3><button class="modal-close" onclick="closeVideoModal()">✕</button></div>
     <div class="modal-body" style="padding:0">
-      <div id="video-embed-wrap" style="position:relative;padding-top:56.25%;height:0;overflow:hidden;background:#000"></div>
+      <div id="video-embed-wrap" oncontextmenu="return false" style="position:relative;padding-top:56.25%;height:0;overflow:hidden;background:#000"></div>
     </div>
   </div>
 </div>
@@ -469,8 +467,19 @@ window.openVideoModal = function(url, id, title){
   const embed = getEmbedUrl(url);
   if(!embed){ window.open(url,'_blank','noopener'); return; } // fallback: unrecognized host, just open it
   document.getElementById('video-modal-title').textContent = title || '▶ Video';
-  document.getElementById('video-embed-wrap').innerHTML =
-    `<iframe src="${esc(embed)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  // A visible watermark identifying the logged-in viewer is overlaid on
+  // top of the player. It can't stop screen recording — nothing running
+  // in a browser can — but it makes any leaked recording traceable back
+  // to whoever's account played it, which is a real deterrent even
+  // though it isn't a technical barrier.
+  const s = session();
+  const watermarkLabel = s ? `${s.name} · ${s.email}` : 'SherigSpace';
+  document.getElementById('video-embed-wrap').innerHTML = `
+    <iframe src="${esc(embed)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    <div style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <div style="transform:rotate(-20deg);color:rgba(255,255,255,.16);font-size:.85rem;font-weight:600;white-space:nowrap;letter-spacing:.05em;text-shadow:0 1px 2px rgba(0,0,0,.4)">${esc(watermarkLabel)} &nbsp;&nbsp;&nbsp; ${esc(watermarkLabel)} &nbsp;&nbsp;&nbsp; ${esc(watermarkLabel)}</div>
+    </div>
+  `;
   document.getElementById('video-modal').classList.add('open');
 };
 window.closeVideoModal = function(){
@@ -565,8 +574,8 @@ window.submitPaymentProof = async function(type, id, price){
 // ── LOAD STATS (live from Supabase) ──
 async function loadStats(){
   const [{ count: lCount }, { count: vCount }, { count: uCount }] = await Promise.all([
-    supabase.from('lessons').select('*',{count:'exact',head:true}),
-    supabase.from('videos').select('*',{count:'exact',head:true}),
+    supabase.from('lessons_public').select('*',{count:'exact',head:true}),
+    supabase.from('videos_public').select('*',{count:'exact',head:true}),
     supabase.from('profiles').select('*',{count:'exact',head:true})
   ]);
   document.getElementById('st-lessons').textContent = lCount ?? 0;
@@ -576,7 +585,7 @@ async function loadStats(){
 
 // ── RENDER LESSONS ──
 async function renderLessons(){
-  const { data: raw } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw } = await supabase.from('lessons_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('lessons-grid');
   if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>No lessons for ${esc(selectedClass)} yet</p></div>`; return; }
@@ -609,7 +618,7 @@ async function renderLessons(){
 
 // ── RENDER RESOURCES ──
 async function renderResources(){
-  const { data: raw } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw } = await supabase.from('resources_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('resources-grid');
   const s = session();
@@ -647,7 +656,7 @@ async function renderResources(){
 
 // ── RENDER VIDEOS ──
 async function renderVideos(){
-  const { data: raw } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw } = await supabase.from('videos_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('videos-grid');
   if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>No videos for ${esc(selectedClass)} yet</p></div>`; return; }
@@ -676,7 +685,7 @@ async function renderVideos(){
 
 // ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
-  const { data: raw } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw } = await supabase.from('articles_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('blog-grid');
   if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>No articles for ${esc(selectedClass)} yet</p></div>`; return; }
