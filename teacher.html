@@ -307,22 +307,30 @@ async function renderStudents(){
   el.innerHTML = data?.length ? data.map(s=>`
     <div class="irow">
       <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">PIN: ${esc(s.pin)}</div></div>
-      <div class="ibtns"><button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">✕ Remove</button></div>
+      <div class="ibtns">
+        <button class="btn btn-edit btn-sm" onclick="openEditStudentForm('${esc(s.id)}','${esc(s.display_name)}')">✏ Edit</button>
+        <button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">✕ Remove</button>
+      </div>
     </div>`).join('') : `<div class="empty"><div class="ei">🧒</div><p>No students yet. Click + Add Student!</p></div>`;
 }
 
 window.openStudentForm = function(){
   document.getElementById('m-title').textContent = 'Add Student';
-  document.getElementById('m-body').innerHTML = `<div class="field"><label>Student Display Name</label><input id="f-student-name" placeholder="e.g. Student 1"/></div>`;
+  document.getElementById('m-body').innerHTML = `
+    <div class="field"><label>Student Display Name</label><input id="f-student-name" placeholder="e.g. Student 1"/></div>
+    <div class="field"><label>Password / PIN (optional)</label><input id="f-student-pin" placeholder="Leave blank to auto-generate a 6-digit PIN"/></div>
+  `;
   const btn = document.getElementById('m-save-btn');
   btn.textContent = 'Add';
   btn.onclick = async ()=>{
     const name = fv('f-student-name');
     if(!name){ toast('Please enter a name.', true); return; }
+    const customPin = fv('f-student-pin');
+    if(customPin && customPin.length < 6){ toast('Password/PIN must be at least 6 characters.', true); return; }
     btn.disabled = true; btn.textContent = 'Adding…';
     try{
       const code = document.getElementById('detail-class-code').textContent;
-      const pin = genPin();
+      const pin = customPin || genPin();
       const loginEmail = `${slugify(code)}-${slugify(name)}-${Date.now().toString(36).slice(-4)}@students.sherigspace.local`;
 
       // Isolated client so this signUp doesn't hijack the teacher's own
@@ -357,6 +365,70 @@ window.openStudentForm = function(){
       toast('Error: '+err.message, true);
     }
     btn.disabled = false; btn.textContent = 'Add';
+  };
+  document.getElementById('overlay').classList.add('open');
+};
+
+// Renaming is just a plain update — no Auth account involved.
+// Setting a NEW password/PIN can't safely be done in place from a
+// static site (that needs a privileged service-role key, which must
+// never live in client-side code). Instead it creates a fresh student
+// login the same way "Add Student" already does, and re-points this
+// enrollment row at it. The old login is simply abandoned — nobody has
+// its credentials, so it can't be used, but it isn't deleted.
+window.openEditStudentForm = function(rowId, currentName){
+  document.getElementById('m-title').textContent = 'Edit Student';
+  document.getElementById('m-body').innerHTML = `
+    <div class="field"><label>Student Display Name</label><input id="f-edit-name" value="${esc(currentName)}"/></div>
+    <div class="field"><label>New Password / PIN</label><input id="f-edit-pin" placeholder="Leave blank to keep the current one"/></div>
+  `;
+  const btn = document.getElementById('m-save-btn');
+  btn.textContent = 'Save';
+  btn.onclick = async ()=>{
+    const name = fv('f-edit-name');
+    if(!name){ toast('Please enter a name.', true); return; }
+    const newPin = fv('f-edit-pin');
+    if(newPin && newPin.length < 6){ toast('Password/PIN must be at least 6 characters.', true); return; }
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try{
+      if(!newPin){
+        // Rename only.
+        const { error } = await supabase.from('class_students').update({ display_name: name }).eq('id', rowId);
+        if(error) throw error;
+        closeModal();
+        toast('Updated ✓');
+        renderStudents();
+      } else {
+        // Full credential reset: create a brand-new login and swap the
+        // enrollment row over to it.
+        const code = document.getElementById('detail-class-code').textContent;
+        const loginEmail = `${slugify(code)}-${slugify(name)}-${Date.now().toString(36).slice(-4)}@students.sherigspace.local`;
+        const tempClient = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession:false, autoRefreshToken:false } });
+        const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: loginEmail, password: newPin });
+        if(signUpErr) throw signUpErr;
+        const studentId = signUpData.user?.id;
+        if(!studentId) throw new Error('Could not create the new login.');
+        await tempClient.from('profiles').upsert({ id: studentId, name, email: loginEmail, role: 'user' });
+
+        const { error: updErr } = await supabase.from('class_students').update({
+          student_id: studentId, login_email: loginEmail, pin: newPin, display_name: name
+        }).eq('id', rowId);
+        if(updErr) throw updErr;
+
+        closeModal();
+        toast('Password reset ✓');
+        renderStudents();
+        document.getElementById('login-card-body').innerHTML = `
+          Class Code: <b>${esc(code)}</b><br>
+          Student Name: <b>${esc(name)}</b><br>
+          PIN: <b>${esc(newPin)}</b><br><br>
+          This is a new login — the old PIN no longer works. Give the student these updated details.`;
+        document.getElementById('login-card-overlay').classList.add('open');
+      }
+    }catch(err){
+      toast('Error: '+err.message, true);
+    }
+    btn.disabled = false; btn.textContent = 'Save';
   };
   document.getElementById('overlay').classList.add('open');
 };
