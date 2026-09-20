@@ -81,9 +81,10 @@ footer span{color:var(--gold)}
     <p>Your Teaching &amp; Learning Portal</p>
   </div>
   <div class="card">
-    <div class="tabs">
+    <div class="tabs" style="grid-template-columns:1fr 1fr 1fr">
       <div class="tab on" onclick="switchTab('login')">Log In</div>
       <div class="tab" onclick="switchTab('signup')">Sign Up</div>
+      <div class="tab" onclick="switchTab('student')">🎓 Student</div>
     </div>
     <div class="forms">
 
@@ -152,6 +153,25 @@ footer span{color:var(--gold)}
         <p class="hint">Already have an account? <a onclick="switchTab('login')">Log in here</a></p>
       </form>
 
+      <!-- STUDENT LOGIN -->
+      <form class="form" id="f-student" onsubmit="doStudentLogin(event)">
+        <div id="student-msg" class="msg"></div>
+        <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem">Ask your teacher for your Class Code, Name, and PIN.</p>
+        <div class="field">
+          <label>Class Code</label>
+          <input id="st-classcode" type="text" placeholder="e.g. AB3C-XY9" required/>
+        </div>
+        <div class="field">
+          <label>Your Name</label>
+          <input id="st-name" type="text" placeholder="e.g. Student 1" required/>
+        </div>
+        <div class="field">
+          <label>PIN</label>
+          <input id="st-pin" type="text" inputmode="numeric" placeholder="6-digit PIN" required/>
+        </div>
+        <button class="btn" type="submit" id="student-btn">Log In</button>
+      </form>
+
     </div>
     <!-- Admin access: just a normal link now. admin.html itself checks
          Supabase Auth + profiles.role and redirects anyone who isn't an
@@ -200,10 +220,11 @@ function setBtn(id, loading, label){
 }
 window.switchTab = function(t){
   document.querySelectorAll('.tab').forEach((el,i)=>
-    el.classList.toggle('on',(t==='login'&&i===0)||(t==='signup'&&i===1))
+    el.classList.toggle('on',(t==='login'&&i===0)||(t==='signup'&&i===1)||(t==='student'&&i===2))
   );
   document.getElementById('f-login').classList.toggle('on', t==='login');
   document.getElementById('f-signup').classList.toggle('on', t==='signup');
+  document.getElementById('f-student').classList.toggle('on', t==='student');
 };
 window.checkStrength = function(v){
   const bar = document.getElementById('sbar');
@@ -285,6 +306,35 @@ window.doLogin = async function(e){
   }
 };
 
+window.doStudentLogin = async function(e){
+  e.preventDefault();
+  const classCode = document.getElementById('st-classcode').value.trim();
+  const name = document.getElementById('st-name').value.trim();
+  const pin = document.getElementById('st-pin').value.trim();
+  if(!classCode || !name || !pin) return showMsg('student-msg','Please fill in all fields.','err');
+  setBtn('student-btn', true, 'Log In');
+  showMsg('student-msg','','');
+  try {
+    const { data: email, error: lookupErr } = await sb.rpc('student_login_lookup', {
+      p_class_code: classCode, p_display_name: name, p_pin: pin
+    });
+    if(lookupErr) throw lookupErr;
+    if(!email) throw new Error('Class Code, Name, or PIN is incorrect. Check with your teacher.');
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pin });
+    if(error) throw error;
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+    localStorage.setItem('edu_session', JSON.stringify({
+      id: data.user.id, name: profile?.name || name, email,
+      role: profile?.role || 'user', class_grade: profile?.class_grade || ''
+    }));
+    window.location.href = 'student.html';
+  } catch(err){
+    showMsg('student-msg','❌ ' + err.message,'err');
+  } finally {
+    setBtn('student-btn', false, 'Log In');
+  }
+};
+
 // ── FORGOT PASSWORD ──
 window.openForgotPassword = function(){ document.getElementById('forgotModal').classList.add('show'); };
 window.closeForgotPassword = function(){ document.getElementById('forgotModal').classList.remove('show'); };
@@ -306,9 +356,12 @@ document.getElementById('forgotModal').addEventListener('click', e => {
   if(e.target.id === 'forgotModal') document.getElementById('forgotModal').classList.remove('show');
 });
 
-// Auto redirect if already logged in
-sb.auth.getSession().then(({ data }) => {
-  if(data.session) window.location.href = 'index.html';
+// Auto redirect if already logged in — a student account goes to their
+// own assignments dashboard, everyone else to the main site.
+sb.auth.getSession().then(async ({ data }) => {
+  if(!data.session) return;
+  const { data: enrollment } = await sb.from('class_students').select('id').eq('student_id', data.session.user.id).limit(1).maybeSingle();
+  window.location.href = enrollment ? 'student.html' : 'index.html';
 });
 
 // Handle Google OAuth redirect with profile creation
