@@ -583,7 +583,8 @@ async function loadStats(){
 
 // ── RENDER LESSONS ──
 async function renderLessons(){
-  const { data: raw } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load lessons:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('lessons-grid');
   if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>No lessons for ${esc(selectedClass)} yet</p></div>`; return; }
@@ -616,7 +617,8 @@ async function renderLessons(){
 
 // ── RENDER RESOURCES ──
 async function renderResources(){
-  const { data: raw } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load resources:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('resources-grid');
   const s = session();
@@ -654,7 +656,8 @@ async function renderResources(){
 
 // ── RENDER VIDEOS ──
 async function renderVideos(){
-  const { data: raw } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load videos:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('videos-grid');
   if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>No videos for ${esc(selectedClass)} yet</p></div>`; return; }
@@ -683,7 +686,8 @@ async function renderVideos(){
 
 // ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
-  const { data: raw } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load articles:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('blog-grid');
   if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>No articles for ${esc(selectedClass)} yet</p></div>`; return; }
