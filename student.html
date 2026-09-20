@@ -3,180 +3,487 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Classroom — SherigSpace</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"/>
+<link rel="manifest" href="site.webmanifest"/>
+<title>Teacher Dashboard — SherigSpace</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--surface:#192035;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--red:#e05c5c;--green:#4caf84}
+:root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--surface:#192035;--surface2:#202b4a;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--red:#e05c5c;--green:#4caf84;--blue:#5c8de0}
 body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
 #gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f1623,#1a2340,#1a2f50);display:flex;align-items:center;justify-content:center;padding:1rem}
 #gate.hide{display:none}
-.gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;max-width:380px;padding:2rem;text-align:center}
+.gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;width:100%;max-width:420px;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5)}
 .gate-icon{font-size:2.5rem;margin-bottom:.75rem}
-.gate-card h2{font-family:'Playfair Display',serif;color:var(--gold);margin-bottom:.4rem}
-.gate-card p{font-size:.85rem;color:var(--text2);margin-bottom:1.2rem}
-.gate-btn{padding:11px 20px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font-family:'DM Sans',sans-serif}
-nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;border-bottom:1px solid var(--border);background:#131c2e}
-.nav-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:1.2rem}
-.nav-right{display:flex;align-items:center;gap:1rem;font-size:.85rem;color:var(--text2)}
-.nav-right button{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.25);color:var(--red);padding:7px 14px;border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8rem}
-main{max-width:800px;margin:0 auto;padding:2rem 5%}
-.class-heading{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold);margin:1.6rem 0 .8rem}
-.class-heading:first-child{margin-top:0}
-.assign-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1rem}
-.assign-card.done{border-left-color:var(--green);opacity:.75}
-.assign-title{font-weight:600;font-size:.95rem;margin-bottom:.3rem}
-.assign-desc{font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:.7rem}
-.assign-meta{font-size:.76rem;color:var(--text2);margin-bottom:.8rem}
-.assign-actions{display:flex;gap:.6rem;flex-wrap:wrap}
-.btn{padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
-.btn-gold{background:var(--gold);color:#1a2340}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}
-.btn-green{background:rgba(76,175,132,.15);border:1px solid rgba(76,175,132,.35);color:var(--green)}
+.gate-card h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold);margin-bottom:.3rem}
+.gate-card p{font-size:.85rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.6}
+.gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+.gate-btn:hover{background:var(--gold-light)}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;flex-shrink:0;background:#131c2e;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.logo{padding:1.4rem 1.5rem;border-bottom:1px solid var(--border)}
+.logo h2{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold)}
+.logo small{display:block;font-size:.7rem;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.sidenav{padding:.8rem 0;flex:1}
+.sitem{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.4rem;font-size:.87rem;font-weight:500;color:var(--text2);cursor:pointer;border-left:2px solid transparent}
+.sitem:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.sitem.on{color:var(--gold);background:rgba(201,168,76,.07);border-left-color:var(--gold)}
+.sfoot{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.6rem}
+.sfoot a,.sfoot button{display:block;text-align:center;padding:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:4px;color:var(--gold);font-size:.8rem;text-decoration:none;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif}
+.sfoot button.logout{background:rgba(224,92,92,.1);border-color:rgba(224,92,92,.25);color:var(--red)}
+.main{flex:1;padding:2rem;overflow-x:hidden}
+.page{display:none}.page.on{display:block}
+.phead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.8rem;flex-wrap:wrap;gap:1rem}
+.ptitle{font-family:'Playfair Display',serif;font-size:1.7rem}
+.psub{font-size:.83rem;color:var(--text2);margin-top:3px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1.5rem}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.4rem;border-bottom:1px solid var(--border)}
+.card-head h3{font-size:.95rem;font-weight:600}
+.cbadge{background:rgba(201,168,76,.15);color:var(--gold);font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px}
+.irow{display:grid;grid-template-columns:1fr auto;align-items:center;padding:.85rem 1.4rem;border-bottom:1px solid rgba(255,255,255,.05);gap:1rem}
+.irow:last-child{border-bottom:none}
+.iname{font-weight:500;font-size:.88rem}
+.imeta{font-size:.76rem;color:var(--text2);margin-top:2px}
+.ibtns{display:flex;gap:.4rem;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
+.btn-gold{background:var(--gold);color:#1a2340}.btn-gold:hover{background:var(--gold-light)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-edit{background:rgba(92,141,224,.12);border:1px solid rgba(92,141,224,.25);color:var(--blue)}
+.btn-del{background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);color:var(--red)}
+.btn-sm{padding:5px 9px;font-size:.76rem}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.empty{text-align:center;padding:3rem 1rem;color:var(--text2)}
-.empty .ei{font-size:2.5rem;margin-bottom:.75rem}
-.locked-note{font-size:.8rem;color:var(--gold);background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem .9rem;margin-bottom:.7rem}
+.overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:#131c2e;border:1px solid var(--border);border-radius:8px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
+.mhead{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)}
+.mhead h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold)}
+.mclose{background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer}
+.mbody{padding:1.4rem;display:flex;flex-direction:column;gap:.9rem}
+.mfoot{padding:.9rem 1.4rem;border-top:1px solid var(--border);display:flex;gap:.7rem;justify-content:flex-end}
+.field{display:flex;flex-direction:column;gap:.35rem}
+.field label{font-size:.76rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
+.field input,.field select,.field textarea{background:#202b4a;border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:.88rem;padding:9px 11px;outline:none;width:100%;font-family:'DM Sans',sans-serif}
+.field textarea{resize:vertical;min-height:75px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text2)}.empty .ei{font-size:2.2rem;margin-bottom:.6rem}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;background:var(--surface);border:1px solid var(--green);border-left:3px solid var(--green);border-radius:5px;padding:11px 16px;font-size:.86rem;transform:translateY(16px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{border-color:var(--red);border-left-color:var(--red)}
+.login-card{background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;font-size:.85rem;line-height:1.9}
+.login-card b{color:var(--gold)}
+.class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold);font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
+.classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.class-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
+.class-card:hover{transform:translateY(-3px)}
+.class-card h4{font-family:'Playfair Display',serif;color:var(--text);margin-bottom:.4rem}
+@media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <div id="gate">
   <div class="gate-card" id="gate-inner">
-    <div class="gate-icon">🎓</div>
+    <div class="gate-icon">🍎</div>
     <h2>Checking access…</h2>
     <p>One moment…</p>
   </div>
 </div>
 
-<div id="app" style="display:none">
-  <nav>
-    <div class="nav-logo">SherigSpace</div>
-    <div class="nav-right">
-      <span id="student-name">Student</span>
-      <button onclick="logout()">Log Out</button>
+<div class="layout" id="app-layout" style="display:none">
+  <aside class="sidebar">
+    <div class="logo"><h2>SherigSpace</h2><small>Teacher Dashboard</small></div>
+    <nav class="sidenav">
+      <div class="sitem on" onclick="go('classes')">🏫 &nbsp;My Classes</div>
+      <div class="sitem" onclick="go('billing')">💳 &nbsp;Subscription</div>
+    </nav>
+    <div class="sfoot">
+      <a href="index.html">↗ View Website</a>
+      <button class="logout" onclick="logout()">🔒 Log Out</button>
     </div>
-  </nav>
-  <main id="assignments-wrap">
-    <div class="empty"><div class="ei">📋</div><p>Loading your assignments…</p></div>
+  </aside>
+
+  <main class="main">
+    <div class="page on" id="p-classes">
+      <div class="phead"><div><div class="ptitle">My Classes</div><div class="psub">Create a class, enroll students, and assign work</div></div><button class="btn btn-gold" onclick="openClassForm()">+ New Class</button></div>
+      <div id="classes-list" class="classes-grid"></div>
+    </div>
+
+    <div class="page" id="p-class-detail">
+      <div class="phead">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem">← Back to Classes</button>
+          <div class="ptitle" id="detail-class-name">Class</div>
+          <div class="psub">Class Code: <span class="class-code-badge" id="detail-class-code">—</span></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-head"><h3>Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()">+ Add Student</button></div><div id="students-list"></div></div>
+      <div class="card"><div class="card-head"><h3>Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()">+ New Assignment</button></div><div id="assignments-list"></div></div>
+    </div>
+
+    <div class="page" id="p-billing">
+      <div class="phead"><div><div class="ptitle">Subscription</div><div class="psub">Your teacher plan status</div></div></div>
+      <div class="card"><div id="billing-status" style="padding:1.4rem"></div></div>
+    </div>
   </main>
 </div>
 
+<!-- Generic modal (class / student / assignment forms) -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mhead"><h3 id="m-title">Add</h3><button class="mclose" onclick="closeModal()">✕</button></div>
+    <div class="mbody" id="m-body"></div>
+    <div class="mfoot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-gold" id="m-save-btn">Save</button></div>
+  </div>
+</div>
+
+<!-- Student login card (shown once, after creating a student) -->
+<div class="overlay" id="login-card-overlay">
+  <div class="modal" style="max-width:420px">
+    <div class="mhead"><h3>✅ Student Created</h3><button class="mclose" onclick="document.getElementById('login-card-overlay').classList.remove('open')">✕</button></div>
+    <div class="mbody">
+      <p style="font-size:.85rem;color:var(--text2)">Give these details to the student — this is the only time the PIN is shown in full here (you can still view it later in the student list).</p>
+      <div class="login-card" id="login-card-body"></div>
+    </div>
+    <div class="mfoot"><button class="btn btn-gold" onclick="document.getElementById('login-card-overlay').classList.remove('open')">Done</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { SUPABASE_URL, SUPABASE_KEY, esc } from './config.js';
+import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
+import { uploadFileToDrive } from './drive-upload.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-let me = null;
+let me = null; // { id, name, email }
+let currentClassId = null;
+let siteSettings = {};
+const CLASS_LEVELS=['PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
 
-const TYPE_ICON = { lessons:'📚', resources:'📁', videos:'🎥', articles:'✍️' };
+function toast(msg, isErr=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast'+(isErr?' err':'');
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000);
+}
+function fv(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+function genCode(){ return Math.random().toString(36).slice(2,6).toUpperCase()+'-'+Math.random().toString(36).slice(2,5).toUpperCase(); }
+function genPin(){ return String(Math.floor(100000+Math.random()*900000)); }
+function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,20) || 'student'; }
 
-async function init(){
+// ── ACCESS CHECK ──
+async function checkAccess(){
   const { data: { session } } = await supabase.auth.getSession();
   const gate = document.getElementById('gate-inner');
   if(!session){
-    gate.innerHTML = `<div class="gate-icon">🔒</div><h2>Please log in</h2><p>Use the Student tab on the login page.</p><a class="gate-btn" href="login.html">Go to Login</a>`;
+    gate.innerHTML = `<div class="gate-icon">🔒</div><h2>Please log in</h2><p>Log in with your SherigSpace account first, then come back here to set up your teacher plan.</p><a class="gate-btn" href="login.html">Go to Login</a>`;
     return;
   }
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-  me = { id: session.user.id, name: profile?.name || 'Student' };
+  me = { id: session.user.id, name: profile?.name || session.user.email, email: session.user.email };
+
+  const { data: sub } = await supabase.from('teacher_subscriptions')
+    .select('*').eq('teacher_id', me.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
+
+  const active = sub && sub.status === 'approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+
+  if(!active){
+    const { data: settings } = await supabase.from('site_settings').select('*').eq('id',1).single();
+    siteSettings = settings || {};
+    const qr = siteSettings.qr_image_url;
+    let statusNote = '';
+    if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold);font-size:.85rem;margin-top:1rem">⏳ Your last payment is under review.</p>`;
+    else if(sub && sub.status === 'rejected') statusNote = `<p style="color:var(--red);font-size:.85rem;margin-top:1rem">Your last payment was not approved. You can submit again below.</p>`;
+    gate.innerHTML = `
+      <div class="gate-icon">🍎</div>
+      <h2>Become a Teacher</h2>
+      <p>Subscribe for Nu. ${esc(siteSettings.teacher_plan_price || 'X')}/month to create classes, enroll students, and assign work.</p>
+      ${qr?`<img src="${esc(qr)}" style="width:160px;margin:0 auto 1rem;display:block;border-radius:6px"/>`:''}
+      <div style="background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.82rem;text-align:left;line-height:1.8">
+        ${siteSettings.bank_name?`<div><b>Bank/App:</b> ${esc(siteSettings.bank_name)}</div>`:''}
+        ${siteSettings.account_name?`<div><b>Account Name:</b> ${esc(siteSettings.account_name)}</div>`:''}
+        ${siteSettings.account_number?`<div><b>Account Number:</b> ${esc(siteSettings.account_number)}</div>`:''}
+      </div>
+      <div class="field" style="text-align:left"><label>Upload Payment Screenshot</label><input type="file" id="teacher-proof-file" accept="image/*"/></div>
+      <p id="teacher-proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
+      <button class="gate-btn" style="border:none;cursor:pointer;margin-top:.5rem" onclick="submitTeacherProof()">Submit for Review</button>
+      ${statusNote}
+    `;
+    return;
+  }
 
   document.getElementById('gate').classList.add('hide');
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('student-name').textContent = me.name;
-  await renderAssignments();
+  document.getElementById('app-layout').style.display = 'flex';
+  renderClasses();
+  renderBilling(sub);
 }
+
+window.submitTeacherProof = async function(){
+  const fileInput = document.getElementById('teacher-proof-file');
+  const file = fileInput.files[0];
+  const statusEl = document.getElementById('teacher-proof-status');
+  if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red)'; return; }
+  statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
+  try{
+    const path = `${me.id}/teacher-${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file);
+    if(upErr) throw upErr;
+    const { error: insErr } = await supabase.from('teacher_subscriptions').insert({
+      teacher_id: me.id, price: siteSettings.teacher_plan_price || null, proof_path: path, status: 'pending'
+    });
+    if(insErr) throw insErr;
+    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = '#7ed9b0';
+    setTimeout(checkAccess, 1200);
+  }catch(err){
+    statusEl.textContent = 'Failed: ' + err.message; statusEl.style.color = 'var(--red)';
+  }
+};
 
 window.logout = async function(){ await supabase.auth.signOut(); window.location.href = 'login.html'; };
 
-async function renderAssignments(){
-  const wrap = document.getElementById('assignments-wrap');
+window.go = function(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
+  document.getElementById('p-'+p).classList.add('on');
+  document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
+  if(p==='classes') document.querySelector('.sitem').classList.add('on');
+  if(p==='billing') document.querySelectorAll('.sitem')[1].classList.add('on');
+};
 
-  const { data: enrollments } = await supabase.from('class_students').select('class_id, classes(id,name)').eq('student_id', me.id);
-  if(!enrollments?.length){
-    wrap.innerHTML = `<div class="empty"><div class="ei">🏫</div><p>You're not enrolled in any class yet. Ask your teacher for a Class Code.</p></div>`;
-    return;
-  }
-
-  const classIds = enrollments.map(e=>e.class_id);
-  const { data: assignments } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
-  const { data: statuses } = await supabase.from('assignment_status').select('*').eq('student_id', me.id);
-  const statusMap = {};
-  (statuses||[]).forEach(s=>{ statusMap[s.assignment_id] = s.status; });
-
-  if(!assignments?.length){
-    wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>No assignments yet — check back soon!</p></div>`;
-    return;
-  }
-
-  // Group by class
-  const byClass = {};
-  enrollments.forEach(e=>{ byClass[e.class_id] = { name: e.classes?.name || 'Class', items: [] }; });
-  assignments.forEach(a=>{ if(byClass[a.class_id]) byClass[a.class_id].items.push(a); });
-
-  let html = '';
-  for(const classId of Object.keys(byClass)){
-    const group = byClass[classId];
-    if(!group.items.length) continue;
-    html += `<div class="class-heading">🏫 ${esc(group.name)}</div>`;
-    for(const a of group.items){
-      const done = statusMap[a.id] === 'done';
-      html += await renderAssignmentCard(a, done);
-    }
-  }
-  wrap.innerHTML = html || `<div class="empty"><div class="ei">📋</div><p>No assignments yet.</p></div>`;
-
-  wrap.querySelectorAll('[data-mark-done]').forEach(btn=>{
-    btn.addEventListener('click', ()=>markDone(btn.getAttribute('data-mark-done')));
-  });
-  wrap.querySelectorAll('[data-open-item]').forEach(btn=>{
-    btn.addEventListener('click', ()=>window.open(btn.getAttribute('data-open-item'), '_blank', 'noopener'));
-  });
+// ── CLASSES ──
+async function renderClasses(){
+  const { data } = await supabase.from('classes').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false});
+  const el = document.getElementById('classes-list');
+  el.innerHTML = data?.length ? data.map(c=>`
+    <div class="class-card" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(c.class_code)}')">
+      <h4>${esc(c.name)}</h4>
+      <div style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem">${esc(c.class_level||'')}</div>
+      <span class="class-code-badge">${esc(c.class_code)}</span>
+    </div>`).join('') : `<div class="empty" style="grid-column:1/-1"><div class="ei">🏫</div><p>No classes yet — create your first one!</p></div>`;
 }
 
-async function renderAssignmentCard(a, done){
-  let title, desc, openUrl = null, lockedNote = '';
+window.openClassForm = function(){
+  document.getElementById('m-title').textContent = 'New Class';
+  document.getElementById('m-body').innerHTML = `
+    <div class="field"><label>Class Name</label><input id="f-class-name" placeholder="e.g. Math 7B"/></div>
+    <div class="field"><label>Class Level</label><select id="f-class-level">${CLASS_LEVELS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+  `;
+  const btn = document.getElementById('m-save-btn');
+  btn.textContent = 'Create';
+  btn.onclick = async ()=>{
+    const name = fv('f-class-name');
+    if(!name){ toast('Please enter a class name.', true); return; }
+    const { error } = await supabase.from('classes').insert({
+      teacher_id: me.id, name, class_level: fv('f-class-level'), class_code: genCode()
+    });
+    if(error){ toast('Error: '+error.message, true); return; }
+    toast('Class created ✓'); closeModal(); renderClasses();
+  };
+  document.getElementById('overlay').classList.add('open');
+};
 
-  if(a.kind === 'custom'){
-    title = a.title;
-    desc = a.description || '';
-    openUrl = a.attachment_url || null;
-  } else {
-    const { data: item } = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
-    title = item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : '(content unavailable)';
-    desc = item?.description || '';
-    if(item){
-      if(item.is_premium && !item.url){
-        lockedNote = `<div class="locked-note">🔒 This is premium content — visit the <a href="index.html" style="color:var(--gold)">TLM Store</a> to unlock it first.</div>`;
-      } else {
-        openUrl = item.url;
-      }
-    }
-  }
-
-  return `<div class="assign-card ${done?'done':''}">
-    <div class="assign-title">${esc(title)}</div>
-    ${desc?`<div class="assign-desc">${esc(desc)}</div>`:''}
-    ${a.due_date?`<div class="assign-meta">📅 Due ${esc(a.due_date)}</div>`:''}
-    ${lockedNote}
-    <div class="assign-actions">
-      ${openUrl?`<button class="btn btn-gold" data-open-item="${esc(openUrl)}">Open</button>`:''}
-      ${done
-        ? `<button class="btn btn-green" disabled>✓ Completed</button>`
-        : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">Mark Complete</button>`}
-    </div>
-  </div>`;
-}
-
-window.markDone = async function(assignmentId){
-  const { error } = await supabase.from('assignment_status').upsert({
-    assignment_id: assignmentId, student_id: me.id, status: 'done', completed_at: new Date().toISOString()
-  }, { onConflict: 'assignment_id,student_id' });
-  if(error){ alert('Error: ' + error.message); return; }
+window.openClass = function(id, name, code){
+  currentClassId = id;
+  document.getElementById('detail-class-name').textContent = name;
+  document.getElementById('detail-class-code').textContent = code;
+  go('class-detail');
+  renderStudents();
   renderAssignments();
 };
 
-init();
+window.closeModal = function(){ document.getElementById('overlay').classList.remove('open'); };
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
+
+// ── STUDENTS ──
+async function renderStudents(){
+  const { data } = await supabase.from('class_students').select('*').eq('class_id', currentClassId).order('created_at',{ascending:true});
+  const el = document.getElementById('students-list');
+  el.innerHTML = data?.length ? data.map(s=>`
+    <div class="irow">
+      <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">PIN: ${esc(s.pin)}</div></div>
+      <div class="ibtns"><button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">✕ Remove</button></div>
+    </div>`).join('') : `<div class="empty"><div class="ei">🧒</div><p>No students yet. Click + Add Student!</p></div>`;
+}
+
+window.openStudentForm = function(){
+  document.getElementById('m-title').textContent = 'Add Student';
+  document.getElementById('m-body').innerHTML = `<div class="field"><label>Student Display Name</label><input id="f-student-name" placeholder="e.g. Student 1"/></div>`;
+  const btn = document.getElementById('m-save-btn');
+  btn.textContent = 'Add';
+  btn.onclick = async ()=>{
+    const name = fv('f-student-name');
+    if(!name){ toast('Please enter a name.', true); return; }
+    btn.disabled = true; btn.textContent = 'Adding…';
+    try{
+      const code = document.getElementById('detail-class-code').textContent;
+      const pin = genPin();
+      const loginEmail = `${slugify(code)}-${slugify(name)}-${Date.now().toString(36).slice(-4)}@students.sherigspace.local`;
+
+      // Isolated client so this signUp doesn't hijack the teacher's own
+      // logged-in session in the main `supabase` client above.
+      const tempClient = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession:false, autoRefreshToken:false } });
+      const { data: signUpData, error: signUpErr } = await tempClient.auth.signUp({ email: loginEmail, password: pin });
+      if(signUpErr) throw signUpErr;
+      const studentId = signUpData.user?.id;
+      if(!studentId) throw new Error('Could not create student account. Check that email confirmation is disabled in Supabase Auth settings.');
+
+      // Student's own profile row — must be created by the student's own
+      // just-issued session (tempClient), since profiles can only be
+      // inserted by their own owner.
+      await tempClient.from('profiles').upsert({ id: studentId, name, email: loginEmail, role: 'user' });
+
+      // Enrollment row — created by the teacher's own session.
+      const { error: enrollErr } = await supabase.from('class_students').insert({
+        class_id: currentClassId, student_id: studentId, display_name: name, login_email: loginEmail, pin
+      });
+      if(enrollErr) throw enrollErr;
+
+      closeModal();
+      toast('Student added ✓');
+      renderStudents();
+      document.getElementById('login-card-body').innerHTML = `
+        Class Code: <b>${esc(code)}</b><br>
+        Student Name: <b>${esc(name)}</b><br>
+        PIN: <b>${esc(pin)}</b><br><br>
+        Give the student this info and send them to <b>${esc(window.location.origin)}/login.html</b> → Student tab.`;
+      document.getElementById('login-card-overlay').classList.add('open');
+    }catch(err){
+      toast('Error: '+err.message, true);
+    }
+    btn.disabled = false; btn.textContent = 'Add';
+  };
+  document.getElementById('overlay').classList.add('open');
+};
+
+window.deleteStudent = async function(id){
+  if(!confirm('Remove this student from the class?')) return;
+  const { error } = await supabase.from('class_students').delete().eq('id', id);
+  if(error){ toast('Error: '+error.message, true); return; }
+  toast('Removed.'); renderStudents();
+};
+
+// ── ASSIGNMENTS ──
+async function renderAssignments(){
+  const { data } = await supabase.from('assignments').select('*').eq('class_id', currentClassId).order('created_at',{ascending:false});
+  const el = document.getElementById('assignments-list');
+  if(!data?.length){ el.innerHTML = `<div class="empty"><div class="ei">📋</div><p>No assignments yet.</p></div>`; return; }
+
+  const rows = await Promise.all(data.map(async a=>{
+    const { count: doneCount } = await supabase.from('assignment_status').select('*',{count:'exact',head:true}).eq('assignment_id', a.id).eq('status','done');
+    const { count: totalStudents } = await supabase.from('class_students').select('*',{count:'exact',head:true}).eq('class_id', currentClassId);
+    const label = a.kind === 'custom' ? a.title : `${a.item_type} item`;
+    return `<div class="irow">
+      <div><div class="iname">${esc(label)}</div><div class="imeta">${a.due_date?'Due '+esc(a.due_date)+' · ':''}${doneCount||0}/${totalStudents||0} completed</div></div>
+      <div class="ibtns"><button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button></div>
+    </div>`;
+  }));
+  el.innerHTML = rows.join('');
+}
+
+window.deleteAssignment = async function(id){
+  if(!confirm('Delete this assignment?')) return;
+  const { error } = await supabase.from('assignments').delete().eq('id', id);
+  if(error){ toast('Error: '+error.message, true); return; }
+  toast('Deleted.'); renderAssignments();
+};
+
+window.openAssignmentForm = async function(){
+  document.getElementById('m-title').textContent = 'New Assignment';
+  document.getElementById('m-body').innerHTML = `
+    <div class="field"><label>Type</label>
+      <select id="f-kind" onchange="toggleAssignmentKind()">
+        <option value="tlm">Assign existing TLM content</option>
+        <option value="custom">Create a custom task</option>
+      </select>
+    </div>
+    <div id="kind-tlm-fields">
+      <div class="field"><label>Content Type</label>
+        <select id="f-item-type" onchange="loadTlmOptions()">
+          <option value="lessons">Lesson</option><option value="resources">Resource</option>
+          <option value="videos">Video</option><option value="articles">Article</option>
+        </select>
+      </div>
+      <div class="field"><label>Choose Item</label><select id="f-item-id"></select></div>
+    </div>
+    <div id="kind-custom-fields" style="display:none">
+      <div class="field"><label>Title</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3"/></div>
+      <div class="field"><label>Description</label><textarea id="f-custom-desc" placeholder="Instructions for students"></textarea></div>
+      <div class="field"><label>Attachment (optional)</label>
+        <div style="display:flex;gap:.6rem;align-items:center">
+          <input type="file" id="f-custom-file" style="display:none" onchange="handleAssignmentFilePick(event)"/>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('f-custom-file').click()">📤 Upload to Drive</button>
+          <span id="assignment-upload-status" style="font-size:.78rem;color:var(--text2)"></span>
+        </div>
+        <input type="hidden" id="f-custom-url"/>
+      </div>
+    </div>
+    <div class="field"><label>Due Date (optional)</label><input type="date" id="f-due-date"/></div>
+  `;
+  await loadTlmOptions();
+  const btn = document.getElementById('m-save-btn');
+  btn.textContent = 'Create';
+  btn.onclick = async ()=>{
+    const kind = fv('f-kind');
+    const payload = { class_id: currentClassId, kind, due_date: fv('f-due-date') || null };
+    if(kind === 'tlm'){
+      const itemId = fv('f-item-id');
+      if(!itemId){ toast('Please choose an item.', true); return; }
+      payload.item_type = fv('f-item-type');
+      payload.item_id = itemId;
+    } else {
+      if(!fv('f-custom-title')){ toast('Please enter a title.', true); return; }
+      payload.title = fv('f-custom-title');
+      payload.description = fv('f-custom-desc');
+      payload.attachment_url = fv('f-custom-url');
+    }
+    const { error } = await supabase.from('assignments').insert(payload);
+    if(error){ toast('Error: '+error.message, true); return; }
+    toast('Assignment created ✓'); closeModal(); renderAssignments();
+  };
+  document.getElementById('overlay').classList.add('open');
+};
+
+window.toggleAssignmentKind = function(){
+  const kind = fv('f-kind');
+  document.getElementById('kind-tlm-fields').style.display = kind==='tlm' ? 'block':'none';
+  document.getElementById('kind-custom-fields').style.display = kind==='custom' ? 'block':'none';
+};
+
+window.loadTlmOptions = async function(){
+  const type = fv('f-item-type') || 'lessons';
+  const { data } = await supabase.from(type+'_public').select('id,title').order('created_at',{ascending:false});
+  const sel = document.getElementById('f-item-id');
+  if(sel) sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
+};
+
+window.handleAssignmentFilePick = async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('assignment-upload-status');
+  statusEl.textContent = 'Uploading…';
+  try{
+    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
+    document.getElementById('f-custom-url').value = result.viewUrl;
+    statusEl.textContent = `Uploaded "${result.name}" ✓`;
+  }catch(err){
+    statusEl.textContent = 'Upload failed: '+err.message;
+  }
+};
+
+// ── BILLING ──
+function renderBilling(sub){
+  const el = document.getElementById('billing-status');
+  if(!sub){ el.innerHTML = `<p style="color:var(--text2)">No subscription history.</p>`; return; }
+  const active = sub.status==='approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+  el.innerHTML = `
+    <p><b style="color:${active?'var(--green)':'var(--red)'}">${active?'✅ Active':sub.status==='pending'?'⏳ Pending review':'❌ '+sub.status}</b></p>
+    ${sub.expires_at?`<p style="color:var(--text2);font-size:.85rem;margin-top:.4rem">Renews/expires: ${esc(new Date(sub.expires_at).toLocaleDateString())}</p>`:''}
+  `;
+}
+
+checkAccess();
 </script>
 </body>
 </html>
