@@ -44,6 +44,17 @@ function waitForGis(timeoutMs = 10000) {
   return gisReadyPromise;
 }
 
+// The one sign-in request currently waiting on Google's popup (if any).
+let pending = null;
+
+function settle(fn, value) {
+  if (!pending) return;
+  const p = pending;
+  pending = null;
+  clearTimeout(p.timer);
+  fn === 'resolve' ? p.resolve(value) : p.reject(value);
+}
+
 async function initGoogle(clientId) {
   await waitForGis();
 
@@ -52,42 +63,61 @@ async function initGoogle(clientId) {
       client_id: clientId,
       // Broadened from 'drive.file' — see note at top of file.
       scope: 'https://www.googleapis.com/auth/drive',
-      callback: () => {}
+      callback: (response) => {
+        if (response.error) {
+          settle('reject', new Error(response.error_description || response.error || 'Google authorization failed.'));
+          return;
+        }
+        if (!response.access_token) {
+          settle('reject', new Error('Google did not return an access token.'));
+          return;
+        }
+        currentToken = response.access_token;
+        tokenExpiresAt = Date.now() + (Number(response.expires_in) || 3600) * 1000;
+        settle('resolve', currentToken);
+      },
+      // Without this, a blocked or closed popup NEVER calls `callback`, so the
+      // page just sat on "Uploading…" forever.
+      error_callback: (err) => {
+        const messages = {
+          popup_failed_to_open: 'The Google sign-in popup was blocked by the browser. Allow popups for this site (icon in the address bar) and try again.',
+          popup_closed: 'The Google sign-in window was closed before it finished. If it showed an error page (e.g. "origin_mismatch" or "Access blocked"), the Google Cloud OAuth settings need fixing.'
+        };
+        settle('reject', new Error(messages[err && err.type] || ('Google sign-in failed: ' + ((err && (err.type || err.message)) || 'unknown error'))));
+      }
     });
   }
 
   return tokenClient;
 }
 
-async function getDriveToken(clientId) {
-  const now = Date.now();
+/** True if we already hold a Google token that is not about to expire. */
+export function hasValidDriveToken() {
+  return !!currentToken && Date.now() < tokenExpiresAt - 10000;
+}
 
-  // Reuse existing token if it's not close to expiring.
-  if (currentToken && now < tokenExpiresAt - 10000) {
-    return currentToken;
-  }
+/**
+ * Gets a Drive access token. IMPORTANT: when a new token is needed this opens
+ * a popup, so it must be called straight from a real click (not from a file
+ * input's change event) or the browser will block the popup.
+ */
+export async function connectGoogleDrive(clientId) {
+  if (hasValidDriveToken()) return currentToken;
 
   const client = await initGoogle(clientId);
 
   return new Promise((resolve, reject) => {
-    client.callback = (response) => {
-      if (response.error) {
-        reject(new Error(response.error_description || response.error || 'Google authorization failed.'));
-        return;
-      }
-      if (!response.access_token) {
-        reject(new Error('Google did not return an access token.'));
-        return;
-      }
-      currentToken = response.access_token;
-      tokenExpiresAt = Date.now() + (Number(response.expires_in) || 3600) * 1000;
-      resolve(currentToken);
-    };
-
-    // 'consent' the first time (and the first time after broadening the
-    // scope); after that, Google will typically skip the prompt.
+    // Give up after 2 minutes instead of waiting forever.
+    const timer = setTimeout(() => {
+      settle('reject', new Error('Google sign-in timed out. Please try again.'));
+    }, 120000);
+    pending = { resolve, reject, timer };
     client.requestAccessToken({ prompt: '' });
   });
+}
+
+async function getDriveToken(clientId) {
+  return connectGoogleDrive(clientId);
 }
 
 async function driveUploadRaw(file, token, folderId) {
