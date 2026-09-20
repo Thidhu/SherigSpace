@@ -209,7 +209,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
             <label>QR Code Image</label>
             <div class="upload-row">
               <input type="file" id="s-qrfile" accept="image/*" style="display:none" onchange="handleQrPick(event)"/>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('s-qrfile').click()">📤 Upload QR Code</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('s-qrfile','qr-upload-status')">📤 Upload QR Code</button>
               <span class="upload-status" id="qr-upload-status"></span>
             </div>
             <div class="thumb-preview" id="qr-preview"></div>
@@ -239,7 +239,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
-import { uploadFileToDrive } from './drive-upload.js';
+import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -507,7 +507,7 @@ function imageUploadField(v){
       <label>Attach File (optional) — image, PDF, slides, doc, video…</label>
       <div class="upload-row">
         <input type="file" id="f-imagefile" style="display:none" onchange="handleFilePick(event)"/>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('f-imagefile').click()">📤 Upload to Google Drive</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('f-imagefile','upload-status')">📤 Upload to Google Drive</button>
         <span class="upload-status" id="upload-status"></span>
       </div>
       <div class="thumb-preview" id="thumb-preview">${thumb?`<img src="${esc(thumb)}" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'upload-status',textContent:'📄 File attached (no preview available)'}))"/>`:''}</div>
@@ -587,6 +587,23 @@ function buildForm(type,d={}){
     ${premiumField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="རྩོམ་ཡིག་གི་མིང་" value="${esc(v('dz'))}"/></div>`;
 }
+
+// Opens the file chooser. If we're not signed in to Google yet, do the sign-in
+// FIRST, directly from this click, so the browser allows the popup.
+window.pickFile = async function(inputId, statusId){
+  if(hasValidDriveToken()){ document.getElementById(inputId).click(); return; }
+  const statusEl = document.getElementById(statusId);
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Connecting to Google… allow the popup and sign in.';
+  try{
+    await connectGoogleDrive(GOOGLE_CLIENT_ID);
+    statusEl.textContent = 'Google connected ✓ — click the upload button again to choose your file.';
+    statusEl.className = 'upload-status ok';
+  }catch(err){
+    statusEl.textContent = 'Could not connect: ' + err.message;
+    statusEl.className = 'upload-status err';
+  }
+};
 
 window.handleFilePick = async function(e){
   const file = e.target.files[0];
