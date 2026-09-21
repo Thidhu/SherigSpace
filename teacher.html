@@ -114,6 +114,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .ans-grade input{width:180px;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;padding:7px 10px;outline:none}
 .ans-grade input:focus{border-color:var(--gold)}
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="theme.js"></script>
 </head>
 <body>
@@ -614,7 +615,7 @@ window.openAssignmentForm = async function(editId){
         <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-file')">📎 Upload file / document / photo</button>
       </div>
       <div id="assignment-upload-status" style="font-size:.78rem;color:var(--text2);margin-top:.5rem"></div>
-      <div class="hint">Uploads go to Google Drive (up to 50&nbsp;MB) and are shared automatically. For a longer video, put it on YouTube as <b>Unlisted</b> and paste the link. <b>Google Docs, Slides, Sheets and Forms links must be shared as “Anyone with the link”</b> or students won't be able to open them. You can rename any resource by editing its title.</div>
+      <div class="hint">Uploads are saved to the SherigSpace Google Drive (up to 25&nbsp;MB) and shared automatically. For a longer video, put it on YouTube as <b>Unlisted</b> and paste the link. <b>Google Docs, Slides, Sheets and Forms links must be shared as “Anyone with the link”</b> or students won't be able to open them. You can rename any resource by editing its title.</div>
     </div>
 
     ${cfg.extras ? `
