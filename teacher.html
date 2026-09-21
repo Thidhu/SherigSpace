@@ -74,6 +74,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .toast.err{border-color:var(--red);border-left-color:var(--red)}
 .login-card{background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;font-size:.85rem;line-height:1.9}
 .login-card b{color:var(--gold-text,var(--gold))}
+.ans-card{border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;margin-bottom:.8rem;background:rgba(201,168,76,.04)}
+.ans-head{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-bottom:.5rem}
+.ans-badge{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.03em}
+.ans-badge.sub{background:rgba(76,175,132,.15);color:var(--ok-text,#7ed9b0)}
+.ans-badge.none{background:rgba(224,92,92,.12);color:var(--err-text,#f09090)}
+.ans-badge.plain{background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold))}
+.ans-text{white-space:pre-wrap;font-size:.88rem;line-height:1.6;margin-bottom:.5rem}
+.ans-links a{display:inline-block;margin:0 .5rem .4rem 0;padding:5px 11px;border:1px solid var(--border);border-radius:6px;font-size:.8rem;color:var(--gold-text,var(--gold));text-decoration:none}
+.ans-fb{display:flex;gap:.5rem;margin-top:.5rem}
+.ans-fb textarea{flex:1;min-height:52px;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;padding:8px 10px;outline:none;resize:vertical}
 .task-att{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.45rem .7rem;border:1px solid var(--border);border-radius:6px;margin-bottom:.4rem;font-size:.84rem;background:rgba(201,168,76,.06)}
 .task-att span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
@@ -159,7 +169,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
+import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc, safeUrl } from './config.js';
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -472,7 +482,7 @@ async function renderAssignments(){
     const attCount = String(a.attachment_url || '').split('\n').filter(Boolean).length;
     return `<div class="irow">
       <div><div class="iname">${esc(label)}</div><div class="imeta">${a.due_date?'Due '+esc(a.due_date)+' · ':''}${attCount?'📎 '+attCount+' attached · ':''}${doneCount||0}/${totalStudents||0} completed</div></div>
-      <div class="ibtns"><button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button></div>
+      <div class="ibtns"><button class="btn btn-ghost btn-sm" onclick="viewAnswers('${esc(a.id)}')">✍ Answers</button><button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button></div>
     </div>`;
   }));
   el.innerHTML = rows.join('');
@@ -561,6 +571,60 @@ window.loadTlmOptions = async function(){
   const { data } = await supabase.from(type+'_public').select('id,title').order('created_at',{ascending:false});
   const sel = document.getElementById('f-item-id');
   if(sel) sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
+};
+
+
+// ── Viewing what students submitted ──
+window.viewAnswers = async function(assignmentId){
+  document.getElementById('m-title').textContent = 'Student answers';
+  const body = document.getElementById('m-body');
+  body.innerHTML = '<div class="empty"><p>Loading…</p></div>';
+  const btn = document.getElementById('m-save-btn');
+  btn.textContent = 'Close'; btn.disabled = false; btn.onclick = closeModal;
+  document.getElementById('overlay').classList.add('open');
+
+  const [{ data: students }, { data: rows, error }] = await Promise.all([
+    supabase.from('class_students').select('student_id, display_name').eq('class_id', currentClassId),
+    supabase.from('assignment_status').select('*').eq('assignment_id', assignmentId)
+  ]);
+  if(error){ body.innerHTML = `<div class="empty"><p>Could not load answers: ${esc(error.message)}</p></div>`; return; }
+  const byStudent = {}; (rows||[]).forEach(r => { byStudent[r.student_id] = r; });
+  if(!(students||[]).length){ body.innerHTML = '<div class="empty"><p>No students in this class yet.</p></div>'; return; }
+  const needsSetup = (rows||[]).some(r => r.answer_text === undefined);
+
+  const cards = await Promise.all(students.map(async st => {
+    const r = byStudent[st.student_id];
+    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">Not submitted</span></div></div>`;
+    const links = String(r.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
+    const paths = String(r.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
+    const fileLinks = await Promise.all(paths.map(async p => {
+      const { data } = await supabase.storage.from('task-answers').createSignedUrl(p, 3600);
+      const name = p.split('/').pop().replace(/^\d+-/, '');
+      return data?.signedUrl ? `<a href="${esc(data.signedUrl)}" target="_blank" rel="noopener noreferrer">📎 ${esc(name)}</a>` : `<span style="font-size:.78rem;color:var(--text2)">📎 ${esc(name)} (cannot open)</span>`;
+    }));
+    const hasAnswer = (r.answer_text || '').trim() || links.length || paths.length;
+    const badge = hasAnswer ? '<span class="ans-badge sub">Submitted</span>' : '<span class="ans-badge plain">Marked complete</span>';
+    return `<div class="ans-card">
+      <div class="ans-head"><b>${esc(st.display_name)}</b>${badge}</div>
+      ${(r.answer_text || '').trim() ? `<div class="ans-text">${esc(r.answer_text)}</div>` : ''}
+      ${(links.length || fileLinks.length) ? `<div class="ans-links">${links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(u.replace(/^https?:\/\//,'').slice(0,40))}</a>`).join('')}${fileLinks.join('')}</div>` : ''}
+      <div class="ans-fb"><textarea data-fb-input="${esc(st.student_id)}" placeholder="Feedback for ${esc(st.display_name)}…">${esc(r.teacher_feedback || '')}</textarea>
+        <button type="button" class="btn btn-gold btn-sm" data-fb-save="${esc(st.student_id)}">Save</button></div>
+    </div>`;
+  }));
+  body.innerHTML = (needsSetup ? '<div style="font-size:.8rem;color:var(--text2);margin-bottom:.7rem">Written answers are not switched on yet — run <b>sherigspace_task_answers.sql</b> in Supabase to enable them.</div>' : '') + cards.join('');
+
+  body.querySelectorAll('[data-fb-save]').forEach(b => b.addEventListener('click', async () => {
+    const sid = b.getAttribute('data-fb-save');
+    const text = [...body.querySelectorAll('[data-fb-input]')].find(t => t.getAttribute('data-fb-input') === sid).value.trim();
+    b.disabled = true;
+    const { error: upErr } = await supabase.from('assignment_status')
+      .update({ teacher_feedback: text || null, reviewed_at: new Date().toISOString() })
+      .eq('assignment_id', assignmentId).eq('student_id', sid);
+    b.disabled = false;
+    if(upErr){ toast('Could not save feedback: ' + upErr.message, true); return; }
+    toast('Feedback saved ✓');
+  }));
 };
 
 // ── Task attachments: several videos / links / files per task ──
