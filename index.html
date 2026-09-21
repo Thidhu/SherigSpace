@@ -240,6 +240,19 @@ html[data-lang="dz"] span.pill,html[data-lang="dz"] :is(.lock-bar) :is(span,a){f
 @media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}.admin-lock{display:none}.nav-right{gap:.4rem}.nav-logo{font-size:1.1rem}.login-btn{padding:6px 9px;font-size:.7rem}nav{padding:0 4%}.hamburger{width:26px}.lang-btn{padding:4px 7px}nav{gap:.5rem}.about-avatar{max-width:320px;margin:auto}.about-signature{font-size:1.4rem}.about-role{font-size:.62rem;letter-spacing:.12em}}
 @media(max-width:400px){.nav-logo{font-size:.95rem}.login-btn{padding:6px 7px;font-size:.64rem}.theme-toggle{width:34px}.lang-btn{padding:3px 5px;font-size:.66rem}.nav-right{gap:.3rem}nav{gap:.3rem}}
 @media(max-width:340px){.theme-toggle{display:none}}
+img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.blog-thumb{position:relative;overflow:hidden}
+.cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2))}
+.cover-emoji{font-size:2.6rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.cover-label{font-family:var(--font-en);font-weight:800;font-size:.78rem;letter-spacing:.16em;opacity:.95}
+.cover-video .cover-emoji,.cover-video .cover-label{display:none}
+.cover-mini{width:64px;height:64px;flex-shrink:0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2))}
+.cover-mini span{font-size:1.5rem;line-height:1}
+.cover-mini b{font-family:var(--font-en);font-size:.56rem;letter-spacing:.1em}
+.cover-pdf{--c1:#c0392b;--c2:#e5643a}.cover-doc{--c1:#2b5fc0;--c2:#4f8ff0}.cover-slides{--c1:#d9822b;--c2:#f2b04d}
+.cover-sheet{--c1:#1f8a5b;--c2:#3fbf86}.cover-image{--c1:#7b4bc0;--c2:#a877ee}.cover-video{--c1:#1a2340;--c2:#3a4a86}
+.cover-audio{--c1:#b8437a;--c2:#e56aa0}.cover-form{--c1:#5b3fa8;--c2:#8a6fdc}.cover-file{--c1:#4a5568;--c2:#718096}
+.cover-lesson{--c1:#1a2340;--c2:#34457f}.cover-article{--c1:#9a6a1f;--c2:#d19a3d}
 </style>
 </head>
 <body>
@@ -425,6 +438,49 @@ const ICONS={Mathematics:'📐',Science:'🌍','Language Arts':'✍️',History:
 const RICONS={PDF:'📄',DOCX:'📝',Image:'🗺️','Video Link':'🎥',Spreadsheet:'📊',Presentation:'🖥️',Other:'📁'};
 const GRADS=['linear-gradient(135deg,#1a2340,#253056)','linear-gradient(135deg,#1e3a5f,#1a2340)','linear-gradient(135deg,#253056,#1e3a5f)'];
 const EMOJIS=['📖','🌱','🛠️','💡','🎯','🔬'];
+
+// ── THUMBNAILS ──
+// Uses the thumbnail saved by the admin; when there isn't one, makes an automatic one
+// from the item's link (YouTube / Google Drive / image). Loaded defensively so a missing
+// helper file can never stop the site from working.
+const _thumbUtils = await import('./assignment-utils.js').catch(() => null);
+const autoThumbFor = _thumbUtils ? _thumbUtils.autoThumbFor : () => '';
+const fileKindFor = _thumbUtils ? _thumbUtils.fileKindFor : () => null;
+function thumbFor(row){ return safeUrl(row.thumbnail_url) || safeUrl(autoThumbFor(safeUrl(row.url))); }
+// Google can be picky about which of its two preview addresses answers, so try the second if the first fails.
+function thumbAlt(u){ const m = String(u).match(/drive\.google\.com\/thumbnail\?id=([\w-]+)/); return m ? 'https://lh3.googleusercontent.com/d/' + m[1] + '=w640' : ''; }
+function thumbImg(u, extra){
+  const alt = thumbAlt(u);
+  return `<img class="thumb-img" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-thumb${alt ? ` data-alt="${esc(alt)}"` : ''}${extra||''}/>`;
+}
+// Every item gets a clear cover — a real preview picture when one exists, otherwise a coloured
+// PDF / DOC / SLIDES… card — so no file is ever left as a blank box.
+const COVER = {
+  pdf:{icon:'📄',label:'PDF'}, doc:{icon:'📝',label:'DOC'}, slides:{icon:'📽️',label:'SLIDES'}, sheet:{icon:'📊',label:'SHEET'},
+  image:{icon:'🖼️',label:'IMAGE'}, video:{icon:'🎬',label:'VIDEO'}, audio:{icon:'🎧',label:'AUDIO'}, form:{icon:'📋',label:'FORM'},
+  file:{icon:'📎',label:'FILE'}, lesson:{icon:'📖',label:'LESSON'}, article:{icon:'✍️',label:'ARTICLE'}
+};
+function coverHtml(kind, emoji){
+  const m = COVER[kind] || COVER.file;
+  return `<div class="cover cover-${kind in COVER ? kind : 'file'}"><span class="cover-emoji">${emoji || m.icon}</span><span class="cover-label">${m.label}</span></div>`;
+}
+function miniCover(kind){
+  const k = kind in COVER ? kind : 'file', m = COVER[k];
+  return `<div class="cover-mini cover-${k}"><span>${m.icon}</span><b>${m.label}</b></div>`;
+}
+// Image errors don't bubble, so listen while the event travels down (capture).
+document.addEventListener('error', function(e){
+  const img = e.target;
+  if(!img || img.tagName !== 'IMG' || !img.hasAttribute('data-thumb')) return;
+  const alt = img.getAttribute('data-alt');
+  if(alt){ img.removeAttribute('data-alt'); img.src = alt; return; }
+  if(img.hasAttribute('data-kind')){
+    const w = document.createElement('div'); w.innerHTML = miniCover(img.getAttribute('data-kind'));
+    img.replaceWith(w.firstChild); return;
+  }
+  img.remove();   // the icon underneath shows instead
+}, true);
+
 const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
 let selectedClass = localStorage.getItem('edu_selected_class') || 'All Classes';
 
@@ -667,10 +723,11 @@ async function renderLessons(){
     const icon = ICONS[l.subject]||'📖';
     const title = lang()==='dz' && l.dz ? l.dz : l.title;
     const url = safeUrl(l.url);
-    const thumb = safeUrl(l.thumbnail_url);
+    const thumb = thumbFor(l);
+    const lk = fileKindFor(url) || 'lesson';
     const state = accessState('lessons', l);
     return `<div class="lesson-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}">
-      <div class="card-media"><span class="media-icon">${icon}</span>${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" onerror="this.remove()"/>` : ''}
+      <div class="card-media">${coverHtml(lk, lk==='lesson' ? icon : null)}${thumb ? thumbImg(thumb) : ''}
         <div class="pill-row"><span class="pill">${esc(l.subject||'General')}</span>${l.class_level && l.class_level!=='All Classes' ? `<span class="pill">${esc(l.class_level)}</span>` : ''}</div>
       </div>
       <div class="card-body">
@@ -707,13 +764,14 @@ async function renderResources(){
     const title = lang()==='dz' && r.dz ? r.dz : r.title;
     const loginLocked = !s;
     const url = safeUrl(r.url);
-    const thumb = safeUrl(r.thumbnail_url);
+    const thumb = thumbFor(r);
+    const rk = fileKindFor(url, r.rtype) || 'file';
     const state = loginLocked ? 'locked-anon' : accessState('resources', r);
     const overlay = lockOverlayHtml(state, r);
     return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(r.id)}" data-title="${esc(title)}" data-price="${esc(r.price||0)}">
       ${thumb
-        ? `<img src="${esc(thumb)}" style="width:64px;height:64px;object-fit:cover;border-radius:14px;flex-shrink:0" onerror="this.outerHTML='<div class=\\'resource-icon\\'>${icon}</div>'"/>`
-        : `<div class="resource-icon">${icon}</div>`}
+        ? thumbImg(thumb, ` data-kind="${rk}" style="position:static;width:64px;height:64px;object-fit:cover;border-radius:14px;flex-shrink:0"`)
+        : miniCover(rk)}
       <div class="resource-info"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.rtype||'')}${r.filesize?' · '+esc(r.filesize):''}${r.class_level && r.class_level!=='All Classes'?' · 🎓 '+esc(r.class_level):''}</div></div>
       ${overlay}
     </div>`;
@@ -742,10 +800,10 @@ async function renderVideos(){
     const title = lang()==='dz' && v.dz ? v.dz : v.title;
     const icon = ICONS[v.subject]||'🎬';
     const url = safeUrl(v.url);
-    const thumb = safeUrl(v.thumbnail_url);
+    const thumb = thumbFor(v);
     const state = accessState('videos', v);
     return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}">
-      <div class="video-thumb" ${thumb ?`style="background:url('${esc(thumb)}') center/cover"`:''}>${thumb?'':icon}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div><div class="play-btn">▶</div></div>
+      <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div><div class="play-btn">▶</div></div>
       <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}</div></div>
       ${lockOverlayHtml(state, v)}
     </div>`;
@@ -773,13 +831,13 @@ async function renderArticles(){
     const title = lang()==='dz' && a.dz ? a.dz : a.title;
     const date = a.article_date ? new Date(a.article_date).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '';
     const url = safeUrl(a.url);
-    const thumb = safeUrl(a.thumbnail_url);
+    const thumb = thumbFor(a);
     const state = accessState('articles', a);
     const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 Nu.${esc(a.price||0)} — log in</span>`
                     : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 Nu.${esc(a.price||0)} — tap to unlock</span>`
                     : state==='pending' ? ` <span style="color:var(--text2);font-size:.78rem">⏳ Under review</span>` : '';
     return `<div class="blog-card fade-in">
-      <div class="blog-thumb" style="${thumb?`background:url('${esc(thumb)}') center/cover`:``}">${thumb?'':EMOJIS[i%6]}</div>
+      <div class="blog-thumb">${coverHtml('article', EMOJIS[i%6])}${thumb ? thumbImg(thumb) : ''}</div>
       <div class="blog-body">
         <div class="blog-date">${esc(date)}</div>
         <h3 data-state="${state}" data-url="${esc(url)}" data-id="${esc(a.id)}" data-title="${esc(title)}" data-price="${esc(a.price||0)}" style="${state==='free'||state==='approved'?'cursor:pointer':''}">${esc(title)}${priceTag}</h3>
