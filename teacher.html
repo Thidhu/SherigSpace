@@ -74,6 +74,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .toast.err{border-color:var(--red);border-left-color:var(--red)}
 .login-card{background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;font-size:.85rem;line-height:1.9}
 .login-card b{color:var(--gold-text,var(--gold))}
+.task-att{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.45rem .7rem;border:1px solid var(--border);border-radius:6px;margin-bottom:.4rem;font-size:.84rem;background:rgba(201,168,76,.06)}
+.task-att span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
 .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
 .class-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
@@ -158,7 +160,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
-import { uploadFileToDrive } from './drive-upload.js';
+import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 let me = null; // { id, name, email }
@@ -467,8 +469,9 @@ async function renderAssignments(){
     const { count: doneCount } = await supabase.from('assignment_status').select('*',{count:'exact',head:true}).eq('assignment_id', a.id).eq('status','done');
     const { count: totalStudents } = await supabase.from('class_students').select('*',{count:'exact',head:true}).eq('class_id', currentClassId);
     const label = a.kind === 'custom' ? a.title : `${a.item_type} item`;
+    const attCount = String(a.attachment_url || '').split('\n').filter(Boolean).length;
     return `<div class="irow">
-      <div><div class="iname">${esc(label)}</div><div class="imeta">${a.due_date?'Due '+esc(a.due_date)+' · ':''}${doneCount||0}/${totalStudents||0} completed</div></div>
+      <div><div class="iname">${esc(label)}</div><div class="imeta">${a.due_date?'Due '+esc(a.due_date)+' · ':''}${attCount?'📎 '+attCount+' attached · ':''}${doneCount||0}/${totalStudents||0} completed</div></div>
       <div class="ibtns"><button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button></div>
     </div>`;
   }));
@@ -503,18 +506,27 @@ window.openAssignmentForm = async function(){
     <div id="kind-custom-fields" style="display:none">
       <div class="field"><label>Title</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3"/></div>
       <div class="field"><label>Description</label><textarea id="f-custom-desc" placeholder="Instructions for students"></textarea></div>
-      <div class="field"><label>Attachment (optional)</label>
-        <div style="display:flex;gap:.6rem;align-items:center">
-          <input type="file" id="f-custom-file" style="display:none" onchange="handleAssignmentFilePick(event)"/>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('f-custom-file').click()">📤 Upload to Drive</button>
-          <span id="assignment-upload-status" style="font-size:.78rem;color:var(--text2)"></span>
+      <div class="field"><label>Videos, links &amp; files (optional)</label>
+        <div id="task-attach-list" style="margin-bottom:.5rem"></div>
+        <div style="display:flex;gap:.5rem">
+          <input id="f-link-input" placeholder="Paste a link (YouTube, website, Google Drive…)" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
+          <button type="button" class="btn btn-gold btn-sm" style="white-space:nowrap" onclick="addTaskLink()">＋ Add link</button>
         </div>
-        <input type="hidden" id="f-custom-url"/>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
+          <input type="file" id="f-task-video" accept="video/*" style="display:none" onchange="handleTaskUpload(event,'video')"/>
+          <input type="file" id="f-task-file" style="display:none" onchange="handleTaskUpload(event,'file')"/>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-video')">🎥 Upload video</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-file')">📎 Upload file</button>
+        </div>
+        <div id="assignment-upload-status" style="font-size:.78rem;color:var(--text2);margin-top:.5rem"></div>
+        <div style="font-size:.74rem;color:var(--text2);margin-top:.35rem">Uploads go to Google Drive (up to 50&nbsp;MB). For a longer video, put it on YouTube as <b>Unlisted</b> and paste its link. Students can watch videos right inside the task.</div>
       </div>
     </div>
     <div class="field"><label>Due Date (optional)</label><input type="date" id="f-due-date"/></div>
   `;
   await loadTlmOptions();
+  taskAttachments = [];
+  renderTaskAttachments();
   const btn = document.getElementById('m-save-btn');
   btn.textContent = 'Create';
   btn.onclick = async ()=>{
@@ -529,7 +541,7 @@ window.openAssignmentForm = async function(){
       if(!fv('f-custom-title')){ toast('Please enter a title.', true); return; }
       payload.title = fv('f-custom-title');
       payload.description = fv('f-custom-desc');
-      payload.attachment_url = fv('f-custom-url');
+      payload.attachment_url = taskAttachments.map(a => a.url).join('\n');
     }
     const { error } = await supabase.from('assignments').insert(payload);
     if(error){ toast('Error: '+error.message, true); return; }
@@ -551,17 +563,76 @@ window.loadTlmOptions = async function(){
   if(sel) sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
 };
 
-window.handleAssignmentFilePick = async function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  const statusEl = document.getElementById('assignment-upload-status');
-  statusEl.textContent = 'Uploading…';
+// ── Task attachments: several videos / links / files per task ──
+let taskAttachments = []; // [{ url, icon, label }]
+
+function renderTaskAttachments(){
+  const el = document.getElementById('task-attach-list');
+  if(!el) return;
+  el.innerHTML = taskAttachments.length
+    ? taskAttachments.map((a,i)=>`<div class="task-att"><span>${a.icon} ${esc(a.label)}</span><button type="button" class="btn btn-del btn-sm" data-rm-att="${i}">✕</button></div>`).join('')
+    : '<div style="font-size:.78rem;color:var(--text2)">Nothing added yet.</div>';
+  el.querySelectorAll('[data-rm-att]').forEach(b => b.addEventListener('click', () => {
+    taskAttachments.splice(Number(b.getAttribute('data-rm-att')), 1);
+    renderTaskAttachments();
+  }));
+}
+
+window.addTaskLink = function(){
+  const inp = document.getElementById('f-link-input');
+  let v = (inp.value || '').trim();
+  if(!v) return;
+  if(!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  let u;
+  try{ u = new URL(v); }catch(e){ toast('That does not look like a valid link.', true); return; }
+  if(u.protocol !== 'http:' && u.protocol !== 'https:'){ toast('Only web links (http/https) can be added.', true); return; }
+  const host = u.hostname.replace(/^www\./,'');
+  const isVideo = /(^|\.)(youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com)$/.test(host);
+  taskAttachments.push({ url: u.href, icon: isVideo ? '🎥' : '🔗', label: isVideo ? 'Video — ' + host : host + (u.pathname.length > 1 ? u.pathname.slice(0,30) : '') });
+  inp.value = '';
+  renderTaskAttachments();
+};
+
+// Google's sign-in popup must be opened straight from a click, so sign in first,
+// then let the teacher choose the file on the next click.
+window.pickTaskFile = async function(inputId){
+  const st = document.getElementById('assignment-upload-status');
+  if(hasValidDriveToken()){ document.getElementById(inputId).click(); return; }
+  st.style.color = 'var(--text2)';
+  st.textContent = 'Connecting to Google… allow the popup and sign in.';
   try{
-    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
-    document.getElementById('f-custom-url').value = result.viewUrl;
-    statusEl.textContent = `Uploaded "${result.name}" ✓`;
+    await connectGoogleDrive(GOOGLE_CLIENT_ID);
+    st.style.color = 'var(--green)';
+    st.textContent = 'Google connected ✓ — click the upload button again to choose your file.';
   }catch(err){
-    statusEl.textContent = 'Upload failed: '+err.message;
+    st.style.color = 'var(--red)';
+    st.textContent = 'Could not connect to Google: ' + err.message + ' You can still paste a link instead.';
+  }
+};
+
+window.handleTaskUpload = async function(e, kind){
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  const st = document.getElementById('assignment-upload-status');
+  st.style.color = 'var(--text2)';
+  st.textContent = 'Uploading "' + file.name + '"… (a video can take a few minutes — keep this window open)';
+  try{
+    let result;
+    try{ result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID); }
+    catch(err){
+      // The shared folder may not be visible to this teacher's Google account —
+      // fall back to their own Drive instead of failing.
+      if(/\(404\)|File not found/i.test(String(err.message))) result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, '');
+      else throw err;
+    }
+    taskAttachments.push({ url: result.viewUrl, icon: kind === 'video' ? '🎥' : '📎', label: result.name });
+    renderTaskAttachments();
+    st.style.color = 'var(--green)';
+    st.textContent = 'Uploaded "' + result.name + '" ✓';
+  }catch(err){
+    st.style.color = 'var(--red)';
+    st.textContent = 'Upload failed: ' + err.message;
   }
 };
 
