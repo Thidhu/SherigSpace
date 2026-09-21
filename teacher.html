@@ -18,21 +18,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 #gate.hide{display:none}
 .gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;width:100%;max-width:420px;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5)}
 .gate-icon{font-size:2.5rem;margin-bottom:.75rem}
-.gate-card h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold);margin-bottom:.3rem}
+.gate-card h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-text,var(--gold));margin-bottom:.3rem}
 .gate-card p{font-size:.85rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.6}
 .gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
 .gate-btn:hover{background:var(--gold-light)}
 .layout{display:flex;min-height:100vh}
 .sidebar{width:220px;flex-shrink:0;background:#131c2e;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
 .logo{padding:1.4rem 1.5rem;border-bottom:1px solid var(--border)}
-.logo h2{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold)}
+.logo h2{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold-text,var(--gold))}
 .logo small{display:block;font-size:.7rem;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
 .sidenav{padding:.8rem 0;flex:1}
 .sitem{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.4rem;font-size:.87rem;font-weight:500;color:var(--text2);cursor:pointer;border-left:2px solid transparent}
 .sitem:hover{color:var(--text);background:rgba(255,255,255,.04)}
-.sitem.on{color:var(--gold);background:rgba(201,168,76,.07);border-left-color:var(--gold)}
+.sitem.on{color:var(--gold-text,var(--gold));background:rgba(201,168,76,.07);border-left-color:var(--gold)}
 .sfoot{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.6rem}
-.sfoot a,.sfoot button{display:block;text-align:center;padding:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:4px;color:var(--gold);font-size:.8rem;text-decoration:none;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif}
+.sfoot a,.sfoot button{display:block;text-align:center;padding:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:4px;color:var(--gold-text,var(--gold));font-size:.8rem;text-decoration:none;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif}
 .sfoot button.logout{background:rgba(224,92,92,.1);border-color:rgba(224,92,92,.25);color:var(--red)}
 .main{flex:1;padding:2rem;overflow-x:hidden}
 .page{display:none}.page.on{display:block}
@@ -42,7 +42,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1.5rem}
 .card-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.4rem;border-bottom:1px solid var(--border)}
 .card-head h3{font-size:.95rem;font-weight:600}
-.cbadge{background:rgba(201,168,76,.15);color:var(--gold);font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px}
+.cbadge{background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px}
 .irow{display:grid;grid-template-columns:1fr auto;align-items:center;padding:.85rem 1.4rem;border-bottom:1px solid rgba(255,255,255,.05);gap:1rem}
 .irow:last-child{border-bottom:none}
 .iname{font-weight:500;font-size:.88rem}
@@ -50,7 +50,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .ibtns{display:flex;gap:.4rem;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;gap:.35rem;padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
 .btn-gold{background:var(--gold);color:#1a2340}.btn-gold:hover{background:var(--gold-light)}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-ghost:hover{border-color:var(--gold);color:var(--gold-text,var(--gold))}
 .btn-edit{background:rgba(92,141,224,.12);border:1px solid rgba(92,141,224,.25);color:var(--blue)}
 .btn-del{background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);color:var(--red)}
 .btn-sm{padding:5px 9px;font-size:.76rem}
@@ -59,7 +59,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .overlay.open{display:flex}
 .modal{background:#131c2e;border:1px solid var(--border);border-radius:8px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
 .mhead{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)}
-.mhead h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold)}
+.mhead h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold-text,var(--gold))}
 .mclose{background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer}
 .mbody{padding:1.4rem;display:flex;flex-direction:column;gap:.9rem}
 .mfoot{padding:.9rem 1.4rem;border-top:1px solid var(--border);display:flex;gap:.7rem;justify-content:flex-end}
@@ -73,14 +73,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .toast.show{transform:translateY(0);opacity:1}
 .toast.err{border-color:var(--red);border-left-color:var(--red)}
 .login-card{background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;font-size:.85rem;line-height:1.9}
-.login-card b{color:var(--gold)}
-.class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold);font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
+.login-card b{color:var(--gold-text,var(--gold))}
+.class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
 .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
 .class-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
 .class-card:hover{transform:translateY(-3px)}
 .class-card h4{font-family:'Playfair Display',serif;color:var(--text);margin-bottom:.4rem}
 @media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
 </style>
+<script src="theme.js"></script>
 </head>
 <body>
 
@@ -100,6 +101,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="sitem" onclick="go('billing')">💳 &nbsp;Subscription</div>
     </nav>
     <div class="sfoot">
+      <div data-theme-slot></div>
       <a href="index.html">↗ View Website</a>
       <button class="logout" onclick="logout()">🔒 Log Out</button>
     </div>
@@ -116,7 +118,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
         <div>
           <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem">← Back to Classes</button>
           <div class="ptitle" id="detail-class-name">Class</div>
-          <div class="psub">Class Code: <span class="class-code-badge" id="detail-class-code">—</span></div>
+          <div class="psub">Students log in with this class name: <span class="class-code-badge" id="detail-class-code">—</span></div>
         </div>
       </div>
       <div class="card"><div class="card-head"><h3>Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()">+ Add Student</button></div><div id="students-list"></div></div>
@@ -170,6 +172,9 @@ function toast(msg, isErr=false){
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000);
 }
 function fv(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+// The class NAME is now what students type at login (it is stored in the class_code column).
+function canonName(s){ return String(s||'').trim().replace(/\s+/g,' ').toLowerCase(); }
+function loginText(c){ return canonName(c.name) === c.class_code ? c.name : c.class_code; }
 function genCode(){ return Math.random().toString(36).slice(2,6).toUpperCase()+'-'+Math.random().toString(36).slice(2,5).toUpperCase(); }
 function genPin(){ return String(Math.floor(100000+Math.random()*900000)); }
 function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,20) || 'student'; }
@@ -195,7 +200,7 @@ async function checkAccess(){
     siteSettings = settings || {};
     const qr = siteSettings.qr_image_url;
     let statusNote = '';
-    if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold);font-size:.85rem;margin-top:1rem">⏳ Your last payment is under review.</p>`;
+    if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold-text,var(--gold));font-size:.85rem;margin-top:1rem">⏳ Your last payment is under review.</p>`;
     else if(sub && sub.status === 'rejected') statusNote = `<p style="color:var(--red);font-size:.85rem;margin-top:1rem">Your last payment was not approved. You can submit again below.</p>`;
     gate.innerHTML = `
       <div class="gate-icon">🍎</div>
@@ -239,7 +244,7 @@ window.submitTeacherProof = async function(){
       teacher_id: me.id, price: siteSettings.teacher_plan_price || null, proof_path: path, status: 'pending'
     });
     if(insErr) throw insErr;
-    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = '#7ed9b0';
+    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = 'var(--ok-text,#7ed9b0)';
     setTimeout(checkAccess, 1200);
   }catch(err){
     statusEl.textContent = 'Failed: ' + err.message; statusEl.style.color = 'var(--red)';
@@ -259,19 +264,27 @@ window.go = function(p){
 // ── CLASSES ──
 async function renderClasses(){
   const { data } = await supabase.from('classes').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false});
+  // Older classes still have a random code. Switch them to their class name so
+  // students can just type the name. (If a name is already taken by another
+  // class the update is refused and the old code keeps working.)
+  await Promise.all((data||[]).filter(c => c.name && canonName(c.name) !== c.class_code).map(async c => {
+    const { error } = await supabase.from('classes').update({ class_code: canonName(c.name) }).eq('id', c.id);
+    if(!error) c.class_code = canonName(c.name);
+    else console.warn('Could not switch class to name login:', c.name, error.message);
+  }));
   const el = document.getElementById('classes-list');
   el.innerHTML = data?.length ? data.map(c=>`
-    <div class="class-card" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(c.class_code)}')">
+    <div class="class-card" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(loginText(c))}')">
       <h4>${esc(c.name)}</h4>
       <div style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem">${esc(c.class_level||'')}</div>
-      <span class="class-code-badge">${esc(c.class_code)}</span>
+      <span class="class-code-badge">${esc(loginText(c))}</span>
     </div>`).join('') : `<div class="empty" style="grid-column:1/-1"><div class="ei">🏫</div><p>No classes yet — create your first one!</p></div>`;
 }
 
 window.openClassForm = function(){
   document.getElementById('m-title').textContent = 'New Class';
   document.getElementById('m-body').innerHTML = `
-    <div class="field"><label>Class Name</label><input id="f-class-name" placeholder="e.g. Math 7B"/></div>
+    <div class="field"><label>Class Name</label><input id="f-class-name" placeholder="e.g. Class 9 Dzongkha"/><div style="font-size:.76rem;color:var(--text2);margin-top:.35rem">Students type this name to log in, so keep it short and easy to spell.</div></div>
     <div class="field"><label>Class Level</label><select id="f-class-level">${CLASS_LEVELS.map(c=>`<option>${c}</option>`).join('')}</select></div>
   `;
   const btn = document.getElementById('m-save-btn');
@@ -280,9 +293,13 @@ window.openClassForm = function(){
     const name = fv('f-class-name');
     if(!name){ toast('Please enter a class name.', true); return; }
     const { error } = await supabase.from('classes').insert({
-      teacher_id: me.id, name, class_level: fv('f-class-level'), class_code: genCode()
+      teacher_id: me.id, name, class_level: fv('f-class-level'), class_code: canonName(name)
     });
-    if(error){ toast('Error: '+error.message, true); return; }
+    if(error){
+      const taken = error.code === '23505' || /duplicate|unique/i.test(error.message || '');
+      toast(taken ? 'That class name is already taken. Add something to make it different (e.g. "Class 9 Dzongkha - Paro").' : 'Error: '+error.message, true);
+      return;
+    }
     toast('Class created ✓'); closeModal(); renderClasses();
   };
   document.getElementById('overlay').classList.add('open');
@@ -356,7 +373,7 @@ window.openStudentForm = function(){
       toast('Student added ✓');
       renderStudents();
       document.getElementById('login-card-body').innerHTML = `
-        Class Code: <b>${esc(code)}</b><br>
+        Class Name: <b>${esc(code)}</b><br>
         Student Name: <b>${esc(name)}</b><br>
         PIN: <b>${esc(pin)}</b><br><br>
         Give the student this info and send them to <b>${esc(window.location.origin)}/login.html</b> → Student tab.`;
@@ -419,7 +436,7 @@ window.openEditStudentForm = function(rowId, currentName){
         toast('Password reset ✓');
         renderStudents();
         document.getElementById('login-card-body').innerHTML = `
-          Class Code: <b>${esc(code)}</b><br>
+          Class Name: <b>${esc(code)}</b><br>
           Student Name: <b>${esc(name)}</b><br>
           PIN: <b>${esc(newPin)}</b><br><br>
           This is a new login — the old PIN no longer works. Give the student these updated details.`;
