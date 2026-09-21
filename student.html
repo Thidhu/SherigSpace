@@ -64,6 +64,40 @@ main{max-width:800px;margin:0 auto;padding:2rem 5%}
 .empty{text-align:center;padding:3rem 1rem;color:var(--text2)}
 .empty .ei{font-size:2.5rem;margin-bottom:.75rem}
 .locked-note{font-size:.8rem;color:var(--gold-text,var(--gold));background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem .9rem;margin-bottom:.7rem}
+
+a.btn{text-decoration:none;display:inline-block}
+.btn-sm{padding:5px 11px;font-size:.78rem}
+.assign-desc{white-space:pre-wrap}
+.due-tag{display:inline-block;margin-left:.5rem;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:700}
+.due-tag.late{background:rgba(224,92,92,.14);color:var(--err-text,#f09090)}
+.due-tag.soon{background:rgba(201,168,76,.18);color:var(--gold-text,var(--gold))}
+.res-block{margin:.2rem 0 1rem}
+.res-head{font-weight:600;font-size:.86rem;margin-bottom:.5rem}
+.res-video{margin-bottom:.8rem}
+.res-cap{font-size:.78rem;color:var(--text2);margin-top:.3rem}
+.res-cap a{color:var(--gold-text,var(--gold));text-decoration:none}
+.res-cap a:hover{text-decoration:underline}
+.res-media{width:100%;max-width:640px;border-radius:10px;background:#000;display:block}
+.res-img img{max-width:100%;max-height:420px;border-radius:8px;border:1px solid var(--border);display:block}
+.res-audio{margin-bottom:.8rem}
+.res-tile{border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem;margin-bottom:.5rem;background:rgba(201,168,76,.06)}
+.res-row{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.res-ico{font-size:1.3rem}
+.res-info{flex:1;min-width:140px}
+.res-name{font-weight:600;font-size:.86rem;overflow-wrap:anywhere}
+.res-sub{font-size:.74rem;color:var(--text2)}
+.res-btns{display:flex;gap:.4rem;flex-wrap:wrap}
+.res-preview iframe{width:100%;height:420px;border:0;border-radius:8px;margin-top:.6rem;background:#fff}
+.q-list{display:flex;flex-direction:column;gap:1rem;margin:.2rem 0 1rem}
+.q-item{display:flex;flex-direction:column;gap:.45rem}
+.q-text{font-size:.9rem;font-weight:500;line-height:1.5}
+.q-num{display:inline-block;min-width:1.5rem;color:var(--gold-text,var(--gold));font-weight:700}
+.q-item textarea{min-height:90px}
+.q-opts{display:flex;flex-direction:column;gap:.35rem}
+.q-opt{display:flex;align-items:flex-start;gap:.55rem;padding:.5rem .7rem;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.88rem;background:rgba(201,168,76,.04)}
+.q-opt:hover{border-color:var(--gold)}
+.q-opt input{margin-top:.2rem;accent-color:var(--gold)}
+.answer-sub{font-size:.8rem;color:var(--text2);margin:.2rem 0 .4rem}
 </style>
 <script src="theme.js"></script>
 </head>
@@ -94,6 +128,7 @@ main{max-width:800px;margin:0 auto;padding:2rem 5%}
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
+import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions } from './assignment-utils.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 let me = null;
@@ -135,13 +170,17 @@ async function renderAssignments(){
   (statuses||[]).forEach(s=>{
     statusMap[s.assignment_id] = s.status;
     statusRows[s.assignment_id] = s;
-    if(!drafts[s.assignment_id]) drafts[s.assignment_id] = { text: s.answer_text || '', links: splitLines(s.answer_links), files: splitLines(s.answer_files) };
+    if(!drafts[s.assignment_id]) drafts[s.assignment_id] = normDraft(loadLocalDraft(s.assignment_id) || {
+      text: s.answer_text || '', links: splitLines(s.answer_links), files: splitLines(s.answer_files),
+      answers: (s.answers && typeof s.answers === 'object') ? s.answers : {}
+    });
   });
 
   if(!assignments?.length){
     wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>No assignments yet — check back soon!</p></div>`;
     return;
   }
+  assignments.forEach(a => { assignmentsById[String(a.id)] = a; });
 
   // Group by class
   const byClass = {};
@@ -153,10 +192,8 @@ async function renderAssignments(){
     const group = byClass[classId];
     if(!group.items.length) continue;
     html += `<div class="class-heading">🏫 ${esc(group.name)}</div>`;
-    for(const a of group.items){
-      const done = statusMap[a.id] === 'done';
-      html += await renderAssignmentCard(a, done);
-    }
+    const cards = await Promise.all(group.items.map(a => renderAssignmentCard(a, statusMap[a.id] === 'done')));
+    html += cards.join('');
   }
   wrap.innerHTML = html || `<div class="empty"><div class="ei">📋</div><p>No assignments yet.</p></div>`;
 
@@ -166,18 +203,43 @@ async function renderAssignments(){
   wrap.querySelectorAll('[data-open-item]').forEach(btn=>{
     btn.addEventListener('click', ()=>window.open(btn.getAttribute('data-open-item'), '_blank', 'noopener'));
   });
+  // "Preview" on documents / files: the frame is only created when asked for, so the page stays fast.
+  wrap.querySelectorAll('[data-preview]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const box = btn.closest('.res-tile').querySelector('.res-preview');
+      if(box.firstChild){ box.innerHTML = ''; btn.textContent = 'Preview'; return; }
+      const f = document.createElement('iframe');
+      f.src = btn.dataset.preview; f.title = 'Preview'; f.loading = 'lazy';
+      f.setAttribute('allowfullscreen', '');
+      f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms');
+      f.referrerPolicy = 'strict-origin-when-cross-origin';
+      box.appendChild(f); btn.textContent = 'Hide preview';
+    });
+  });
   wireAnswerBoxes(wrap);
 }
 
-// ── Written answers, links and photos/files submitted by the student ──
-let answersEnabled = false;   // becomes true once the setup SQL has been run
-const drafts = {};            // assignment id -> { text, links[], files[] }
+// ── Answers, links and photos/files submitted by the student ──
+let answersEnabled = false;   // becomes true once sherigspace_task_answers.sql has been run
+let questionsEnabled = false; // becomes true once sherigspace_assignments_v2.sql has been run
+const drafts = {};            // assignment id -> { text, links[], files[], answers{} }
 const statusRows = {};        // assignment id -> saved status row
+const assignmentsById = {};   // assignment id -> assignment row
 function splitLines(v){ return String(v || '').split(/\s*\n\s*/).filter(Boolean); }
-function getDraft(id){ return drafts[id] || (drafts[id] = { text:'', links:[], files:[] }); }
+function normDraft(d){ return Object.assign({ text:'', links:[], files:[], answers:{} }, d); }
+function getDraft(id){ return drafts[id] || (drafts[id] = normDraft(loadLocalDraft(id) || {})); }
+
+// Drafts are also kept on this device, so a refresh or a lost connection doesn't wipe what a student typed.
+function draftKey(id){ return 'sherigDraft:' + me.id + ':' + id; }
+function loadLocalDraft(id){ try{ const raw = localStorage.getItem(draftKey(id)); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+function saveLocalDraft(id){ try{ localStorage.setItem(draftKey(id), JSON.stringify(getDraft(id))); }catch(e){} }
+function clearLocalDraft(id){ try{ localStorage.removeItem(draftKey(id)); }catch(e){} }
+
 async function checkAnswersEnabled(){
   const { error } = await supabase.from('assignment_status').select('answer_text').limit(1);
   answersEnabled = !error;
+  const r2 = await supabase.from('assignment_status').select('answers,score').limit(1);
+  questionsEnabled = !r2.error;
 }
 function fileLabel(path){ const n = String(path).split('/').pop() || ''; return n.replace(/^\d+-/, ''); }
 function chipsHtml(id){
@@ -192,16 +254,41 @@ function refreshChips(id){
   const el = boxFor('.chips', id); if(!el) return;
   el.innerHTML = chipsHtml(id);
   el.querySelectorAll('[data-rm-chip]').forEach(b => b.addEventListener('click', () => {
-    getDraft(id)[b.dataset.kind].splice(Number(b.dataset.i), 1); refreshChips(id);
+    getDraft(id)[b.dataset.kind].splice(Number(b.dataset.i), 1); saveLocalDraft(id); refreshChips(id);
   }));
 }
+
+// The teacher's questions for this task (short answer, paragraph, multiple choice).
+function questionsFor(a){ return questionsEnabled ? parseQuestions(a) : []; }
+function questionsHtml(a){
+  const qs = questionsFor(a);
+  if(!qs.length) return '';
+  const id = String(a.id), d = getDraft(id);
+  return `<div class="q-list">` + qs.map((q,i)=>{
+    const val = d.answers[q.id] == null ? '' : String(d.answers[q.id]);
+    const attrs = `data-q-input data-id="${esc(id)}" data-qid="${esc(q.id)}"`;
+    let input;
+    if(q.type === 'long') input = `<textarea ${attrs} placeholder="Write your answer…">${esc(val)}</textarea>`;
+    else if(q.type === 'choice') input = `<div class="q-opts">${q.options.map(o =>
+      `<label class="q-opt"><input type="radio" name="qr-${esc(id)}-${esc(q.id)}" ${attrs} data-val="${esc(o)}" ${val === o ? 'checked' : ''}/><span>${esc(o)}</span></label>`).join('')}</div>`;
+    else input = `<input type="text" ${attrs} value="${esc(val)}" placeholder="Your answer…"/>`;
+    return `<div class="q-item"><div class="q-text"><span class="q-num">${i+1}.</span>${esc(q.text)}</div>${input}</div>`;
+  }).join('') + `</div>`;
+}
+
 function answerBoxHtml(a){
   const id = String(a.id), d = getDraft(id), row = statusRows[id] || {};
   const submitted = !!row.submitted_at;
+  const hasQ = questionsFor(a).length > 0;
+  const fb = [];
+  if(row.score) fb.push(`<b>⭐ Marks: ${esc(row.score)}</b>`);
+  if(row.teacher_feedback) fb.push(`<b>💬 Teacher feedback</b>`, esc(row.teacher_feedback));
   return `<div class="answer-box">
-    <div class="answer-title">✍️ Your answer</div>
+    <div class="answer-title">✍️ ${hasQ ? 'Your answers' : 'Your answer'}</div>
     ${submitted ? `<div class="submitted-note">✓ Submitted ${esc(new Date(row.submitted_at).toLocaleString())} — you can edit and submit again.</div>` : ''}
-    <textarea data-answer-text data-id="${esc(id)}" placeholder="Write your answer here…">${esc(d.text)}</textarea>
+    ${questionsHtml(a)}
+    ${hasQ ? `<div class="answer-sub">Anything else you want to tell your teacher? (optional)</div>` : ''}
+    <textarea data-answer-text data-id="${esc(id)}" style="${hasQ ? 'min-height:70px' : ''}" placeholder="${hasQ ? 'Add a note…' : 'Write your answer here…'}">${esc(d.text)}</textarea>
     <div class="answer-add">
       <input type="text" data-link-input data-id="${esc(id)}" placeholder="Add a link (optional)"/>
       <button type="button" class="btn btn-ghost" data-add-link data-id="${esc(id)}">＋ Link</button>
@@ -211,18 +298,24 @@ function answerBoxHtml(a){
     </div>
     <div class="chips" data-id="${esc(id)}">${chipsHtml(id)}</div>
     <div class="ans-status" data-id="${esc(id)}"></div>
-    <button type="button" class="btn btn-gold" data-submit-answer data-id="${esc(id)}">${submitted ? 'Update my answer' : 'Submit answer'}</button>
-  </div>${row.teacher_feedback ? `<div class="feedback-box"><b>💬 Teacher feedback</b><br>${esc(row.teacher_feedback)}</div>` : ''}`;
+    <button type="button" class="btn btn-gold" data-submit-answer data-id="${esc(id)}">${submitted ? 'Update my answers' : 'Submit answers'}</button>
+  </div>${fb.length ? `<div class="feedback-box">${fb.join('<br>')}</div>` : ''}`;
 }
 function wireAnswerBoxes(root){
-  root.querySelectorAll('[data-answer-text]').forEach(t => t.addEventListener('input', () => { getDraft(t.dataset.id).text = t.value; }));
+  root.querySelectorAll('[data-answer-text]').forEach(t => t.addEventListener('input', () => { getDraft(t.dataset.id).text = t.value; saveLocalDraft(t.dataset.id); }));
+  root.querySelectorAll('[data-q-input]').forEach(el => el.addEventListener(el.type === 'radio' ? 'change' : 'input', () => {
+    const d = getDraft(el.dataset.id);
+    if(el.type === 'radio'){ if(el.checked) d.answers[el.dataset.qid] = el.dataset.val; }
+    else d.answers[el.dataset.qid] = el.value;
+    saveLocalDraft(el.dataset.id);
+  }));
   root.querySelectorAll('[data-add-link]').forEach(b => b.addEventListener('click', () => {
     const id = b.dataset.id, inp = boxFor('[data-link-input]', id);
     let v = (inp.value || '').trim(); if(!v) return;
     if(!/^https?:\/\//i.test(v)) v = 'https://' + v;
     const ok = safeUrl(v);
     if(!ok){ setAnsStatus(id, 'That does not look like a valid link.', 'err'); return; }
-    getDraft(id).links.push(ok); inp.value = ''; setAnsStatus(id, '', ''); refreshChips(id);
+    getDraft(id).links.push(ok); saveLocalDraft(id); inp.value = ''; setAnsStatus(id, '', ''); refreshChips(id);
   }));
   root.querySelectorAll('[data-link-input]').forEach(i => i.addEventListener('keydown', e => {
     if(e.key === 'Enter'){ e.preventDefault(); boxFor('[data-add-link]', i.dataset.id).click(); }
@@ -236,7 +329,7 @@ function wireAnswerBoxes(root){
       const path = `${me.id}/${id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
       const { error } = await supabase.storage.from('task-answers').upload(path, file);
       if(error) throw error;
-      getDraft(id).files.push(path); refreshChips(id); setAnsStatus(id, 'Added ✓ — press Submit answer when you are ready.', 'ok');
+      getDraft(id).files.push(path); saveLocalDraft(id); refreshChips(id); setAnsStatus(id, 'Added ✓ — press Submit when you are ready.', 'ok');
     }catch(err){ setAnsStatus(id, 'Upload failed: ' + err.message, 'err'); }
   }));
   root.querySelectorAll('[data-submit-answer]').forEach(b => b.addEventListener('click', () => submitAnswer(b.dataset.id, b)));
@@ -244,79 +337,109 @@ function wireAnswerBoxes(root){
 }
 async function submitAnswer(id, btn){
   const d = getDraft(id);
-  if(!d.text.trim() && !d.links.length && !d.files.length){ setAnsStatus(id, 'Please write an answer, or add a link or file, first.', 'err'); return; }
+  const qs = questionsFor(assignmentsById[id] || {});
+  const cleanAnswers = {};
+  qs.forEach(q => { const v = String(d.answers[q.id] == null ? '' : d.answers[q.id]).trim(); if(v) cleanAnswers[q.id] = v; });
+  const answered = Object.keys(cleanAnswers).length;
+
+  if(!answered && !d.text.trim() && !d.links.length && !d.files.length){
+    setAnsStatus(id, qs.length ? 'Please answer at least one question, or add a note, link or file.' : 'Please write an answer, or add a link or file, first.', 'err');
+    return;
+  }
+  const blank = qs.length - answered;
+  if(blank > 0 && !confirm('You left ' + blank + ' question' + (blank > 1 ? 's' : '') + ' unanswered. Submit anyway?')) return;
+
   btn.disabled = true; const label = btn.textContent; btn.textContent = 'Submitting…';
   const now = new Date().toISOString();
-  const { error } = await supabase.from('assignment_status').upsert({
+  const payload = {
     assignment_id: id, student_id: me.id, status: 'done', completed_at: now, submitted_at: now,
     answer_text: d.text.trim(), answer_links: d.links.join('\n'), answer_files: d.files.join('\n')
-  }, { onConflict: 'assignment_id,student_id' });
+  };
+  if(questionsEnabled) payload.answers = cleanAnswers;
+  const { error } = await supabase.from('assignment_status').upsert(payload, { onConflict: 'assignment_id,student_id' });
   if(error){ setAnsStatus(id, 'Could not submit: ' + error.message, 'err'); btn.disabled = false; btn.textContent = label; return; }
+  clearLocalDraft(id);
   await renderAssignments();
 }
 
-// Turns the saved attachment text (one link per line) into videos/players/buttons.
-function embedFor(url){
-  let u; try{ u = new URL(url); }catch(e){ return null; }
-  const host = u.hostname.replace(/^www\./,'');
-  let id = null;
-  if(host === 'youtu.be') id = u.pathname.slice(1).split('/')[0];
-  else if(host.endsWith('youtube.com') || host === 'youtube-nocookie.com'){
-    if(u.pathname === '/watch') id = u.searchParams.get('v');
-    else { const m = u.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]{6,})/); if(m) id = m[1]; }
+// ── Resources the teacher attached: videos play here, documents preview here, everything else opens ──
+function resourceHtml(att){
+  const c = classifyUrl(att.url);
+  const kind = att.type && KIND_META[att.type] ? att.type : c.kind;
+  const meta = KIND_META[kind] || KIND_META.link;
+  const label = att.label || defaultLabel(att.url);
+  const open = `<a href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">↗ Open in a new tab</a>`;
+
+  if(kind === 'video' && c.embed){
+    return `<div class="res-video"><div class="task-embed"><iframe src="${esc(c.embed)}" title="${esc(label)}" loading="lazy" allowfullscreen
+      allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"
+      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"></iframe></div><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
   }
-  if(id && /^[\w-]{6,}$/.test(id)) return 'https://www.youtube-nocookie.com/embed/' + id;
-  if(host === 'vimeo.com'){ const m = u.pathname.match(/^\/(\d+)/); if(m) return 'https://player.vimeo.com/video/' + m[1]; }
-  if(host === 'drive.google.com'){ const m = u.pathname.match(/\/file\/d\/([\w-]+)/); if(m) return 'https://drive.google.com/file/d/' + m[1] + '/preview'; }
-  return null;
+  if(c.media === 'video') return `<div class="res-video"><video class="res-media" controls preload="metadata" src="${esc(att.url)}"></video><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
+  if(c.media === 'audio') return `<div class="res-audio"><div class="res-cap" style="margin:0 0 .3rem">🎧 ${esc(label)}</div><audio controls preload="none" src="${esc(att.url)}" style="width:100%"></audio></div>`;
+  if(c.media === 'image') return `<div class="res-video"><a class="res-img" href="${esc(att.url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(att.url)}" alt="${esc(label)}" loading="lazy"/></a><div class="res-cap">🖼️ ${esc(label)}</div></div>`;
+
+  return `<div class="res-tile"><div class="res-row">
+    <span class="res-ico">${meta.icon}</span>
+    <div class="res-info"><div class="res-name">${esc(label)}</div><div class="res-sub">${esc(c.name || meta.label)} · ${esc(c.host)}</div></div>
+    <div class="res-btns">
+      ${c.embed ? `<button type="button" class="btn btn-ghost btn-sm" data-preview="${esc(c.embed)}">Preview</button>` : ''}
+      <a class="btn btn-gold btn-sm" href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">${kind === 'form' ? 'Open form' : 'Open'}</a>
+      ${c.download ? `<a class="btn btn-ghost btn-sm" href="${esc(c.download)}" target="_blank" rel="noopener noreferrer">Download</a>` : ''}
+    </div></div><div class="res-preview"></div></div>`;
 }
-function renderAttachments(raw){
-  const urls = String(raw || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
-  return urls.map(url => {
-    const embed = embedFor(url);
-    if(embed){
-      return `<div class="task-embed"><iframe src="${esc(embed)}" title="Task media" loading="lazy" allowfullscreen
-        allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"
-        sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"></iframe></div>
-        <a class="task-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ Open in a new tab</a>`;
-    }
-    let host = url; try{ host = new URL(url).hostname.replace(/^www\./,''); }catch(e){}
-    return `<a class="task-linkbtn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">🔗 Open ${esc(host)}</a>`;
-  }).join('');
+function resourcesHtml(list){
+  if(!list.length) return '';
+  return `<div class="res-block"><div class="res-head">📎 Resources for this task</div>${list.map(resourceHtml).join('')}</div>`;
+}
+
+function dueHtml(a, done){
+  if(!a.due_date) return '';
+  const d = new Date(a.due_date + 'T00:00:00');
+  if(isNaN(d)) return `<div class="assign-meta">📅 Due ${esc(a.due_date)}</div>`;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days = Math.round((d - today) / 86400000);
+  let tag = '';
+  if(!done){
+    if(days < 0) tag = '<span class="due-tag late">Overdue</span>';
+    else if(days === 0) tag = '<span class="due-tag soon">Due today</span>';
+    else if(days === 1) tag = '<span class="due-tag soon">Due tomorrow</span>';
+  }
+  return `<div class="assign-meta">📅 Due ${esc(d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }))}${tag}</div>`;
 }
 
 async function renderAssignmentCard(a, done){
-  let title, desc, openUrl = null, lockedNote = '', attachmentsHtml = '';
+  let title, desc, lockedNote = '', resources = parseAttachments(a);
 
   if(a.kind === 'custom'){
-    title = a.title;
+    title = a.title || 'Task';
     desc = a.description || '';
-    attachmentsHtml = renderAttachments(a.attachment_url);
   } else {
     const { data: item } = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
-    title = item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : '(content unavailable)';
-    desc = item?.description || '';
+    title = a.title || (item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : '(content unavailable)');
+    desc = [a.description, item?.description].filter(Boolean).join('\n\n');
     if(item){
       if(item.is_premium && !item.url){
         lockedNote = `<div class="locked-note">🔒 This is premium content — visit the <a href="index.html" style="color:var(--gold-text,var(--gold))">TLM Store</a> to unlock it first.</div>`;
       } else {
-        attachmentsHtml = renderAttachments(item.url);
+        // the library item first, then whatever the teacher added on top
+        resources = parseAttachments({ attachment_url: item.url }).concat(resources);
       }
     }
   }
 
+  const hasQ = questionsFor(a).length > 0;
   return `<div class="assign-card ${done?'done':''}">
     <div class="assign-title">${esc(title)}</div>
-    ${desc?`<div class="assign-desc">${esc(desc)}</div>`:''}
-    ${a.due_date?`<div class="assign-meta">📅 Due ${esc(a.due_date)}</div>`:''}
-    ${attachmentsHtml}
+    ${dueHtml(a, done)}
+    ${desc ? `<div class="assign-desc">${esc(desc)}</div>` : ''}
+    ${resourcesHtml(resources)}
     ${lockedNote}
     ${answersEnabled && !lockedNote ? answerBoxHtml(a) : ''}
     <div class="assign-actions">
-      ${openUrl?`<button class="btn btn-gold" data-open-item="${esc(openUrl)}">Open</button>`:''}
       ${done
         ? `<button class="btn btn-green" disabled>✓ Completed</button>`
-        : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">Mark Complete</button>`}
+        : (hasQ ? '' : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">Mark Complete</button>`)}
     </div>
   </div>`;
 }
@@ -330,6 +453,7 @@ window.markDone = async function(assignmentId){
 };
 
 init();
+
 </script>
 </body>
 </html>
