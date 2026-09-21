@@ -121,7 +121,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 
 <div id="gate">
   <div class="gate-card" id="gate-inner">
-    <div class="gate-icon">🍎</div>
+    <div class="gate-icon">🧑‍🏫</div>
     <h2>Checking access…</h2>
     <p>One moment…</p>
   </div>
@@ -238,7 +238,7 @@ async function checkAccess(){
     if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold-text,var(--gold));font-size:.85rem;margin-top:1rem">⏳ Your last payment is under review.</p>`;
     else if(sub && sub.status === 'rejected') statusNote = `<p style="color:var(--red);font-size:.85rem;margin-top:1rem">Your last payment was not approved. You can submit again below.</p>`;
     gate.innerHTML = `
-      <div class="gate-icon">🍎</div>
+      <div class="gate-icon">🧑‍🏫</div>
       <h2>Become a Teacher</h2>
       <p>Subscribe for Nu. ${esc(siteSettings.teacher_plan_price || 'X')}/month to create classes, enroll students, and assign work.</p>
       ${qr?`<img src="${esc(qr)}" style="width:160px;margin:0 auto 1rem;display:block;border-radius:6px"/>`:''}
