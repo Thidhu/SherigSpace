@@ -1,976 +1,877 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-lang="en">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SherigSpace</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<title>Admin — SherigSpace</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
-@font-face{font-family:'ThinWangTJoyig';src:url('ThinWangTJoyig-Regular.ttf') format('truetype');font-weight:normal;font-style:normal;font-display:swap}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--gold:#c9a84c;--gold-light:#e8c97a;--gold-text:#c9a84c;--gold-soft:rgba(201,168,76,.08);--on-accent:#1a2340;--media-bg:linear-gradient(135deg,#1a2340,#253056);--shadow:0 6px 22px rgba(0,0,0,.28);--shadow-hover:0 16px 38px rgba(0,0,0,.4);--font-en:'DM Sans',sans-serif;--font-dz:'ThinWangTJoyig','Noto Serif Tibetan',sans-serif}
-[data-theme="dark"]{--bg:#0f1623;--surface:#1a2340;--card-bg:#192035;--card-border:#2a3556;--border:rgba(201,168,76,0.18);--text:#e8e4dc;--text2:#9aa3b8;--nav-bg:rgba(13,18,30,0.97);--section-alt:#131c2e;--footer-bg:#080d14;--hero1:#0f1623;--hero2:#1a2340;--hero3:#1a2f50;--navy:#1a2340;--navy-light:#253056;--input-bg:#202b4a}
-[data-theme="light"]{--bg:#fffaf1;--surface:#ffffff;--card-bg:#ffffff;--card-border:#f0e2c6;--border:rgba(214,140,20,0.30);--text:#1a2340;--text2:#5d584b;--nav-bg:rgba(26,35,64,0.97);--section-alt:#fff3dc;--footer-bg:#131c2e;--hero1:#fff4da;--hero2:#fffaf1;--hero3:#ffe6b3;--navy:#1a2340;--navy-light:#253056;--input-bg:#fbf0d9;--gold:#e0951c;--gold-light:#f5c25a;--gold-text:#a35a00;--gold-soft:rgba(224,149,28,.12);--on-accent:#1a2340;--media-bg:linear-gradient(135deg,#ffe4ae,#fff4da);--shadow:0 4px 20px rgba(150,90,10,.10);--shadow-hover:0 16px 38px rgba(150,90,10,.20)}
-html{scroll-behavior:smooth}
-body{font-family:var(--font-en);background:var(--bg);color:var(--text);overflow-x:hidden;transition:background .35s,color .35s}
-[data-lang="dz"] h1,[data-lang="dz"] h2,[data-lang="dz"] h3,[data-lang="dz"] h4,[data-lang="dz"] p,[data-lang="dz"] span:not(.t-icon),[data-lang="dz"] a,[data-lang="dz"] li,[data-lang="dz"] button{font-family:var(--font-dz)!important;line-height:2;letter-spacing:0}
-[data-lang="dz"] .hero-title,[data-lang="dz"] .section-title{font-family:'ThinWangTJoyig',sans-serif!important;line-height:1.8}
-nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:68px;border-bottom:1px solid var(--border);gap:1rem}
-.nav-logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold);text-decoration:none;flex-shrink:0}
-.nav-links{display:flex;gap:1.8rem;list-style:none}
-.nav-links a{color:rgba(255,255,255,.8);text-decoration:none;font-size:.85rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;transition:color .2s;position:relative;padding-bottom:4px}
-.nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1.5px;background:var(--gold);transition:width .25s}
-.nav-links a:hover{color:var(--gold)}.nav-links a:hover::after{width:100%}
-.nav-right{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
-.lang-toggle{display:flex;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:20px;overflow:hidden}
-.lang-btn{padding:4px 9px;font-size:.73rem;font-weight:600;color:rgba(255,255,255,.5);background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s;line-height:1.4}
-.lang-btn[data-lang-btn="dz"]{font-family:'ThinWangTJoyig',sans-serif;font-size:.78rem}
-.lang-btn.on{background:var(--gold);color:#1a2340;border-radius:18px}
-.theme-toggle{width:42px;height:22px;background:rgba(255,255,255,.1);border:1px solid var(--border);border-radius:11px;position:relative;cursor:pointer;flex-shrink:0}
-.theme-toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:var(--gold);border-radius:50%;transition:transform .3s}
-[data-theme="light"] .theme-toggle::after{transform:translateX(20px)}
-.admin-lock{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,.1);border:1px solid var(--border);color:var(--gold);text-decoration:none;font-size:.9rem;flex-shrink:0;transition:background .2s}
-.admin-lock:hover{background:rgba(201,168,76,.2)}
-.t-icon{position:absolute;top:50%;transform:translateY(-50%);font-size:.62rem;pointer-events:none;transition:opacity .3s}
-.t-icon.moon{left:4px}.t-icon.sun{right:4px;opacity:0}
-[data-theme="light"] .t-icon.moon{opacity:0}[data-theme="light"] .t-icon.sun{opacity:1}
-.user-btn{display:flex;align-items:center;gap:.45rem;padding:5px 11px;background:rgba(201,168,76,.12);border:1px solid var(--border);border-radius:20px;cursor:pointer;color:var(--gold);font-size:.8rem;font-weight:600;transition:background .2s;position:relative}
-.user-btn:hover{background:rgba(201,168,76,.22)}
-.user-avatar{width:22px;height:22px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#1a2340;font-weight:700}
-.user-dropdown{position:absolute;top:calc(100% + 12px);right:0;background:#131c2e;border:1px solid var(--border);border-radius:6px;min-width:160px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:300;display:none}
-.user-btn:focus-within .user-dropdown,.user-dropdown:hover{display:block}
-.udrop-item{display:block;padding:.65rem 1rem;font-size:.83rem;color:var(--text2);cursor:pointer;transition:background .15s;text-decoration:none;border:none;background:none;width:100%;text-align:left;font-family:var(--font-en)}
-.udrop-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
-.udrop-item.danger{color:#e05c5c}.udrop-item.danger:hover{background:rgba(224,92,92,.08)}
-.udrop-sep{height:1px;background:var(--border);margin:.2rem 0}
-.login-btn{padding:6px 14px;background:var(--gold);border:none;border-radius:3px;color:#1a2340;font-size:.8rem;font-weight:700;cursor:pointer;font-family:var(--font-en);transition:background .2s;text-decoration:none;display:inline-block}
-.login-btn:hover{background:var(--gold-light)}
-.hamburger{display:none;width:30px;height:24px;flex-direction:column;justify-content:space-between;cursor:pointer;background:none;border:none;padding:0;flex-shrink:0}
-.hamburger span{display:block;height:2px;width:100%;background:var(--gold);border-radius:2px;transition:transform .25s,opacity .25s}
-.hamburger.open span:nth-child(1){transform:translateY(11px) rotate(45deg)}
-.hamburger.open span:nth-child(2){opacity:0}
-.hamburger.open span:nth-child(3){transform:translateY(-11px) rotate(-45deg)}
-.mobile-nav{display:none;position:fixed;top:68px;left:0;right:0;z-index:199;background:var(--nav-bg);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);flex-direction:column;padding:.5rem 5% 1rem}
-.mobile-nav.open{display:flex}
-.mobile-nav a{color:rgba(255,255,255,.85);text-decoration:none;font-size:.92rem;font-weight:500;padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
-.mobile-nav a:last-child{border-bottom:none}
-#home{min-height:100vh;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 60%,var(--hero3) 100%);display:flex;align-items:center;padding:100px 5% 60px;position:relative;overflow:hidden}
-#home::before{content:'';position:absolute;top:-80px;right:-80px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.12) 0%,transparent 70%);pointer-events:none}
-#home::after{content:'';position:absolute;bottom:-60px;left:10%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.07) 0%,transparent 70%);pointer-events:none}
-.hero-inner{max-width:1100px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
-.hero-tag{display:inline-block;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold-light);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;padding:6px 14px;border-radius:2px;margin-bottom:1.5rem;animation:fadeUp .7s ease both}
-.hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.1rem,4.5vw,3.6rem);font-weight:700;color:#fff;line-height:1.15;margin-bottom:1.2rem;animation:fadeUp .8s .1s ease both}
-.hero-title span{color:var(--gold)}
-.hero-desc{color:rgba(255,255,255,.65);font-size:1rem;line-height:1.8;margin-bottom:2.2rem;animation:fadeUp .8s .2s ease both}
-.hero-cta{display:flex;gap:1rem;flex-wrap:wrap;animation:fadeUp .8s .3s ease both}
-.btn-primary{background:var(--gold);color:var(--navy);padding:12px 26px;border-radius:3px;font-weight:600;font-size:.9rem;text-decoration:none;transition:background .2s,transform .15s;display:inline-block;border:none;cursor:pointer;font-family:var(--font-en)}
-.btn-primary:disabled{opacity:.6;cursor:not-allowed}
-
-.btn-primary:hover{background:var(--gold-light);transform:translateY(-2px)}
-.btn-outline{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:rgba(255,255,255,.85);padding:12px 26px;border-radius:3px;font-weight:500;font-size:.9rem;text-decoration:none;transition:border-color .2s,color .2s,transform .15s;display:inline-block}
-.btn-outline:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px)}
-.hero-stats{display:flex;flex-direction:column;gap:1.5rem;animation:fadeUp .9s .35s ease both}
-.stat-card{background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.2);border-left:3px solid var(--gold);border-radius:4px;padding:1.2rem 1.5rem}
-.stat-card h3{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold);font-weight:700}
-.stat-card p{font-size:.82rem;color:rgba(255,255,255,.55);margin-top:2px;text-transform:uppercase;letter-spacing:.07em}
-section{padding:80px 5%}
-.inner{max-width:1100px;margin:auto}
-.section-label{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-text);font-weight:600;margin-bottom:.6rem}
-.section-title{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,3.5vw,2.7rem);font-weight:700;color:var(--text);line-height:1.2;margin-bottom:.8rem;transition:color .35s}
-.section-desc{color:var(--text2);font-size:1rem;line-height:1.75;max-width:560px;margin-bottom:3rem;transition:color .35s}
-.divider{width:48px;height:3px;background:var(--gold);border-radius:2px;margin:1rem 0 1.5rem}
-.class-tabs{display:flex;flex-wrap:wrap;gap:.5rem}
-.class-tab{padding:7px 16px;border-radius:20px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text2);font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
-.class-tab:hover{border-color:var(--gold);color:var(--gold-text)}
-.class-tab.active{background:var(--gold);border-color:var(--gold);color:var(--navy)}
-#lessons{background:var(--surface);transition:background .35s}
-.lessons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
-.lesson-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-top:3px solid var(--gold);border-radius:5px;padding:1.8rem;transition:transform .2s,box-shadow .2s,background .35s;cursor:pointer;overflow:hidden}
-.lesson-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
-.lesson-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--navy),var(--navy-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:1rem}
-.lesson-card h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:.5rem;transition:color .35s}
-.lesson-card p{font-size:.88rem;color:var(--text2);line-height:1.6;margin-bottom:1rem;transition:color .35s}
-.lesson-meta{display:flex;gap:.8rem;flex-wrap:wrap;font-size:.76rem;color:var(--text2)}
-.badge{display:inline-block;background:rgba(201,168,76,.15);font-size:.7rem;font-weight:600;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;margin-bottom:.8rem;color:#8a6820}
-[data-theme="dark"] .badge{color:var(--gold-light)}
-#resources{background:var(--section-alt);transition:background .35s}
-.resources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.5rem}
-.resource-card{background:var(--surface);border:1px solid var(--card-border);border-radius:5px;padding:1.5rem;display:flex;align-items:flex-start;gap:1rem;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;position:relative;overflow:hidden}
-.resource-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.14)}
-.resource-icon{width:40px;height:40px;flex-shrink:0;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-.resource-info h4{font-weight:600;font-size:.93rem;color:var(--text);margin-bottom:.3rem;transition:color .35s}
-.resource-info p{font-size:.8rem;color:var(--text2);line-height:1.5;transition:color .35s}
-.resource-type{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-text);margin-top:.4rem;font-family:var(--font-en)!important}
-/* Locked / premium items: details stay fully visible; the price sits in a bar along the bottom */
-.resource-card.is-locked{padding-bottom:3.6rem!important}
-.lock-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.65rem 1rem;white-space:nowrap;background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a2340;font-family:var(--font-en)!important;font-size:.8rem;font-weight:700;line-height:1.3!important;z-index:2}
-.lock-bar *{font-family:var(--font-en)!important;line-height:1.3!important;letter-spacing:0!important}
-.lock-bar .lb-cta{font-weight:600;font-size:.76rem;color:#1a2340;text-decoration:none;white-space:nowrap}
-.lock-bar a.lb-cta{border-bottom:1px solid rgba(26,35,64,.4)}
-.lock-bar.pending{background:var(--surface);color:var(--text2);border-top:1px solid var(--card-border)}
-#videos{background:var(--surface);transition:background .35s}
-.videos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
-.video-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;display:block}
-.video-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
-.video-thumb{height:160px;background:linear-gradient(135deg,#1a2340,#253056);display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative}
-.play-btn{position:absolute;width:48px;height:48px;background:rgba(201,168,76,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;padding-left:3px}
-.video-body{padding:1.2rem}
-.video-body h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--text);margin-bottom:.4rem;font-weight:600;transition:color .35s}
-.video-body p{font-size:.83rem;color:var(--text2);line-height:1.5}
-.video-meta{display:flex;gap:.8rem;font-size:.75rem;color:var(--text2);margin-top:.6rem}
-#blog{background:var(--section-alt);transition:background .35s}
-.blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
-.blog-card{border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s}
-.blog-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.16)}
-.blog-thumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:3rem}
-.blog-body{padding:1.4rem;background:var(--card-bg);transition:background .35s}
-.blog-body h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--text);margin-bottom:.5rem;font-weight:600}
-.blog-body p{font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:.8rem}
-.blog-date{font-size:.76rem;color:var(--gold-text);font-weight:500;margin-bottom:.4rem}
-.comments-wrap{margin-top:1rem}
-.comments-wrap h4{font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:.75rem}
-.comment-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.75rem;max-height:180px;overflow-y:auto}
-.comment-item{background:var(--section-alt);border-radius:4px;padding:.7rem .9rem;font-size:.82rem}
-.comment-author{font-weight:600;color:var(--gold-text);font-size:.75rem;margin-bottom:.2rem}
-.comment-text{color:var(--text2);line-height:1.5;word-break:break-word}
-.comment-form{display:flex;gap:.5rem;margin-top:.5rem}
-.comment-form input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font-en);font-size:.83rem;padding:7px 10px;outline:none;transition:border-color .2s;min-width:0}
-.comment-form input:focus{border-color:var(--gold)}
-.comment-form button{padding:7px 14px;background:var(--gold);border:none;border-radius:4px;color:#1a2340;font-weight:600;font-size:.8rem;cursor:pointer;font-family:var(--font-en);white-space:nowrap}
-.comment-login-note{font-size:.78rem;color:var(--text2)}
-.comment-login-note a{color:var(--gold-text);text-decoration:none}
-#about{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%)}
-.about-inner{max-width:1100px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
-.about-avatar-wrap{position:relative}
-.about-avatar{width:100%;max-width:360px;aspect-ratio:1;background:rgba(255,255,255,.05);border:2px solid rgba(201,168,76,.75);border-radius:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 18px 45px rgba(0,0,0,.28),0 0 0 8px rgba(201,168,76,.06);position:relative}
-.about-profile-photo{width:100%;height:100%;display:block;object-fit:cover;object-position:center top}
-.about-avatar-label{font-size:.85rem;color:rgba(255,255,255,.4);letter-spacing:.08em}
-.about-signature{font-family:'Playfair Display',serif;font-size:1.65rem;font-style:italic;color:var(--gold-light);text-align:center;margin-top:1rem}
-.about-role{font-size:.72rem;letter-spacing:.18em;color:rgba(255,255,255,.72);text-align:center;margin-top:.35rem}
-.about-accent{position:absolute;bottom:-16px;right:-16px;width:80px;height:80px;border:2px solid var(--gold);border-radius:4px;opacity:.4}
-#about .section-label{color:var(--gold-light)}
-#about .section-title{color:#fff}
-#about .section-desc{color:rgba(255,255,255,.65);max-width:100%}
-.about-skills{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.5rem}
-.skill-tag{background:var(--gold-soft);border:1px solid var(--border);color:var(--gold-light);font-size:.8rem;padding:5px 12px;border-radius:20px}
-.about-contact{margin-top:2rem}
-.about-contact p{color:rgba(255,255,255,.55);font-size:.9rem;margin-bottom:1rem}
-.modal-overlay{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem}
-.modal-overlay.open{display:flex}
-.modal-box{background:#131c2e;border:1px solid var(--border);border-radius:8px;width:100%;max-width:460px;overflow:hidden}
-.modal-head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)}
-.modal-head h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold-text)}
-.modal-close{background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;padding:2px 6px}
-.modal-body{padding:1.4rem}
-.profile-avatar{width:64px;height:64px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#1a2340;font-weight:700;margin:0 auto 1rem}
-.profile-name{text-align:center;font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--text);margin-bottom:.2rem}
-.profile-email{text-align:center;font-size:.82rem;color:var(--text2);margin-bottom:.5rem}
-.profile-class{text-align:center;font-size:.82rem;color:var(--gold-text);margin-bottom:1.5rem;font-weight:600}
-.profile-stat{display:flex;gap:1rem;justify-content:center;margin-bottom:1.5rem}
-.pstat{text-align:center;background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem 1.1rem}
-.pstat .pn{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-text);font-weight:700}
-.pstat .pl{font-size:.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
-.empty-state{text-align:center;padding:3rem 1rem;color:var(--text2);grid-column:1/-1}
-.empty-state .ei{font-size:2.5rem;margin-bottom:.75rem}
-.empty-state p{font-size:.88rem;margin-bottom:.75rem}
-.empty-state a{color:var(--gold-text);font-size:.82rem;text-decoration:none}
-footer{background:var(--footer-bg);color:rgba(255,255,255,.4);text-align:center;padding:1.8rem 5%;font-size:.83rem;transition:background .35s}
-footer .gold{color:var(--gold)}
-/* ═══════════ Modern rounded card design (both themes) ═══════════ */
-.lesson-card,.video-card,.blog-card,.resource-card{border:1px solid var(--card-border);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;transition:transform .2s,box-shadow .2s}
-.lesson-card:hover,.video-card:hover,.blog-card:hover,.resource-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
-.lesson-card{padding:0;border-top:1px solid var(--card-border);background:var(--card-bg)}
-.card-media{position:relative;aspect-ratio:16/9;background:var(--media-bg);overflow:hidden}
-.card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.media-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.8rem}
-.pill-row{position:absolute;top:.85rem;left:.85rem;right:.85rem;display:flex;gap:.4rem;flex-wrap:wrap;z-index:1}
-.pill{background:rgba(15,27,61,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font-family:var(--font-en);font-size:.68rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:999px;line-height:1.2}
-.card-body{padding:1.25rem 1.4rem 1.4rem}
-.lesson-card h3,.video-body h3,.blog-body h3{font-family:var(--font-en);font-weight:700;font-size:1.05rem;line-height:1.4;color:var(--text);margin-bottom:.45rem}
-.lesson-card p,.video-body p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.9rem}
-.lesson-meta,.video-meta{display:flex;flex-wrap:wrap;gap:.5rem 1rem;font-size:.78rem;color:var(--text2);margin-top:0}
-.video-thumb{height:auto;aspect-ratio:16/9;background:var(--media-bg);overflow:hidden}
-.video-body{padding:1.25rem 1.4rem 1.4rem}
-.lesson-card.is-locked .card-body,.video-card.is-locked .video-body{padding-bottom:4.2rem}
-.lock-bar{color:var(--on-accent)}
-.lock-bar .lb-cta{color:var(--on-accent)}
-.lock-bar a.lb-cta{border-bottom-color:currentColor}
-.resource-icon{border-radius:14px}
-.resource-card{padding:1.3rem 1.4rem}
-.blog-thumb{height:auto;aspect-ratio:16/9;background:var(--media-bg)}
-.blog-body{padding:1.25rem 1.4rem 1.4rem}
-.class-tab{padding:8px 18px;font-weight:600}
-.btn-primary,.btn-outline,.login-btn{border-radius:12px}
-.btn-primary,.login-btn,.class-tab.active,.lang-btn.on,.user-avatar,.profile-avatar,.comment-form button{color:var(--on-accent)}
-.modal-box{border-radius:20px}
-.stat-card{border-radius:16px}
-.hero-tag{border-radius:999px}
-.comment-form input{border-radius:10px}
-html[data-lang="dz"] span.pill,html[data-lang="dz"] :is(.lock-bar) :is(span,a){font-family:var(--font-en)!important;line-height:1.3!important;letter-spacing:0!important}
-
-/* ═══════════ Light mode: warm ivory + golden orange (matches the navy/gold night mode) ═══════════ */
-/* nav, About section and footer stay navy in both modes; only the content areas turn light */
-[data-theme="light"] #home::before{background:radial-gradient(circle,rgba(240,160,30,.22) 0%,transparent 70%)}
-[data-theme="light"] #home::after{background:radial-gradient(circle,rgba(245,194,90,.28) 0%,transparent 70%)}
-[data-theme="light"] .hero-tag{background:rgba(224,149,28,.14);border:1px solid rgba(224,149,28,.40);color:var(--gold-text);border-radius:999px}
-[data-theme="light"] .hero-title{color:var(--text)}
-[data-theme="light"] .hero-title span{color:#c77a00}
-[data-theme="light"] .hero-desc{color:var(--text2)}
-[data-theme="light"] .btn-outline{border-color:#e5cf9f;color:var(--text);background:#fff}
-[data-theme="light"] .btn-outline:hover{border-color:var(--gold);color:var(--gold-text)}
-[data-theme="light"] .stat-card{background:#fff;border:1px solid var(--card-border);border-left:4px solid var(--gold);border-radius:16px;box-shadow:var(--shadow)}
-[data-theme="light"] .stat-card h3{color:#c77a00}
-[data-theme="light"] .stat-card p{color:var(--text2)}
-[data-theme="light"] .lesson-card,[data-theme="light"] .video-card,[data-theme="light"] .blog-card,[data-theme="light"] .resource-card,[data-theme="light"] .blog-body{background:#fff}
-[data-theme="light"] .resource-icon{background:#ffefc9}
-[data-theme="light"] .class-tab{background:#fff;border-color:#ecd9ae;color:#4a4636}
-[data-theme="light"] .class-tab.active{background:var(--gold);border-color:var(--gold);color:var(--on-accent);box-shadow:0 6px 16px rgba(224,149,28,.38)}
-[data-theme="light"] .play-btn{background:rgba(255,255,255,.95);color:#c77a00;box-shadow:0 6px 20px rgba(60,35,0,.28)}
-[data-theme="light"] .modal-overlay{background:rgba(26,35,64,.55)}
-[data-theme="light"] .modal-box,[data-theme="light"] .user-dropdown{background:#fffdf8;border-color:#f0e2c6;box-shadow:0 20px 50px rgba(60,35,0,.28)}
-[data-theme="light"] .udrop-item:hover{background:#fff3dc}
-[data-theme="light"] .modal-box strong{color:var(--text)}
-[data-theme="light"] .pstat{background:var(--gold-soft)}
-[data-lang="dz"][data-theme="light"] :is(#lessons,#resources,#videos,#blog) :is(h2,h3,h4,p,.section-desc){-webkit-text-stroke:.35px currentColor}
-[data-lang="dz"][data-theme="light"] :is(.lock-bar,.pill) *{-webkit-text-stroke:0}
-@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-.fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
-.fade-in.visible{opacity:1;transform:translateY(0)}
-@media(max-width:768px){.hero-inner,.about-inner{grid-template-columns:1fr;gap:2.5rem}.hero-stats{flex-direction:row;flex-wrap:wrap}.stat-card{flex:1;min-width:110px}}
-@media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}.admin-lock{display:none}.nav-right{gap:.4rem}.nav-logo{font-size:1.1rem}.login-btn{padding:6px 9px;font-size:.7rem}nav{padding:0 4%}.hamburger{width:26px}.lang-btn{padding:4px 7px}nav{gap:.5rem}.about-avatar{max-width:320px;margin:auto}.about-signature{font-size:1.4rem}.about-role{font-size:.62rem;letter-spacing:.12em}}
-@media(max-width:400px){.nav-logo{font-size:.95rem}.login-btn{padding:6px 7px;font-size:.64rem}.theme-toggle{width:34px}.lang-btn{padding:3px 5px;font-size:.66rem}.nav-right{gap:.3rem}nav{gap:.3rem}}
-@media(max-width:340px){.theme-toggle{display:none}}
-img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.blog-thumb{position:relative;overflow:hidden}
-.cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2))}
-.cover-emoji{font-size:2.6rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
-.cover-label{font-family:var(--font-en);font-weight:800;font-size:.78rem;letter-spacing:.16em;opacity:.95}
-.cover-video .cover-emoji,.cover-video .cover-label{display:none}
-.cover-mini{width:64px;height:64px;flex-shrink:0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2))}
-.cover-mini span{font-size:1.5rem;line-height:1}
-.cover-mini b{font-family:var(--font-en);font-size:.56rem;letter-spacing:.1em}
-.cover-pdf{--c1:#c0392b;--c2:#e5643a}.cover-doc{--c1:#2b5fc0;--c2:#4f8ff0}.cover-slides{--c1:#d9822b;--c2:#f2b04d}
-.cover-sheet{--c1:#1f8a5b;--c2:#3fbf86}.cover-image{--c1:#7b4bc0;--c2:#a877ee}.cover-video{--c1:#1a2340;--c2:#3a4a86}
-.cover-audio{--c1:#b8437a;--c2:#e56aa0}.cover-form{--c1:#5b3fa8;--c2:#8a6fdc}.cover-file{--c1:#4a5568;--c2:#718096}
-.cover-lesson{--c1:#1a2340;--c2:#34457f}.cover-article{--c1:#9a6a1f;--c2:#d19a3d}
+:root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--surface:#192035;--surface2:#202b4a;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--red:#e05c5c;--green:#4caf84;--blue:#5c8de0}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
+#gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f1623,#1a2340,#1a2f50);display:flex;align-items:center;justify-content:center;padding:1rem}
+#gate.hide{display:none}
+.gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;width:100%;max-width:380px;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.gate-icon{font-size:2.5rem;margin-bottom:.75rem}
+.gate-card h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-text,var(--gold));margin-bottom:.3rem}
+.gate-card p{font-size:.83rem;color:var(--text2);margin-bottom:1.5rem}
+.gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s;text-decoration:none;display:inline-block}
+.gate-btn:hover{background:var(--gold-light)}
+.gate-err{font-size:.85rem;color:var(--err-text,#f09090);margin-top:1rem}
+.gate-spin{font-size:.85rem;color:var(--text2)}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;flex-shrink:0;background:#131c2e;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.logo{padding:1.4rem 1.5rem;border-bottom:1px solid var(--border)}
+.logo h2{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold-text,var(--gold))}
+.logo small{display:block;font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text2);font-weight:400;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.sidenav{padding:.8rem 0;flex:1}
+.sitem{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.4rem;font-size:.87rem;font-weight:500;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .2s}
+.sitem:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.sitem.on{color:var(--gold-text,var(--gold));background:rgba(201,168,76,.07);border-left-color:var(--gold)}
+.sfoot{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.6rem}
+.sfoot-user{font-size:.76rem;color:var(--text2);padding:0 .1rem;word-break:break-all}
+.sfoot a,.sfoot button{display:block;text-align:center;padding:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:4px;color:var(--gold-text,var(--gold));font-size:.8rem;text-decoration:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;width:100%}
+.sfoot a:hover,.sfoot button:hover{background:rgba(201,168,76,.2)}
+.sfoot button.logout{background:rgba(224,92,92,.1);border-color:rgba(224,92,92,.25);color:var(--red)}
+.sfoot button.logout:hover{background:rgba(224,92,92,.2)}
+.main{flex:1;padding:2rem;overflow-x:hidden}
+.page{display:none}.page.on{display:block}
+.phead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.8rem;flex-wrap:wrap;gap:1rem}
+.ptitle{font-family:'Playfair Display',serif;font-size:1.7rem}
+.psub{font-size:.83rem;color:var(--text2);margin-top:3px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.sbox{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--gold);border-radius:6px;padding:1.1rem 1.3rem}
+.sbox .n{font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--gold-text,var(--gold));font-weight:700}
+.sbox .l{font-size:.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1.5rem}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.4rem;border-bottom:1px solid var(--border)}
+.card-head h3{font-size:.95rem;font-weight:600}
+.cbadge{background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px}
+.irow{display:grid;grid-template-columns:1fr auto;align-items:center;padding:.85rem 1.4rem;border-bottom:1px solid rgba(255,255,255,.05);gap:1rem;transition:background .15s}
+.irow:last-child{border-bottom:none}
+.irow:hover{background:rgba(255,255,255,.03)}
+.iname{font-weight:500;font-size:.88rem}
+.imeta{font-size:.76rem;color:var(--text2);margin-top:2px}
+.ibtns{display:flex;gap:.4rem}
+.utbl{width:100%;border-collapse:collapse;font-size:.85rem}
+.utbl th{text-align:left;padding:.7rem 1rem;font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+.utbl td{padding:.8rem 1rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.utbl tr:last-child td{border-bottom:none}
+.utbl tr:hover td{background:rgba(255,255,255,.02)}
+.role-badge{font-size:.7rem;font-weight:600;padding:3px 8px;border-radius:10px;text-transform:uppercase}
+.role-user{background:rgba(92,141,224,.15);color:var(--blue)}
+.role-admin{background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold))}
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .2s}
+.btn-gold{background:var(--gold);color:#1a2340}.btn-gold:hover{background:var(--gold-light)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-ghost:hover{border-color:var(--gold);color:var(--gold-text,var(--gold))}
+.btn-edit{background:rgba(92,141,224,.12);border:1px solid rgba(92,141,224,.25);color:var(--blue)}.btn-edit:hover{background:rgba(92,141,224,.22)}
+.btn-del{background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);color:var(--red)}.btn-del:hover{background:rgba(224,92,92,.22)}
+.btn-sm{padding:5px 9px;font-size:.76rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:#131c2e;border:1px solid var(--border);border-radius:8px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
+.mhead{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)}
+.mhead h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold-text,var(--gold))}
+.mclose{background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;padding:2px 6px}.mclose:hover{color:var(--text)}
+.mbody{padding:1.4rem;display:flex;flex-direction:column;gap:.9rem}
+.mfoot{padding:.9rem 1.4rem;border-top:1px solid var(--border);display:flex;gap:.7rem;justify-content:flex-end}
+.field{display:flex;flex-direction:column;gap:.35rem}
+.field label{font-size:.76rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
+.field input,.field select,.field textarea{background:#202b4a;border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;padding:9px 11px;outline:none;transition:border-color .2s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.field textarea{resize:vertical;min-height:75px}
+.field select option{background:#1a2340}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text2)}.empty .ei{font-size:2.2rem;margin-bottom:.6rem}.empty p{font-size:.85rem}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;background:var(--surface);border:1px solid var(--green);border-left:3px solid var(--green);border-radius:5px;padding:11px 16px;font-size:.86rem;transform:translateY(16px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{border-color:var(--red);border-left-color:var(--red)}
+.info-box{background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1.5rem}
+.info-box h4{font-size:.9rem;font-weight:600;color:var(--gold-text,var(--gold));margin-bottom:.3rem}
+.info-box p{font-size:.8rem;color:var(--text2);line-height:1.6}
+.info-box code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:3px;font-size:.78rem}
+.upload-row{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.upload-status{font-size:.78rem;color:var(--text2)}
+.upload-status.ok{color:var(--green)}
+.upload-status.err{color:var(--red)}
+.thumb-preview img{max-width:110px;max-height:110px;border-radius:5px;border:1px solid var(--border);object-fit:cover;display:block;margin-top:.5rem}
+.irow-thumb{width:38px;height:38px;border-radius:5px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+.irow-left{display:flex;align-items:center;gap:.7rem}
+@media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
+.thumb-modes{display:flex;gap:1rem;flex-wrap:wrap;margin:.2rem 0 .4rem}
+.field .thumb-mode{display:inline-flex;align-items:center;gap:.4rem;font-size:.86rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)}
+.field .thumb-mode input{width:auto;padding:0;accent-color:var(--gold)}
 </style>
+<script src="theme.js"></script>
 </head>
 <body>
 
-<nav>
-  <a href="#home" class="nav-logo">SherigSpace</a>
-  <ul class="nav-links">
-    <li><a href="#home"      data-en="Home"      data-dz="གདོང་ཤོག">Home</a></li>
-    <li><a href="#lessons"   data-en="Lessons"   data-dz="སློབ་སྟོན།">Lessons</a></li>
-    <li><a href="#resources" data-en="Resources" data-dz="ཡིག་ཆ།">Resources</a></li>
-    <li><a href="#videos"    data-en="Videos"    data-dz="བརྙན་ཐུང་།">Videos</a></li>
-    <li><a href="#blog"      data-en="Articles"  data-dz="རྩོམ་ཡིག།">Articles</a></li>
-  </ul>
-  <div class="nav-right">
-    <div class="lang-toggle">
-      <button class="lang-btn on" data-lang-btn="en">EN</button>
-      <button class="lang-btn"    data-lang-btn="dz">རྫོང་ཁ།</button>
-    </div>
-    <div class="theme-toggle" id="themeToggle"><span class="t-icon moon">🌙</span><span class="t-icon sun">☀️</span></div>
-    <a class="admin-lock" href="admin.html" title="Admin">🔐</a>
-    <div id="nav-auth"></div>
-    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
-  </div>
-</nav>
-<div class="mobile-nav" id="mobileNav">
-  <a href="#home">Home</a>
-  <a href="#lessons">Lessons</a>
-  <a href="#resources">Resources</a>
-  <a href="#videos">Videos</a>
-  <a href="#blog">Articles</a>
-  <a href="#about">About</a>
-  <a href="teacher.html">🍎 Teacher Dashboard</a>
-  <a href="admin.html">🔐 Admin</a>
-</div>
-
-<!-- HERO -->
-<section id="home">
-  <div class="hero-inner">
-    <div>
-      <div class="hero-tag" data-en="✦ Welcome to My Teaching & Learning Space" data-dz="✦ ངའི་སློབ་སྟོན་གྱི་ཞིང་ཁམས་ནང་བྱོན་པ་ལེགས་སོ།">✦ Welcome to My Teaching & Learning Space</div>
-      <h1 class="hero-title" data-en="Enhancing Dzongkha Learning through <span>Modern Digital Tools</span>" data-dz="དེང་སང་གློག་རིག་ཐོག་ <span>རྫོང་ཁ་ལྷབ་སྦྱང་ཡར་རྒྱས།</span>">Empowering Minds Through <span>Quality Education</span></h1>
-      <p class="hero-desc" data-en="Browse lessons, download resources, watch videos, and join the learning community." data-dz="རྫོང་ཁའི་སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཕན་ཚུན་འབྲེལ་བའི་བརྙན་ཐུང་གི་བང་མཛོད།">Browse lessons, download resources, watch videos, and join the learning community.</p>
-      <div class="hero-cta">
-        <a href="#lessons" class="btn-primary" data-en="Explore Lessons" data-dz="སློབ་ཚན་འཚོལ་ཞིབ།">Explore Lessons</a>
-        <a href="login.html" class="btn-outline" id="hero-join-btn" data-en="Join Free" data-dz="རིན་མེད་སྟོང་པ་སྦེ་འཛུལ།">Join Free</a>
-      </div>
-    </div>
-    <div class="hero-stats">
-      <div class="stat-card"><h3 id="st-lessons">…</h3><p data-en="Lessons" data-dz="སློབ་ཚན།">Lessons</p></div>
-      <div class="stat-card"><h3 id="st-videos">…</h3><p data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</p></div>
-      <div class="stat-card"><h3 id="st-users">…</h3><p data-en="Members" data-dz="འཐུས་མི།">Members</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- CLASS PICKER — the TLM Store's classwise browsing bar -->
-<section id="class-picker-section" style="padding:2rem 5% 0">
-  <div class="inner">
-    <p class="section-label">✦ TLM Store</p>
-    <h2 class="section-title" style="font-size:1.5rem;margin-bottom:1rem">Browse by Class</h2>
-    <div id="class-tabs" class="class-tabs"></div>
-  </div>
-</section>
-
-<!-- LESSONS -->
-<section id="lessons">
-  <div class="inner">
-    <div class="fade-in">
-      <p class="section-label" data-en="✦ Curriculum" data-dz="✦ རྩ་གཞུང་།">✦ Curriculum</p>
-      <h2 class="section-title" data-en="Teaching Lessons" data-dz="སློབ་སྟོན།">Teaching Lessons</h2>
-      <div class="divider"></div>
-      <p class="section-desc" data-en="Structured lessons designed for clarity and deep understanding." data-dz="གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།">Structured lessons designed for clarity and deep understanding.</p>
-    </div>
-    <div class="lessons-grid" id="lessons-grid"></div>
-  </div>
-</section>
-
-<!-- RESOURCES -->
-<section id="resources">
-  <div class="inner">
-    <div class="fade-in">
-      <p class="section-label" data-en="✦ Materials" data-dz="✦ མཁོ་ཆས།">✦ Materials</p>
-      <h2 class="section-title" data-en="Resources & Downloads" data-dz="ཡིག་ཆ་དང་ཕབ་ལེན།">Resources & Downloads</h2>
-      <div class="divider"></div>
-      <p class="section-desc" data-en="Sign in to download worksheets, guides, and materials." data-dz="མཁོ་ཆས་དང་ཡིག་ཆ་ཕབ་ལེན་གྱི་དོན་ལུ་ (Sign IN) མཛད་གནང་།">Sign in to download worksheets, guides, and materials.</p>
-    </div>
-    <div class="resources-grid" id="resources-grid"></div>
-  </div>
-</section>
-
-<!-- VIDEOS -->
-<section id="videos">
-  <div class="inner">
-    <div class="fade-in">
-      <p class="section-label" data-en="✦ Video Lessons" data-dz="✦ བརྙན་ཐུང་།">✦ Video Lessons</p>
-      <h2 class="section-title" data-en="Watch & Learn" data-dz="བལྟ་སྟེ་ལྷབ་སྦྱང་མཛད་གནང་།་">Watch & Learn</h2>
-      <div class="divider"></div>
-      <p class="section-desc" data-en="Video tutorials to help you learn at your own pace." data-dz="ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་བརྙན་ཐུང་།">Video tutorials to help you learn at your own pace.</p>
-    </div>
-    <div class="videos-grid" id="videos-grid"></div>
-  </div>
-</section>
-
-<!-- BLOG -->
-<section id="blog">
-  <div class="inner">
-    <div class="fade-in">
-      <p class="section-label" data-en="✦ Insights" data-dz="✦ བསམ་ཞིབ།">✦ Insights</p>
-      <h2 class="section-title" data-en="Latest Articles" data-dz="རྩོམ་ཡིག་གསརཔ།">Latest Articles</h2>
-      <div class="divider"></div>
-      <p class="section-desc" data-en="Reflections and strategies from the classroom." data-dz="སློབ་ཁང་གི་ཐབས་ལམ་དང་བསམ་ཞིབ།">Reflections and strategies from the classroom.</p>
-    </div>
-    <div class="blog-grid" id="blog-grid"></div>
-  </div>
-</section>
-
-<!-- ABOUT -->
-<section id="about">
-  <div class="about-inner">
-    <div class="about-avatar-wrap fade-in">
-      <div class="about-avatar">
-        <img src="profile.jpg" alt="Thinley Wangchuk" class="about-profile-photo">
-      </div>
-      <div class="about-accent"></div>
-      <div class="about-signature">Thinley Wangchuk</div>
-      <div class="about-role">TEACHER&nbsp;&nbsp;•&nbsp;&nbsp;CREATOR&nbsp;&nbsp;•&nbsp;&nbsp;LIFELONG LEARNER</div>
-    </div>
-    <div class="fade-in">
-      <p class="section-label"  data-en="✦ About Me" data-dz="✦ ང་རའི་སྐོར།">✦ About Me</p>
-      <h2 class="section-title" data-en="Hello, I'm a Passionate Educator" data-dz="སྐུ་གཟུགས་བཟང་པོ། ང་ཤེས་ཡོན་སྤྲོད་ནི་ལུ་སྤྲོ་བ་དང་དང་འདོད་ཡོད་པའི་ རྫོང་ཁའི་སློབ་དཔོན་ཅིག་ཨིན།">Hello, I'm a Passionate Educator</h2>
-      <div class="divider"></div>
-      <p class="section-desc" data-en="A dedicated teacher sharing lessons, resources, and videos with learners everywhere." data-dz="ལྷག་བསམ་རྣམ་དག་གི་སྒོ་ལས་ སློབ་སྟོན་འབད་ནི་ལུ་སྤྲོ་བ་ཡོདཔ་ལས་ སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཐབས་ཤེས་ཚུ་བརྗེ་སོར་འབདཝ་ཨིན།">A dedicated teacher sharing lessons, resources, and videos with learners everywhere.</p>
-      <div class="about-skills">
-        <span class="skill-tag" data-en="Curriculum Design" data-dz="Curriculum Design">Curriculum Design</span>
-        <span class="skill-tag" data-en="Project-Based Learning" data-dz="ལས་འགུལ་ཐོག་ལྷབ་སྦྱང་།">Project-Based Learning</span>
-        <span class="skill-tag" data-en="Student Engagement" data-dz="སློབ་ཕྲུག་འབྲེལ་གཏོགས།">Student Engagement</span>
-        <span class="skill-tag" data-en="EdTech" data-dz="སློབ་སྟོན་ཐབས་ལམ་གསརཔ།">EdTech</span>
-      </div>
-      <div class="about-contact">
-        <p data-en="Want to collaborate or get in touch?" data-dz="མཉམ་འབྲེལ་སྦེ་ ལཱ་འབད་ནི་/འབྲེལ་བ་འཐབ་ནི?">Want to collaborate or get in touch?</p>
-        <a href="mailto:thinleywangchuk478@gmail.com" class="btn-primary" data-en="✉ Contact Me" data-dz="ང་དང་་འབྲེལ་བ་འཐབ།">✉ Contact Me</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<footer><p>© 2026 <span class="gold">ཤེས་རིགSpace</span> · <span data-en="Built with care for better education, particularly Dzongkha" data-dz="རྫོང་ཁའི་ཤེས་ཡོན་ཡར་རྒྱས་གཏང་ཐབས་ལུ་དམིགས་ཏེ་བཟོ་ཡོདཔ་ཨིན།">Built with care for better education</span></p></footer>
-
-<!-- PROFILE MODAL -->
-<div class="modal-overlay" id="profile-modal">
-  <div class="modal-box">
-    <div class="modal-head"><h3>My Profile</h3><button class="modal-close" onclick="closeProfile()">✕</button></div>
-    <div class="modal-body" id="profile-body"></div>
+<!-- ACCESS GATE (real auth check happens in JS; this is just the loading/denied UI) -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-icon" id="gate-icon">🔐</div>
+    <h2 id="gate-title">Checking access…</h2>
+    <p id="gate-text">Verifying your admin session.</p>
+    <div class="gate-spin" id="gate-spin">One moment…</div>
+    <a class="gate-btn" id="gate-btn" href="login.html" style="display:none">Go to Login</a>
+    <div class="gate-err" id="gate-err"></div>
   </div>
 </div>
 
-<!-- VIDEO PLAYER MODAL -->
-<div class="modal-overlay" id="video-modal">
-  <div class="modal-box" style="max-width:900px;width:95%">
-    <div class="modal-head"><h3 id="video-modal-title">▶ Video</h3><button class="modal-close" onclick="closeVideoModal()">✕</button></div>
-    <div class="modal-body" style="padding:0">
-      <div id="video-embed-wrap" style="position:relative;padding-top:56.25%;height:0;overflow:hidden;background:#000"></div>
+<!-- ADMIN DASHBOARD -->
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo"><h2>SherigSpace</h2><small>Admin Panel</small></div>
+    <nav class="sidenav">
+      <div class="sitem on"  onclick="go('dash')">🏠 &nbsp;Dashboard</div>
+      <div class="sitem"     onclick="go('lessons')">📚 &nbsp;Lessons</div>
+      <div class="sitem"     onclick="go('resources')">📁 &nbsp;Resources</div>
+      <div class="sitem"     onclick="go('videos')">🎥 &nbsp;Videos</div>
+      <div class="sitem"     onclick="go('articles')">✍️ &nbsp;Articles</div>
+      <div class="sitem"     onclick="go('announce')">📢 &nbsp;Announcements</div>
+      <div class="sitem"     onclick="go('payments')">💳 &nbsp;Payments</div>
+      <div class="sitem"     onclick="go('users')">👥 &nbsp;Users</div>
+      <div class="sitem"     onclick="go('settings')">⚙️ &nbsp;Settings</div>
+    </nav>
+    <div class="sfoot">
+      <div data-theme-slot></div>
+      <div class="sfoot-user" id="sfoot-user"></div>
+      <a href="index.html" target="_blank">↗ View Website</a>
+      <button class="logout" onclick="logoutAdmin()">🔒 Log Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page on" id="p-dash">
+      <div class="phead"><div><div class="ptitle">Dashboard</div><div class="psub">Overview of your SherigSpace content</div></div></div>
+      <div class="stats" id="d-stats"></div>
+      <div class="card"><div class="card-head"><h3>Recent Lessons</h3><button class="btn btn-ghost btn-sm" onclick="go('lessons')">View All</button></div><div id="d-lessons"></div></div>
+      <div class="card"><div class="card-head"><h3>Recent Videos</h3><button class="btn btn-ghost btn-sm" onclick="go('videos')">View All</button></div><div id="d-videos"></div></div>
+    </div>
+
+    <div class="page" id="p-lessons">
+      <div class="phead"><div><div class="ptitle">Lessons</div><div class="psub">Add and manage your teaching lessons</div></div><button class="btn btn-gold" onclick="openForm('lesson')">+ Add Lesson</button></div>
+      <div class="card"><div class="card-head"><h3>All Lessons</h3><span class="cbadge" id="c-lessons">0</span></div><div id="l-lessons"></div></div>
+    </div>
+
+    <div class="page" id="p-resources">
+      <div class="phead"><div><div class="ptitle">Resources</div><div class="psub">Manage downloadable files and guides</div></div><button class="btn btn-gold" onclick="openForm('resource')">+ Add Resource</button></div>
+      <div class="card"><div class="card-head"><h3>All Resources</h3><span class="cbadge" id="c-resources">0</span></div><div id="l-resources"></div></div>
+    </div>
+
+    <div class="page" id="p-videos">
+      <div class="phead"><div><div class="ptitle">Videos</div><div class="psub">Manage your video lessons</div></div><button class="btn btn-gold" onclick="openForm('video')">+ Add Video</button></div>
+      <div class="card"><div class="card-head"><h3>All Videos</h3><span class="cbadge" id="c-videos">0</span></div><div id="l-videos"></div></div>
+    </div>
+
+    <div class="page" id="p-articles">
+      <div class="phead"><div><div class="ptitle">Articles</div><div class="psub">Manage your blog posts</div></div><button class="btn btn-gold" onclick="openForm('article')">+ Add Article</button></div>
+      <div class="card"><div class="card-head"><h3>All Articles</h3><span class="cbadge" id="c-articles">0</span></div><div id="l-articles"></div></div>
+    </div>
+
+    <div class="page" id="p-announce">
+      <div class="phead"><div><div class="ptitle">Announcements</div><div class="psub">Post a banner announcement shown at the top of your site</div></div><button class="btn btn-gold" onclick="openForm('announce')">+ New Announcement</button></div>
+      <div class="card"><div class="card-head"><h3>All Announcements</h3><span class="cbadge" id="c-announce">0</span></div><div id="l-announce"></div></div>
+    </div>
+
+    <div class="page" id="p-payments">
+      <div class="phead"><div><div class="ptitle">Payments</div><div class="psub">Review payment proof screenshots and approve access to premium content</div></div></div>
+      <div class="card"><div class="card-head"><h3>Pending Review</h3><span class="cbadge" id="c-payments-pending">0</span></div><div id="l-payments-pending"></div></div>
+      <div class="card"><div class="card-head"><h3>Reviewed</h3></div><div id="l-payments-reviewed"></div></div>
+    </div>
+
+    <div class="page" id="p-users">
+      <div class="phead"><div><div class="ptitle">Users</div><div class="psub">People who have signed up to your site</div></div></div>
+      <div class="card"><div class="card-head"><h3>All Users</h3><span class="cbadge" id="c-users">0</span></div><div id="l-users" style="overflow-x:auto;padding:.5rem 0"></div></div>
+    </div>
+
+    <div class="page" id="p-settings">
+      <div class="phead"><div><div class="ptitle">Settings</div><div class="psub">Manage your site info and admin access</div></div></div>
+      <div class="info-box">
+        <h4>🔑 Admin Access</h4>
+        <p>Admin access is now controlled by your Supabase <code>profiles.role</code> column instead of a shared password — anyone logged in with <code>role = 'admin'</code> can reach this panel, and everyone else is redirected. To grant or revoke admin access for someone, update their <code>role</code> in the Users tab's underlying table (or directly in the Supabase dashboard). Make sure your Row Level Security policies also check this role before allowing writes — a client-side check alone doesn't stop direct API calls.</p>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Site Information</h3></div>
+        <div style="padding:1.4rem;display:flex;flex-direction:column;gap:1rem">
+          <div class="field"><label>Site Name</label><input id="s-sitename" placeholder="SherigSpace"/></div>
+          <div class="field"><label>Your Name / Tagline</label><input id="s-tagline" placeholder="e.g. Passionate Educator · Bhutan"/></div>
+          <div class="field"><label>Contact Email</label><input id="s-email" type="email" placeholder="your@email.com"/></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>💳 Payment Info — shown to members on locked premium content</h3></div>
+        <div style="padding:1.4rem;display:flex;flex-direction:column;gap:1rem">
+          <div class="row2">
+            <div class="field"><label>Account Holder Name</label><input id="s-acctname" placeholder="e.g. Thinley Wangchuk"/></div>
+            <div class="field"><label>Account Number</label><input id="s-acctnum" placeholder="e.g. 000000000000"/></div>
+          </div>
+          <div class="field"><label>Bank / Mobile Banking Name</label><input id="s-bankname" placeholder="e.g. BOB Mobile, mPay, BhutanQR"/></div>
+          <div class="field"><label>Teacher Plan Price (Nu./month)</label><input id="s-teacherprice" type="number" min="0" step="0.01" placeholder="e.g. 300"/></div>
+          <div class="field">
+            <label>QR Code Image</label>
+            <div class="upload-row">
+              <input type="file" id="s-qrfile" accept="image/*" style="display:none" onchange="handleQrPick(event)"/>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('s-qrfile','qr-upload-status')">📤 Upload QR Code</button>
+              <span class="upload-status" id="qr-upload-status"></span>
+            </div>
+            <div class="thumb-preview" id="qr-preview"></div>
+            <input type="hidden" id="s-qrurl"/>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>🖼 Thumbnails</h3></div>
+        <div style="padding:1.4rem;display:flex;flex-direction:column;gap:.8rem">
+          <p style="font-size:.85rem;color:var(--text2);line-height:1.6">Adds an automatic thumbnail to every lesson, resource, video and article that doesn't have one, using its YouTube, Google Drive / Docs or image link. Items that already have a thumbnail are never changed.</p>
+          <div class="upload-row"><button type="button" class="btn btn-ghost btn-sm" onclick="fillMissingThumbnails()">✨ Generate missing thumbnails</button><span class="upload-status" id="thumb-fill-status"></span></div>
+        </div>
+      </div>
+      <button class="btn btn-gold" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mhead"><h3 id="m-title">Add</h3><button class="mclose" onclick="closeForm()">✕</button></div>
+    <div class="mbody" id="m-body"></div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="closeForm()">Cancel</button>
+      <button class="btn btn-gold" id="save-btn" onclick="saveItem()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- PAYMENT MODAL -->
-<div class="modal-overlay" id="payment-modal">
-  <div class="modal-box" style="max-width:440px">
-    <div class="modal-head"><h3>🔒 Unlock Premium Content</h3><button class="modal-close" onclick="closePaymentModal()">✕</button></div>
-    <div class="modal-body" id="payment-modal-body"></div>
-  </div>
-</div>
+<div class="toast" id="toast"></div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
+import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
+import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
+import { autoThumbFor, fileKindFor } from './assignment-utils.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const html = document.documentElement;
-const ICONS={Mathematics:'📐',Science:'🌍','Language Arts':'✍️',History:'🏛️',Technology:'💻','Social Studies':'🗺️',Arts:'🎨','Physical Education':'⚽',Other:'📖'};
-const RICONS={PDF:'📄',DOCX:'📝',Image:'🗺️','Video Link':'🎥',Spreadsheet:'📊',Presentation:'🖥️',Other:'📁'};
-const GRADS=['linear-gradient(135deg,#1a2340,#253056)','linear-gradient(135deg,#1e3a5f,#1a2340)','linear-gradient(135deg,#253056,#1e3a5f)'];
-const EMOJIS=['📖','🌱','🛠️','💡','🎯','🔬'];
-
-// ── THUMBNAILS ──
-// Uses the thumbnail saved by the admin; when there isn't one, makes an automatic one
-// from the item's link (YouTube / Google Drive / image). Loaded defensively so a missing
-// helper file can never stop the site from working.
-const _thumbUtils = await import('./assignment-utils.js').catch(() => null);
-const autoThumbFor = _thumbUtils ? _thumbUtils.autoThumbFor : () => '';
-const fileKindFor = _thumbUtils ? _thumbUtils.fileKindFor : () => null;
-function thumbFor(row){ return safeUrl(row.thumbnail_url) || safeUrl(autoThumbFor(safeUrl(row.url))); }
-// Google can be picky about which of its two preview addresses answers, so try the second if the first fails.
-function thumbAlt(u){ const m = String(u).match(/drive\.google\.com\/thumbnail\?id=([\w-]+)/); return m ? 'https://lh3.googleusercontent.com/d/' + m[1] + '=w640' : ''; }
-function thumbImg(u, extra){
-  const alt = thumbAlt(u);
-  return `<img class="thumb-img" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-thumb${alt ? ` data-alt="${esc(alt)}"` : ''}${extra||''}/>`;
-}
-// Every item gets a clear cover — a real preview picture when one exists, otherwise a coloured
-// PDF / DOC / SLIDES… card — so no file is ever left as a blank box.
-const COVER = {
-  pdf:{icon:'📄',label:'PDF'}, doc:{icon:'📝',label:'DOC'}, slides:{icon:'📽️',label:'SLIDES'}, sheet:{icon:'📊',label:'SHEET'},
-  image:{icon:'🖼️',label:'IMAGE'}, video:{icon:'🎬',label:'VIDEO'}, audio:{icon:'🎧',label:'AUDIO'}, form:{icon:'📋',label:'FORM'},
-  file:{icon:'📎',label:'FILE'}, lesson:{icon:'📖',label:'LESSON'}, article:{icon:'✍️',label:'ARTICLE'}
-};
-function coverHtml(kind, emoji){
-  const m = COVER[kind] || COVER.file;
-  return `<div class="cover cover-${kind in COVER ? kind : 'file'}"><span class="cover-emoji">${emoji || m.icon}</span><span class="cover-label">${m.label}</span></div>`;
-}
-function miniCover(kind){
-  const k = kind in COVER ? kind : 'file', m = COVER[k];
-  return `<div class="cover-mini cover-${k}"><span>${m.icon}</span><b>${m.label}</b></div>`;
-}
-// Image errors don't bubble, so listen while the event travels down (capture).
-document.addEventListener('error', function(e){
-  const img = e.target;
-  if(!img || img.tagName !== 'IMG' || !img.hasAttribute('data-thumb')) return;
-  const alt = img.getAttribute('data-alt');
-  if(alt){ img.removeAttribute('data-alt'); img.src = alt; return; }
-  if(img.hasAttribute('data-kind')){
-    const w = document.createElement('div'); w.innerHTML = miniCover(img.getAttribute('data-kind'));
-    img.replaceWith(w.firstChild); return;
+// ── REAL ACCESS CHECK ──
+// Access is decided by Supabase Auth + profiles.role, not a client-side
+// password. This still doesn't replace RLS — see the SQL policies
+// shipped alongside this file — but it stops the admin UI itself from
+// opening for anyone who isn't actually an admin.
+async function checkAccess(){
+  const { data: { session } } = await supabase.auth.getSession();
+  if(!session){
+    document.getElementById('gate-icon').textContent = '🔒';
+    document.getElementById('gate-title').textContent = 'Please log in';
+    document.getElementById('gate-text').textContent = "You'll need to log in with an admin account to view this page.";
+    document.getElementById('gate-spin').style.display = 'none';
+    document.getElementById('gate-btn').style.display = 'inline-block';
+    return;
   }
-  img.remove();   // the icon underneath shows instead
-}, true);
+  const { data: profile, error } = await supabase.from('profiles').select('role,name,email').eq('id', session.user.id).single();
+  if(error || !profile || profile.role !== 'admin'){
+    document.getElementById('gate-icon').textContent = '⛔';
+    document.getElementById('gate-title').textContent = 'Access denied';
+    document.getElementById('gate-text').textContent = 'Your account does not have admin access.';
+    document.getElementById('gate-spin').style.display = 'none';
+    document.getElementById('gate-btn').textContent = 'Back to Site';
+    document.getElementById('gate-btn').href = 'index.html';
+    document.getElementById('gate-btn').style.display = 'inline-block';
+    return;
+  }
+  // Access granted
+  document.getElementById('gate').classList.add('hide');
+  document.getElementById('sfoot-user').textContent = `${profile.name} · ${profile.email}`;
+  renderAll();
+  loadSettings();
+}
 
-const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
-let selectedClass = localStorage.getItem('edu_selected_class') || 'All Classes';
+window.logoutAdmin = async function(){
+  await supabase.auth.signOut();
+  window.location.href = 'login.html';
+};
 
-function renderClassTabs(){
-  const wrap = document.getElementById('class-tabs');
-  wrap.innerHTML = CLASS_LEVELS.map(c =>
-    `<button class="class-tab${c===selectedClass?' active':''}" data-class="${esc(c)}">${c==='All Classes'?'All':esc(c)}</button>`
-  ).join('');
-  wrap.querySelectorAll('.class-tab').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      selectedClass = btn.getAttribute('data-class');
-      localStorage.setItem('edu_selected_class', selectedClass);
-      renderClassTabs();
-      await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles()]);
-      // The freshly drawn cards start invisible (fade-in). Without this line
-      // they stayed invisible until the page was refreshed.
-      observeFadeIns();
-    });
+checkAccess();
+
+// ── NAVIGATION ──
+window.go = function(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
+  document.getElementById('p-'+p).classList.add('on');
+  const map={dash:'dashboard',lessons:'lessons',resources:'resources',videos:'videos',articles:'articles',payments:'payments',users:'users',settings:'settings'};
+  document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
+  renderAll();
+};
+
+// ── RENDER ALL ──
+async function renderAll(){
+  const [
+    { data: L, count: lc, error: lErr },
+    { data: R, count: rc, error: rErr },
+    { data: V, count: vc, error: vErr },
+    { data: A, count: ac, error: aErr },
+    { data: U, count: uc, error: uErr },
+    { data: AN, count: anc, error: anErr },
+    { count: visitCount }
+  ] = await Promise.all([
+    supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('resources').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
+    supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('page_views').select('*',{count:'exact',head:true})
+  ]);
+
+  // Surface load errors instead of silently showing "No lessons yet".
+  [['lessons',lErr],['resources',rErr],['videos',vErr],
+   ['articles',aErr],['profiles',uErr],['announcements',anErr]].forEach(([name,err])=>{
+    if(err){ console.error('Could not load '+name+':', err); toast('Could not load '+name+': '+err.message, true); }
   });
+
+  const totalDownloads = [L,R,V,A].reduce((sum, arr) =>
+    sum + (arr||[]).reduce((s,i)=>s+(i.download_count||0), 0), 0);
+
+  document.getElementById('d-stats').innerHTML =
+    stat(lc||0,'Lessons')+stat(rc||0,'Resources')+stat(vc||0,'Videos')+stat(uc||0,'Members')
+    + stat(visitCount||0,'Site Visits') + stat(totalDownloads,'Total Downloads');
+  document.getElementById('c-lessons').textContent   = lc||0;
+  document.getElementById('c-resources').textContent = rc||0;
+  document.getElementById('c-videos').textContent    = vc||0;
+  document.getElementById('c-articles').textContent  = ac||0;
+  document.getElementById('c-announce').textContent  = anc||0;
+  document.getElementById('c-users').textContent     = uc||0;
+
+  document.getElementById('d-lessons').innerHTML  = L?.length ? L.slice(0,3).map(i=>row(i,'lesson')).join('') : empty('📚','No lessons yet');
+  document.getElementById('d-videos').innerHTML   = V?.length ? V.slice(0,3).map(i=>row(i,'video')).join('')  : empty('🎥','No videos yet');
+  document.getElementById('l-lessons').innerHTML   = L?.length ? L.map(i=>row(i,'lesson')).join('')   : empty('📚','No lessons yet. Click + Add Lesson!');
+  document.getElementById('l-resources').innerHTML = R?.length ? R.map(i=>row(i,'resource')).join('') : empty('📁','No resources yet. Click + Add Resource!');
+  document.getElementById('l-videos').innerHTML    = V?.length ? V.map(i=>row(i,'video')).join('')    : empty('🎥','No videos yet. Click + Add Video!');
+  document.getElementById('l-articles').innerHTML  = A?.length ? A.map(i=>row(i,'article')).join('')  : empty('✍️','No articles yet. Click + Add Article!');
+  document.getElementById('l-announce').innerHTML  = AN?.length
+    ? AN.map(a=>`<div class="irow"><div><div class="iname">${esc(a.emoji||'📢')} ${esc(a.message||'')}</div><div class="imeta">${a.active?'✅ Active':'❌ Hidden'}${a.link_label?' · '+esc(a.link_label):''}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('announce','${esc(a.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('announce','${esc(a.id)}')">✕</button></div></div>`).join('')
+    : empty('📢','No announcements yet. Click + New Announcement!');
+  renderUsers(U||[]);
+  renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[]});
 }
 
-// An item matches the current class filter if it's tagged "All Classes"
-// (general material) or matches the picked class exactly.
-function matchesClass(item){
-  if(selectedClass === 'All Classes') return true;
-  const c = item.class_level || 'All Classes';
-  return c === selectedClass || c === 'All Classes';
-}
 
-function lang(){ return html.getAttribute('data-lang'); }
-function session(){ try{ return JSON.parse(localStorage.getItem('edu_session')||'null') }catch{ return null } }
+// ── PAYMENTS ──
+async function renderPayments(itemsByType){
+  const findItem = (type, id) => (itemsByType[type]||[]).find(i => i.id === id);
 
-// ── MOBILE NAV ──
-const hamburger = document.getElementById('hamburger');
-const mobileNav  = document.getElementById('mobileNav');
-hamburger.addEventListener('click', ()=>{
-  hamburger.classList.toggle('open');
-  mobileNav.classList.toggle('open');
-});
-mobileNav.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=>{
-  hamburger.classList.remove('open'); mobileNav.classList.remove('open');
-}));
+  // Load requests, then look up the member names separately. (The old
+  // combined "purchases + profiles" query silently returned nothing whenever
+  // Supabase couldn't match the two tables, so real requests never appeared.)
+  const withProfiles = async (table, userCol) => {
+    const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
+    if(error){
+      console.error('Could not load ' + table + ':', error);
+      toast('Could not load ' + table + ': ' + error.message, true);
+      return [];
+    }
+    const rows = data || [];
+    const ids = [...new Set(rows.map(r => r[userCol]).filter(Boolean))];
+    const byId = {};
+    if(ids.length){
+      const { data: profs, error: pErr } = await supabase.from('profiles').select('id,name,email').in('id', ids);
+      if(pErr) console.error('Could not load member names:', pErr);
+      (profs || []).forEach(p => { byId[p.id] = p; });
+    }
+    return rows.map(r => ({ ...r, profiles: byId[r[userCol]] || null }));
+  };
+  const purchases = await withProfiles('purchases', 'user_id');
+  const teacherSubs = await withProfiles('teacher_subscriptions', 'teacher_id');
 
-// ── AUTH NAV ──
-function renderNav(){
-  const s = session();
-  const el = document.getElementById('nav-auth');
-  const joinBtn = document.getElementById('hero-join-btn');
-  if(s){
-    const initials = esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const adminLink = s.role === 'admin'
-      ? `<a class="udrop-item" href="admin.html">🛠️ Admin Panel</a><div class="udrop-sep"></div>`
-      : '';
-    el.innerHTML=`<div class="user-btn" tabindex="0">
-      <div class="user-avatar">${initials}</div>
-      <span>${esc(s.name.split(' ')[0])}</span>
-      <div class="user-dropdown">
-        <a class="udrop-item" onclick="openProfile()">👤 My Profile</a>
-        <a class="udrop-item" href="teacher.html">🍎 Teacher Dashboard</a>
-        <div class="udrop-sep"></div>
-        ${adminLink}
-        <a class="udrop-item danger" onclick="logout()">🔒 Log Out</a>
+  const pending  = (purchases||[]).filter(p => p.status === 'pending');
+  const reviewed = (purchases||[]).filter(p => p.status !== 'pending');
+  const teacherPending  = (teacherSubs||[]).filter(t => t.status === 'pending');
+  const teacherReviewed = (teacherSubs||[]).filter(t => t.status !== 'pending');
+
+  document.getElementById('c-payments-pending').textContent = pending.length + teacherPending.length;
+
+  const renderRow = (p) => {
+    const item = findItem(p.item_type, p.item_id);
+    const itemTitle = item ? item.title : '(item removed)';
+    const buyer = p.profiles ? `${esc(p.profiles.name)} (${esc(p.profiles.email)})` : 'Unknown member';
+    const statusBadge = p.status === 'approved' ? '✅ Approved' : p.status === 'rejected' ? '❌ Rejected' : '⏳ Pending';
+    return `<div class="irow">
+      <div><div class="iname">${esc(itemTitle)} — Nu.${esc(p.price||0)}</div>
+        <div class="imeta">${buyer} · ${esc(new Date(p.created_at).toLocaleString())} · ${statusBadge}</div>
+      </div>
+      <div class="ibtns">
+        <button class="btn btn-ghost btn-sm" onclick="viewProof('${esc(p.proof_path)}')">🖼 View Proof</button>
+        ${p.status==='pending' ? `
+          <button class="btn btn-edit btn-sm" onclick="reviewPurchase('${esc(p.id)}','approved')">✓ Approve</button>
+          <button class="btn btn-del btn-sm" onclick="reviewPurchase('${esc(p.id)}','rejected')">✕ Reject</button>
+        ` : ''}
       </div>
     </div>`;
-    if(joinBtn) joinBtn.style.display='none';
-  } else {
-    el.innerHTML=`<a href="login.html" class="login-btn" data-en="Log In / Sign Up" data-dz="ནང་འཛུལ">Log In / Sign Up</a>`;
-    if(joinBtn) joinBtn.style.display='';
+  };
+
+  const renderTeacherRow = (t) => {
+    const buyer = t.profiles ? `${esc(t.profiles.name)} (${esc(t.profiles.email)})` : 'Unknown';
+    const statusBadge = t.status === 'approved' ? '✅ Approved' : t.status === 'rejected' ? '❌ Rejected' : '⏳ Pending';
+    return `<div class="irow">
+      <div><div class="iname">🍎 Teacher Plan — Nu.${esc(t.price||0)}</div>
+        <div class="imeta">${buyer} · ${esc(new Date(t.created_at).toLocaleString())} · ${statusBadge}</div>
+      </div>
+      <div class="ibtns">
+        <button class="btn btn-ghost btn-sm" onclick="viewProof('${esc(t.proof_path)}')">🖼 View Proof</button>
+        ${t.status==='pending' ? `
+          <button class="btn btn-edit btn-sm" onclick="reviewTeacherSub('${esc(t.id)}','approved')">✓ Approve</button>
+          <button class="btn btn-del btn-sm" onclick="reviewTeacherSub('${esc(t.id)}','rejected')">✕ Reject</button>
+        ` : ''}
+      </div>
+    </div>`;
+  };
+
+  const allPending = [...teacherPending.map(renderTeacherRow), ...pending.map(renderRow)];
+  const allReviewed = [...teacherReviewed.map(renderTeacherRow), ...reviewed.map(renderRow)];
+
+  document.getElementById('l-payments-pending').innerHTML = allPending.length
+    ? allPending.join('') : empty('💳','No pending payments right now.');
+  document.getElementById('l-payments-reviewed').innerHTML = allReviewed.length
+    ? allReviewed.slice(0,50).join('') : empty('📋','No reviewed payments yet.');
+}
+
+window.viewProof = async function(path){
+  if(!path){ toast('No proof file on this request.', true); return; }
+  const { data, error } = await supabase.storage.from('payment-proofs').createSignedUrl(path, 300);
+  if(error){ toast('Could not load proof: ' + error.message, true); return; }
+  window.open(data.signedUrl, '_blank', 'noopener');
+};
+
+window.reviewPurchase = async function(id, status){
+  if(!confirm(status === 'approved' ? 'Approve this payment and unlock access?' : 'Reject this payment request?')) return;
+  const { error } = await supabase.from('purchases').update({ status, reviewed_at: new Date().toISOString() }).eq('id', id);
+  if(error){ toast('Error: ' + error.message, true); return; }
+  toast(status === 'approved' ? 'Approved ✓' : 'Rejected');
+  renderAll();
+};
+
+window.reviewTeacherSub = async function(id, status){
+  if(!confirm(status === 'approved' ? 'Approve this teacher plan? This unlocks classroom creation for 1 month.' : 'Reject this request?')) return;
+  const update = { status, reviewed_at: new Date().toISOString() };
+  if(status === 'approved'){
+    update.started_at = new Date().toISOString();
+    const expires = new Date(); expires.setMonth(expires.getMonth() + 1);
+    update.expires_at = expires.toISOString();
   }
-}
-
-window.logout = async function(){
-  await supabase.auth.signOut();
-  localStorage.removeItem('edu_session');
-  location.reload();
+  const { error } = await supabase.from('teacher_subscriptions').update(update).eq('id', id);
+  if(error){ toast('Error: ' + error.message, true); return; }
+  toast(status === 'approved' ? 'Approved ✓' : 'Rejected');
+  renderAll();
 };
 
-// ── PROFILE MODAL ──
-window.openProfile = async function(){
-  const s = session(); if(!s) return;
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', s.id).single();
-  document.getElementById('profile-body').innerHTML=`
-    <div class="profile-avatar">${esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
-    <div class="profile-name">${esc(s.name)}</div>
-    <div class="profile-email">${esc(s.email)}</div>
-    <div class="profile-class">📚 ${esc(profile?.class_grade || 'Member')}</div>
-    <div class="profile-stat">
-      <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
-      <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
-    </div>
-    <a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🍎 Teacher Dashboard</a>
-    ${profile?.role === 'admin' ? `<a href="admin.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🛠️ Open Admin Panel</a>` : ''}
-    <button onclick="logout()" style="width:100%;padding:10px;background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);border-radius:4px;color:#e05c5c;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer">🔒 Log Out</button>`;
-  document.getElementById('profile-modal').classList.add('open');
+function renderUsers(U){
+  if(!U.length){ document.getElementById('l-users').innerHTML=empty('👥','No users signed up yet.'); return; }
+  document.getElementById('l-users').innerHTML=`<table class="utbl">
+    <thead><tr><th>Name</th><th>Email</th><th>Class</th><th>Role</th><th>Joined</th></tr></thead>
+    <tbody>${U.map(u=>`<tr>
+      <td>${esc(u.name)}</td>
+      <td>${esc(u.email)}</td>
+      <td>${esc(u.class_grade||'—')}</td>
+      <td><span class="role-badge role-${esc(u.role)}">${esc(u.role)}</span></td>
+      <td>${u.joined_at ? esc(new Date(u.joined_at).toLocaleDateString()) : '—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function stat(n,l){ return `<div class="sbox"><div class="n">${n}</div><div class="l">${l}</div></div>`; }
+function empty(icon,msg){ return `<div class="empty"><div class="ei">${icon}</div><p>${msg}</p></div>`; }
+function row(item,type){
+  const sub={
+    lesson:`${item.subject||'—'} · ${item.level||'—'} · ${item.duration||'—'}`,
+    resource:`${item.rtype||'—'} · ${item.filesize||'—'}`,
+    video:`${item.subject||'—'} · ${item.duration||'—'}`,
+    article:`${item.article_date||'—'} · ${item.category||'—'}`
+  }[type]||'';
+  const thumb = item.thumbnail_url ? `<img class="irow-thumb" src="${esc(item.thumbnail_url)}"/>` : '';
+  const downloads = `⬇ ${item.download_count||0}`;
+  const premiumTag = item.is_premium ? ` · <span style="color:var(--gold-text,var(--gold))">🔒 Nu.${esc(item.price||0)}</span>` : '';
+  const classTag = item.class_level && item.class_level !== 'All Classes' ? ` · <span style="color:var(--blue)">🎓 ${esc(item.class_level)}</span>` : '';
+  return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)} · ${downloads}${classTag}${premiumTag}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
+}
+
+// ── FORM ──
+const SUBJECTS=['Mathematics','Science','Language Arts','History','Technology','Social Studies','Arts','Physical Education','Other'];
+const LEVELS=['Beginner','Intermediate','Advanced'];
+const RTYPES=['PDF','DOCX','Image','Video Link','Spreadsheet','Presentation','Other'];
+const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
+let _type=null, _id=null;
+
+window.openForm = async function(type, id=null){
+  _type=type; _id=id;
+  let item = {};
+  if(id){
+    // Announcements have no url-masking concern; everything else reads
+    // through the _public view so admin sees the real (unmasked) url.
+    const readTable = type === 'announce' ? 'announcements' : type + 's';
+    const { data } = await supabase.from(readTable).select('*').eq('id',id).single();
+    item = data || {};
+  }
+  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement'}[type];
+  document.getElementById('m-body').innerHTML = buildForm(type,item);
+  initThumbUi();
+  document.getElementById('overlay').classList.add('open');
 };
-window.closeProfile = () => document.getElementById('profile-modal').classList.remove('open');
-document.getElementById('profile-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('profile-modal')) closeProfile(); });
 
-// ── VIDEO PLAYER MODAL ──
-// Plays YouTube links and Google Drive files right on the page using
-// each platform's own embeddable iframe — nobody has to leave the site.
-function getEmbedUrl(url){
-  if(!url) return null;
-  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
-  if(yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0`;
-  const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if(gd) return `https://drive.google.com/file/d/${gd[1]}/preview`;
-  return null;
+window.closeForm = function(){ document.getElementById('overlay').classList.remove('open'); _type=null; _id=null; };
+function sel(opts,val){ return opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join(''); }
+function fv(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+function isValidUrl(u){
+  if(!u) return true; // empty is allowed, required-ness is checked separately
+  try{ const p = new URL(u); return p.protocol==='http:'||p.protocol==='https:'; }catch{ return false; }
 }
-window.openVideoModal = function(url, id, title){
-  trackOpen('videos', id);
-  const embed = getEmbedUrl(url);
-  if(!embed){ window.open(url,'_blank','noopener'); return; } // fallback: unrecognized host, just open it
-  document.getElementById('video-modal-title').textContent = title || '▶ Video';
-  document.getElementById('video-embed-wrap').innerHTML =
-    `<iframe src="${esc(embed)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-  document.getElementById('video-modal').classList.add('open');
+
+// ── Thumbnails ──
+// The thumbnail is always stored as one plain URL in thumbnail_url. The form just
+// decides how that URL is chosen: automatically from the link/file, from an image
+// the admin supplies, or not at all.
+function inferThumbMode(url, thumb, isExisting){
+  const auto = autoThumbFor(url);
+  if(!isExisting) return 'auto';
+  if(!thumb) return auto ? 'auto' : 'none';
+  return thumb === auto ? 'auto' : 'custom';
+}
+function currentThumbMode(){
+  const r = document.querySelector('input[name="thumb-mode"]:checked');
+  return r ? r.value : 'auto';
+}
+window.refreshThumb = function(){
+  const hidden = document.getElementById('f-thumbnail_url');
+  if(!hidden) return;
+  const mode = currentThumbMode();
+  const customBox = document.getElementById('thumb-custom');
+  if(customBox) customBox.style.display = mode === 'custom' ? 'block' : 'none';
+  const link = fv('f-url');
+  let url = '', note = '';
+  if(mode === 'auto'){
+    url = autoThumbFor(link);
+    note = url ? 'Made automatically from the link or file above.'
+         : link ? 'No preview picture can be made from this link, so the site will show a coloured ' + ({pdf:'PDF',doc:'DOC',slides:'SLIDES',sheet:'SHEET',image:'IMAGE',video:'VIDEO',audio:'AUDIO',form:'FORM'}[fileKindFor(link, '')] || 'FILE') + ' cover. Choose “My own image” to use your own picture.'
+         : 'Add a file or link above and the thumbnail will appear here.';
+  } else if(mode === 'custom'){
+    url = fv('f-thumb-custom');
+    note = url ? 'Using your own image.' : 'Upload an image, or paste the link of an image.';
+  } else {
+    note = 'No thumbnail — the site will show the plain icon.';
+  }
+  hidden.value = url;
+  document.getElementById('thumb-preview').innerHTML = url
+    ? `<img src="${esc(url)}" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'upload-status',textContent:'No preview yet — Google can take a minute to prepare a new file.'}))"/>` : '';
+  const n = document.getElementById('thumb-note'); if(n) n.textContent = note;
 };
-window.closeVideoModal = function(){
-  document.getElementById('video-modal').classList.remove('open');
-  document.getElementById('video-embed-wrap').innerHTML = ''; // stops playback
+function initThumbUi(){
+  if(!document.getElementById('f-thumbnail_url')) return;
+  const u = document.getElementById('f-url');
+  if(u) u.addEventListener('input', refreshThumb);
+  refreshThumb();
+}
+window.handleThumbPick = async function(e){
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  const st = document.getElementById('thumb-upload-status');
+  st.className = 'upload-status'; st.textContent = 'Uploading…';
+  try{
+    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
+    document.getElementById('f-thumb-custom').value = result.thumbnailUrl;
+    st.textContent = 'Uploaded ✓'; st.className = 'upload-status ok';
+    refreshThumb();
+  }catch(err){
+    st.textContent = 'Upload failed: ' + err.message; st.className = 'upload-status err';
+  }
 };
-document.getElementById('video-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('video-modal')) closeVideoModal(); });
 
-// ── PREMIUM / PAYMENT SYSTEM ──
-let siteSettings = {};
-let myPurchases = {}; // "type:id" -> 'pending' | 'approved'
-
-async function loadSiteSettings(){
-  const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single();
-  siteSettings = data || {};
-}
-
-async function loadMyPurchases(){
-  myPurchases = {};
-  const s = session();
-  if(!s) return;
-  const { data } = await supabase.from('purchases').select('item_type,item_id,status').eq('user_id', s.id);
-  (data||[]).forEach(p=>{ myPurchases[`${p.item_type}:${p.item_id}`] = p.status; });
-}
-
-// Returns 'free' | 'approved' | 'pending' | 'locked-anon' | 'locked-pay'
-function accessState(type, item){
-  if(!item.is_premium) return 'free';
-  const s = session();
-  if(!s) return 'locked-anon';
-  const st = myPurchases[`${type}:${item.id}`];
-  if(st === 'approved') return 'approved';
-  if(st === 'pending') return 'pending';
-  return 'locked-pay';
-}
-
-function lockOverlayHtml(state, item){
-  if(state === 'free' || state === 'approved') return '';
-  const price = item.price != null ? `Nu. ${item.price}` : 'Paid';
-  const left = item.is_premium ? `🔒 ${esc(price)}` : '🔒 Free';
-  if(state === 'pending') return `<div class="lock-bar pending"><span>⏳ Payment under review</span></div>`;
-  if(state === 'locked-anon') return `<div class="lock-bar"><span>${left}</span><a class="lb-cta" href="login.html">${item.is_premium ? 'Log in to unlock' : 'Log in to download'} →</a></div>`;
-  if(state === 'locked-pay') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">Tap to unlock →</span></div>`;
-  return '';
-}
-// Adds the "leave room for the price bar" class to locked/pending cards.
-function lockCls(state){ return (state === 'free' || state === 'approved') ? '' : ' is-locked'; }
-
-window.openPaymentModal = function(type, id, title, price){
-  const body = document.getElementById('payment-modal-body');
-  const qr = safeUrl(siteSettings.qr_image_url);
-  body.innerHTML = `
-    <p style="font-size:.9rem;color:var(--text2);margin-bottom:1rem">Unlock <strong style="color:var(--text)">${esc(title)}</strong> for <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong>. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.</p>
-    ${qr ? `<img src="${esc(qr)}" style="width:100%;max-width:220px;display:block;margin:0 auto 1rem;border-radius:6px;border:1px solid var(--border)"/>` : ''}
-    <div style="background:var(--gold-soft);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;margin-bottom:1rem;font-size:.85rem;line-height:1.8">
-      ${siteSettings.bank_name?`<div><strong>Bank/App:</strong> ${esc(siteSettings.bank_name)}</div>`:''}
-      ${siteSettings.account_name?`<div><strong>Account Name:</strong> ${esc(siteSettings.account_name)}</div>`:''}
-      ${siteSettings.account_number?`<div><strong>Account Number:</strong> ${esc(siteSettings.account_number)}</div>`:''}
+function imageUploadField(v){
+  const thumb = v('thumbnail_url');
+  const mode = inferThumbMode(v('url'), thumb, !!v('id'));
+  const radio = (val, label) => `<label class="thumb-mode"><input type="radio" name="thumb-mode" value="${val}"${mode===val?' checked':''} onchange="refreshThumb()"/> ${label}</label>`;
+  return `
+    <div class="field">
+      <label>Attach File (optional) — image, PDF, slides, doc, video…</label>
+      <div class="upload-row">
+        <input type="file" id="f-imagefile" style="display:none" onchange="handleFilePick(event)"/>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('f-imagefile','upload-status')">📤 Upload to Google Drive</button>
+        <span class="upload-status" id="upload-status"></span>
+      </div>
     </div>
     <div class="field">
-      <label style="font-size:.76rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">Upload Payment Screenshot</label>
-      <input type="file" id="proof-file" accept="image/*" style="margin-top:.4rem"/>
-    </div>
-    <p id="proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
-    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${esc(type)}','${esc(id)}',${Number(price)||0})">Submit for Review</button>
-  `;
-  document.getElementById('payment-modal').classList.add('open');
-};
-window.closePaymentModal = function(){ document.getElementById('payment-modal').classList.remove('open'); };
-document.getElementById('payment-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('payment-modal')) closePaymentModal(); });
-
-window.submitPaymentProof = async function(type, id, price){
-  const s = session();
-  if(!s){ window.location='login.html'; return; }
-  const fileInput = document.getElementById('proof-file');
-  const file = fileInput.files[0];
-  const statusEl = document.getElementById('proof-status');
-  const submitBtn = document.getElementById('proof-submit-btn');
-  if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red,#e05c5c)'; return; }
-  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
-  statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
-  try{
-    // Supabase Storage keys only allow safe characters — spaces, colons
-    // etc. in the original filename cause an "Invalid key" error, so
-    // sanitize before building the path.
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `${s.id}/${Date.now()}-${safeName}`;
-    const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file);
-    if(upErr) throw upErr;
-    const { error: insErr } = await supabase.from('purchases').insert({
-      user_id: s.id, item_type: type, item_id: id, price, proof_path: path, status: 'pending'
-    });
-    if(insErr) throw insErr;
-    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = '#2e9e6b';
-    myPurchases[`${type}:${id}`] = 'pending';
-    setTimeout(()=>{ closePaymentModal(); renderAll(); }, 1200);
-  }catch(err){
-    console.error('Payment proof submit failed:', err);
-    statusEl.textContent = 'Failed: ' + (err && err.message ? err.message : 'please try again.'); statusEl.style.color = 'var(--red,#e05c5c)';
-    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit for Review'; }
-  }
-};
-
-// ── LOAD STATS (live from Supabase) ──
-async function loadStats(){
-  const [{ count: lCount }, { count: vCount }, { count: uCount }] = await Promise.all([
-    supabase.from('lessons').select('*',{count:'exact',head:true}),
-    supabase.from('videos').select('*',{count:'exact',head:true}),
-    supabase.from('profiles').select('*',{count:'exact',head:true})
-  ]);
-  document.getElementById('st-lessons').textContent = lCount ?? 0;
-  document.getElementById('st-videos').textContent  = vCount ?? 0;
-  document.getElementById('st-users').textContent   = uCount ?? 0;
-}
-
-// ── RENDER LESSONS ──
-async function renderLessons(){
-  const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
-  if(loadErr) console.error('Could not load lessons:', loadErr);
-  const items = (raw||[]).filter(matchesClass);
-  const g = document.getElementById('lessons-grid');
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>No lessons for ${esc(selectedClass)} yet</p></div>`; return; }
-  g.innerHTML = items.map(l => {
-    const icon = ICONS[l.subject]||'📖';
-    const title = lang()==='dz' && l.dz ? l.dz : l.title;
-    const url = safeUrl(l.url);
-    const thumb = thumbFor(l);
-    const lk = fileKindFor(url) || 'lesson';
-    const state = accessState('lessons', l);
-    return `<div class="lesson-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}">
-      <div class="card-media">${coverHtml(lk, lk==='lesson' ? icon : null)}${thumb ? thumbImg(thumb) : ''}
-        <div class="pill-row"><span class="pill">${esc(l.subject||'General')}</span>${l.class_level && l.class_level!=='All Classes' ? `<span class="pill">${esc(l.class_level)}</span>` : ''}</div>
+      <label>Thumbnail</label>
+      <div class="thumb-modes">
+        ${radio('auto','✨ Automatic')}
+        ${radio('custom','🖼 My own image')}
+        ${radio('none','🚫 None')}
       </div>
-      <div class="card-body">
-        <h3>${esc(title)}</h3>
-        <p>${esc(l.description||'')}</p>
-        <div class="lesson-meta">${l.duration?`<span>⏱ ${esc(l.duration)}</span>`:''}${l.slides?`<span>📄 ${esc(l.slides)}</span>`:''}${l.level?`<span>🎯 ${esc(l.level)}</span>`:''}</div>
-      </div>
-      ${lockOverlayHtml(state, l)}
-    </div>`;
-  }).join('');
-  g.querySelectorAll('.lesson-card').forEach(card=>{
-    const url = card.getAttribute('data-url');
-    const id = card.getAttribute('data-id');
-    const state = card.getAttribute('data-state');
-    card.addEventListener('click', ()=>{
-      if(state === 'locked-pay') openPaymentModal('lessons', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
-      else if(state === 'locked-anon'){ window.location='login.html'; return; }
-      else if(state === 'pending') return;
-      else if(url){ trackOpen('lessons', id); window.open(url,'_blank','noopener'); }
-    });
-  });
-}
-
-// ── RENDER RESOURCES ──
-async function renderResources(){
-  const { data: raw, error: loadErr } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
-  if(loadErr) console.error('Could not load resources:', loadErr);
-  const items = (raw||[]).filter(matchesClass);
-  const g = document.getElementById('resources-grid');
-  const s = session();
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📁</div><p>No resources for ${esc(selectedClass)} yet</p></div>`; return; }
-  g.innerHTML = items.map(r => {
-    const icon = RICONS[r.rtype]||'📁';
-    const title = lang()==='dz' && r.dz ? r.dz : r.title;
-    const loginLocked = !s;
-    const url = safeUrl(r.url);
-    const thumb = thumbFor(r);
-    const rk = fileKindFor(url, r.rtype) || 'file';
-    const state = loginLocked ? 'locked-anon' : accessState('resources', r);
-    const overlay = lockOverlayHtml(state, r);
-    return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(r.id)}" data-title="${esc(title)}" data-price="${esc(r.price||0)}">
-      ${thumb
-        ? thumbImg(thumb, ` data-kind="${rk}" style="position:static;width:64px;height:64px;object-fit:cover;border-radius:14px;flex-shrink:0"`)
-        : miniCover(rk)}
-      <div class="resource-info"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.rtype||'')}${r.filesize?' · '+esc(r.filesize):''}${r.class_level && r.class_level!=='All Classes'?' · 🎓 '+esc(r.class_level):''}</div></div>
-      ${overlay}
-    </div>`;
-  }).join('');
-  g.querySelectorAll('.resource-card').forEach(card=>{
-    card.addEventListener('click', ()=>{
-      const state = card.getAttribute('data-state');
-      const url = card.getAttribute('data-url');
-      const id = card.getAttribute('data-id');
-      if(state === 'locked-anon') window.location='login.html';
-      else if(state === 'locked-pay') openPaymentModal('resources', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
-      else if(state === 'pending') return;
-      else if(url){ trackOpen('resources', id); window.open(url,'_blank','noopener'); }
-    });
-  });
-}
-
-// ── RENDER VIDEOS ──
-async function renderVideos(){
-  const { data: raw, error: loadErr } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
-  if(loadErr) console.error('Could not load videos:', loadErr);
-  const items = (raw||[]).filter(matchesClass);
-  const g = document.getElementById('videos-grid');
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>No videos for ${esc(selectedClass)} yet</p></div>`; return; }
-  g.innerHTML = items.map(v => {
-    const title = lang()==='dz' && v.dz ? v.dz : v.title;
-    const icon = ICONS[v.subject]||'🎬';
-    const url = safeUrl(v.url);
-    const thumb = thumbFor(v);
-    const state = accessState('videos', v);
-    return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}">
-      <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div><div class="play-btn">▶</div></div>
-      <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}</div></div>
-      ${lockOverlayHtml(state, v)}
-    </div>`;
-  }).join('');
-  g.querySelectorAll('.video-card').forEach(card=>{
-    const state = card.getAttribute('data-state');
-    card.addEventListener('click', ()=>{
-      if(state === 'locked-anon') { window.location='login.html'; return; }
-      if(state === 'locked-pay') { openPaymentModal('videos', card.getAttribute('data-id'), card.getAttribute('data-title'), card.getAttribute('data-price')); return; }
-      if(state === 'pending') return;
-      openVideoModal(card.getAttribute('data-url'), card.getAttribute('data-id'), card.getAttribute('data-title'));
-    });
-  });
-}
-
-// ── RENDER ARTICLES + COMMENTS ──
-async function renderArticles(){
-  const { data: raw, error: loadErr } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
-  if(loadErr) console.error('Could not load articles:', loadErr);
-  const items = (raw||[]).filter(matchesClass);
-  const g = document.getElementById('blog-grid');
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>No articles for ${esc(selectedClass)} yet</p></div>`; return; }
-  const s = session();
-  g.innerHTML = items.map((a,i) => {
-    const title = lang()==='dz' && a.dz ? a.dz : a.title;
-    const date = a.article_date ? new Date(a.article_date).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '';
-    const url = safeUrl(a.url);
-    const thumb = thumbFor(a);
-    const state = accessState('articles', a);
-    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 Nu.${esc(a.price||0)} — log in</span>`
-                    : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 Nu.${esc(a.price||0)} — tap to unlock</span>`
-                    : state==='pending' ? ` <span style="color:var(--text2);font-size:.78rem">⏳ Under review</span>` : '';
-    return `<div class="blog-card fade-in">
-      <div class="blog-thumb">${coverHtml('article', EMOJIS[i%6])}${thumb ? thumbImg(thumb) : ''}</div>
-      <div class="blog-body">
-        <div class="blog-date">${esc(date)}</div>
-        <h3 data-state="${state}" data-url="${esc(url)}" data-id="${esc(a.id)}" data-title="${esc(title)}" data-price="${esc(a.price||0)}" style="${state==='free'||state==='approved'?'cursor:pointer':''}">${esc(title)}${priceTag}</h3>
-        <p>${esc(a.description||'')}</p>
-        <div class="comments-wrap" data-article="${esc(a.id)}">
-          <h4>💬 Comments</h4>
-          <div class="comment-list">Loading…</div>
-          ${s
-            ? `<form class="comment-form" onsubmit="return false"><input class="comment-input" maxlength="500" placeholder="Add a comment…"/><button type="submit">Post</button></form>`
-            : `<p class="comment-login-note">Sign in to leave a comment. <a href="login.html">Log in →</a></p>`}
+      <div id="thumb-custom" style="display:${mode==='custom'?'block':'none'}">
+        <div class="upload-row" style="margin:.4rem 0">
+          <input type="file" id="f-thumbfile" accept="image/*" style="display:none" onchange="handleThumbPick(event)"/>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('f-thumbfile','thumb-upload-status')">📤 Upload image</button>
+          <span class="upload-status" id="thumb-upload-status"></span>
         </div>
+        <input id="f-thumb-custom" placeholder="…or paste an image link (https://…)" value="${esc(mode==='custom'?thumb:'')}" oninput="refreshThumb()"/>
       </div>
+      <div class="thumb-preview" id="thumb-preview"></div>
+      <div class="upload-status" id="thumb-note"></div>
+      <input type="hidden" id="f-thumbnail_url" value="${esc(thumb)}"/>
     </div>`;
-  }).join('');
-  g.querySelectorAll('.blog-body h3[data-state]').forEach(h=>{
-    h.addEventListener('click', ()=>{
-      const state = h.getAttribute('data-state');
-      const id = h.getAttribute('data-id');
-      if(state === 'locked-anon'){ window.location='login.html'; return; }
-      if(state === 'locked-pay'){ openPaymentModal('articles', id, h.getAttribute('data-title'), h.getAttribute('data-price')); return; }
-      if(state === 'pending') return;
-      const url = h.getAttribute('data-url');
-      if(url){ trackOpen('articles', id); window.open(url,'_blank','noopener'); }
-    });
-  });
-  g.querySelectorAll('.comments-wrap').forEach(wrap=>loadComments(wrap, s));
 }
 
-async function loadComments(wrap, s){
-  const articleId = wrap.getAttribute('data-article');
-  const listEl = wrap.querySelector('.comment-list');
-  const { data: comments, error } = await supabase.from('comments').select('*').eq('article_id', articleId).order('created_at',{ascending:true});
-  if(error){ listEl.innerHTML = `<p class="comment-login-note">Comments unavailable right now.</p>`; return; }
-  listEl.innerHTML = comments?.length
-    ? comments.map(c=>`<div class="comment-item"><div class="comment-author">${esc(c.author_name)}</div><div class="comment-text">${esc(c.body)}</div></div>`).join('')
-    : `<p class="comment-login-note" style="opacity:.7">No comments yet — be the first!</p>`;
-  const form = wrap.querySelector('.comment-form');
-  if(form){
-    form.addEventListener('submit', async ()=>{
-      const input = form.querySelector('.comment-input');
-      const text = input.value.trim();
-      if(!text || !s) return;
-      const btn = form.querySelector('button');
-      btn.disabled = true;
-      const { error: insErr } = await supabase.from('comments').insert({
-        article_id: articleId, author_id: s.id, author_name: s.name, body: text
-      });
-      btn.disabled = false;
-      if(!insErr){ input.value=''; loadComments(wrap, s); }
-    });
+function classField(v){
+  const current = v('class_level') || 'All Classes';
+  return `
+    <div class="field"><label>Class</label>
+      <select id="f-class_level">${sel(CLASS_LEVELS, current)}</select>
+    </div>`;
+}
+
+function premiumField(v){
+  const isPremium = v('is_premium') === true || v('is_premium') === 'true';
+  return `
+    <div class="row2">
+      <div class="field"><label>Access</label>
+        <select id="f-is_premium" onchange="document.getElementById('price-field').style.display=this.value==='true'?'flex':'none'">
+          <option value="false"${!isPremium?' selected':''}>🔓 Free</option>
+          <option value="true"${isPremium?' selected':''}>🔒 Premium (paid)</option>
+        </select>
+      </div>
+      <div class="field" id="price-field" style="display:${isPremium?'flex':'none'}"><label>Price (Nu.)</label><input id="f-price" type="number" min="0" step="0.01" placeholder="e.g. 100" value="${esc(v('price'))}"/></div>
+    </div>`;
+}
+
+function buildForm(type,d={}){
+  const v=k=>d[k]!==undefined && d[k]!==null ? d[k] : '';
+  if(type==='lesson') return`
+    <div class="field"><label>Lesson Title *</label><input id="f-title" placeholder="e.g. Introduction to Algebra" value="${esc(v('title'))}"/></div>
+    <div class="row2"><div class="field"><label>Subject</label><select id="f-subject"><option value="">-- Select --</option>${sel(SUBJECTS,v('subject'))}</select></div><div class="field"><label>Level</label><select id="f-level"><option value="">-- Select --</option>${sel(LEVELS,v('level'))}</select></div></div>
+    <div class="row2"><div class="field"><label>Duration</label><input id="f-duration" placeholder="e.g. 45 min" value="${esc(v('duration'))}"/></div><div class="field"><label>Slides / Pages</label><input id="f-slides" placeholder="e.g. 12 slides" value="${esc(v('slides'))}"/></div></div>
+    <div class="field"><label>Description</label><textarea id="f-description" placeholder="What will students learn?">${esc(v('description'))}</textarea></div>
+    <div class="field"><label>File or Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${classField(v)}
+    ${imageUploadField(v)}
+    ${premiumField(v)}
+    <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="སློབ་ཚན་གྱི་མིང་" value="${esc(v('dz'))}"/></div>`;
+  if(type==='resource') return`
+    <div class="field"><label>Resource Title *</label><input id="f-title" placeholder="e.g. Algebra Worksheet Pack" value="${esc(v('title'))}"/></div>
+    <div class="row2"><div class="field"><label>File Type</label><select id="f-rtype"><option value="">-- Select --</option>${sel(RTYPES,v('rtype'))}</select></div><div class="field"><label>File Size</label><input id="f-filesize" placeholder="e.g. 2.4 MB" value="${esc(v('filesize'))}"/></div></div>
+    <div class="field"><label>Description</label><textarea id="f-description" placeholder="What does this contain?">${esc(v('description'))}</textarea></div>
+    <div class="field"><label>Download / Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${classField(v)}
+    ${imageUploadField(v)}
+    ${premiumField(v)}
+    <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="ཡིག་ཆའི་མིང་" value="${esc(v('dz'))}"/></div>`;
+  if(type==='video') return`
+    <div class="field"><label>Video Title *</label><input id="f-title" placeholder="e.g. Coding Basics Part 1" value="${esc(v('title'))}"/></div>
+    <div class="field"><label>YouTube / Video URL *</label><input id="f-url" placeholder="https://youtube.com/watch?v=..." value="${esc(v('url'))}"/></div>
+    <div class="row2"><div class="field"><label>Subject</label><select id="f-subject"><option value="">-- Select --</option>${sel(SUBJECTS,v('subject'))}</select></div><div class="field"><label>Duration</label><input id="f-duration" placeholder="e.g. 12:30" value="${esc(v('duration'))}"/></div></div>
+    <div class="field"><label>Description</label><textarea id="f-description" placeholder="What will students learn?">${esc(v('description'))}</textarea></div>
+    ${classField(v)}
+    ${imageUploadField(v)}
+    ${premiumField(v)}
+    <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="བརྙན་ཐམས་ཀྱི་མིང་" value="${esc(v('dz'))}"/></div>`;
+  if(type==='announce') return`
+    <div class="field"><label>Message *</label><textarea id="f-message" placeholder="e.g. 🎉 New lessons added! Check out Class 6 Mathematics." style="min-height:90px">${esc(v('message'))}</textarea></div>
+    <div class="row2">
+      <div class="field"><label>Emoji (optional)</label><input id="f-emoji" placeholder="e.g. 📢 🎉 🆕" value="${esc(v('emoji'))}"/></div>
+      <div class="field"><label>Active?</label><select id="f-active"><option value="true"${v('active')!=='false'?' selected':''}>✅ Yes — show on site</option><option value="false"${v('active')==='false'?' selected':''}>❌ No — hide</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Link Label (optional)</label><input id="f-link_label" placeholder="e.g. View Lessons" value="${esc(v('link_label'))}"/></div>
+      <div class="field"><label>Link URL (optional)</label><input id="f-link_url" placeholder="https://..." value="${esc(v('link_url'))}"/></div>
+    </div>`;
+  if(type==='article') return`
+    <div class="field"><label>Article Title *</label><input id="f-title" placeholder="e.g. 5 Ways to Make Math Engaging" value="${esc(v('title'))}"/></div>
+    <div class="row2"><div class="field"><label>Date</label><input id="f-article_date" type="date" value="${esc(v('article_date'))}"/></div><div class="field"><label>Category</label><input id="f-category" placeholder="e.g. Pedagogy" value="${esc(v('category'))}"/></div></div>
+    <div class="field"><label>Summary</label><textarea id="f-description" placeholder="Short summary...">${esc(v('description'))}</textarea></div>
+    <div class="field"><label>Article Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${classField(v)}
+    ${imageUploadField(v)}
+    ${premiumField(v)}
+    <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="རྩོམ་ཡིག་གི་མིང་" value="${esc(v('dz'))}"/></div>`;
+}
+
+// Opens the file chooser. If we're not signed in to Google yet, do the sign-in
+// FIRST, directly from this click, so the browser allows the popup.
+window.pickFile = async function(inputId, statusId){
+  if(hasValidDriveToken()){ document.getElementById(inputId).click(); return; }
+  const statusEl = document.getElementById(statusId);
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Connecting to Google… allow the popup and sign in.';
+  try{
+    await connectGoogleDrive(GOOGLE_CLIENT_ID);
+    statusEl.textContent = 'Google connected ✓ — click the upload button again to choose your file.';
+    statusEl.className = 'upload-status ok';
+  }catch(err){
+    statusEl.textContent = 'Could not connect: ' + err.message;
+    statusEl.className = 'upload-status err';
   }
-}
+};
 
-async function renderAll(){
-  renderNav();
-  renderClassTabs();
-  await Promise.all([loadSiteSettings(), loadMyPurchases()]);
-  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), loadStats()]);
-  observeFadeIns();
-}
+window.handleFilePick = async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('upload-status');
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Uploading… (a Google consent popup may appear the first time)';
+  try{
+    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
+    const urlField = document.getElementById('f-url');
+    const kept = urlField && urlField.value.trim();
+    if(urlField && !kept) urlField.value = result.viewUrl;
+    refreshThumb();   // Automatic: follows the link · My own image / None: left exactly as chosen
+    statusEl.textContent = kept ? `Uploaded "${result.name}" ✓ — the link above was kept` : `Uploaded "${result.name}" ✓`;
+    statusEl.className = 'upload-status ok';
+  }catch(err){
+    statusEl.textContent = 'Upload failed: ' + err.message;
+    statusEl.className = 'upload-status err';
+  }
+};
 
-// ── THEME ──
-html.setAttribute('data-theme', localStorage.getItem('eduTheme')||'dark');
-document.getElementById('themeToggle').addEventListener('click',()=>{
-  const n = html.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme',n); localStorage.setItem('eduTheme',n);
-});
-
-// ── LANGUAGE ──
-const langBtns = document.querySelectorAll('[data-lang-btn]');
-function applyLang(l){
-  html.setAttribute('data-lang',l); localStorage.setItem('eduLang',l);
-  document.querySelectorAll('[data-en]').forEach(el=>{
-    const val=el.getAttribute('data-'+l); if(!val) return;
-    if(val.includes('<')) el.innerHTML=val; else el.textContent=val;
-  });
-  langBtns.forEach(b=>b.classList.toggle('on',b.getAttribute('data-lang-btn')===l));
-}
-langBtns.forEach(b=>b.addEventListener('click',()=>{ applyLang(b.getAttribute('data-lang-btn')); renderAll(); }));
-applyLang(localStorage.getItem('eduLang')||'en');
-
-// ── FADE IN ──
-function observeFadeIns(){
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach((e,i)=>{ if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('visible'),i*80); io.unobserve(e.target); }});
-  },{threshold:.08});
-  document.querySelectorAll('.fade-in:not(.visible)').forEach(el=>io.observe(el));
-}
-
-// ── ACTIVE NAV ──
-const secs = document.querySelectorAll('section[id]');
-const nls  = document.querySelectorAll('.nav-links a');
-window.addEventListener('scroll',()=>{
-  let cur='';
-  secs.forEach(s=>{ if(window.scrollY>=s.offsetTop-100) cur=s.id; });
-  nls.forEach(a=>{ a.style.color=a.getAttribute('href')==='#'+cur?'var(--gold)':''; });
-});
-
-// ── SYNC SUPABASE SESSION → localStorage on load AND on change ──
-async function syncSessionAndRender(){
-  const { data } = await supabase.auth.getSession();
-  if(data.session){
-    const uid = data.session.user.id;
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id',uid).single();
-    if(profile){
-      localStorage.setItem('edu_session', JSON.stringify({
-        id: uid, name: profile.name, email: profile.email,
-        role: profile.role, class_grade: profile.class_grade
-      }));
+window.fillMissingThumbnails = async function(){
+  if(!confirm('Add automatic thumbnails to all content that has none? Existing thumbnails are not changed.')) return;
+  const st = document.getElementById('thumb-fill-status');
+  st.className = 'upload-status'; st.textContent = 'Working…';
+  let filled = 0, noLink = 0, failed = 0;
+  for(const t of ['lessons','resources','videos','articles']){
+    const { data, error } = await supabase.from(t).select('id,url,thumbnail_url');
+    if(error){ failed++; continue; }
+    for(const it of (data || [])){
+      if(it.thumbnail_url) continue;
+      const th = autoThumbFor(it.url);
+      if(!th){ noLink++; continue; }
+      const { error: e2 } = await supabase.from(t).update({ thumbnail_url: th }).eq('id', it.id);
+      if(e2) failed++; else filled++;
     }
-  } else {
-    localStorage.removeItem('edu_session');
   }
+  st.textContent = `Done — ${filled} thumbnail${filled===1?'':'s'} added, ${noLink} item${noLink===1?'':'s'} without a link we can use${failed ? ', ' + failed + ' failed' : ''}.`;
+  st.className = 'upload-status ' + (failed ? 'err' : 'ok');
   renderAll();
+};
+
+window.saveItem = async function(){
+  const isAnnounce = _type === 'announce';
+
+  if(isAnnounce){
+    if(!fv('f-message')){ toast('Please enter a message.', true); return; }
+  } else {
+    if(!fv('f-title')){ toast('Please enter a title.', true); return; }
+    if(_type==='video' && !fv('f-url')){ toast('Please enter a video URL.', true); return; }
+    if(fv('f-is_premium')==='true' && !fv('f-price')){ toast('Please enter a price for premium content.', true); return; }
+  }
+  // Validate any URL field before saving so a bad link can't reach the public site
+  const urlField = isAnnounce ? fv('f-link_url') : fv('f-url');
+  if(urlField && !isValidUrl(urlField)){ toast('Please enter a valid http(s):// URL.', true); return; }
+
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+  const table = isAnnounce ? 'announcements' : _type + 's';
+  const base = isAnnounce
+    ? { message: fv('f-message') }
+    : {
+        title: fv('f-title'), dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url'), thumbnail_url: fv('f-thumbnail_url'),
+        class_level: fv('f-class_level') || 'All Classes',
+        is_premium: fv('f-is_premium') === 'true',
+        price: fv('f-is_premium') === 'true' && fv('f-price') ? Number(fv('f-price')) : null
+      };
+  const extra = {
+    lesson:   { subject: fv('f-subject'), level: fv('f-level'), duration: fv('f-duration'), slides: fv('f-slides') },
+    resource: { rtype: fv('f-rtype'), filesize: fv('f-filesize') },
+    video:    { subject: fv('f-subject'), duration: fv('f-duration') },
+    article:  { article_date: fv('f-article_date') || null, category: fv('f-category') },
+    announce: { emoji: fv('f-emoji'), active: fv('f-active') === 'true', link_label: fv('f-link_label'), link_url: fv('f-link_url') }
+  }[_type] || {};
+
+  const newItem = { ...base, ...extra };
+
+  let error;
+  if(_id){
+    ({ error } = await supabase.from(table).update(newItem).eq('id', _id));
+    if(!error) toast('Updated! ✓');
+  } else {
+    newItem.id = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    ({ error } = await supabase.from(table).insert(newItem));
+    if(!error) toast('Added! ✓');
+  }
+
+  if(error){ toast('Error: ' + error.message, true); }
+  else { closeForm(); renderAll(); }
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Save';
+};
+
+window.del = async function(type, id){
+  if(!confirm('Delete this item?')) return;
+  const tbl = type === 'announce' ? 'announcements' : type+'s';
+  const { error } = await supabase.from(tbl).delete().eq('id', id);
+  if(error){ toast('Error: ' + error.message, true); return; }
+  toast('Deleted.');
+  renderAll();
+};
+
+function toast(msg, isErr=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isErr?' err':'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
 }
-supabase.auth.onAuthStateChange(()=>{ syncSessionAndRender(); });
-syncSessionAndRender();
 
-// ── VISIT LOGGING ──
-// Logs one visit per browser session (not on every reload/anchor click)
-// so the admin panel's "Site Visits" count reflects sessions, not raw
-// page loads. Silently does nothing if it fails — never blocks the site.
-(function logVisitOnce(){
-  if(sessionStorage.getItem('edu_visit_logged')) return;
-  sessionStorage.setItem('edu_visit_logged','1');
-  supabase.from('page_views').insert({}).then(()=>{}, ()=>{});
-})();
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target===document.getElementById('overlay')) closeForm(); });
 
-// ── DOWNLOAD / OPEN TRACKING ──
-// Fire-and-forget: never blocks or delays actually opening the file.
-window.trackOpen = function(table, id){
-  if(!id) return;
-  supabase.rpc('increment_downloads', { p_table: table, p_id: id }).then(()=>{}, ()=>{});
+// ── SETTINGS (now stored in the shared site_settings table, so it
+//    actually applies for every visitor — not just this browser) ──
+window.loadSettings = async function(){
+  const { data: s } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+  if(!s) return;
+  document.getElementById('s-sitename').value = s.sitename || 'SherigSpace';
+  document.getElementById('s-tagline').value  = s.tagline || '';
+  document.getElementById('s-email').value    = s.contact_email || '';
+  document.getElementById('s-acctname').value = s.account_name || '';
+  document.getElementById('s-acctnum').value  = s.account_number || '';
+  document.getElementById('s-bankname').value = s.bank_name || '';
+  document.getElementById('s-teacherprice').value = s.teacher_plan_price || '';
+  document.getElementById('s-qrurl').value    = s.qr_image_url || '';
+  document.getElementById('qr-preview').innerHTML = s.qr_image_url ? `<img src="${esc(s.qr_image_url)}"/>` : '';
+};
+
+window.handleQrPick = async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('qr-upload-status');
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Uploading…';
+  try{
+    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
+    document.getElementById('s-qrurl').value = result.thumbnailUrl;
+    document.getElementById('qr-preview').innerHTML = `<img src="${esc(result.thumbnailUrl)}"/>`;
+    statusEl.textContent = 'Uploaded ✓';
+    statusEl.className = 'upload-status ok';
+  }catch(err){
+    statusEl.textContent = 'Upload failed: ' + err.message;
+    statusEl.className = 'upload-status err';
+  }
+};
+
+window.saveSettings = async function(){
+  const { error } = await supabase.from('site_settings').update({
+    sitename: document.getElementById('s-sitename').value,
+    tagline: document.getElementById('s-tagline').value,
+    contact_email: document.getElementById('s-email').value,
+    account_name: document.getElementById('s-acctname').value,
+    account_number: document.getElementById('s-acctnum').value,
+    bank_name: document.getElementById('s-bankname').value,
+    teacher_plan_price: document.getElementById('s-teacherprice').value ? Number(document.getElementById('s-teacherprice').value) : null,
+    qr_image_url: document.getElementById('s-qrurl').value,
+    updated_at: new Date().toISOString()
+  }).eq('id', 1);
+  if(error){ toast('Error: ' + error.message, true); return; }
+  toast('Settings saved! ✓');
 };
 </script>
 </body>
