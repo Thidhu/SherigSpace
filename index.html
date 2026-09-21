@@ -147,6 +147,11 @@ section{padding:80px 5%}
 .about-avatar-label{font-size:.85rem;color:rgba(255,255,255,.4);letter-spacing:.08em}
 .about-signature{font-family:'Playfair Display',serif;font-size:1.65rem;font-style:italic;color:var(--gold-light);text-align:center;margin-top:1rem}
 .about-role{font-size:.72rem;letter-spacing:.18em;color:rgba(255,255,255,.72);text-align:center;margin-top:.35rem}
+.about-quick-contact{display:flex;gap:.6rem;justify-content:center;margin-top:1rem}
+.qc-btn{display:inline-flex;align-items:center;gap:.35rem;padding:7px 15px;border-radius:999px;font-size:.76rem;font-weight:700;text-decoration:none;font-family:var(--font-en);letter-spacing:.01em;transition:transform .15s,opacity .2s;border:1px solid transparent}
+.qc-btn:hover{transform:translateY(-2px)}
+.qc-wa{background:#25D366;color:#0b3d20}
+.qc-call{background:rgba(255,255,255,.08);color:var(--gold-light);border-color:rgba(201,168,76,.55)}
 .about-accent{position:absolute;bottom:-16px;right:-16px;width:80px;height:80px;border:2px solid var(--gold);border-radius:4px;opacity:.4}
 #about .section-label{color:var(--gold-light)}
 #about .section-title{color:#fff}
@@ -379,6 +384,10 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <div class="about-accent"></div>
       <div class="about-signature">Thinley Wangchuk</div>
       <div class="about-role">TEACHER&nbsp;&nbsp;•&nbsp;&nbsp;CREATOR&nbsp;&nbsp;•&nbsp;&nbsp;LIFELONG LEARNER</div>
+      <div class="about-quick-contact">
+        <a class="qc-btn qc-wa" href="https://wa.me/97517272018" target="_blank" rel="noopener" data-en="💬 WhatsApp" data-dz="💬 WhatsApp">💬 WhatsApp</a>
+        <a class="qc-btn qc-call" href="tel:+97517272018" data-en="📞 Call" data-dz="📞 འབྲེལ་འཐབ།">📞 Call</a>
+      </div>
     </div>
     <div class="fade-in">
       <p class="section-label"  data-en="✦ About Me" data-dz="✦ ང་རའི་སྐོར།">✦ About Me</p>
@@ -606,6 +615,8 @@ window.closeVideoModal = function(){
 document.getElementById('video-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('video-modal')) closeVideoModal(); });
 
 // ── PREMIUM / PAYMENT SYSTEM ──
+// Phone number for instant "I've paid" notifications (WhatsApp + direct call).
+const CONTACT_PHONE = '97517272018'; // Bhutan country code + number, no "+" (required by wa.me)
 let siteSettings = {};
 let myPurchases = {}; // "type:id" -> 'pending' | 'approved'
 
@@ -637,7 +648,10 @@ function lockOverlayHtml(state, item){
   if(state === 'free' || state === 'approved') return '';
   const price = item.price != null ? `Nu. ${item.price}` : 'Paid';
   const left = item.is_premium ? `🔒 ${esc(price)}` : '🔒 Free';
-  if(state === 'pending') return `<div class="lock-bar pending"><span>⏳ Payment under review</span></div>`;
+  if(state === 'pending'){
+    const waText = encodeURIComponent(`Hi Thinley, I already submitted payment for "${item.title || 'an item'}" — could you please review it?`);
+    return `<div class="lock-bar pending"><span>⏳ Payment under review</span><a class="lb-cta" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 Notify me</a></div>`;
+  }
   if(state === 'locked-anon') return `<div class="lock-bar"><span>${left}</span><a class="lb-cta" href="login.html">${item.is_premium ? 'Log in to unlock' : 'Log in to download'} →</a></div>`;
   if(state === 'locked-pay') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">Tap to unlock →</span></div>`;
   return '';
@@ -661,14 +675,14 @@ window.openPaymentModal = function(type, id, title, price){
       <input type="file" id="proof-file" accept="image/*" style="margin-top:.4rem"/>
     </div>
     <p id="proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
-    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${esc(type)}','${esc(id)}',${Number(price)||0})">Submit for Review</button>
+    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${esc(type)}','${esc(id)}',${Number(price)||0},'${esc(title)}')">Submit for Review</button>
   `;
   document.getElementById('payment-modal').classList.add('open');
 };
 window.closePaymentModal = function(){ document.getElementById('payment-modal').classList.remove('open'); };
 document.getElementById('payment-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('payment-modal')) closePaymentModal(); });
 
-window.submitPaymentProof = async function(type, id, price){
+window.submitPaymentProof = async function(type, id, price, title){
   const s = session();
   if(!s){ window.location='login.html'; return; }
   const fileInput = document.getElementById('proof-file');
@@ -690,9 +704,23 @@ window.submitPaymentProof = async function(type, id, price){
       user_id: s.id, item_type: type, item_id: id, price, proof_path: path, status: 'pending'
     });
     if(insErr) throw insErr;
-    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = '#2e9e6b';
     myPurchases[`${type}:${id}`] = 'pending';
-    setTimeout(()=>{ closePaymentModal(); renderAll(); }, 1200);
+    renderAll();
+    // Swap the modal to a "submitted" state with a one-tap way to notify me directly —
+    // reviewing screenshots can take a while, so this lets them skip the wait.
+    const waText = encodeURIComponent(`Hi Thinley, I just submitted payment for "${title || 'an item'}" on SherigSpace — could you please review it?`);
+    document.getElementById('payment-modal-body').innerHTML = `
+      <div style="text-align:center;padding:.5rem 0 .2rem">
+        <div style="font-size:2.2rem;margin-bottom:.5rem">✅</div>
+        <h4 style="color:var(--text);margin-bottom:.4rem">Submitted for review!</h4>
+        <p style="font-size:.85rem;color:var(--text2);margin-bottom:1.2rem">We'll unlock it once it's checked. Want it faster? Let me know directly:</p>
+        <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.2rem">
+          <a class="qc-btn qc-wa" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 WhatsApp Me</a>
+          <a class="qc-btn qc-call" href="tel:+${CONTACT_PHONE}">📞 Call Me</a>
+        </div>
+        <button class="btn-primary" style="border:none;cursor:pointer" onclick="closePaymentModal()">Done</button>
+      </div>
+    `;
   }catch(err){
     console.error('Payment proof submit failed:', err);
     statusEl.textContent = 'Failed: ' + (err && err.message ? err.message : 'please try again.'); statusEl.style.color = 'var(--red,#e05c5c)';
