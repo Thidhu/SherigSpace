@@ -1,20 +1,16 @@
 // ── Google Drive upload helper ──
 //
-// Scope note: this uses the full 'drive' scope (not the narrower
-// 'drive.file') specifically so uploads can land inside a folder you
-// picked yourself in Drive's UI. With 'drive.file', the app can only
-// see files/folders IT created — a folder you made manually and pasted
-// the ID for is invisible to it, which is why uploads into
-// GOOGLE_DRIVE_FOLDER_ID were failing. Full 'drive' scope fixes that.
+// Scope: 'drive.file'. This is the narrow, non-sensitive permission — the app can
+// only touch files and folders IT created, never the rest of a teacher's Drive.
+// Because it is non-sensitive, the Google Cloud app can be set to "In production"
+// with no test-user list and no Google verification review.
 //
-// This is fine while your Google Cloud OAuth consent screen is in
-// "Testing" mode with your own account listed as a test user — no
-// extra verification needed for that. If you ever open Drive uploads
-// up to OTHER teachers using their own separate Google accounts (e.g.
-// via teacher.html's assignment attachments), each of those accounts
-// would also need to be added as a test user in Google Cloud, or the
-// app would need to go through Google's verification process to work
-// for arbitrary outside accounts.
+// Since the app can only see what it created, it can't use a folder you made by
+// hand. Instead, the first upload creates a folder called "SherigSpace Uploads"
+// in the signed-in teacher's own Drive, and every later upload goes into it.
+
+const APP_FOLDER_NAME = 'SherigSpace Uploads';
+let appFolderId = null;
 
 let tokenClient = null;
 let currentToken = null;
@@ -61,8 +57,7 @@ async function initGoogle(clientId) {
   if (!tokenClient) {
     tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: clientId,
-      // Broadened from 'drive.file' — see note at top of file.
-      scope: 'https://www.googleapis.com/auth/drive',
+      scope: 'https://www.googleapis.com/auth/drive.file',
       callback: (response) => {
         if (response.error) {
           settle('reject', new Error(response.error_description || response.error || 'Google authorization failed.'));
@@ -73,6 +68,7 @@ async function initGoogle(clientId) {
           return;
         }
         currentToken = response.access_token;
+        appFolderId = null;
         tokenExpiresAt = Date.now() + (Number(response.expires_in) || 3600) * 1000;
         settle('resolve', currentToken);
       },
@@ -156,11 +152,35 @@ async function driveMakePublic(fileId, token) {
   }
 }
 
+/** Finds (or creates) the "SherigSpace Uploads" folder this app owns in the teacher's Drive. */
+async function getAppFolder(token) {
+  if (appFolderId) return appFolderId;
+  const auth = { Authorization: `Bearer ${token}` };
+
+  const q = encodeURIComponent(`name='${APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  let response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&pageSize=1`, { headers: auth });
+  let text = await response.text();
+  if (!response.ok) throw new Error(`Could not look for the upload folder (${response.status}): ${text}`);
+  const found = JSON.parse(text).files;
+  if (found && found.length) { appFolderId = found[0].id; return appFolderId; }
+
+  response = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: APP_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
+  });
+  text = await response.text();
+  if (!response.ok) throw new Error(`Could not create the upload folder (${response.status}): ${text}`);
+  appFolderId = JSON.parse(text).id;
+  return appFolderId;
+}
+
 /**
- * Uploads a file to the signed-in user's Google Drive (optionally into a
- * specific folder), makes it link-viewable, and returns URLs to store.
+ * Uploads a file into the "SherigSpace Uploads" folder of the signed-in
+ * teacher's Google Drive, makes it link-viewable, and returns URLs to store.
+ * (The third argument is ignored now — kept so older calls still work.)
  */
-export async function uploadFileToDrive(file, clientId, folderId) {
+export async function uploadFileToDrive(file, clientId /*, folderId (unused) */) {
   if (!clientId || clientId.startsWith('YOUR_')) {
     throw new Error('Google Drive is not configured. Check GOOGLE_CLIENT_ID in config.js.');
   }
@@ -170,11 +190,17 @@ export async function uploadFileToDrive(file, clientId, folderId) {
   if (file.size > 50 * 1024 * 1024) {
     throw new Error('Please choose a file under 50MB.');
   }
-  // folderId is optional again — an empty/missing value just uploads to
-  // Drive's root instead of failing outright.
 
   const token = await getDriveToken(clientId);
-  const uploaded = await driveUploadRaw(file, token, folderId);
+  let uploaded;
+  try {
+    uploaded = await driveUploadRaw(file, token, await getAppFolder(token));
+  } catch (err) {
+    // The teacher may have deleted the folder since it was cached — recreate it once.
+    if (!/\(404\)/.test(String(err.message))) throw err;
+    appFolderId = null;
+    uploaded = await driveUploadRaw(file, token, await getAppFolder(token));
+  }
   await driveMakePublic(uploaded.id, token);
 
   return {
