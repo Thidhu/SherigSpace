@@ -12,6 +12,66 @@
 const APP_FOLDER_NAME = 'SherigSpace Uploads';
 let appFolderId = null;
 
+import * as cfg from './config.js';
+
+// ── Central-Drive mode ──────────────────────────────────────────
+// When DRIVE_UPLOAD_URL is set in config.js, uploads no longer use a Google
+// popup at all. The file is sent to your Google Apps Script (drive-upload-backend.gs),
+// which runs as YOU and saves it into your own Drive folder. Teachers never sign
+// in to Google. If DRIVE_UPLOAD_URL is empty, the older popup method below is used.
+const BACKEND_MAX_BYTES = 25 * 1024 * 1024;
+let supa = null;
+let tokenProvider = defaultTokenProvider;
+
+export function usingBackend() { return !!cfg.DRIVE_UPLOAD_URL; }
+export function _setTokenProvider(fn) { tokenProvider = fn; }   // for tests
+
+async function defaultTokenProvider() {
+  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+  supa = supa || createClient(cfg.SUPABASE_URL, cfg.SUPABASE_KEY);
+  const { data } = await supa.auth.getSession();
+  if (!data || !data.session) throw new Error('Please log in again, then retry the upload.');
+  return data.session.access_token;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = () => reject(new Error('Could not read the file.'));
+    r.readAsDataURL(file);
+  });
+}
+
+async function uploadViaBackend(file) {
+  if (file.size > BACKEND_MAX_BYTES) throw new Error('Please choose a file under 25MB. For a longer video, put it on YouTube as Unlisted and paste the link.');
+  const token = await tokenProvider();
+  const data = await fileToBase64(file);
+
+  let response;
+  try {
+    response = await fetch(cfg.DRIVE_UPLOAD_URL, {
+      method: 'POST',
+      // text/plain keeps this a "simple" request, so the browser doesn't need a CORS pre-check
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token, name: file.name, mimeType: file.type, data })
+    });
+  } catch (e) {
+    throw new Error('Could not reach the upload service. Check DRIVE_UPLOAD_URL in config.js, and that the script is deployed with access set to "Anyone".');
+  }
+  let out;
+  try { out = JSON.parse(await response.text()); }
+  catch (e) { throw new Error('The upload service sent an unexpected reply. Check that the script is deployed as a Web app with access set to "Anyone".'); }
+  if (!out.ok) throw new Error(out.error || 'Upload failed.');
+
+  return {
+    fileId: out.fileId,
+    name: out.name,
+    viewUrl: out.viewUrl,
+    thumbnailUrl: `https://drive.google.com/thumbnail?id=${out.fileId}&sz=w600`
+  };
+}
+
 let tokenClient = null;
 let currentToken = null;
 let tokenExpiresAt = 0;
@@ -89,6 +149,7 @@ async function initGoogle(clientId) {
 
 /** True if we already hold a Google token that is not about to expire. */
 export function hasValidDriveToken() {
+  if (usingBackend()) return true;
   return !!currentToken && Date.now() < tokenExpiresAt - 10000;
 }
 
@@ -98,6 +159,7 @@ export function hasValidDriveToken() {
  * input's change event) or the browser will block the popup.
  */
 export async function connectGoogleDrive(clientId) {
+  if (usingBackend()) return 'backend';
   if (hasValidDriveToken()) return currentToken;
 
   const client = await initGoogle(clientId);
@@ -181,11 +243,12 @@ async function getAppFolder(token) {
  * (The third argument is ignored now — kept so older calls still work.)
  */
 export async function uploadFileToDrive(file, clientId /*, folderId (unused) */) {
-  if (!clientId || clientId.startsWith('YOUR_')) {
-    throw new Error('Google Drive is not configured. Check GOOGLE_CLIENT_ID in config.js.');
-  }
   if (!file) {
     throw new Error('No file was selected.');
+  }
+  if (usingBackend()) return uploadViaBackend(file);
+  if (!clientId || clientId.startsWith('YOUR_')) {
+    throw new Error('Google Drive is not configured. Check GOOGLE_CLIENT_ID in config.js.');
   }
   if (file.size > 50 * 1024 * 1024) {
     throw new Error('Please choose a file under 50MB.');
