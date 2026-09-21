@@ -19,12 +19,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .bg::after{content:'';position:absolute;bottom:-80px;left:-80px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.05) 0%,transparent 70%)}
 .wrap{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem}
 .brand{text-align:center;margin-bottom:2rem}
-.brand h1{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold);letter-spacing:.02em}
+.brand h1{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold-text,var(--gold));letter-spacing:.02em}
 .brand p{font-size:.85rem;color:var(--text2);margin-top:.3rem}
 .card{background:rgba(25,32,53,.95);border:1px solid var(--border);border-radius:10px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4)}
 .tabs{display:grid;grid-template-columns:1fr 1fr}
 .tab{padding:1rem;text-align:center;font-weight:600;font-size:.9rem;cursor:pointer;color:var(--text2);background:rgba(255,255,255,.03);border-bottom:2px solid transparent;transition:all .2s}
-.tab.on{color:var(--gold);background:transparent;border-bottom-color:var(--gold)}
+.tab.on{color:var(--gold-text,var(--gold));background:transparent;border-bottom-color:var(--gold)}
 .forms{padding:1.8rem}
 .form{display:none;flex-direction:column;gap:1rem}
 .form.on{display:flex}
@@ -46,24 +46,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1)}
 
 .msg{font-size:.82rem;padding:10px 13px;border-radius:5px;display:none}
-.msg.err{background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.3);color:#f09090;display:block}
-.msg.ok{background:rgba(76,175,132,.12);border:1px solid rgba(76,175,132,.3);color:#7ed9b0;display:block}
+.msg.err{background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.3);color:var(--err-text,#f09090);display:block}
+.msg.ok{background:rgba(76,175,132,.12);border:1px solid rgba(76,175,132,.3);color:var(--ok-text,#7ed9b0);display:block}
 .hint{font-size:.78rem;color:var(--text2);text-align:center}
-.hint a{color:var(--gold);cursor:pointer;text-decoration:none}
+.hint a{color:var(--gold-text,var(--gold));cursor:pointer;text-decoration:none}
 .hint a:hover{text-decoration:underline}
 .strength{height:3px;border-radius:2px;margin-top:4px;background:var(--border);overflow:hidden}
 .strength-bar{height:100%;width:0;border-radius:2px;transition:width .3s,background .3s}
 
 /* Admin access link at bottom — now just a normal link, the real check happens on admin.html */
 .admin-link{display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.75rem;border-top:1px solid rgba(201,168,76,.1);font-size:.78rem;color:var(--text2);text-decoration:none;transition:color .2s}
-.admin-link:hover{color:var(--gold)}
+.admin-link:hover{color:var(--gold-text,var(--gold))}
 .admin-link .lock-icon{font-size:.9rem}
 
 /* Modals */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
 .modal.show{display:flex}
 .modal-box{width:100%;max-width:400px;background:rgba(19,28,46,.98);border:1px solid var(--border);border-radius:10px;padding:1.6rem;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.modal-box h2{font-family:'Playfair Display',serif;color:var(--gold);margin-bottom:.4rem;font-size:1.3rem}
+.modal-box h2{font-family:'Playfair Display',serif;color:var(--gold-text,var(--gold));margin-bottom:.4rem;font-size:1.3rem}
 .modal-text{color:var(--text2);font-size:.83rem;margin-bottom:1.1rem;line-height:1.5}
 .modal-field{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1rem}
 .modal-field label{font-size:.73rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
@@ -75,8 +75,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .btn-cancel:hover{background:rgba(255,255,255,.13);transform:none}
 
 footer{position:relative;z-index:1;text-align:center;padding:1.2rem;font-size:.78rem;color:rgba(255,255,255,.25)}
-footer span{color:var(--gold)}
+footer span{color:var(--gold-text,var(--gold))}
 </style>
+<script src="theme.js"></script>
 </head>
 <body>
 <div class="bg"></div>
@@ -161,10 +162,10 @@ footer span{color:var(--gold)}
       <!-- STUDENT LOGIN -->
       <form class="form" id="f-student" onsubmit="doStudentLogin(event)">
         <div id="student-msg" class="msg"></div>
-        <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem">Ask your teacher for your Class Code, Name, and PIN.</p>
+        <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem">Ask your teacher for your Class Name, Your Name, and PIN.</p>
         <div class="field">
-          <label>Class Code</label>
-          <input id="st-classcode" type="text" placeholder="e.g. AB3C-XY9" required/>
+          <label>Class Name</label>
+          <input id="st-classcode" type="text" placeholder="e.g. Class 9 Dzongkha" autocomplete="off" required/>
         </div>
         <div class="field">
           <label>Your Name</label>
@@ -320,11 +321,19 @@ window.doStudentLogin = async function(e){
   setBtn('student-btn', true, 'Log In');
   showMsg('student-msg','','');
   try {
-    const { data: email, error: lookupErr } = await sb.rpc('student_login_lookup', {
-      p_class_code: classCode, p_display_name: name, p_pin: pin
-    });
-    if(lookupErr) throw lookupErr;
-    if(!email) throw new Error('Class Code, Name, or PIN is incorrect. Check with your teacher.');
+    // The class name is stored in lower case, older classes still use an
+    // UPPER-CASE code — so try the common spellings until one matches.
+    const collapsed = classCode.replace(/\s+/g, ' ');
+    const tries = [...new Set([collapsed.toLowerCase(), collapsed.toUpperCase(), collapsed, classCode])];
+    let email = null;
+    for(const tryCode of tries){
+      const { data, error: lookupErr } = await sb.rpc('student_login_lookup', {
+        p_class_code: tryCode, p_display_name: name, p_pin: pin
+      });
+      if(lookupErr) throw lookupErr;
+      if(data){ email = data; break; }
+    }
+    if(!email) throw new Error('Class Name, Your Name, or PIN is incorrect. Check with your teacher.');
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pin });
     if(error) throw error;
     const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
