@@ -165,7 +165,9 @@ footer span{color:var(--gold-text,var(--gold))}
         <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem">Ask your teacher for your Class Name, Your Name, and PIN.</p>
         <div class="field">
           <label>Class Name</label>
+          <select id="st-classselect" style="display:none"><option value="">— Choose your class —</option></select>
           <input id="st-classcode" type="text" placeholder="e.g. Class 9 Dzongkha" autocomplete="off" required/>
+          <a id="st-class-toggle" onclick="toggleClassInput()" style="display:none;font-size:.78rem;margin-top:.35rem;cursor:pointer;color:var(--gold-text,var(--gold))">Can't find your class? Type it instead</a>
         </div>
         <div class="field">
           <label>Your Name</label>
@@ -213,6 +215,34 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── CLASS DROPDOWN (student login) ──
+// Shows every class a teacher has created so students just pick theirs.
+// If the list can't be loaded (e.g. the setup SQL has not been run yet),
+// the plain text box stays in place and everything still works.
+function escHtml(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function showClassDropdown(on){
+  const sel = document.getElementById('st-classselect'), inp = document.getElementById('st-classcode'), tog = document.getElementById('st-class-toggle');
+  sel.style.display = on ? '' : 'none';
+  inp.style.display = on ? 'none' : '';
+  sel.required = on; inp.required = !on;
+  tog.style.display = 'block';
+  tog.textContent = on ? "Can't find your class? Type it instead" : 'Pick your class from the list instead';
+}
+window.toggleClassInput = function(){
+  showClassDropdown(document.getElementById('st-classselect').style.display === 'none');
+};
+async function loadClassDropdown(){
+  try{
+    const { data, error } = await sb.rpc('list_class_names');
+    if(error || !Array.isArray(data) || !data.length) return;
+    const sel = document.getElementById('st-classselect');
+    sel.innerHTML = '<option value="">— Choose your class —</option>' +
+      data.map(c => `<option value="${escHtml(c.class_code)}">${escHtml(c.name)}</option>`).join('');
+    showClassDropdown(true);
+  }catch(e){ /* keep the text box */ }
+}
+loadClassDropdown();
 
 function showMsg(id, msg, type){
   const el = document.getElementById(id);
@@ -314,7 +344,8 @@ window.doLogin = async function(e){
 
 window.doStudentLogin = async function(e){
   e.preventDefault();
-  const classCode = document.getElementById('st-classcode').value.trim();
+  const pickedFromList = document.getElementById('st-classselect').style.display !== 'none';
+  const classCode = (pickedFromList ? document.getElementById('st-classselect').value : document.getElementById('st-classcode').value).trim();
   const name = document.getElementById('st-name').value.trim();
   const pin = document.getElementById('st-pin').value.trim();
   if(!classCode || !name || !pin) return showMsg('student-msg','Please fill in all fields.','err');
@@ -324,7 +355,7 @@ window.doStudentLogin = async function(e){
     // The class name is stored in lower case, older classes still use an
     // UPPER-CASE code — so try the common spellings until one matches.
     const collapsed = classCode.replace(/\s+/g, ' ');
-    const tries = [...new Set([collapsed.toLowerCase(), collapsed.toUpperCase(), collapsed, classCode])];
+    const tries = pickedFromList ? [classCode] : [...new Set([collapsed.toLowerCase(), collapsed.toUpperCase(), collapsed, classCode])];
     let email = null;
     for(const tryCode of tries){
       const { data, error: lookupErr } = await sb.rpc('student_login_lookup', {
