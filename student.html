@@ -31,6 +31,22 @@ main{max-width:800px;margin:0 auto;padding:2rem 5%}
 .assign-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1rem}
 .assign-card.done{border-left-color:var(--green);opacity:.75}
 .assign-title{font-weight:600;font-size:.95rem;margin-bottom:.3rem}
+.answer-box{margin:.9rem 0 .5rem;padding:1rem;border:1px dashed var(--border);border-radius:10px;background:rgba(201,168,76,.06)}
+.answer-title{font-weight:600;font-size:.9rem;margin-bottom:.55rem}
+.answer-box textarea,.answer-box input[type=text]{width:100%;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;padding:9px 11px;outline:none}
+.answer-box textarea{min-height:110px;resize:vertical;line-height:1.55}
+.answer-box textarea:focus,.answer-box input[type=text]:focus{border-color:var(--gold)}
+.answer-add{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.6rem 0 .3rem}
+.answer-add input[type=text]{flex:1;min-width:150px}
+.filebtn{display:inline-flex;align-items:center;cursor:pointer}
+.chips{display:flex;flex-direction:column;gap:.35rem;margin:.4rem 0}
+.chip{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.82rem;background:rgba(201,168,76,.05)}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip button{background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem}
+.ans-status{font-size:.8rem;min-height:1.1rem;margin:.3rem 0 .5rem}
+.ans-status.err{color:var(--err-text,#f09090)}.ans-status.ok{color:var(--ok-text,#7ed9b0)}.ans-status.wait{color:var(--text2)}
+.submitted-note{font-size:.8rem;color:var(--ok-text,#7ed9b0);margin-bottom:.5rem}
+.feedback-box{margin:.6rem 0;padding:.7rem .9rem;border-left:3px solid var(--gold);background:rgba(201,168,76,.08);border-radius:0 6px 6px 0;font-size:.86rem;line-height:1.6;white-space:pre-wrap}
 .task-embed{position:relative;max-width:640px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;margin:.5rem 0 .3rem}
 .task-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .task-link{display:block;font-size:.78rem;color:var(--gold-text,var(--gold));text-decoration:none;margin:0 0 .8rem}
@@ -97,6 +113,7 @@ async function init(){
   document.getElementById('gate').classList.add('hide');
   document.getElementById('app').style.display = 'block';
   document.getElementById('student-name').textContent = me.name;
+  await checkAnswersEnabled();
   await renderAssignments();
 }
 
@@ -115,7 +132,11 @@ async function renderAssignments(){
   const { data: assignments } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
   const { data: statuses } = await supabase.from('assignment_status').select('*').eq('student_id', me.id);
   const statusMap = {};
-  (statuses||[]).forEach(s=>{ statusMap[s.assignment_id] = s.status; });
+  (statuses||[]).forEach(s=>{
+    statusMap[s.assignment_id] = s.status;
+    statusRows[s.assignment_id] = s;
+    if(!drafts[s.assignment_id]) drafts[s.assignment_id] = { text: s.answer_text || '', links: splitLines(s.answer_links), files: splitLines(s.answer_files) };
+  });
 
   if(!assignments?.length){
     wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>No assignments yet — check back soon!</p></div>`;
@@ -145,6 +166,93 @@ async function renderAssignments(){
   wrap.querySelectorAll('[data-open-item]').forEach(btn=>{
     btn.addEventListener('click', ()=>window.open(btn.getAttribute('data-open-item'), '_blank', 'noopener'));
   });
+  wireAnswerBoxes(wrap);
+}
+
+// ── Written answers, links and photos/files submitted by the student ──
+let answersEnabled = false;   // becomes true once the setup SQL has been run
+const drafts = {};            // assignment id -> { text, links[], files[] }
+const statusRows = {};        // assignment id -> saved status row
+function splitLines(v){ return String(v || '').split(/\s*\n\s*/).filter(Boolean); }
+function getDraft(id){ return drafts[id] || (drafts[id] = { text:'', links:[], files:[] }); }
+async function checkAnswersEnabled(){
+  const { error } = await supabase.from('assignment_status').select('answer_text').limit(1);
+  answersEnabled = !error;
+}
+function fileLabel(path){ const n = String(path).split('/').pop() || ''; return n.replace(/^\d+-/, ''); }
+function chipsHtml(id){
+  const d = getDraft(id);
+  const links = d.links.map((u,i)=>`<div class="chip"><span>🔗 ${esc(u)}</span><button type="button" data-rm-chip="${esc(id)}" data-kind="links" data-i="${i}">✕</button></div>`);
+  const files = d.files.map((p,i)=>`<div class="chip"><span>📎 ${esc(fileLabel(p))}</span><button type="button" data-rm-chip="${esc(id)}" data-kind="files" data-i="${i}">✕</button></div>`);
+  return links.concat(files).join('');
+}
+function boxFor(sel, id){ return [...document.querySelectorAll(sel)].find(e => e.dataset.id === id); }
+function setAnsStatus(id, msg, cls){ const el = boxFor('.ans-status', id); if(el){ el.textContent = msg; el.className = 'ans-status ' + (cls||''); } }
+function refreshChips(id){
+  const el = boxFor('.chips', id); if(!el) return;
+  el.innerHTML = chipsHtml(id);
+  el.querySelectorAll('[data-rm-chip]').forEach(b => b.addEventListener('click', () => {
+    getDraft(id)[b.dataset.kind].splice(Number(b.dataset.i), 1); refreshChips(id);
+  }));
+}
+function answerBoxHtml(a){
+  const id = String(a.id), d = getDraft(id), row = statusRows[id] || {};
+  const submitted = !!row.submitted_at;
+  return `<div class="answer-box">
+    <div class="answer-title">✍️ Your answer</div>
+    ${submitted ? `<div class="submitted-note">✓ Submitted ${esc(new Date(row.submitted_at).toLocaleString())} — you can edit and submit again.</div>` : ''}
+    <textarea data-answer-text data-id="${esc(id)}" placeholder="Write your answer here…">${esc(d.text)}</textarea>
+    <div class="answer-add">
+      <input type="text" data-link-input data-id="${esc(id)}" placeholder="Add a link (optional)"/>
+      <button type="button" class="btn btn-ghost" data-add-link data-id="${esc(id)}">＋ Link</button>
+      <label class="btn btn-ghost filebtn">📷 Photo / file
+        <input type="file" hidden data-answer-file data-id="${esc(id)}" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.txt"/>
+      </label>
+    </div>
+    <div class="chips" data-id="${esc(id)}">${chipsHtml(id)}</div>
+    <div class="ans-status" data-id="${esc(id)}"></div>
+    <button type="button" class="btn btn-gold" data-submit-answer data-id="${esc(id)}">${submitted ? 'Update my answer' : 'Submit answer'}</button>
+  </div>${row.teacher_feedback ? `<div class="feedback-box"><b>💬 Teacher feedback</b><br>${esc(row.teacher_feedback)}</div>` : ''}`;
+}
+function wireAnswerBoxes(root){
+  root.querySelectorAll('[data-answer-text]').forEach(t => t.addEventListener('input', () => { getDraft(t.dataset.id).text = t.value; }));
+  root.querySelectorAll('[data-add-link]').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.id, inp = boxFor('[data-link-input]', id);
+    let v = (inp.value || '').trim(); if(!v) return;
+    if(!/^https?:\/\//i.test(v)) v = 'https://' + v;
+    const ok = safeUrl(v);
+    if(!ok){ setAnsStatus(id, 'That does not look like a valid link.', 'err'); return; }
+    getDraft(id).links.push(ok); inp.value = ''; setAnsStatus(id, '', ''); refreshChips(id);
+  }));
+  root.querySelectorAll('[data-link-input]').forEach(i => i.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); boxFor('[data-add-link]', i.dataset.id).click(); }
+  }));
+  root.querySelectorAll('[data-answer-file]').forEach(inp => inp.addEventListener('change', async () => {
+    const id = inp.dataset.id, file = inp.files[0]; inp.value = '';
+    if(!file) return;
+    if(file.size > 20 * 1024 * 1024){ setAnsStatus(id, 'Please choose a file under 20 MB.', 'err'); return; }
+    setAnsStatus(id, 'Uploading "' + file.name + '"…', 'wait');
+    try{
+      const path = `${me.id}/${id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+      const { error } = await supabase.storage.from('task-answers').upload(path, file);
+      if(error) throw error;
+      getDraft(id).files.push(path); refreshChips(id); setAnsStatus(id, 'Added ✓ — press Submit answer when you are ready.', 'ok');
+    }catch(err){ setAnsStatus(id, 'Upload failed: ' + err.message, 'err'); }
+  }));
+  root.querySelectorAll('[data-submit-answer]').forEach(b => b.addEventListener('click', () => submitAnswer(b.dataset.id, b)));
+  root.querySelectorAll('.chips').forEach(c => refreshChips(c.dataset.id));
+}
+async function submitAnswer(id, btn){
+  const d = getDraft(id);
+  if(!d.text.trim() && !d.links.length && !d.files.length){ setAnsStatus(id, 'Please write an answer, or add a link or file, first.', 'err'); return; }
+  btn.disabled = true; const label = btn.textContent; btn.textContent = 'Submitting…';
+  const now = new Date().toISOString();
+  const { error } = await supabase.from('assignment_status').upsert({
+    assignment_id: id, student_id: me.id, status: 'done', completed_at: now, submitted_at: now,
+    answer_text: d.text.trim(), answer_links: d.links.join('\n'), answer_files: d.files.join('\n')
+  }, { onConflict: 'assignment_id,student_id' });
+  if(error){ setAnsStatus(id, 'Could not submit: ' + error.message, 'err'); btn.disabled = false; btn.textContent = label; return; }
+  await renderAssignments();
 }
 
 // Turns the saved attachment text (one link per line) into videos/players/buttons.
@@ -192,7 +300,7 @@ async function renderAssignmentCard(a, done){
       if(item.is_premium && !item.url){
         lockedNote = `<div class="locked-note">🔒 This is premium content — visit the <a href="index.html" style="color:var(--gold-text,var(--gold))">TLM Store</a> to unlock it first.</div>`;
       } else {
-        openUrl = item.url;
+        attachmentsHtml = renderAttachments(item.url);
       }
     }
   }
@@ -203,6 +311,7 @@ async function renderAssignmentCard(a, done){
     ${a.due_date?`<div class="assign-meta">📅 Due ${esc(a.due_date)}</div>`:''}
     ${attachmentsHtml}
     ${lockedNote}
+    ${answersEnabled && !lockedNote ? answerBoxHtml(a) : ''}
     <div class="assign-actions">
       ${openUrl?`<button class="btn btn-gold" data-open-item="${esc(openUrl)}">Open</button>`:''}
       ${done
