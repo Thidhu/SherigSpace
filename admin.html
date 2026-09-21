@@ -100,6 +100,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .irow-thumb{width:38px;height:38px;border-radius:5px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
 .irow-left{display:flex;align-items:center;gap:.7rem}
 @media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
+.thumb-modes{display:flex;gap:1rem;flex-wrap:wrap;margin:.2rem 0 .4rem}
+.field .thumb-mode{display:inline-flex;align-items:center;gap:.4rem;font-size:.86rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)}
+.field .thumb-mode input{width:auto;padding:0;accent-color:var(--gold)}
 </style>
 <script src="theme.js"></script>
 </head>
@@ -219,6 +222,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
           </div>
         </div>
       </div>
+      <div class="card">
+        <div class="card-head"><h3>🖼 Thumbnails</h3></div>
+        <div style="padding:1.4rem;display:flex;flex-direction:column;gap:.8rem">
+          <p style="font-size:.85rem;color:var(--text2);line-height:1.6">Adds an automatic thumbnail to every lesson, resource, video and article that doesn't have one, using its YouTube, Google Drive / Docs or image link. Items that already have a thumbnail are never changed.</p>
+          <div class="upload-row"><button type="button" class="btn btn-ghost btn-sm" onclick="fillMissingThumbnails()">✨ Generate missing thumbnails</button><span class="upload-status" id="thumb-fill-status"></span></div>
+        </div>
+      </div>
       <button class="btn btn-gold" onclick="saveSettings()">Save Settings</button>
     </div>
   </main>
@@ -242,6 +252,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
+import { classifyUrl } from './assignment-utils.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -505,6 +516,7 @@ window.openForm = async function(type, id=null){
   }
   document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement'}[type];
   document.getElementById('m-body').innerHTML = buildForm(type,item);
+  initThumbUi();
   document.getElementById('overlay').classList.add('open');
 };
 
@@ -516,8 +528,83 @@ function isValidUrl(u){
   try{ const p = new URL(u); return p.protocol==='http:'||p.protocol==='https:'; }catch{ return false; }
 }
 
+// ── Thumbnails ──
+// The thumbnail is always stored as one plain URL in thumbnail_url. The form just
+// decides how that URL is chosen: automatically from the link/file, from an image
+// the admin supplies, or not at all.
+function autoThumbFor(url){
+  if(!url) return '';
+  const c = classifyUrl(url);
+  if(c.kind === 'video' && c.embed && c.embed.indexOf('youtube-nocookie.com/embed/') >= 0){
+    return 'https://img.youtube.com/vi/' + c.embed.split('/embed/')[1] + '/hqdefault.jpg';
+  }
+  if(c.media === 'image') return url;
+  if((c.kind === 'file' || c.kind === 'doc') && c.embed){
+    const m = c.embed.match(/\/d\/([\w-]+)/);
+    if(m && m[1] !== 'e') return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600';
+  }
+  return '';
+}
+function inferThumbMode(url, thumb, isExisting){
+  const auto = autoThumbFor(url);
+  if(!isExisting) return 'auto';
+  if(!thumb) return auto ? 'auto' : 'none';
+  return thumb === auto ? 'auto' : 'custom';
+}
+function currentThumbMode(){
+  const r = document.querySelector('input[name="thumb-mode"]:checked');
+  return r ? r.value : 'auto';
+}
+window.refreshThumb = function(){
+  const hidden = document.getElementById('f-thumbnail_url');
+  if(!hidden) return;
+  const mode = currentThumbMode();
+  const customBox = document.getElementById('thumb-custom');
+  if(customBox) customBox.style.display = mode === 'custom' ? 'block' : 'none';
+  const link = fv('f-url');
+  let url = '', note = '';
+  if(mode === 'auto'){
+    url = autoThumbFor(link);
+    note = url ? 'Made automatically from the link or file above.'
+         : link ? 'No automatic thumbnail is possible for this kind of link. Choose “My own image” to add one.'
+         : 'Add a file or link above and the thumbnail will appear here.';
+  } else if(mode === 'custom'){
+    url = fv('f-thumb-custom');
+    note = url ? 'Using your own image.' : 'Upload an image, or paste the link of an image.';
+  } else {
+    note = 'No thumbnail — the site will show the plain icon.';
+  }
+  hidden.value = url;
+  document.getElementById('thumb-preview').innerHTML = url
+    ? `<img src="${esc(url)}" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'upload-status',textContent:'No preview yet — Google can take a minute to prepare a new file.'}))"/>` : '';
+  const n = document.getElementById('thumb-note'); if(n) n.textContent = note;
+};
+function initThumbUi(){
+  if(!document.getElementById('f-thumbnail_url')) return;
+  const u = document.getElementById('f-url');
+  if(u) u.addEventListener('input', refreshThumb);
+  refreshThumb();
+}
+window.handleThumbPick = async function(e){
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  const st = document.getElementById('thumb-upload-status');
+  st.className = 'upload-status'; st.textContent = 'Uploading…';
+  try{
+    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
+    document.getElementById('f-thumb-custom').value = result.thumbnailUrl;
+    st.textContent = 'Uploaded ✓'; st.className = 'upload-status ok';
+    refreshThumb();
+  }catch(err){
+    st.textContent = 'Upload failed: ' + err.message; st.className = 'upload-status err';
+  }
+};
+
 function imageUploadField(v){
   const thumb = v('thumbnail_url');
+  const mode = inferThumbMode(v('url'), thumb, !!v('id'));
+  const radio = (val, label) => `<label class="thumb-mode"><input type="radio" name="thumb-mode" value="${val}"${mode===val?' checked':''} onchange="refreshThumb()"/> ${label}</label>`;
   return `
     <div class="field">
       <label>Attach File (optional) — image, PDF, slides, doc, video…</label>
@@ -526,7 +613,24 @@ function imageUploadField(v){
         <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('f-imagefile','upload-status')">📤 Upload to Google Drive</button>
         <span class="upload-status" id="upload-status"></span>
       </div>
-      <div class="thumb-preview" id="thumb-preview">${thumb?`<img src="${esc(thumb)}" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'upload-status',textContent:'📄 File attached (no preview available)'}))"/>`:''}</div>
+    </div>
+    <div class="field">
+      <label>Thumbnail</label>
+      <div class="thumb-modes">
+        ${radio('auto','✨ Automatic')}
+        ${radio('custom','🖼 My own image')}
+        ${radio('none','🚫 None')}
+      </div>
+      <div id="thumb-custom" style="display:${mode==='custom'?'block':'none'}">
+        <div class="upload-row" style="margin:.4rem 0">
+          <input type="file" id="f-thumbfile" accept="image/*" style="display:none" onchange="handleThumbPick(event)"/>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('f-thumbfile','thumb-upload-status')">📤 Upload image</button>
+          <span class="upload-status" id="thumb-upload-status"></span>
+        </div>
+        <input id="f-thumb-custom" placeholder="…or paste an image link (https://…)" value="${esc(mode==='custom'?thumb:'')}" oninput="refreshThumb()"/>
+      </div>
+      <div class="thumb-preview" id="thumb-preview"></div>
+      <div class="upload-status" id="thumb-note"></div>
       <input type="hidden" id="f-thumbnail_url" value="${esc(thumb)}"/>
     </div>`;
 }
@@ -629,16 +733,37 @@ window.handleFilePick = async function(e){
   statusEl.textContent = 'Uploading… (a Google consent popup may appear the first time)';
   try{
     const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
-    document.getElementById('f-thumbnail_url').value = result.thumbnailUrl;
     const urlField = document.getElementById('f-url');
-    if(urlField && !urlField.value.trim()) urlField.value = result.viewUrl;
-    document.getElementById('thumb-preview').innerHTML = `<img src="${esc(result.thumbnailUrl)}" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'upload-status',textContent:'📄 File attached (no preview available)'}))"/>`;
-    statusEl.textContent = `Uploaded "${result.name}" ✓`;
+    const kept = urlField && urlField.value.trim();
+    if(urlField && !kept) urlField.value = result.viewUrl;
+    refreshThumb();   // Automatic: follows the link · My own image / None: left exactly as chosen
+    statusEl.textContent = kept ? `Uploaded "${result.name}" ✓ — the link above was kept` : `Uploaded "${result.name}" ✓`;
     statusEl.className = 'upload-status ok';
   }catch(err){
     statusEl.textContent = 'Upload failed: ' + err.message;
     statusEl.className = 'upload-status err';
   }
+};
+
+window.fillMissingThumbnails = async function(){
+  if(!confirm('Add automatic thumbnails to all content that has none? Existing thumbnails are not changed.')) return;
+  const st = document.getElementById('thumb-fill-status');
+  st.className = 'upload-status'; st.textContent = 'Working…';
+  let filled = 0, noLink = 0, failed = 0;
+  for(const t of ['lessons','resources','videos','articles']){
+    const { data, error } = await supabase.from(t).select('id,url,thumbnail_url');
+    if(error){ failed++; continue; }
+    for(const it of (data || [])){
+      if(it.thumbnail_url) continue;
+      const th = autoThumbFor(it.url);
+      if(!th){ noLink++; continue; }
+      const { error: e2 } = await supabase.from(t).update({ thumbnail_url: th }).eq('id', it.id);
+      if(e2) failed++; else filled++;
+    }
+  }
+  st.textContent = `Done — ${filled} thumbnail${filled===1?'':'s'} added, ${noLink} item${noLink===1?'':'s'} without a link we can use${failed ? ', ' + failed + ' failed' : ''}.`;
+  st.className = 'upload-status ' + (failed ? 'err' : 'ok');
+  renderAll();
 };
 
 window.saveItem = async function(){
