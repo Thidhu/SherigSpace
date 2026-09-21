@@ -15,6 +15,12 @@ export const GOOGLE_CLIENT_ID = '409297862405-81tfjtld0pu6pm9ld3b3drpk206o89i9.a
 // one specific folder (e.g. a folder called "SherigSpace Uploads") instead
 // of the root of your Drive. Leave as '' to upload to Drive's root.
 export const GOOGLE_DRIVE_FOLDER_ID = '1jwhfD--6LaIMlzT452ebRqMOBnPXxoSo';
+// ── Central Google Drive storage (recommended) ──
+// Paste the "Web app" URL from your Google Apps Script here (it ends in /exec).
+// When this is set, teachers and admins upload files straight into YOUR Drive
+// with no Google sign-in popup. See drive-upload-backend.gs.
+export const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbyNXWRJKiOuT4cGhOJ7MspFq5DzAqmrnCsYH91rgy0V2hYxi3hPbyxGvv6msbR9uGRo/exec';
+
 // Escape any string before dropping it into innerHTML. Every field that
 // came from the database (titles, descriptions, comments, etc.) must be
 // passed through this before being rendered, since anyone able to write
