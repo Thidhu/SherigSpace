@@ -92,6 +92,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .class-card:hover{transform:translateY(-3px)}
 .class-card h4{font-family:'Playfair Display',serif;color:var(--text);margin-bottom:.4rem}
 @media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
+
+.hint{font-size:.76rem;color:var(--text2);line-height:1.5;margin-top:.35rem}
+.task-att .att-label{flex:1;min-width:0;background:transparent;border:none;border-bottom:1px dashed var(--border);border-radius:0;padding:3px 2px;font-size:.84rem}
+.task-att .att-label:focus{border-bottom-color:var(--gold)}
+.qb{border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:.7rem .8rem;margin-bottom:.6rem;background:rgba(201,168,76,.04);display:flex;flex-direction:column;gap:.5rem}
+.qb-head{display:flex;align-items:center;gap:.6rem;font-size:.82rem}
+.qb-type{font-size:.72rem;color:var(--text2)}
+.qb-tools{margin-left:auto;display:flex;gap:.3rem}
+.qb-opts{display:flex;flex-direction:column;gap:.4rem}
+.qb-opt{display:flex;align-items:center;gap:.5rem}
+.qb-opt input[type=radio]{width:auto;accent-color:var(--gold);flex-shrink:0}
+.qa{padding:.5rem 0;border-top:1px solid rgba(255,255,255,.06)}
+.qa:first-of-type{border-top:none}
+.qa-q{font-size:.8rem;color:var(--text2);margin-bottom:.2rem}
+.qa-a{font-size:.88rem;white-space:pre-wrap;line-height:1.55}
+.qa-mark{display:inline-block;margin-left:.6rem;font-size:.74rem;font-weight:700}
+.qa-mark.ok{color:var(--ok-text,#7ed9b0)}.qa-mark.bad{color:var(--err-text,#f09090)}
+.ans-auto{font-size:.8rem;font-weight:600;color:var(--gold-text,var(--gold));margin:.4rem 0}
+.ans-grade{margin-top:.5rem}
+.ans-grade input{width:180px;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;padding:7px 10px;outline:none}
+.ans-grade input:focus{border-color:var(--gold)}
 </style>
 <script src="theme.js"></script>
 </head>
@@ -171,6 +192,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc, safeUrl } from './config.js';
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
+import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions } from './assignment-utils.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 let me = null; // { id, name, email }
@@ -326,7 +348,7 @@ window.openClass = function(id, name, code){
   renderAssignments();
 };
 
-window.closeModal = function(){ document.getElementById('overlay').classList.remove('open'); };
+window.closeModal = function(){ document.getElementById('overlay').classList.remove('open'); document.querySelector('#overlay .modal').style.maxWidth = ''; };
 document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
 
 // ── STUDENTS ──
@@ -470,38 +492,100 @@ window.deleteStudent = async function(id){
 };
 
 // ── ASSIGNMENTS ──
+// v2 = the extra database pieces from sherigspace_assignments_v2.sql.
+// Until that SQL is run, everything still works the old way (title, note, links).
+let v2 = null; // { extras: attachments/questions/answers/score columns exist, keys: assignment_keys table exists }
+async function ensureV2(){
+  if(v2) return v2;
+  const [a, s, k] = await Promise.all([
+    supabase.from('assignments').select('attachments,questions').limit(1),
+    supabase.from('assignment_status').select('answers,score').limit(1),
+    supabase.from('assignment_keys').select('assignment_id').limit(1)
+  ]);
+  v2 = { extras: !a.error && !s.error, keys: !k.error };
+  return v2;
+}
+
+const Q_TYPE_LABEL = { short:'Short answer', long:'Paragraph', choice:'Multiple choice' };
+let taskAttachments = []; // [{ url, label, type }]
+let taskQuestions = [];   // [{ id, type, text, options[], correct (option index or null) }]
+function newQid(){ return 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
 async function renderAssignments(){
-  const { data } = await supabase.from('assignments').select('*').eq('class_id', currentClassId).order('created_at',{ascending:false});
   const el = document.getElementById('assignments-list');
+  const { data } = await supabase.from('assignments').select('*').eq('class_id', currentClassId).order('created_at',{ascending:false});
   if(!data?.length){ el.innerHTML = `<div class="empty"><div class="ei">📋</div><p>No assignments yet.</p></div>`; return; }
 
-  const rows = await Promise.all(data.map(async a=>{
-    const { count: doneCount } = await supabase.from('assignment_status').select('*',{count:'exact',head:true}).eq('assignment_id', a.id).eq('status','done');
-    const { count: totalStudents } = await supabase.from('class_students').select('*',{count:'exact',head:true}).eq('class_id', currentClassId);
-    const label = a.kind === 'custom' ? a.title : `${a.item_type} item`;
-    const attCount = String(a.attachment_url || '').split('\n').filter(Boolean).length;
-    return `<div class="irow">
-      <div><div class="iname">${esc(label)}</div><div class="imeta">${a.due_date?'Due '+esc(a.due_date)+' · ':''}${attCount?'📎 '+attCount+' attached · ':''}${doneCount||0}/${totalStudents||0} completed</div></div>
-      <div class="ibtns"><button class="btn btn-ghost btn-sm" onclick="viewAnswers('${esc(a.id)}')">✍ Answers</button><button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button></div>
-    </div>`;
+  const ids = data.map(a => a.id);
+  const [{ data: statuses }, { count: totalStudents }] = await Promise.all([
+    supabase.from('assignment_status').select('assignment_id,status').in('assignment_id', ids),
+    supabase.from('class_students').select('*',{count:'exact',head:true}).eq('class_id', currentClassId)
+  ]);
+  const doneBy = {};
+  (statuses||[]).forEach(s => { if(s.status === 'done') doneBy[s.assignment_id] = (doneBy[s.assignment_id]||0) + 1; });
+
+  // Library items have no title of their own — look theirs up so the list is readable.
+  const tlmTitles = {};
+  await Promise.all(['lessons','resources','videos','articles'].map(async t => {
+    const itemIds = data.filter(a => a.kind === 'tlm' && a.item_type === t).map(a => a.item_id);
+    if(!itemIds.length) return;
+    const { data: items } = await supabase.from(t+'_public').select('id,title').in('id', itemIds);
+    (items||[]).forEach(i => { tlmTitles[t+':'+i.id] = i.title; });
   }));
-  el.innerHTML = rows.join('');
+
+  el.innerHTML = data.map(a => {
+    const label = a.title || (a.kind === 'tlm' ? (tlmTitles[a.item_type+':'+a.item_id] || a.item_type+' item') : 'Untitled task');
+    const attCount = parseAttachments(a).length;
+    const qCount = parseQuestions(a).length;
+    const meta = [
+      a.due_date ? 'Due ' + esc(a.due_date) : '',
+      attCount ? '📎 ' + attCount + ' resource' + (attCount>1?'s':'') : '',
+      qCount ? '❓ ' + qCount + ' question' + (qCount>1?'s':'') : '',
+      (doneBy[a.id]||0) + '/' + (totalStudents||0) + ' completed'
+    ].filter(Boolean).join(' · ');
+    return `<div class="irow">
+      <div><div class="iname">${esc(label)}</div><div class="imeta">${meta}</div></div>
+      <div class="ibtns">
+        <button class="btn btn-ghost btn-sm" onclick="viewAnswers('${esc(a.id)}')">✍ Answers</button>
+        <button class="btn btn-edit btn-sm" onclick="openAssignmentForm('${esc(a.id)}')">✏ Edit</button>
+        <button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 window.deleteAssignment = async function(id){
-  if(!confirm('Delete this assignment?')) return;
+  if(!confirm('Delete this assignment? Students\' answers for it will be deleted too.')) return;
   const { error } = await supabase.from('assignments').delete().eq('id', id);
   if(error){ toast('Error: '+error.message, true); return; }
   toast('Deleted.'); renderAssignments();
 };
 
-window.openAssignmentForm = async function(){
-  document.getElementById('m-title').textContent = 'Assign a Task';
+// ── Create / edit a task ──
+window.openAssignmentForm = async function(editId){
+  const cfg = await ensureV2();
+  let existing = null, keyMap = {};
+  if(editId){
+    const { data, error } = await supabase.from('assignments').select('*').eq('id', editId).single();
+    if(error || !data){ toast('Could not open this task.', true); return; }
+    existing = data;
+    if(cfg.keys){
+      const { data: k } = await supabase.from('assignment_keys').select('answers').eq('assignment_id', editId).maybeSingle();
+      keyMap = (k && k.answers) || {};
+    }
+  }
+  const editing = !!existing;
+
+  taskAttachments = editing ? parseAttachments(existing).map(a => ({ ...a, label: a.label || defaultLabel(a.url), type: a.type || classifyUrl(a.url).kind })) : [];
+  taskQuestions = editing ? parseQuestions(existing).map(q => ({ ...q, correct: q.type === 'choice' && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null })) : [];
+
+  document.getElementById('m-title').textContent = editing ? 'Edit Task' : 'Assign a Task';
+  document.querySelector('#overlay .modal').style.maxWidth = '700px';
   document.getElementById('m-body').innerHTML = `
     <div class="field"><label>Type</label>
-      <select id="f-kind" onchange="toggleAssignmentKind()">
-        <option value="custom">📝 New task — add videos, links &amp; files</option>
-        <option value="tlm">📚 Pick from my TLM library (lessons, videos…)</option>
+      <select id="f-kind" onchange="toggleAssignmentKind()" ${editing?'disabled':''}>
+        <option value="custom">📝 New task</option>
+        <option value="tlm">📚 Task based on my TLM library (lesson, video…)</option>
       </select>
     </div>
     <div id="kind-tlm-fields" style="display:none">
@@ -512,50 +596,123 @@ window.openAssignmentForm = async function(){
         </select>
       </div>
       <div class="field"><label>Choose Item</label><select id="f-item-id"></select></div>
+      <div class="hint">Students will see this item, plus anything you add below.</div>
     </div>
-    <div id="kind-custom-fields">
-      <div class="field"><label>Title</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3"/></div>
-      <div class="field"><label>Description</label><textarea id="f-custom-desc" placeholder="Instructions for students"></textarea></div>
-      <div class="field"><label>Videos, links &amp; files (optional)</label>
-        <div id="task-attach-list" style="margin-bottom:.5rem"></div>
-        <div style="display:flex;gap:.5rem">
-          <input id="f-link-input" placeholder="Paste a link (YouTube, website, Google Drive…)" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
-          <button type="button" class="btn btn-gold btn-sm" style="white-space:nowrap" onclick="addTaskLink()">＋ Add link</button>
-        </div>
-        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
-          <input type="file" id="f-task-video" accept="video/*" style="display:none" onchange="handleTaskUpload(event,'video')"/>
-          <input type="file" id="f-task-file" style="display:none" onchange="handleTaskUpload(event,'file')"/>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-video')">🎥 Upload video</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-file')">📎 Upload file</button>
-        </div>
-        <div id="assignment-upload-status" style="font-size:.78rem;color:var(--text2);margin-top:.5rem"></div>
-        <div style="font-size:.74rem;color:var(--text2);margin-top:.35rem">Uploads go to Google Drive (up to 50&nbsp;MB). For a longer video, put it on YouTube as <b>Unlisted</b> and paste its link. Students can watch videos right inside the task.</div>
+    <div class="field"><label>Title</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3 and answer the questions"/></div>
+    <div class="field"><label>Instructions</label><textarea id="f-custom-desc" style="min-height:100px" placeholder="What should students do? Add tips, reading notes or steps here."></textarea></div>
+
+    <div class="field"><label>Resources for students (optional)</label>
+      <div id="task-attach-list"></div>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem">
+        <input id="f-link-input" placeholder="Paste a link — YouTube, Google Docs / Slides / Drive, any website…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
+        <button type="button" class="btn btn-gold btn-sm" style="white-space:nowrap" onclick="addTaskLink()">＋ Add link</button>
       </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
+        <input type="file" id="f-task-video" accept="video/*" style="display:none" onchange="handleTaskUpload(event,'video')"/>
+        <input type="file" id="f-task-file" style="display:none" onchange="handleTaskUpload(event,'file')"/>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-video')">🎥 Upload video</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-file')">📎 Upload file / document / photo</button>
+      </div>
+      <div id="assignment-upload-status" style="font-size:.78rem;color:var(--text2);margin-top:.5rem"></div>
+      <div class="hint">Uploads go to Google Drive (up to 50&nbsp;MB) and are shared automatically. For a longer video, put it on YouTube as <b>Unlisted</b> and paste the link. <b>Google Docs, Slides, Sheets and Forms links must be shared as “Anyone with the link”</b> or students won't be able to open them. You can rename any resource by editing its title.</div>
     </div>
+
+    ${cfg.extras ? `
+    <div class="field"><label>Questions for students (optional)</label>
+      <div id="q-builder"></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('short')">＋ Short answer</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('long')">＋ Paragraph</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('choice')">＋ Multiple choice</button>
+      </div>
+      <div class="hint">Students answer these on their own page.${cfg.keys ? ' For multiple choice, tick the correct option and it will be checked for you — students never see which option is correct.' : ''}</div>
+      ${cfg.keys ? '' : '<div class="hint" style="color:var(--gold-text,var(--gold))">Automatic checking of multiple choice is off. Run <b>sherigspace_assignments_v2.sql</b> again in Supabase to turn it on.</div>'}
+    </div>` : `
+    <div class="field"><label>Questions</label>
+      <div class="hint" style="color:var(--gold-text,var(--gold))">Questions, marks and editing are not switched on yet — run <b>sherigspace_assignments_v2.sql</b> once in Supabase (SQL Editor), then reload this page.</div>
+    </div>`}
+
     <div class="field"><label>Due Date (optional)</label><input type="date" id="f-due-date"/></div>
   `;
-  await loadTlmOptions();
-  taskAttachments = [];
+
+  // Prefill when editing
+  if(editing){
+    document.getElementById('f-kind').value = existing.kind;
+    toggleAssignmentKind();
+    if(existing.kind === 'tlm'){
+      document.getElementById('f-item-type').value = existing.item_type || 'lessons';
+      await loadTlmOptions();
+      document.getElementById('f-item-id').value = existing.item_id;
+    } else { await loadTlmOptions(); }
+    document.getElementById('f-custom-title').value = existing.title || '';
+    document.getElementById('f-custom-desc').value = existing.description || '';
+    document.getElementById('f-due-date').value = existing.due_date || '';
+  } else {
+    await loadTlmOptions();
+  }
   renderTaskAttachments();
+  if(cfg.extras){ wireQuestionBuilder(); renderQuestionBuilder(); }
+
   const btn = document.getElementById('m-save-btn');
-  btn.textContent = 'Create';
+  btn.textContent = editing ? 'Save changes' : 'Create';
+  btn.disabled = false;
   btn.onclick = async ()=>{
-    const kind = fv('f-kind');
-    const payload = { class_id: currentClassId, kind, due_date: fv('f-due-date') || null };
+    const kind = editing ? existing.kind : fv('f-kind');
+    const title = fv('f-custom-title');
+    const payload = {
+      kind,
+      title,
+      description: fv('f-custom-desc'),
+      due_date: fv('f-due-date') || null,
+      attachment_url: taskAttachments.map(a => a.url).join('\n')   // kept so older pages still work
+    };
     if(kind === 'tlm'){
       const itemId = fv('f-item-id');
       if(!itemId){ toast('Please choose an item.', true); return; }
       payload.item_type = fv('f-item-type');
       payload.item_id = itemId;
-    } else {
-      if(!fv('f-custom-title')){ toast('Please enter a title.', true); return; }
-      payload.title = fv('f-custom-title');
-      payload.description = fv('f-custom-desc');
-      payload.attachment_url = taskAttachments.map(a => a.url).join('\n');
+    } else if(!title){
+      toast('Please enter a title.', true); return;
     }
-    const { error } = await supabase.from('assignments').insert(payload);
-    if(error){ toast('Error: '+error.message, true); return; }
-    toast('Assignment created ✓'); closeModal(); renderAssignments();
+
+    const keyOut = {};
+    if(cfg.extras){
+      payload.attachments = taskAttachments.map(a => ({ url: a.url, label: (a.label || '').trim() || defaultLabel(a.url), type: a.type || classifyUrl(a.url).kind }));
+      const qs = [];
+      for(const q of taskQuestions){
+        const text = q.text.trim();
+        if(!text) continue;
+        const item = { id: q.id, type: q.type, text };
+        if(q.type === 'choice'){
+          const opts = []; let correct = null;
+          q.options.forEach((o, j) => { const t = o.trim(); if(!t) return; if(j === q.correct) correct = t; opts.push(t); });
+          if(opts.length < 2){ toast('Multiple-choice question "' + text.slice(0,30) + '" needs at least two options.', true); return; }
+          item.options = opts;
+          if(correct) keyOut[q.id] = correct;
+        }
+        qs.push(item);
+      }
+      payload.questions = qs;
+    }
+
+    btn.disabled = true;
+    let error, savedId = editing ? existing.id : null;
+    if(editing){
+      ({ error } = await supabase.from('assignments').update(payload).eq('id', existing.id));
+    } else {
+      payload.class_id = currentClassId;
+      const r = await supabase.from('assignments').insert(payload).select('id').single();
+      error = r.error; savedId = r.data && r.data.id;
+    }
+    if(error){ btn.disabled = false; toast('Error: '+error.message, true); return; }
+
+    if(cfg.extras && cfg.keys && savedId){
+      const kr = Object.keys(keyOut).length
+        ? await supabase.from('assignment_keys').upsert({ assignment_id: savedId, answers: keyOut, updated_at: new Date().toISOString() }, { onConflict: 'assignment_id' })
+        : await supabase.from('assignment_keys').delete().eq('assignment_id', savedId);
+      if(kr.error){ toast('Task saved, but the correct answers could not be saved: ' + kr.error.message, true); closeModal(); renderAssignments(); return; }
+    }
+    toast(editing ? 'Task updated ✓' : 'Assignment created ✓'); closeModal(); renderAssignments();
   };
   document.getElementById('overlay').classList.add('open');
 };
@@ -563,7 +720,6 @@ window.openAssignmentForm = async function(){
 window.toggleAssignmentKind = function(){
   const kind = fv('f-kind');
   document.getElementById('kind-tlm-fields').style.display = kind==='tlm' ? 'block':'none';
-  document.getElementById('kind-custom-fields').style.display = kind==='custom' ? 'block':'none';
 };
 
 window.loadTlmOptions = async function(){
@@ -573,28 +729,103 @@ window.loadTlmOptions = async function(){
   if(sel) sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
 };
 
+// ── Question builder ──
+window.addQuestion = function(type){
+  taskQuestions.push({ id: newQid(), type, text: '', options: type === 'choice' ? ['',''] : [], correct: null });
+  renderQuestionBuilder();
+  const last = document.querySelector('#q-builder .qb:last-child [data-q-text]');
+  if(last) last.focus();
+};
 
-// ── Viewing what students submitted ──
+function renderQuestionBuilder(){
+  const el = document.getElementById('q-builder');
+  if(!el) return;
+  el.innerHTML = taskQuestions.length ? taskQuestions.map((q,i)=>`
+    <div class="qb" data-qi="${i}">
+      <div class="qb-head">
+        <b>Question ${i+1}</b><span class="qb-type">${esc(Q_TYPE_LABEL[q.type])}</span>
+        <span class="qb-tools">
+          <button type="button" class="btn btn-ghost btn-sm" data-q-up title="Move up" ${i===0?'disabled':''}>↑</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-q-down title="Move down" ${i===taskQuestions.length-1?'disabled':''}>↓</button>
+          <button type="button" class="btn btn-del btn-sm" data-q-del title="Remove question">✕</button>
+        </span>
+      </div>
+      <input data-q-text value="${esc(q.text)}" placeholder="Type your question…"/>
+      ${q.type === 'choice' ? `<div class="qb-opts">
+        ${q.options.map((o,j)=>`<div class="qb-opt">
+          ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="Mark as the correct option"/>` : ''}
+          <input data-q-opt="${j}" value="${esc(o)}" placeholder="Option ${j+1}"/>
+          <button type="button" class="btn btn-del btn-sm" data-q-optdel="${j}" title="Remove option">✕</button>
+        </div>`).join('')}
+        <button type="button" class="btn btn-ghost btn-sm" data-q-optadd>＋ Add option</button>
+      </div>` : ''}
+    </div>`).join('') : '<div class="hint">No questions yet.</div>';
+}
+
+// One set of listeners on the container — it survives every re-render.
+function wireQuestionBuilder(){
+  const el = document.getElementById('q-builder');
+  if(!el) return;
+  const qOf = t => { const box = t.closest('.qb'); return box ? taskQuestions[Number(box.dataset.qi)] : null; };
+  el.addEventListener('input', e => {
+    const q = qOf(e.target); if(!q) return;
+    if(e.target.hasAttribute('data-q-text')) q.text = e.target.value;
+    else if(e.target.hasAttribute('data-q-opt')) q.options[Number(e.target.getAttribute('data-q-opt'))] = e.target.value;
+  });
+  el.addEventListener('change', e => {
+    const q = qOf(e.target); if(!q) return;
+    if(e.target.hasAttribute('data-q-correct')) q.correct = Number(e.target.getAttribute('data-q-correct'));
+  });
+  el.addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    const box = b.closest('.qb'); if(!box) return;
+    const i = Number(box.dataset.qi), q = taskQuestions[i];
+    if(b.hasAttribute('data-q-del')) taskQuestions.splice(i, 1);
+    else if(b.hasAttribute('data-q-up') && i > 0) [taskQuestions[i-1], taskQuestions[i]] = [taskQuestions[i], taskQuestions[i-1]];
+    else if(b.hasAttribute('data-q-down') && i < taskQuestions.length-1) [taskQuestions[i+1], taskQuestions[i]] = [taskQuestions[i], taskQuestions[i+1]];
+    else if(b.hasAttribute('data-q-optadd')) q.options.push('');
+    else if(b.hasAttribute('data-q-optdel')){
+      if(q.options.length <= 2){ toast('A multiple-choice question needs at least two options.', true); return; }
+      const j = Number(b.getAttribute('data-q-optdel'));
+      q.options.splice(j, 1);
+      if(q.correct === j) q.correct = null; else if(q.correct != null && q.correct > j) q.correct--;
+    } else return;
+    renderQuestionBuilder();
+  });
+}
+
+// ── Viewing what students submitted (and marking it) ──
 window.viewAnswers = async function(assignmentId){
   document.getElementById('m-title').textContent = 'Student answers';
+  document.querySelector('#overlay .modal').style.maxWidth = '700px';
   const body = document.getElementById('m-body');
   body.innerHTML = '<div class="empty"><p>Loading…</p></div>';
   const btn = document.getElementById('m-save-btn');
   btn.textContent = 'Close'; btn.disabled = false; btn.onclick = closeModal;
   document.getElementById('overlay').classList.add('open');
 
-  const [{ data: students }, { data: rows, error }] = await Promise.all([
-    supabase.from('class_students').select('student_id, display_name').eq('class_id', currentClassId),
-    supabase.from('assignment_status').select('*').eq('assignment_id', assignmentId)
+  const cfg = await ensureV2();
+  const [asgRes, stuRes, rowRes, keyRes] = await Promise.all([
+    supabase.from('assignments').select('*').eq('id', assignmentId).single(),
+    supabase.from('class_students').select('student_id, display_name').eq('class_id', currentClassId).order('display_name'),
+    supabase.from('assignment_status').select('*').eq('assignment_id', assignmentId),
+    cfg.keys ? supabase.from('assignment_keys').select('answers').eq('assignment_id', assignmentId).maybeSingle() : Promise.resolve({ data: null })
   ]);
+  const students = stuRes.data, rows = rowRes.data, error = rowRes.error;
   if(error){ body.innerHTML = `<div class="empty"><p>Could not load answers: ${esc(error.message)}</p></div>`; return; }
-  const byStudent = {}; (rows||[]).forEach(r => { byStudent[r.student_id] = r; });
   if(!(students||[]).length){ body.innerHTML = '<div class="empty"><p>No students in this class yet.</p></div>'; return; }
+
+  const asg = asgRes.data || {};
+  const questions = parseQuestions(asg);
+  const key = (keyRes.data && keyRes.data.answers) || {};
+  const byStudent = {}; (rows||[]).forEach(r => { byStudent[r.student_id] = r; });
   const needsSetup = (rows||[]).some(r => r.answer_text === undefined);
+  const submittedCount = students.filter(st => byStudent[st.student_id]).length;
 
   const cards = await Promise.all(students.map(async st => {
     const r = byStudent[st.student_id];
     if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">Not submitted</span></div></div>`;
+
     const links = String(r.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
     const paths = String(r.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
     const fileLinks = await Promise.all(paths.map(async p => {
@@ -602,43 +833,69 @@ window.viewAnswers = async function(assignmentId){
       const name = p.split('/').pop().replace(/^\d+-/, '');
       return data?.signedUrl ? `<a href="${esc(data.signedUrl)}" target="_blank" rel="noopener noreferrer">📎 ${esc(name)}</a>` : `<span style="font-size:.78rem;color:var(--text2)">📎 ${esc(name)} (cannot open)</span>`;
     }));
-    const hasAnswer = (r.answer_text || '').trim() || links.length || paths.length;
+
+    // Question-by-question answers, with automatic checking of multiple choice
+    let autoOk = 0, autoTotal = 0, answeredQ = 0;
+    const answers = (r.answers && typeof r.answers === 'object') ? r.answers : {};
+    const qaHtml = questions.map((q,i) => {
+      const ans = String(answers[q.id] == null ? '' : answers[q.id]).trim();
+      if(ans) answeredQ++;
+      let mark = '';
+      if(q.type === 'choice' && key[q.id] != null){
+        autoTotal++;
+        if(ans && ans === key[q.id]){ autoOk++; mark = '<span class="qa-mark ok">✓ Correct</span>'; }
+        else mark = `<span class="qa-mark bad">✗ Correct: ${esc(key[q.id])}</span>`;
+      }
+      return `<div class="qa"><div class="qa-q">${i+1}. ${esc(q.text)}</div><div class="qa-a">${ans ? esc(ans) : '<i style="color:var(--text2)">No answer</i>'}${mark}</div></div>`;
+    }).join('');
+
+    const hasAnswer = answeredQ || (r.answer_text || '').trim() || links.length || paths.length;
     const badge = hasAnswer ? '<span class="ans-badge sub">Submitted</span>' : '<span class="ans-badge plain">Marked complete</span>';
+    const late = asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ' <span class="ans-badge none">Late</span>' : '';
+
     return `<div class="ans-card">
-      <div class="ans-head"><b>${esc(st.display_name)}</b>${badge}</div>
+      <div class="ans-head"><b>${esc(st.display_name)}</b><span>${badge}${late}</span></div>
+      ${qaHtml}
+      ${autoTotal ? `<div class="ans-auto">Auto-checked: ${autoOk} / ${autoTotal} multiple-choice correct</div>` : ''}
       ${(r.answer_text || '').trim() ? `<div class="ans-text">${esc(r.answer_text)}</div>` : ''}
       ${(links.length || fileLinks.length) ? `<div class="ans-links">${links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(u.replace(/^https?:\/\//,'').slice(0,40))}</a>`).join('')}${fileLinks.join('')}</div>` : ''}
+      ${cfg.extras ? `<div class="ans-grade"><input data-score-input="${esc(st.student_id)}" placeholder="Marks (e.g. 8/10)" value="${esc(r.score || '')}"/></div>` : ''}
       <div class="ans-fb"><textarea data-fb-input="${esc(st.student_id)}" placeholder="Feedback for ${esc(st.display_name)}…">${esc(r.teacher_feedback || '')}</textarea>
         <button type="button" class="btn btn-gold btn-sm" data-fb-save="${esc(st.student_id)}">Save</button></div>
     </div>`;
   }));
-  body.innerHTML = (needsSetup ? '<div style="font-size:.8rem;color:var(--text2);margin-bottom:.7rem">Written answers are not switched on yet — run <b>sherigspace_task_answers.sql</b> in Supabase to enable them.</div>' : '') + cards.join('');
+
+  body.innerHTML = (needsSetup ? '<div class="hint" style="margin-bottom:.7rem">Written answers are not switched on yet — run <b>sherigspace_task_answers.sql</b> in Supabase to enable them.</div>' : '')
+    + `<div class="hint" style="margin-bottom:.8rem">${submittedCount} of ${students.length} students have submitted.</div>` + cards.join('');
 
   body.querySelectorAll('[data-fb-save]').forEach(b => b.addEventListener('click', async () => {
     const sid = b.getAttribute('data-fb-save');
-    const text = [...body.querySelectorAll('[data-fb-input]')].find(t => t.getAttribute('data-fb-input') === sid).value.trim();
+    const find = attr => [...body.querySelectorAll('[' + attr + ']')].find(t => t.getAttribute(attr) === sid);
+    const patch = { teacher_feedback: find('data-fb-input').value.trim() || null, reviewed_at: new Date().toISOString() };
+    const scoreEl = find('data-score-input');
+    if(scoreEl) patch.score = scoreEl.value.trim() || null;
     b.disabled = true;
-    const { error: upErr } = await supabase.from('assignment_status')
-      .update({ teacher_feedback: text || null, reviewed_at: new Date().toISOString() })
+    const { error: upErr } = await supabase.from('assignment_status').update(patch)
       .eq('assignment_id', assignmentId).eq('student_id', sid);
     b.disabled = false;
-    if(upErr){ toast('Could not save feedback: ' + upErr.message, true); return; }
+    if(upErr){ toast('Could not save: ' + upErr.message, true); return; }
     toast('Feedback saved ✓');
   }));
 };
 
-// ── Task attachments: several videos / links / files per task ──
-let taskAttachments = []; // [{ url, icon, label }]
-
+// ── Task resources: any number of videos / links / files / documents ──
 function renderTaskAttachments(){
   const el = document.getElementById('task-attach-list');
   if(!el) return;
   el.innerHTML = taskAttachments.length
-    ? taskAttachments.map((a,i)=>`<div class="task-att"><span>${a.icon} ${esc(a.label)}</span><button type="button" class="btn btn-del btn-sm" data-rm-att="${i}">✕</button></div>`).join('')
-    : '<div style="font-size:.78rem;color:var(--text2)">Nothing added yet.</div>';
+    ? taskAttachments.map((a,i)=>`<div class="task-att"><span>${(KIND_META[a.type] || KIND_META.link).icon}</span><input class="att-label" data-att-label="${i}" value="${esc(a.label)}" aria-label="Resource title"/><button type="button" class="btn btn-del btn-sm" data-rm-att="${i}">✕</button></div>`).join('')
+    : '<div class="hint">Nothing added yet.</div>';
   el.querySelectorAll('[data-rm-att]').forEach(b => b.addEventListener('click', () => {
     taskAttachments.splice(Number(b.getAttribute('data-rm-att')), 1);
     renderTaskAttachments();
+  }));
+  el.querySelectorAll('[data-att-label]').forEach(inp => inp.addEventListener('input', () => {
+    taskAttachments[Number(inp.getAttribute('data-att-label'))].label = inp.value;
   }));
 }
 
@@ -650,9 +907,7 @@ window.addTaskLink = function(){
   let u;
   try{ u = new URL(v); }catch(e){ toast('That does not look like a valid link.', true); return; }
   if(u.protocol !== 'http:' && u.protocol !== 'https:'){ toast('Only web links (http/https) can be added.', true); return; }
-  const host = u.hostname.replace(/^www\./,'');
-  const isVideo = /(^|\.)(youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com)$/.test(host);
-  taskAttachments.push({ url: u.href, icon: isVideo ? '🎥' : '🔗', label: isVideo ? 'Video — ' + host : host + (u.pathname.length > 1 ? u.pathname.slice(0,30) : '') });
+  taskAttachments.push({ url: u.href, label: defaultLabel(u.href), type: classifyUrl(u.href).kind });
   inp.value = '';
   renderTaskAttachments();
 };
@@ -690,7 +945,8 @@ window.handleTaskUpload = async function(e, kind){
       if(/\(404\)|File not found/i.test(String(err.message))) result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, '');
       else throw err;
     }
-    taskAttachments.push({ url: result.viewUrl, icon: kind === 'video' ? '🎥' : '📎', label: result.name });
+    const isVideo = kind === 'video' || /^video\//.test(file.type);
+    taskAttachments.push({ url: result.viewUrl, label: result.name, type: isVideo ? 'video' : 'file' });
     renderTaskAttachments();
     st.style.color = 'var(--green)';
     st.textContent = 'Uploaded "' + result.name + '" ✓';
