@@ -133,3 +133,54 @@ export function parseQuestions(row) {
       options: Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : []
     }));
 }
+
+/**
+ * An automatic thumbnail for a link, or '' when none can be made.
+ *   YouTube link          -> the video's own picture
+ *   Google Drive / Docs   -> Google's preview of the file (needs "anyone with the link")
+ *   image link            -> the image itself
+ */
+export function autoThumbFor(url) {
+  if (!url) return '';
+  const c = classifyUrl(url);
+  if (c.kind === 'video' && c.embed && c.embed.indexOf('youtube-nocookie.com/embed/') >= 0) {
+    return 'https://img.youtube.com/vi/' + c.embed.split('/embed/')[1] + '/hqdefault.jpg';
+  }
+  if (c.media === 'image') return url;
+  if ((c.kind === 'file' || c.kind === 'doc') && c.embed) {
+    const m = c.embed.match(/\/d\/([\w-]+)/);
+    if (m && m[1] !== 'e') return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600';
+  }
+  return '';
+}
+
+/**
+ * What kind of file is this? Used to give every item a clear cover on the public
+ * site even when no real preview picture can be made.
+ * Returns pdf | doc | slides | sheet | image | video | audio | form | file, or null if unknown.
+ * `rtype` is the admin's "File Type" choice for resources (PDF, DOCX, Image…).
+ */
+export function fileKindFor(url, rtype) {
+  const byType = { PDF: 'pdf', DOCX: 'doc', Image: 'image', 'Video Link': 'video', Spreadsheet: 'sheet', Presentation: 'slides' }[rtype];
+  if (byType) return byType;
+  if (!url) return null;
+  let u;
+  try { u = new URL(url); } catch (e) { return null; }
+  const p = u.pathname.toLowerCase();
+  if (u.hostname.replace(/^www\./, '') === 'docs.google.com') {
+    if (/^\/document\//.test(p)) return 'doc';
+    if (/^\/presentation\//.test(p)) return 'slides';
+    if (/^\/spreadsheets\//.test(p)) return 'sheet';
+    if (/^\/forms\//.test(p)) return 'form';
+  }
+  const c = classifyUrl(url);
+  if (c.kind === 'video') return 'video';
+  if (c.media === 'image' || IMG.test(p)) return 'image';
+  if (c.media === 'audio') return 'audio';
+  if (/\.pdf$/.test(p)) return 'pdf';
+  if (/\.(docx?|odt|rtf|txt)$/.test(p)) return 'doc';
+  if (/\.(pptx?|odp)$/.test(p)) return 'slides';
+  if (/\.(xlsx?|csv|ods)$/.test(p)) return 'sheet';
+  if (c.kind === 'file' || FILE.test(p)) return 'file';
+  return null;
+}
