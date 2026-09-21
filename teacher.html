@@ -124,7 +124,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
         </div>
       </div>
       <div class="card"><div class="card-head"><h3>Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()">+ Add Student</button></div><div id="students-list"></div></div>
-      <div class="card"><div class="card-head"><h3>Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()">+ New Assignment</button></div><div id="assignments-list"></div></div>
+      <div class="card"><div class="card-head"><h3>Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()">＋ Assign Task</button></div><div id="assignments-list"></div></div>
     </div>
 
     <div class="page" id="p-billing">
@@ -486,15 +486,15 @@ window.deleteAssignment = async function(id){
 };
 
 window.openAssignmentForm = async function(){
-  document.getElementById('m-title').textContent = 'New Assignment';
+  document.getElementById('m-title').textContent = 'Assign a Task';
   document.getElementById('m-body').innerHTML = `
     <div class="field"><label>Type</label>
       <select id="f-kind" onchange="toggleAssignmentKind()">
-        <option value="tlm">Assign existing TLM content</option>
-        <option value="custom">Create a custom task</option>
+        <option value="custom">📝 New task — add videos, links &amp; files</option>
+        <option value="tlm">📚 Pick from my TLM library (lessons, videos…)</option>
       </select>
     </div>
-    <div id="kind-tlm-fields">
+    <div id="kind-tlm-fields" style="display:none">
       <div class="field"><label>Content Type</label>
         <select id="f-item-type" onchange="loadTlmOptions()">
           <option value="lessons">Lesson</option><option value="resources">Resource</option>
@@ -503,7 +503,7 @@ window.openAssignmentForm = async function(){
       </div>
       <div class="field"><label>Choose Item</label><select id="f-item-id"></select></div>
     </div>
-    <div id="kind-custom-fields" style="display:none">
+    <div id="kind-custom-fields">
       <div class="field"><label>Title</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3"/></div>
       <div class="field"><label>Description</label><textarea id="f-custom-desc" placeholder="Instructions for students"></textarea></div>
       <div class="field"><label>Videos, links &amp; files (optional)</label>
