@@ -18,15 +18,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 #gate.hide{display:none}
 .gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;max-width:380px;padding:2rem;text-align:center}
 .gate-icon{font-size:2.5rem;margin-bottom:.75rem}
-.gate-card h2{font-family:'Playfair Display',serif;color:var(--gold);margin-bottom:.4rem}
+.gate-card h2{font-family:'Playfair Display',serif;color:var(--gold-text,var(--gold));margin-bottom:.4rem}
 .gate-card p{font-size:.85rem;color:var(--text2);margin-bottom:1.2rem}
 .gate-btn{padding:11px 20px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font-family:'DM Sans',sans-serif}
 nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;border-bottom:1px solid var(--border);background:#131c2e}
-.nav-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:1.2rem}
+.nav-logo{font-family:'Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1.2rem}
 .nav-right{display:flex;align-items:center;gap:1rem;font-size:.85rem;color:var(--text2)}
 .nav-right button{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.25);color:var(--red);padding:7px 14px;border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8rem}
 main{max-width:800px;margin:0 auto;padding:2rem 5%}
-.class-heading{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold);margin:1.6rem 0 .8rem}
+.class-heading{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold-text,var(--gold));margin:1.6rem 0 .8rem}
 .class-heading:first-child{margin-top:0}
 .assign-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1rem}
 .assign-card.done{border-left-color:var(--green);opacity:.75}
@@ -41,8 +41,9 @@ main{max-width:800px;margin:0 auto;padding:2rem 5%}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .empty{text-align:center;padding:3rem 1rem;color:var(--text2)}
 .empty .ei{font-size:2.5rem;margin-bottom:.75rem}
-.locked-note{font-size:.8rem;color:var(--gold);background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem .9rem;margin-bottom:.7rem}
+.locked-note{font-size:.8rem;color:var(--gold-text,var(--gold));background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem .9rem;margin-bottom:.7rem}
 </style>
+<script src="theme.js"></script>
 </head>
 <body>
 
@@ -58,6 +59,7 @@ main{max-width:800px;margin:0 auto;padding:2rem 5%}
   <nav>
     <div class="nav-logo">SherigSpace</div>
     <div class="nav-right">
+      <span data-theme-slot></span>
       <span id="student-name">Student</span>
       <button onclick="logout()">Log Out</button>
     </div>
@@ -99,7 +101,7 @@ async function renderAssignments(){
 
   const { data: enrollments } = await supabase.from('class_students').select('class_id, classes(id,name)').eq('student_id', me.id);
   if(!enrollments?.length){
-    wrap.innerHTML = `<div class="empty"><div class="ei">🏫</div><p>You're not enrolled in any class yet. Ask your teacher for a Class Code.</p></div>`;
+    wrap.innerHTML = `<div class="empty"><div class="ei">🏫</div><p>You're not enrolled in any class yet. Ask your teacher to add you to a class.</p></div>`;
     return;
   }
 
@@ -152,7 +154,7 @@ async function renderAssignmentCard(a, done){
     desc = item?.description || '';
     if(item){
       if(item.is_premium && !item.url){
-        lockedNote = `<div class="locked-note">🔒 This is premium content — visit the <a href="index.html" style="color:var(--gold)">TLM Store</a> to unlock it first.</div>`;
+        lockedNote = `<div class="locked-note">🔒 This is premium content — visit the <a href="index.html" style="color:var(--gold-text,var(--gold))">TLM Store</a> to unlock it first.</div>`;
       } else {
         openUrl = item.url;
       }
