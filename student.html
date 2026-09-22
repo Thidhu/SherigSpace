@@ -392,6 +392,11 @@ function resourcesHtml(list){
   if(!list.length) return '';
   return `<div class="res-block"><div class="res-head">📎 Resources for this task</div>${list.map(resourceHtml).join('')}</div>`;
 }
+// Shown when a task has instructions but nothing to open — so it's clear that's
+// really the case, rather than looking like the page failed to load something.
+function noResourceNote(){
+  return `<div class="res-block" style="font-size:.83rem;color:var(--text2);padding:.6rem .8rem;border:1px dashed var(--border);border-radius:8px">Your teacher hasn't attached anything to open for this task yet.</div>`;
+}
 
 function dueHtml(a, done){
   if(!a.due_date) return '';
@@ -433,7 +438,7 @@ async function renderAssignmentCard(a, done){
     <div class="assign-title">${esc(title)}</div>
     ${dueHtml(a, done)}
     ${desc ? `<div class="assign-desc">${esc(desc)}</div>` : ''}
-    ${resourcesHtml(resources)}
+    ${resources.length ? resourcesHtml(resources) : (lockedNote ? '' : noResourceNote())}
     ${lockedNote}
     ${answersEnabled && !lockedNote ? answerBoxHtml(a) : ''}
     <div class="assign-actions">
