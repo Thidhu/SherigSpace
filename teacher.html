@@ -22,10 +22,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .gate-card p{font-size:.85rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.6}
 .gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
 .gate-btn:hover{background:var(--gold-light)}
-.qc-btn{display:inline-flex;align-items:center;gap:.35rem;padding:8px 16px;border-radius:999px;font-size:.8rem;font-weight:700;text-decoration:none;transition:transform .15s;border:1px solid transparent}
-.qc-btn:hover{transform:translateY(-2px)}
-.qc-wa{background:#25D366;color:#0b3d20}
-.qc-call{background:rgba(255,255,255,.08);color:var(--gold-light);border-color:rgba(201,168,76,.5)}
 .layout{display:flex;min-height:100vh}
 .sidebar{width:220px;flex-shrink:0;background:#131c2e;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
 .logo{padding:1.4rem 1.5rem;border-bottom:1px solid var(--border)}
@@ -203,8 +199,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 let me = null; // { id, name, email }
 let currentClassId = null;
 let siteSettings = {};
-// Phone number for instant "I've paid" notifications (WhatsApp + direct call).
-const CONTACT_PHONE = '97517272018'; // Bhutan country code + number, no "+" (required by wa.me)
 const CLASS_LEVELS=['PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
 
 function toast(msg, isErr=false){
@@ -241,11 +235,7 @@ async function checkAccess(){
     siteSettings = settings || {};
     const qr = siteSettings.qr_image_url;
     let statusNote = '';
-    if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold-text,var(--gold));font-size:.85rem;margin-top:1rem">⏳ Your last payment is under review.</p>
-      <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.7rem">
-        <a class="qc-btn qc-wa" href="https://wa.me/${CONTACT_PHONE}?text=${encodeURIComponent('Hi Thinley, I already submitted my teacher plan payment on SherigSpace — could you please review it?')}" target="_blank" rel="noopener">💬 Notify me</a>
-        <a class="qc-btn qc-call" href="tel:+${CONTACT_PHONE}">📞 Call</a>
-      </div>`;
+    if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold-text,var(--gold));font-size:.85rem;margin-top:1rem">⏳ Your last payment is under review.</p>`;
     else if(sub && sub.status === 'rejected') statusNote = `<p style="color:var(--red);font-size:.85rem;margin-top:1rem">Your last payment was not approved. You can submit again below.</p>`;
     gate.innerHTML = `
       <div class="gate-icon">🧑‍🏫</div>
@@ -289,19 +279,8 @@ window.submitTeacherProof = async function(){
       teacher_id: me.id, price: siteSettings.teacher_plan_price || null, proof_path: path, status: 'pending'
     });
     if(insErr) throw insErr;
-    // Swap the whole gate card to a "submitted" state with a one-tap way to notify me
-    // directly — reviewing screenshots can take a while, so this lets them skip the wait.
-    const waText = encodeURIComponent('Hi Thinley, I just submitted my teacher plan payment on SherigSpace — could you please review it?');
-    document.getElementById('gate-inner').innerHTML = `
-      <div class="gate-icon">✅</div>
-      <h2>Submitted for review!</h2>
-      <p>We'll activate your plan once it's checked. Want it faster? Let me know directly:</p>
-      <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem">
-        <a class="qc-btn qc-wa" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 WhatsApp Me</a>
-        <a class="qc-btn qc-call" href="tel:+${CONTACT_PHONE}">📞 Call Me</a>
-      </div>
-      <a class="gate-btn" href="javascript:void(0)" onclick="checkAccess()">Done</a>
-    `;
+    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = 'var(--ok-text,#7ed9b0)';
+    setTimeout(checkAccess, 1200);
   }catch(err){
     statusEl.textContent = 'Failed: ' + err.message; statusEl.style.color = 'var(--red)';
   }
@@ -551,7 +530,11 @@ async function renderAssignments(){
   await Promise.all(['lessons','resources','videos','articles'].map(async t => {
     const itemIds = data.filter(a => a.kind === 'tlm' && a.item_type === t).map(a => a.item_id);
     if(!itemIds.length) return;
-    const { data: items } = await supabase.from(t+'_public').select('id,title').in('id', itemIds);
+    let { data: items, error: itemsErr } = await supabase.from(t+'_public').select('id,title').in('id', itemIds);
+    if((itemsErr || !items || !items.length)){
+      const fb = await supabase.from(t).select('id,title').in('id', itemIds);
+      if(!fb.error) items = fb.data;
+    }
     (items||[]).forEach(i => { tlmTitles[t+':'+i.id] = i.title; });
   }));
 
@@ -746,9 +729,24 @@ window.toggleAssignmentKind = function(){
 
 window.loadTlmOptions = async function(){
   const type = fv('f-item-type') || 'lessons';
-  const { data } = await supabase.from(type+'_public').select('id,title').order('created_at',{ascending:false});
   const sel = document.getElementById('f-item-id');
-  if(sel) sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
+  if(sel) sel.innerHTML = '<option value="">Loading…</option>';
+  // Try the public view first (it's what index.html shows to visitors); if it comes back
+  // empty or errors — e.g. the view hasn't been created, or its definition filters
+  // everything out — fall back to the real table so the teacher still sees their content.
+  let { data, error } = await supabase.from(type+'_public').select('id,title').order('created_at',{ascending:false});
+  if(error || !data || !data.length){
+    if(error) console.warn('Could not read '+type+'_public, falling back to '+type+':', error.message);
+    const fallback = await supabase.from(type).select('id,title').order('created_at',{ascending:false});
+    if(fallback.error){
+      if(sel) sel.innerHTML = '<option value="">Could not load — ' + esc(fallback.error.message) + '</option>';
+      return;
+    }
+    data = fallback.data;
+  }
+  if(!sel) return;
+  sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('')
+    || `<option value="">No ${esc(type)} yet — add some under ${esc(type[0].toUpperCase()+type.slice(1))} first</option>`;
 };
 
 // ── Question builder ──
