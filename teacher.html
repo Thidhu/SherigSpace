@@ -113,6 +113,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .ans-grade{margin-top:.5rem}
 .ans-grade input{width:180px;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;padding:7px 10px;outline:none}
 .ans-grade input:focus{border-color:var(--gold)}
+#present-overlay{display:none;position:fixed;inset:0;z-index:5000;background:var(--navy);color:var(--text);flex-direction:column}
+#present-overlay.open{display:flex}
+.present-bar{display:flex;align-items:center;gap:1rem;padding:.9rem 1.4rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.present-title{font-weight:800;font-size:1.15rem;flex:1;text-align:center}
+.present-count{font-size:.85rem;color:var(--text2);white-space:nowrap}
+.present-content{flex:1;overflow-y:auto;padding:2.5rem 8vw;display:flex;flex-direction:column;gap:1.7rem}
+.present-student{font-size:2.1rem;font-weight:800;color:var(--gold-text,var(--gold));text-align:center;margin-bottom:.3rem}
+.present-empty,.present-loading{font-size:1.3rem;color:var(--text2);text-align:center;margin-top:1rem}
+.present-qa{border-bottom:1px solid var(--border);padding-bottom:1.3rem}
+.present-q{font-size:1.05rem;color:var(--text2);margin-bottom:.5rem}
+.present-a{font-size:1.6rem;line-height:1.5;white-space:pre-wrap}
+.present-mark{display:block;margin-top:.4rem;font-size:1.1rem;font-weight:700}
+.present-mark.ok{color:var(--ok-text,#7ed9b0)}.present-mark.bad{color:var(--err-text,#f09090)}
+.present-links{display:flex;flex-wrap:wrap;gap:1rem;font-size:1.1rem}
+.present-links a{color:var(--gold-text,var(--gold))}
+.present-nav{display:flex;align-items:center;justify-content:center;gap:1rem;padding:1rem;border-top:1px solid var(--border);flex-shrink:0}
+.present-nav select{max-width:240px}
+@media(max-width:640px){.present-content{padding:1.6rem 5vw}.present-student{font-size:1.5rem}.present-a{font-size:1.25rem}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="theme.js"></script>
@@ -121,7 +139,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 
 <div id="gate">
   <div class="gate-card" id="gate-inner">
-    <div class="gate-icon">🧑‍🏫</div>
+    <div class="gate-icon">🍎</div>
     <h2>Checking access…</h2>
     <p>One moment…</p>
   </div>
@@ -154,7 +172,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
           <div class="ptitle" id="detail-class-name">Class</div>
           <div class="psub">Students log in with this class name: <span class="class-code-badge" id="detail-class-code">—</span></div>
         </div>
-        <button class="btn btn-del btn-sm" onclick="deleteCurrentClass()">🗑 Delete Class</button>
       </div>
       <div class="card"><div class="card-head"><h3>Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()">+ Add Student</button></div><div id="students-list"></div></div>
       <div class="card"><div class="card-head"><h3>Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()">＋ Assign Task</button></div><div id="assignments-list"></div></div>
@@ -239,7 +256,7 @@ async function checkAccess(){
     if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold-text,var(--gold));font-size:.85rem;margin-top:1rem">⏳ Your last payment is under review.</p>`;
     else if(sub && sub.status === 'rejected') statusNote = `<p style="color:var(--red);font-size:.85rem;margin-top:1rem">Your last payment was not approved. You can submit again below.</p>`;
     gate.innerHTML = `
-      <div class="gate-icon">🧑‍🏫</div>
+      <div class="gate-icon">🍎</div>
       <h2>Become a Teacher</h2>
       <p>Subscribe for Nu. ${esc(siteSettings.teacher_plan_price || 'X')}/month to create classes, enroll students, and assign work.</p>
       ${qr?`<img src="${esc(qr)}" style="width:160px;margin:0 auto 1rem;display:block;border-radius:6px"/>`:''}
@@ -310,8 +327,7 @@ async function renderClasses(){
   }));
   const el = document.getElementById('classes-list');
   el.innerHTML = data?.length ? data.map(c=>`
-    <div class="class-card" style="position:relative" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(loginText(c))}')">
-      <button type="button" class="btn btn-del btn-sm" title="Delete class" onclick="event.stopPropagation(); deleteClass('${esc(c.id)}','${esc(c.name)}')" style="position:absolute;top:.7rem;right:.7rem">✕</button>
+    <div class="class-card" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(loginText(c))}')">
       <h4>${esc(c.name)}</h4>
       <div style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem">${esc(c.class_level||'')}</div>
       <span class="class-code-badge">${esc(loginText(c))}</span>
@@ -341,32 +357,6 @@ window.openClassForm = function(){
   };
   document.getElementById('overlay').classList.add('open');
 };
-
-window.deleteClass = async function(id, name){
-  if(!confirm(`Delete "${name}"? This permanently removes the class, its students, and every assignment and answer in it — this cannot be undone.`)) return;
-  if(!confirm('Are you sure? Type OK to confirm you want to permanently delete this class.')) return;
-  try{
-    const { data: asg } = await supabase.from('assignments').select('id').eq('class_id', id);
-    const asgIds = (asg||[]).map(a => a.id);
-    if(asgIds.length){
-      const { error: e1 } = await supabase.from('assignment_status').delete().in('assignment_id', asgIds);
-      if(e1) throw e1;
-      const { error: e2 } = await supabase.from('assignments').delete().eq('class_id', id);
-      if(e2) throw e2;
-    }
-    const { error: e3 } = await supabase.from('class_students').delete().eq('class_id', id);
-    if(e3) throw e3;
-    const { error: e4 } = await supabase.from('classes').delete().eq('id', id);
-    if(e4) throw e4;
-    toast('Class deleted.');
-    if(currentClassId === id){ currentClassId = null; go('classes'); }
-    renderClasses();
-  }catch(err){
-    toast('Could not delete: ' + err.message, true);
-  }
-};
-
-window.deleteCurrentClass = function(){ deleteClass(currentClassId, document.getElementById('detail-class-name').textContent); };
 
 window.openClass = function(id, name, code){
   currentClassId = id;
@@ -535,7 +525,7 @@ async function ensureV2(){
   return v2;
 }
 
-const Q_TYPE_LABEL = { short:'Short answer', long:'Paragraph', choice:'Multiple choice' };
+const Q_TYPE_LABEL = { short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False' };
 let taskAttachments = []; // [{ url, label, type }]
 let taskQuestions = [];   // [{ id, type, text, options[], correct (option index or null) }]
 function newQid(){ return 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
@@ -558,11 +548,7 @@ async function renderAssignments(){
   await Promise.all(['lessons','resources','videos','articles'].map(async t => {
     const itemIds = data.filter(a => a.kind === 'tlm' && a.item_type === t).map(a => a.item_id);
     if(!itemIds.length) return;
-    let { data: items, error: itemsErr } = await supabase.from(t+'_public').select('id,title').in('id', itemIds);
-    if((itemsErr || !items || !items.length)){
-      const fb = await supabase.from(t).select('id,title').in('id', itemIds);
-      if(!fb.error) items = fb.data;
-    }
+    const { data: items } = await supabase.from(t+'_public').select('id,title').in('id', itemIds);
     (items||[]).forEach(i => { tlmTitles[t+':'+i.id] = i.title; });
   }));
 
@@ -580,6 +566,7 @@ async function renderAssignments(){
       <div><div class="iname">${esc(label)}</div><div class="imeta">${meta}</div></div>
       <div class="ibtns">
         <button class="btn btn-ghost btn-sm" onclick="viewAnswers('${esc(a.id)}')">✍ Answers</button>
+        <button class="btn btn-ghost btn-sm" onclick="presentStudent('${esc(a.id)}')">🖥 Present</button>
         <button class="btn btn-edit btn-sm" onclick="openAssignmentForm('${esc(a.id)}')">✏ Edit</button>
         <button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button>
       </div>
@@ -610,7 +597,7 @@ window.openAssignmentForm = async function(editId){
   const editing = !!existing;
 
   taskAttachments = editing ? parseAttachments(existing).map(a => ({ ...a, label: a.label || defaultLabel(a.url), type: a.type || classifyUrl(a.url).kind })) : [];
-  taskQuestions = editing ? parseQuestions(existing).map(q => ({ ...q, correct: q.type === 'choice' && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null })) : [];
+  taskQuestions = editing ? parseQuestions(existing).map(q => ({ ...q, correct: (q.type === 'choice' || q.type === 'truefalse') && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null })) : [];
 
   document.getElementById('m-title').textContent = editing ? 'Edit Task' : 'Assign a Task';
   document.querySelector('#overlay .modal').style.maxWidth = '700px';
@@ -628,7 +615,7 @@ window.openAssignmentForm = async function(editId){
           <option value="videos">Video</option><option value="articles">Article</option>
         </select>
       </div>
-      <div class="field"><label>Choose Item</label><select id="f-item-id" onchange="showTlmEmptyWarning()"></select><div id="tlm-empty-note" style="display:none;font-size:.78rem;color:var(--red);margin-top:.4rem">⚠️ This item has no file or link attached in your library yet, so students would see the description only, with nothing to open. Add a link or upload a file to it under Lessons/Resources/Videos/Articles first, or attach a resource below instead.</div></div>
+      <div class="field"><label>Choose Item</label><select id="f-item-id"></select></div>
       <div class="hint">Students will see this item, plus anything you add below.</div>
     </div>
     <div class="field"><label>Title</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3 and answer the questions"/></div>
@@ -657,6 +644,7 @@ window.openAssignmentForm = async function(editId){
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('short')">＋ Short answer</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('long')">＋ Paragraph</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('choice')">＋ Multiple choice</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('truefalse')">＋ True / False</button>
       </div>
       <div class="hint">Students answer these on their own page.${cfg.keys ? ' For multiple choice, tick the correct option and it will be checked for you — students never see which option is correct.' : ''}</div>
       ${cfg.keys ? '' : '<div class="hint" style="color:var(--gold-text,var(--gold))">Automatic checking of multiple choice is off. Run <b>sherigspace_assignments_v2.sql</b> again in Supabase to turn it on.</div>'}
@@ -690,10 +678,6 @@ window.openAssignmentForm = async function(editId){
   btn.textContent = editing ? 'Save changes' : 'Create';
   btn.disabled = false;
   btn.onclick = async ()=>{
-    // If the teacher typed a link but forgot to press "＋ Add link", add it now
-    // rather than silently losing it.
-    const pendingLink = document.getElementById('f-link-input');
-    if(pendingLink && pendingLink.value.trim()) addTaskLink();
     const kind = editing ? existing.kind : fv('f-kind');
     const title = fv('f-custom-title');
     const payload = {
@@ -726,6 +710,9 @@ window.openAssignmentForm = async function(editId){
           if(opts.length < 2){ toast('Multiple-choice question "' + text.slice(0,30) + '" needs at least two options.', true); return; }
           item.options = opts;
           if(correct) keyOut[q.id] = correct;
+        } else if(q.type === 'truefalse'){
+          item.options = ['True', 'False'];
+          if(q.correct === 0 || q.correct === 1) keyOut[q.id] = item.options[q.correct];
         }
         qs.push(item);
       }
@@ -761,39 +748,15 @@ window.toggleAssignmentKind = function(){
 
 window.loadTlmOptions = async function(){
   const type = fv('f-item-type') || 'lessons';
+  const { data } = await supabase.from(type+'_public').select('id,title').order('created_at',{ascending:false});
   const sel = document.getElementById('f-item-id');
-  if(sel) sel.innerHTML = '<option value="">Loading…</option>';
-  // Read url/is_premium too, so items with nothing attached can be flagged —
-  // assigning one of those silently showed students "no content" before.
-  let { data, error } = await supabase.from(type+'_public').select('id,title,url,is_premium').order('created_at',{ascending:false});
-  if(error || !data || !data.length){
-    if(error) console.warn('Could not read '+type+'_public, falling back to '+type+':', error.message);
-    const fallback = await supabase.from(type).select('id,title,url,is_premium').order('created_at',{ascending:false});
-    if(fallback.error){
-      if(sel) sel.innerHTML = '<option value="">Could not load — ' + esc(fallback.error.message) + '</option>';
-      return;
-    }
-    data = fallback.data;
-  }
-  if(!sel) return;
-  sel.innerHTML = (data||[]).map(i=>{
-    const empty = !i.is_premium && !String(i.url||'').trim();
-    return `<option value="${esc(i.id)}"${empty ? ' data-empty="1"' : ''}>${esc(i.title)}${empty ? ' — ⚠️ no file/link attached yet' : ''}</option>`;
-  }).join('')
-    || `<option value="">No ${esc(type)} yet — add some under ${esc(type[0].toUpperCase()+type.slice(1))} first</option>`;
-  showTlmEmptyWarning();
-};
-window.showTlmEmptyWarning = function(){
-  const sel = document.getElementById('f-item-id');
-  const note = document.getElementById('tlm-empty-note');
-  if(!sel || !note) return;
-  const opt = sel.selectedOptions[0];
-  note.style.display = opt && opt.dataset.empty ? 'block' : 'none';
+  if(sel) sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
 };
 
 // ── Question builder ──
 window.addQuestion = function(type){
-  taskQuestions.push({ id: newQid(), type, text: '', options: type === 'choice' ? ['',''] : [], correct: null });
+  const options = type === 'choice' ? ['',''] : type === 'truefalse' ? ['True', 'False'] : [];
+  taskQuestions.push({ id: newQid(), type, text: '', options, correct: null });
   renderQuestionBuilder();
   const last = document.querySelector('#q-builder .qb:last-child [data-q-text]');
   if(last) last.focus();
@@ -820,6 +783,12 @@ function renderQuestionBuilder(){
           <button type="button" class="btn btn-del btn-sm" data-q-optdel="${j}" title="Remove option">✕</button>
         </div>`).join('')}
         <button type="button" class="btn btn-ghost btn-sm" data-q-optadd>＋ Add option</button>
+      </div>` : ''}
+      ${q.type === 'truefalse' ? `<div class="qb-opts">
+        ${q.options.map((o,j)=>`<div class="qb-opt">
+          ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="Mark as the correct answer"/>` : ''}
+          <span style="flex:1">${esc(o)}</span>
+        </div>`).join('')}
       </div>` : ''}
     </div>`).join('') : '<div class="hint">No questions yet.</div>';
 }
@@ -886,7 +855,8 @@ window.viewAnswers = async function(assignmentId){
 
   const cards = await Promise.all(students.map(async st => {
     const r = byStudent[st.student_id];
-    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">Not submitted</span></div></div>`;
+    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">Not submitted</span></div>
+      <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">🖥 Present to class</button></div>`;
 
     const links = String(r.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
     const paths = String(r.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
@@ -903,7 +873,7 @@ window.viewAnswers = async function(assignmentId){
       const ans = String(answers[q.id] == null ? '' : answers[q.id]).trim();
       if(ans) answeredQ++;
       let mark = '';
-      if(q.type === 'choice' && key[q.id] != null){
+      if((q.type === 'choice' || q.type === 'truefalse') && key[q.id] != null){
         autoTotal++;
         if(ans && ans === key[q.id]){ autoOk++; mark = '<span class="qa-mark ok">✓ Correct</span>'; }
         else mark = `<span class="qa-mark bad">✗ Correct: ${esc(key[q.id])}</span>`;
@@ -916,7 +886,8 @@ window.viewAnswers = async function(assignmentId){
     const late = asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ' <span class="ans-badge none">Late</span>' : '';
 
     return `<div class="ans-card">
-      <div class="ans-head"><b>${esc(st.display_name)}</b><span>${badge}${late}</span></div>
+      <div class="ans-head"><b>${esc(st.display_name)}</b><span>${badge}${late}</span>
+        <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">🖥 Present to class</button></div>
       ${qaHtml}
       ${autoTotal ? `<div class="ans-auto">Auto-checked: ${autoOk} / ${autoTotal} multiple-choice correct</div>` : ''}
       ${(r.answer_text || '').trim() ? `<div class="ans-text">${esc(r.answer_text)}</div>` : ''}
@@ -928,7 +899,13 @@ window.viewAnswers = async function(assignmentId){
   }));
 
   body.innerHTML = (needsSetup ? '<div class="hint" style="margin-bottom:.7rem">Written answers are not switched on yet — run <b>sherigspace_task_answers.sql</b> in Supabase to enable them.</div>' : '')
-    + `<div class="hint" style="margin-bottom:.8rem">${submittedCount} of ${students.length} students have submitted.</div>` + cards.join('');
+    + `<div class="hint" style="margin-bottom:.5rem">${submittedCount} of ${students.length} students have submitted.</div>`
+    + `<div style="margin-bottom:.9rem"><button type="button" class="btn btn-gold btn-sm" id="present-all-btn">🖥 Present to Class</button></div>`
+    + cards.join('');
+
+  const pCtx = { assignmentId, asg, students, rows: byStudent, questions, key, idx: 0 };
+  document.getElementById('present-all-btn').addEventListener('click', () => presentStudent(pCtx));
+  body.querySelectorAll('[data-present-student]').forEach(b => b.addEventListener('click', () => presentStudent(pCtx, b.getAttribute('data-present-student'))));
 
   body.querySelectorAll('[data-fb-save]').forEach(b => b.addEventListener('click', async () => {
     const sid = b.getAttribute('data-fb-save');
@@ -944,6 +921,123 @@ window.viewAnswers = async function(assignmentId){
     toast('Feedback saved ✓');
   }));
 };
+
+// ── Present a student's work to the whole class (for a projector or shared screen) ──
+let presentCtx = null;
+
+async function loadPresentCtx(assignmentId){
+  const cfg = await ensureV2();
+  const [asgRes, stuRes, rowRes, keyRes] = await Promise.all([
+    supabase.from('assignments').select('*').eq('id', assignmentId).single(),
+    supabase.from('class_students').select('student_id, display_name').eq('class_id', currentClassId).order('display_name'),
+    supabase.from('assignment_status').select('*').eq('assignment_id', assignmentId),
+    cfg.keys ? supabase.from('assignment_keys').select('answers').eq('assignment_id', assignmentId).maybeSingle() : Promise.resolve({ data: null })
+  ]);
+  if(rowRes.error){ toast('Could not load answers: ' + rowRes.error.message, true); return null; }
+  if(!(stuRes.data||[]).length){ toast('No students in this class yet.', true); return null; }
+  const byStudent = {}; (rowRes.data||[]).forEach(r => { byStudent[r.student_id] = r; });
+  const asg = asgRes.data || {};
+  return { assignmentId, asg, students: stuRes.data, rows: byStudent, questions: parseQuestions(asg), key: (keyRes.data && keyRes.data.answers) || {}, idx: 0 };
+}
+
+function ensurePresentOverlay(){
+  if(document.getElementById('present-overlay')) return;
+  const ov = document.createElement('div');
+  ov.id = 'present-overlay';
+  ov.innerHTML = `
+    <div class="present-bar">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closePresent()">✕ Close</button>
+      <div id="present-title" class="present-title"></div>
+      <div id="present-count" class="present-count"></div>
+    </div>
+    <div id="present-body" class="present-content"></div>
+    <div class="present-nav">
+      <button type="button" id="present-prev" class="btn btn-ghost" onclick="presentNav(-1)">← Previous</button>
+      <select id="present-jump" onchange="presentJump(this.value)"></select>
+      <button type="button" id="present-next" class="btn btn-gold" onclick="presentNav(1)">Next →</button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+async function presentAnswerHtml(ctx, idx){
+  const st = ctx.students[idx];
+  const row = ctx.rows[st.student_id];
+  if(!row){
+    return `<div class="present-student">${esc(st.display_name)}</div><div class="present-empty">Has not submitted yet.</div>`;
+  }
+  const answers = (row.answers && typeof row.answers === 'object') ? row.answers : {};
+  const qaHtml = ctx.questions.map((q,i) => {
+    const ans = String(answers[q.id] == null ? '' : answers[q.id]).trim();
+    let mark = '';
+    if((q.type === 'choice' || q.type === 'truefalse') && ctx.key[q.id] != null){
+      mark = ans && ans === ctx.key[q.id] ? '<span class="present-mark ok">✓ Correct</span>' : `<span class="present-mark bad">✗ Correct answer: ${esc(ctx.key[q.id])}</span>`;
+    }
+    return `<div class="present-qa"><div class="present-q">${i+1}. ${esc(q.text)}</div><div class="present-a">${ans ? esc(ans) : '<i>No answer</i>'}${mark}</div></div>`;
+  }).join('');
+
+  const links = String(row.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
+  const paths = String(row.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
+  const fileLinks = await Promise.all(paths.map(async p => {
+    const { data } = await supabase.storage.from('task-answers').createSignedUrl(p, 3600);
+    const name = p.split('/').pop().replace(/^\d+-/, '');
+    return data?.signedUrl ? `<a href="${esc(data.signedUrl)}" target="_blank" rel="noopener noreferrer">📎 ${esc(name)}</a>` : '';
+  }));
+  const note = (row.answer_text || '').trim();
+
+  return `
+    <div class="present-student">${esc(st.display_name)}</div>
+    ${qaHtml}
+    ${note ? `<div class="present-qa"><div class="present-q">Note</div><div class="present-a">${esc(note)}</div></div>` : ''}
+    ${(links.length || fileLinks.some(Boolean)) ? `<div class="present-links">${links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(u)}</a>`).join('')}${fileLinks.join('')}</div>` : ''}
+  `;
+}
+
+async function renderPresent(){
+  const ctx = presentCtx;
+  if(!ctx) return;
+  document.getElementById('present-title').textContent = ctx.asg.title || 'Task';
+  document.getElementById('present-count').textContent = (ctx.idx+1) + ' / ' + ctx.students.length;
+  document.getElementById('present-prev').disabled = ctx.idx <= 0;
+  document.getElementById('present-next').disabled = ctx.idx >= ctx.students.length - 1;
+  document.getElementById('present-jump').innerHTML = ctx.students.map((s,i) =>
+    `<option value="${esc(s.student_id)}" ${i===ctx.idx?'selected':''}>${esc(s.display_name)}${ctx.rows[s.student_id]?'':' (not submitted)'}</option>`).join('');
+  document.getElementById('present-body').innerHTML = '<div class="present-loading">Loading…</div>';
+  document.getElementById('present-body').innerHTML = await presentAnswerHtml(ctx, ctx.idx);
+}
+
+// ctxOrId is either a context already loaded by viewAnswers, or an assignment id to fetch fresh.
+window.presentStudent = async function(ctxOrId, startId){
+  const ctx = typeof ctxOrId === 'string' ? await loadPresentCtx(ctxOrId) : ctxOrId;
+  if(!ctx) return;
+  presentCtx = ctx;
+  if(ctx.idx == null) ctx.idx = 0;
+  if(startId){ const i = ctx.students.findIndex(s => s.student_id === startId); if(i >= 0) ctx.idx = i; }
+  ensurePresentOverlay();
+  document.getElementById('overlay').classList.remove('open');   // the small Answers modal, if it was open, gets out of the way
+  document.getElementById('present-overlay').classList.add('open');
+  await renderPresent();
+};
+window.presentNav = function(dir){
+  if(!presentCtx) return;
+  presentCtx.idx = Math.max(0, Math.min(presentCtx.students.length - 1, presentCtx.idx + dir));
+  renderPresent();
+};
+window.presentJump = function(studentId){
+  if(!presentCtx) return;
+  const i = presentCtx.students.findIndex(s => s.student_id === studentId);
+  if(i >= 0){ presentCtx.idx = i; renderPresent(); }
+};
+window.closePresent = function(){
+  const ov = document.getElementById('present-overlay');
+  if(ov) ov.classList.remove('open');
+};
+document.addEventListener('keydown', e => {
+  const ov = document.getElementById('present-overlay');
+  if(!ov || !ov.classList.contains('open')) return;
+  if(e.key === 'Escape') closePresent();
+  else if(e.key === 'ArrowRight') presentNav(1);
+  else if(e.key === 'ArrowLeft') presentNav(-1);
+});
 
 // ── Task resources: any number of videos / links / files / documents ──
 function renderTaskAttachments(){
