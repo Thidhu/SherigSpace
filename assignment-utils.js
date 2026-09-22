@@ -120,18 +120,22 @@ export function parseAttachments(row) {
     .map(url => ({ url, label: '', type: '' }));
 }
 
-/** Reads an assignment's questions: [{ id, type: short|long|choice, text, options[] }] */
+/** Reads an assignment's questions: [{ id, type: short|long|choice|truefalse, text, options[] }] */
 export function parseQuestions(row) {
   const raw = row && row.questions;
   if (!Array.isArray(raw)) return [];
   return raw
     .filter(q => q && q.id && q.text)
-    .map(q => ({
-      id: String(q.id),
-      type: ['short', 'long', 'choice'].includes(q.type) ? q.type : 'short',
-      text: String(q.text),
-      options: Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : []
-    }));
+    .map(q => {
+      const type = ['short', 'long', 'choice', 'truefalse'].includes(q.type) ? q.type : 'short';
+      return {
+        id: String(q.id),
+        type,
+        text: String(q.text),
+        // True/False always has exactly these two options, regardless of what was stored.
+        options: type === 'truefalse' ? ['True', 'False'] : (Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : [])
+      };
+    });
 }
 
 /**
