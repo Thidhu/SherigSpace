@@ -269,7 +269,7 @@ function questionsHtml(a){
     const attrs = `data-q-input data-id="${esc(id)}" data-qid="${esc(q.id)}"`;
     let input;
     if(q.type === 'long') input = `<textarea ${attrs} placeholder="Write your answer…">${esc(val)}</textarea>`;
-    else if(q.type === 'choice') input = `<div class="q-opts">${q.options.map(o =>
+    else if(q.type === 'choice' || q.type === 'truefalse') input = `<div class="q-opts">${q.options.map(o =>
       `<label class="q-opt"><input type="radio" name="qr-${esc(id)}-${esc(q.id)}" ${attrs} data-val="${esc(o)}" ${val === o ? 'checked' : ''}/><span>${esc(o)}</span></label>`).join('')}</div>`;
     else input = `<input type="text" ${attrs} value="${esc(val)}" placeholder="Your answer…"/>`;
     return `<div class="q-item"><div class="q-text"><span class="q-num">${i+1}.</span>${esc(q.text)}</div>${input}</div>`;
@@ -392,11 +392,6 @@ function resourcesHtml(list){
   if(!list.length) return '';
   return `<div class="res-block"><div class="res-head">📎 Resources for this task</div>${list.map(resourceHtml).join('')}</div>`;
 }
-// Shown when a task has instructions but nothing to open — so it's clear that's
-// really the case, rather than looking like the page failed to load something.
-function noResourceNote(){
-  return `<div class="res-block" style="font-size:.83rem;color:var(--text2);padding:.6rem .8rem;border:1px dashed var(--border);border-radius:8px">Your teacher hasn't attached anything to open for this task yet.</div>`;
-}
 
 function dueHtml(a, done){
   if(!a.due_date) return '';
@@ -438,7 +433,7 @@ async function renderAssignmentCard(a, done){
     <div class="assign-title">${esc(title)}</div>
     ${dueHtml(a, done)}
     ${desc ? `<div class="assign-desc">${esc(desc)}</div>` : ''}
-    ${resources.length ? resourcesHtml(resources) : (lockedNote ? '' : noResourceNote())}
+    ${resourcesHtml(resources)}
     ${lockedNote}
     ${answersEnabled && !lockedNote ? answerBoxHtml(a) : ''}
     <div class="assign-actions">
