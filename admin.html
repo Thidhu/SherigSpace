@@ -498,7 +498,7 @@ function row(item,type){
 }
 
 // ── FORM ──
-const SUBJECTS=['Mathematics','Science','Language Arts','History','Technology','Social Studies','Arts','Physical Education','Other'];
+const SUBJECTS=['Dzongkha','English','Mathematics','Science','Language Arts','History','Technology','Social Studies','Arts','Physical Education','Other'];
 const LEVELS=['Beginner','Intermediate','Advanced'];
 const RTYPES=['PDF','DOCX','Image','Video Link','Spreadsheet','Presentation','Other'];
 const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
@@ -850,7 +850,7 @@ window.loadSettings = async function(){
   document.getElementById('s-bankname').value = s.bank_name || '';
   document.getElementById('s-teacherprice').value = s.teacher_plan_price || '';
   document.getElementById('s-qrurl').value    = s.qr_image_url || '';
-  document.getElementById('qr-preview').innerHTML = s.qr_image_url ? `<img src="${esc(s.qr_image_url)}"/>` : '';
+  document.getElementById('qr-preview').innerHTML = s.qr_image_url ? `<img src="${esc(s.qr_image_url)}" referrerpolicy="no-referrer" onerror="this.outerHTML='<span style=&quot;font-size:.8rem&quot;>The saved QR could not load — upload it again.</span>'"/>` : '';
 };
 
 window.handleQrPick = async function(e){
@@ -861,10 +861,18 @@ window.handleQrPick = async function(e){
   statusEl.textContent = 'Uploading…';
   try{
     const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
-    document.getElementById('s-qrurl').value = result.thumbnailUrl;
-    document.getElementById('qr-preview').innerHTML = `<img src="${esc(result.thumbnailUrl)}"/>`;
-    statusEl.textContent = 'Uploaded ✓';
-    statusEl.className = 'upload-status ok';
+    // lh3.googleusercontent.com is the most dependable way to show a public Drive picture in a web page
+    const qrUrl = result.fileId ? `https://lh3.googleusercontent.com/d/${result.fileId}=w800` : result.thumbnailUrl;
+    document.getElementById('s-qrurl').value = qrUrl;
+    document.getElementById('qr-preview').innerHTML = `<img src="${esc(qrUrl)}" referrerpolicy="no-referrer" onerror="this.outerHTML='<span style=&quot;font-size:.8rem&quot;>Preview could not load — check the file is shared as &ldquo;Anyone with the link&rdquo;.</span>'"/>`;
+    const { error: saveErr } = await supabase.from('site_settings').update({ qr_image_url: qrUrl, updated_at: new Date().toISOString() }).eq('id', 1);
+    if(saveErr){
+      statusEl.textContent = 'Uploaded, but not saved yet — press Save Settings below. (' + saveErr.message + ')';
+      statusEl.className = 'upload-status err';
+    } else {
+      statusEl.textContent = 'Uploaded and saved ✓';
+      statusEl.className = 'upload-status ok';
+    }
   }catch(err){
     statusEl.textContent = 'Upload failed: ' + err.message;
     statusEl.className = 'upload-status err';
