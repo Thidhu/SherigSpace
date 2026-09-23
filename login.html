@@ -83,14 +83,15 @@ footer span{color:var(--gold-text,var(--gold))}
 <div class="bg"></div>
 <div class="wrap">
   <div class="brand">
+    <div data-lang-slot style="display:flex;justify-content:center;margin-bottom:.8rem"></div>
     <h1>SherigSpace</h1>
-    <p>Your Teaching &amp; Learning Portal</p>
+    <p data-en="Your Teaching &amp; Learning Portal" data-dz="ཁྱོད་ཀྱི་སློབ་སྟོན་དང་ལྷབ་སྦྱང་ས་ཁོངས།">Your Teaching &amp; Learning Portal</p>
   </div>
   <div class="card">
     <div class="tabs" style="grid-template-columns:1fr 1fr 1fr">
-      <div class="tab on" onclick="switchTab('login')">Log In</div>
-      <div class="tab" onclick="switchTab('signup')">Sign Up</div>
-      <div class="tab" onclick="switchTab('student')">🎓 Student</div>
+      <div class="tab on" onclick="switchTab('login')" data-en="Log In" data-dz="ནང་འཛུལ།">Log In</div>
+      <div class="tab" onclick="switchTab('signup')" data-en="Sign Up" data-dz="ཐོ་བཀོད།">Sign Up</div>
+      <div class="tab" onclick="switchTab('student')" data-en="🎓 Student" data-dz="🎓 སློབ་ཕྲུག">🎓 Student</div>
     </div>
     <div class="forms">
 
@@ -102,20 +103,20 @@ footer span{color:var(--gold-text,var(--gold))}
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.1C33.4 33.1 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.3 35.6 26.8 36 24 36c-5.1 0-9.4-2.9-11.1-7L6.2 33.9C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.1c-.8 2.2-2.3 4.1-4.2 5.4l6.2 5.2C40.5 34.9 44 29.9 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
           Continue with Google
         </button>
-        <div class="divider">or sign in with email</div>
+        <div class="divider" data-en="or sign in with email" data-dz="ཡང་ན་ཡིག་འཕྲིན་ཐོག་ནང་འཛུལ">or sign in with email</div>
         <div class="field">
-          <label>Email</label>
+          <label data-en="Email" data-dz="ཡིག་འཕྲིན།">Email</label>
           <input id="l-email" type="email" placeholder="you@example.com" required/>
         </div>
         <div class="field">
-          <label>Password</label>
-          <input id="l-pass" type="password" placeholder="Your password" required/>
+          <label data-en="Password" data-dz="གསང་ཨང་།">Password</label>
+          <input id="l-pass" type="password" placeholder="Your password" data-en-ph="Your password" data-dz-ph="ཁྱོད་ཀྱི་གསང་ཨང་" required/>
         </div>
         <p class="hint" style="text-align:right;margin-top:-8px;">
-          <a onclick="openForgotPassword()">Forgot Password?</a>
+          <a onclick="openForgotPassword()" data-en="Forgot Password?" data-dz="གསང་ཨང་བརྗེད་སོང་ག?">Forgot Password?</a>
         </p>
-        <button class="btn" type="submit" id="login-btn">Log In</button>
-        <p class="hint">Don't have an account? <a onclick="switchTab('signup')">Sign up here</a></p>
+        <button class="btn" type="submit" id="login-btn" data-en="Log In" data-dz="ནང་འཛུལ།">Log In</button>
+        <p class="hint" data-en="Don't have an account? <a onclick=&quot;switchTab('signup')&quot;>Sign up here</a>" data-dz="ཁྱོད་ལུ་ཐོ་བཀོད་མིན་འདུག་ག? <a onclick=&quot;switchTab('signup')&quot;>དེབ་འདི་ནང་ཐོ་བཀོད་འབད།</a>">Don't have an account? <a onclick="switchTab('signup')">Sign up here</a></p>
       </form>
 
       <!-- SIGNUP -->
@@ -126,58 +127,58 @@ footer span{color:var(--gold-text,var(--gold))}
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.1C33.4 33.1 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.3 35.6 26.8 36 24 36c-5.1 0-9.4-2.9-11.1-7L6.2 33.9C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.1c-.8 2.2-2.3 4.1-4.2 5.4l6.2 5.2C40.5 34.9 44 29.9 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
           Sign up with Google
         </button>
-        <div class="divider">or create account with email</div>
+        <div class="divider" data-en="or create account with email" data-dz="ཡང་ན་ཡིག་འཕྲིན་ཐོག་ཐོ་བཀོད་འབད">or create account with email</div>
         <div class="field">
-          <label>Full Name</label>
+          <label data-en="Full Name" data-dz="མིང་ཆ་ཚང་།">Full Name</label>
           <input id="s-name" type="text" placeholder="e.g. Tenzin Dorji" required/>
         </div>
         <div class="field">
-          <label>Email</label>
+          <label data-en="Email" data-dz="ཡིག་འཕྲིན།">Email</label>
           <input id="s-email" type="email" placeholder="you@example.com" required/>
         </div>
         <div class="field">
-          <label>Class / Grade</label>
+          <label data-en="Class / Grade" data-dz="དཔྱེ་སློབ།">Class / Grade</label>
           <select id="s-class">
-            <option value="">-- Select your class --</option>
+            <option value="" data-en="-- Select your class --" data-dz="-- ཁྱོད་ཀྱི་དཔྱེ་སློབ་སེལ་འཐུ་འབད --">-- Select your class --</option>
             <option>Class 1</option><option>Class 2</option><option>Class 3</option>
             <option>Class 4</option><option>Class 5</option><option>Class 6</option>
             <option>Class 7</option><option>Class 8</option><option>Class 9</option>
             <option>Class 10</option><option>Class 11</option><option>Class 12</option>
-            <option>Teacher / Educator</option><option>Other</option>
+            <option data-en="Teacher / Educator" data-dz="སློབ་དཔོན།">Teacher / Educator</option><option data-en="Other" data-dz="གཞན།">Other</option>
           </select>
         </div>
         <div class="field">
-          <label>Password</label>
-          <input id="s-pass" type="password" placeholder="Min. 6 characters" required oninput="checkStrength(this.value)"/>
+          <label data-en="Password" data-dz="གསང་ཨང་།">Password</label>
+          <input id="s-pass" type="password" placeholder="Min. 6 characters" data-en-ph="Min. 6 characters" data-dz-ph="ཉུང་མཐའ་ཡིག་འབྲུ་ ༦" required oninput="checkStrength(this.value)"/>
           <div class="strength"><div class="strength-bar" id="sbar"></div></div>
         </div>
         <div class="field">
-          <label>Confirm Password</label>
-          <input id="s-pass2" type="password" placeholder="Repeat password" required/>
+          <label data-en="Confirm Password" data-dz="གསང་ཨང་བདེན་སྦྱོར།">Confirm Password</label>
+          <input id="s-pass2" type="password" placeholder="Repeat password" data-en-ph="Repeat password" data-dz-ph="གསང་ཨང་ལོག་བྲིས" required/>
         </div>
-        <button class="btn" type="submit" id="signup-btn">Create Account</button>
-        <p class="hint">Already have an account? <a onclick="switchTab('login')">Log in here</a></p>
+        <button class="btn" type="submit" id="signup-btn" data-en="Create Account" data-dz="ཐོ་བཀོད་གསར་བསྐྲུན།">Create Account</button>
+        <p class="hint" data-en="Already have an account? <a onclick=&quot;switchTab('login')&quot;>Log in here</a>" data-dz="ཐོ་བཀོད་ཡོད་བཞིནམ་ན? <a onclick=&quot;switchTab('login')&quot;>དེབ་འདི་ནང་ནང་འཛུལ།</a>">Already have an account? <a onclick="switchTab('login')">Log in here</a></p>
       </form>
 
       <!-- STUDENT LOGIN -->
       <form class="form" id="f-student" onsubmit="doStudentLogin(event)">
         <div id="student-msg" class="msg"></div>
-        <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem">Ask your teacher for your Class Name, Your Name, and PIN.</p>
+        <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem" data-en="Ask your teacher for your Class Name, Your Name, and PIN." data-dz="ཁྱོད་ཀྱི་དཔྱེ་སློབ་མིང་། མིང་། དང་ PIN དེ་སློབ་དཔོན་ལས་འདྲི་བཀོད་འབད།">Ask your teacher for your Class Name, Your Name, and PIN.</p>
         <div class="field">
-          <label>Class Name</label>
-          <select id="st-classselect" style="display:none"><option value="">— Choose your class —</option></select>
+          <label data-en="Class Name" data-dz="དཔྱེ་སློབ་མིང་།">Class Name</label>
+          <select id="st-classselect" style="display:none"><option value="" data-en="— Choose your class —" data-dz="— དཔྱེ་སློབ་སེལ་འཐུ་འབད —">— Choose your class —</option></select>
           <input id="st-classcode" type="text" placeholder="e.g. Class 9 Dzongkha" autocomplete="off" required/>
-          <a id="st-class-toggle" onclick="toggleClassInput()" style="display:none;font-size:.78rem;margin-top:.35rem;cursor:pointer;color:var(--gold-text,var(--gold))">Can't find your class? Type it instead</a>
+          <a id="st-class-toggle" onclick="toggleClassInput()" style="display:none;font-size:.78rem;margin-top:.35rem;cursor:pointer;color:var(--gold-text,var(--gold))" data-en="Can't find your class? Type it instead" data-dz="དཔྱེ་སློབ་མ་འཐོབ་ག? དེའི་ཚབ་ལུ་ཡིག་རྐྱབས།">Can't find your class? Type it instead</a>
         </div>
         <div class="field">
-          <label>Your Name</label>
+          <label data-en="Your Name" data-dz="ཁྱོད་ཀྱི་མིང་།">Your Name</label>
           <input id="st-name" type="text" placeholder="e.g. Student 1" required/>
         </div>
         <div class="field">
           <label>PIN</label>
-          <input id="st-pin" type="text" inputmode="numeric" placeholder="6-digit PIN" required/>
+          <input id="st-pin" type="text" inputmode="numeric" placeholder="6-digit PIN" data-en-ph="6-digit PIN" data-dz-ph="PIN ཨང་གྲངས་ ༦" required/>
         </div>
-        <button class="btn" type="submit" id="student-btn">Log In</button>
+        <button class="btn" type="submit" id="student-btn" data-en="Log In" data-dz="ནང་འཛུལ།">Log In</button>
       </form>
 
     </div>
@@ -186,7 +187,7 @@ footer span{color:var(--gold-text,var(--gold))}
          admin — there is no separate password to guess here anymore. -->
     <a class="admin-link" href="admin.html">
       <span class="lock-icon">🔐</span>
-      Admin Access
+      <span data-en="Admin Access" data-dz="འགོ་འདྲེན་འཛུལ་སྒོ།">Admin Access</span>
     </a>
   </div>
 </div>
@@ -194,16 +195,16 @@ footer span{color:var(--gold-text,var(--gold))}
 <!-- FORGOT PASSWORD MODAL -->
 <div id="forgotModal" class="modal">
   <div class="modal-box">
-    <h2>Reset Password</h2>
-    <p class="modal-text">Enter your email and we'll send a password reset link.</p>
+    <h2 data-en="Reset Password" data-dz="གསང་ཨང་སླར་གསོ།">Reset Password</h2>
+    <p class="modal-text" data-en="Enter your email and we'll send a password reset link." data-dz="ཁྱོད་ཀྱི་ཡིག་འཕྲིན་བཙུགས་བཞིནམ་ལས་ང་བཅས་ཀྱིས་གསང་ཨང་སླར་གསོའི་འབྲེལ་མཐུད་གཏང་ནི།">Enter your email and we'll send a password reset link.</p>
     <div id="forgot-msg" class="msg"></div>
     <div class="modal-field">
-      <label>Email</label>
+      <label data-en="Email" data-dz="ཡིག་འཕྲིན།">Email</label>
       <input id="fp-email" type="email" placeholder="you@example.com"/>
     </div>
     <div class="modal-actions">
-      <button class="btn" onclick="sendReset()">Send Reset Link</button>
-      <button class="btn btn-cancel" onclick="closeForgotPassword()">Cancel</button>
+      <button class="btn" onclick="sendReset()" data-en="Send Reset Link" data-dz="སླར་གསོའི་འབྲེལ་མཐུད་གཏང་།">Send Reset Link</button>
+      <button class="btn btn-cancel" onclick="closeForgotPassword()" data-en="Cancel" data-dz="ཕྱིར་འཐེན།">Cancel</button>
     </div>
   </div>
 </div>
@@ -227,8 +228,15 @@ function showClassDropdown(on){
   inp.style.display = on ? 'none' : '';
   sel.required = on; inp.required = !on;
   tog.style.display = 'block';
-  tog.textContent = on ? "Can't find your class? Type it instead" : 'Pick your class from the list instead';
+  tog.textContent = on
+    ? T("Can't find your class? Type it instead", "དཔྱེ་སློབ་མ་འཐོབ་ག? དེའི་ཚབ་ལུ་ཡིག་རྐྱབས།")
+    : T('Pick your class from the list instead', 'ཐོ་ཡིག་ནང་ལས་དཔྱེ་སློབ་སེལ་འཐུ་འབད།');
 }
+window.addEventListener('sherig:langchange', function(){
+  if(document.getElementById('st-class-toggle').style.display !== 'none'){
+    showClassDropdown(document.getElementById('st-classselect').style.display !== 'none');
+  }
+});
 window.toggleClassInput = function(){
   showClassDropdown(document.getElementById('st-classselect').style.display === 'none');
 };
@@ -237,7 +245,7 @@ async function loadClassDropdown(){
     const { data, error } = await sb.rpc('list_class_names');
     if(error || !Array.isArray(data) || !data.length) return;
     const sel = document.getElementById('st-classselect');
-    sel.innerHTML = '<option value="">— Choose your class —</option>' +
+    sel.innerHTML = `<option value="">${T('— Choose your class —','— དཔྱེ་སློབ་སེལ་འཐུ་འབད —')}</option>` +
       data.map(c => `<option value="${escHtml(c.class_code)}">${escHtml(c.name)}</option>`).join('');
     showClassDropdown(true);
   }catch(e){ /* keep the text box */ }
@@ -252,7 +260,7 @@ function showMsg(id, msg, type){
 function setBtn(id, loading, label){
   const b = document.getElementById(id);
   b.disabled = loading;
-  b.textContent = loading ? 'Please wait…' : label;
+  b.textContent = loading ? T('Please wait…','བཞུགས་སྒོ་གནང་...') : label;
 }
 window.switchTab = function(t){
   document.querySelectorAll('.tab').forEach((el,i)=>
