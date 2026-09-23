@@ -140,45 +140,47 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 <div id="gate">
   <div class="gate-card" id="gate-inner">
     <div class="gate-icon">🍎</div>
-    <h2>Checking access…</h2>
-    <p>One moment…</p>
+    <h2 data-en="Checking access…" data-dz="འཛུལ་སྒོ་ཞིབ་དཔྱད་འབད་བཞིནམ...">Checking access…</h2>
+    <p data-en="One moment…" data-dz="སྐར་ཆ་ཅིག...">One moment…</p>
   </div>
 </div>
 
 <div class="layout" id="app-layout" style="display:none">
   <aside class="sidebar">
-    <div class="logo"><h2>SherigSpace</h2><small>Teacher Dashboard</small></div>
+    <div class="logo"><h2>SherigSpace</h2><small data-en="Teacher Dashboard" data-dz="སློབ་དཔོན་ཌེཤ་བོརཌི།">Teacher Dashboard</small></div>
     <nav class="sidenav">
-      <div class="sitem on" onclick="go('classes')">🏫 &nbsp;My Classes</div>
-      <div class="sitem" onclick="go('billing')">💳 &nbsp;Subscription</div>
+      <div class="sitem on" onclick="go('classes')">🏫 &nbsp;<span data-en="My Classes" data-dz="ང་གི་དཔྱེ་སློབ།">My Classes</span></div>
+      <div class="sitem" onclick="go('billing')">💳 &nbsp;<span data-en="Subscription" data-dz="འོས་སྦྱོར།">Subscription</span></div>
     </nav>
     <div class="sfoot">
+      <div data-lang-slot></div>
       <div data-theme-slot></div>
-      <a href="index.html">↗ View Website</a>
-      <button class="logout" onclick="logout()">🔒 Log Out</button>
+      <a href="index.html" data-en="↗ View Website" data-dz="↗ ཝེབ་ས་ཁོངས་བལྟ།">↗ View Website</a>
+      <button class="logout" onclick="logout()" data-en="🔒 Log Out" data-dz="🔒 ཕྱིར་འཐོན།">🔒 Log Out</button>
     </div>
   </aside>
 
   <main class="main">
     <div class="page on" id="p-classes">
-      <div class="phead"><div><div class="ptitle">My Classes</div><div class="psub">Create a class, enroll students, and assign work</div></div><button class="btn btn-gold" onclick="openClassForm()">+ New Class</button></div>
+      <div class="phead"><div><div class="ptitle" data-en="My Classes" data-dz="ང་གི་དཔྱེ་སློབ།">My Classes</div><div class="psub" data-en="Create a class, enroll students, and assign work" data-dz="དཔྱེ་སློབ་གསར་བསྐྲུན་འབད། སློབ་ཕྲུག་ཐོ་བཀོད་འབད། དེ་ལས་ལཱ་སྤྲོད་འབད།">Create a class, enroll students, and assign work</div></div><button class="btn btn-gold" onclick="openClassForm()" data-en="+ New Class" data-dz="+ དཔྱེ་སློབ་གསརཔ།">+ New Class</button></div>
+      <div id="plan-note-classes" style="font-size:.82rem;color:var(--text2);margin:-.6rem 0 1rem"></div>
       <div id="classes-list" class="classes-grid"></div>
     </div>
 
     <div class="page" id="p-class-detail">
       <div class="phead">
         <div>
-          <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem">← Back to Classes</button>
+          <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem" data-en="← Back to Classes" data-dz="← དཔྱེ་སློབ་ལུ་ལོག">← Back to Classes</button>
           <div class="ptitle" id="detail-class-name">Class</div>
-          <div class="psub">Students log in with this class name: <span class="class-code-badge" id="detail-class-code">—</span></div>
+          <div class="psub"><span data-en="Students log in with this class name:" data-dz="སློབ་ཕྲུག་ཚུ་གིས་འ་ནི་དཔྱེ་སློབ་མིང་འདི་གིས་ནང་འཛུལ་འབད:">Students log in with this class name:</span> <span class="class-code-badge" id="detail-class-code">—</span></div>
         </div>
       </div>
-      <div class="card"><div class="card-head"><h3>Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()">+ Add Student</button></div><div id="students-list"></div></div>
-      <div class="card"><div class="card-head"><h3>Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()">＋ Assign Task</button></div><div id="assignments-list"></div></div>
+      <div class="card"><div class="card-head"><h3 data-en="Students" data-dz="སློབ་ཕྲུག">Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()" data-en="+ Add Student" data-dz="+ སློབ་ཕྲུག་ཁ་སྐོང་།">+ Add Student</button></div><div id="plan-note-students" style="font-size:.82rem;color:var(--text2);padding:0 1rem .4rem"></div><div id="students-list"></div></div>
+      <div class="card"><div class="card-head"><h3 data-en="Assignments" data-dz="ལཱ་ཁག">Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()" data-en="＋ Assign Task" data-dz="＋ ལཱ་སྤྲོད་">＋ Assign Task</button></div><div id="assignments-list"></div></div>
     </div>
 
     <div class="page" id="p-billing">
-      <div class="phead"><div><div class="ptitle">Subscription</div><div class="psub">Your teacher plan status</div></div></div>
+      <div class="phead"><div><div class="ptitle" data-en="Subscription" data-dz="འོས་སྦྱོར།">Subscription</div><div class="psub" data-en="Your teacher plan status" data-dz="ཁྱོད་ཀྱི་སློབ་དཔོན་འཆར་གཞིའི་གནས་སྟངས།">Your teacher plan status</div></div></div>
       <div class="card"><div id="billing-status" style="padding:1.4rem"></div></div>
     </div>
   </main>
@@ -189,19 +191,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
   <div class="modal">
     <div class="mhead"><h3 id="m-title">Add</h3><button class="mclose" onclick="closeModal()">✕</button></div>
     <div class="mbody" id="m-body"></div>
-    <div class="mfoot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-gold" id="m-save-btn">Save</button></div>
+    <div class="mfoot"><button class="btn btn-ghost" onclick="closeModal()" data-en="Cancel" data-dz="ཕྱིར་འཐེན།">Cancel</button><button class="btn btn-gold" id="m-save-btn" data-en="Save" data-dz="སྲུང་བཞག">Save</button></div>
   </div>
 </div>
 
 <!-- Student login card (shown once, after creating a student) -->
 <div class="overlay" id="login-card-overlay">
   <div class="modal" style="max-width:420px">
-    <div class="mhead"><h3>✅ Student Created</h3><button class="mclose" onclick="document.getElementById('login-card-overlay').classList.remove('open')">✕</button></div>
+    <div class="mhead"><h3 data-en="✅ Student Created" data-dz="✅ སློབ་ཕྲུག་གསར་བསྐྲུན་འབད་ཡོད།">✅ Student Created</h3><button class="mclose" onclick="document.getElementById('login-card-overlay').classList.remove('open')">✕</button></div>
     <div class="mbody">
-      <p style="font-size:.85rem;color:var(--text2)">Give these details to the student — this is the only time the PIN is shown in full here (you can still view it later in the student list).</p>
+      <p style="font-size:.85rem;color:var(--text2)" data-en="Give these details to the student — this is the only time the PIN is shown in full here (you can still view it later in the student list)." data-dz="གནད་སྡུད་འདི་ཚུ་སློབ་ཕྲུག་ལུ་སྤྲོད། PIN འདི་ཆ་ཚང་སྟོན་ནི་འདི་འ་ནཱ་ནང་ཚར་གཅིག་རྐྱངམ་ཅིག་ཨིན (སློབ་ཕྲུག་ཐོ་ཡིག་ནང་ཤུལ་ལས་ལོག་བལྟ་ཚུགས)།">Give these details to the student — this is the only time the PIN is shown in full here (you can still view it later in the student list).</p>
       <div class="login-card" id="login-card-body"></div>
     </div>
-    <div class="mfoot"><button class="btn btn-gold" onclick="document.getElementById('login-card-overlay').classList.remove('open')">Done</button></div>
+    <div class="mfoot"><button class="btn btn-gold" onclick="document.getElementById('login-card-overlay').classList.remove('open')" data-en="Done" data-dz="མཇུག་བསྡུ།">Done</button></div>
   </div>
 </div>
 
@@ -217,6 +219,10 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 let me = null; // { id, name, email }
 let currentClassId = null;
 let siteSettings = {};
+let subActive = false;
+let subRow = null;
+const FREE_MAX_CLASSES = 1;
+const FREE_MAX_STUDENTS = 20;
 const CLASS_LEVELS=['PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
 
 function toast(msg, isErr=false){
@@ -237,7 +243,7 @@ async function checkAccess(){
   const { data: { session } } = await supabase.auth.getSession();
   const gate = document.getElementById('gate-inner');
   if(!session){
-    gate.innerHTML = `<div class="gate-icon">🔒</div><h2>Please log in</h2><p>Log in with your SherigSpace account first, then come back here to set up your teacher plan.</p><a class="gate-btn" href="login.html">Go to Login</a>`;
+    gate.innerHTML = `<div class="gate-icon">🔒</div><h2>${T('Please log in','ནང་འཛུལ་གནང་།')}</h2><p>${T('Log in with your SherigSpace account first, then come back here to set up your teacher plan.','དང་པ་ SherigSpace ཀྱི་ཐོ་བཀོད་ཐོག་ནང་འཛུལ་འབད་ཞིནམ་ལས་ལོག་འོང་སྟེ་སློབ་དཔོན་གྱི་འཆར་གཞི་གཞི་བཙུགས་འབད།')}</p><a class="gate-btn" href="login.html">${T('Go to Login','ནང་འཛུལ་ལུ་འགྱོ།')}</a>`;
     return;
   }
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
@@ -245,34 +251,14 @@ async function checkAccess(){
 
   const { data: sub } = await supabase.from('teacher_subscriptions')
     .select('*').eq('teacher_id', me.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  subRow = sub;
+  subActive = !!(sub && sub.status === 'approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date()));
 
-  const active = sub && sub.status === 'approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+  const { data: settings } = await supabase.from('site_settings').select('*').eq('id',1).single();
+  siteSettings = settings || {};
 
-  if(!active){
-    const { data: settings } = await supabase.from('site_settings').select('*').eq('id',1).single();
-    siteSettings = settings || {};
-    const qr = siteSettings.qr_image_url;
-    let statusNote = '';
-    if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold-text,var(--gold));font-size:.85rem;margin-top:1rem">⏳ Your last payment is under review.</p>`;
-    else if(sub && sub.status === 'rejected') statusNote = `<p style="color:var(--red);font-size:.85rem;margin-top:1rem">Your last payment was not approved. You can submit again below.</p>`;
-    gate.innerHTML = `
-      <div class="gate-icon">🍎</div>
-      <h2>Become a Teacher</h2>
-      <p>Subscribe for Nu. ${esc(siteSettings.teacher_plan_price || 'X')}/month to create classes, enroll students, and assign work.</p>
-      ${qr?`<img src="${esc(qr)}" style="width:160px;margin:0 auto 1rem;display:block;border-radius:6px"/>`:''}
-      <div style="background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.82rem;text-align:left;line-height:1.8">
-        ${siteSettings.bank_name?`<div><b>Bank/App:</b> ${esc(siteSettings.bank_name)}</div>`:''}
-        ${siteSettings.account_name?`<div><b>Account Name:</b> ${esc(siteSettings.account_name)}</div>`:''}
-        ${siteSettings.account_number?`<div><b>Account Number:</b> ${esc(siteSettings.account_number)}</div>`:''}
-      </div>
-      <div class="field" style="text-align:left"><label>Upload Payment Screenshot</label><input type="file" id="teacher-proof-file" accept="image/*"/></div>
-      <p id="teacher-proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
-      <button class="gate-btn" style="border:none;cursor:pointer;margin-top:.5rem" onclick="submitTeacherProof()">Submit for Review</button>
-      ${statusNote}
-    `;
-    return;
-  }
-
+  // Everyone gets in — the Free plan (1 class / 20 students) is enforced at
+  // the point of creating a class or adding a student, not at the door.
   document.getElementById('gate').classList.add('hide');
   document.getElementById('app-layout').style.display = 'flex';
   renderClasses();
@@ -283,8 +269,8 @@ window.submitTeacherProof = async function(){
   const fileInput = document.getElementById('teacher-proof-file');
   const file = fileInput.files[0];
   const statusEl = document.getElementById('teacher-proof-status');
-  if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red)'; return; }
-  statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
+  if(!file){ statusEl.textContent = T('Please choose a screenshot first.','དང་པ་པར་ཅིག་སེལ་འཐུ་འབད་གནང་།'); statusEl.style.color = 'var(--red)'; return; }
+  statusEl.textContent = T('Uploading…','བཙུགས་བཞིནམ...'); statusEl.style.color = 'var(--text2)';
   try{
     // Supabase Storage keys only allow safe characters — spaces, colons
     // etc. in the original filename (e.g. "Screenshot ... 6.46.15 PM.png")
@@ -297,10 +283,10 @@ window.submitTeacherProof = async function(){
       teacher_id: me.id, price: siteSettings.teacher_plan_price || null, proof_path: path, status: 'pending'
     });
     if(insErr) throw insErr;
-    statusEl.textContent = 'Submitted! We\'ll review it shortly.'; statusEl.style.color = 'var(--ok-text,#7ed9b0)';
+    statusEl.textContent = T('Submitted! We\'ll review it shortly.','སྙན་ཞུ་འབད་ཚར་ཡོད! ང་བཅས་ཀྱིས་འཕྲལ་ཁམ་ལུ་ཞིབ་དཔྱད་འབད་ནི།'); statusEl.style.color = 'var(--ok-text,#7ed9b0)';
     setTimeout(checkAccess, 1200);
   }catch(err){
-    statusEl.textContent = 'Failed: ' + err.message; statusEl.style.color = 'var(--red)';
+    statusEl.textContent = T('Failed: ','ལྟོགས་ཤོར: ') + err.message; statusEl.style.color = 'var(--red)';
   }
 };
 
@@ -317,6 +303,8 @@ window.go = function(p){
 // ── CLASSES ──
 async function renderClasses(){
   const { data } = await supabase.from('classes').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false});
+  const note = document.getElementById('plan-note-classes');
+  if(note) note.innerHTML = subActive ? '' : `🆓 ${T('Free plan:','རིན་མེད་འཆར་གཞི:')} ${(data||[]).length} / ${FREE_MAX_CLASSES} ${T('classes.','དཔྱེ་སློབ།')} <a onclick="go('billing')" style="cursor:pointer;color:var(--gold-text,var(--gold))">${T('Upgrade','འོས་སྦྱོར')}</a>`;
   // Older classes still have a random code. Switch them to their class name so
   // students can just type the name. (If a name is already taken by another
   // class the update is refused and the old code keeps working.)
@@ -331,29 +319,45 @@ async function renderClasses(){
       <h4>${esc(c.name)}</h4>
       <div style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem">${esc(c.class_level||'')}</div>
       <span class="class-code-badge">${esc(loginText(c))}</span>
-    </div>`).join('') : `<div class="empty" style="grid-column:1/-1"><div class="ei">🏫</div><p>No classes yet — create your first one!</p></div>`;
+    </div>`).join('') : `<div class="empty" style="grid-column:1/-1"><div class="ei">🏫</div><p>${T('No classes yet — create your first one!','ད་ལྟོ་དཔྱེ་སློབ་མིན་འདུག — དང་པའི་ཅིག་གསར་བསྐྲུན་འབད!')}</p></div>`;
 }
 
-window.openClassForm = function(){
-  document.getElementById('m-title').textContent = 'New Class';
+window.openClassForm = async function(){
+  if(!subActive){
+    const { count } = await supabase.from('classes').select('id', { count:'exact', head:true }).eq('teacher_id', me.id);
+    if((count||0) >= FREE_MAX_CLASSES){
+      toast(T('Free plan allows 1 class. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་དཔྱེ་སློབ་གཅིག་རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
+      go('billing');
+      return;
+    }
+  }
+  document.getElementById('m-title').textContent = T('New Class','དཔྱེ་སློབ་གསརཔ།');
   document.getElementById('m-body').innerHTML = `
-    <div class="field"><label>Class Name</label><input id="f-class-name" placeholder="e.g. Class 9 Dzongkha"/><div style="font-size:.76rem;color:var(--text2);margin-top:.35rem">Students type this name to log in, so keep it short and easy to spell.</div></div>
-    <div class="field"><label>Class Level</label><select id="f-class-level">${CLASS_LEVELS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div class="field"><label>${T('Class Name','དཔྱེ་སློབ་མིང་།')}</label><input id="f-class-name" placeholder="e.g. Class 9 Dzongkha"/><div style="font-size:.76rem;color:var(--text2);margin-top:.35rem">${T('Students type this name to log in, so keep it short and easy to spell.','སློབ་ཕྲུག་ཚུ་གིས་མིང་འདི་བྲིས་ཏེ་ནང་འཛུལ་འབད་དགོཔ་ལས་ཐུང་ཀུ་དང་བྲིས་བདེཝ་སྦེ་བཞག')}</div></div>
+    <div class="field"><label>${T('Class Level','དཔྱེ་སློབ་གནས་རིམ།')}</label><select id="f-class-level">${CLASS_LEVELS.map(c=>`<option>${c}</option>`).join('')}</select></div>
   `;
   const btn = document.getElementById('m-save-btn');
-  btn.textContent = 'Create';
+  btn.textContent = T('Create','གསར་བསྐྲུན།');
   btn.onclick = async ()=>{
     const name = fv('f-class-name');
-    if(!name){ toast('Please enter a class name.', true); return; }
+    if(!name){ toast(T('Please enter a class name.','དཔྱེ་སློབ་མིང་བཙུགས་གནང་།'), true); return; }
+    if(!subActive){
+      const { count } = await supabase.from('classes').select('id', { count:'exact', head:true }).eq('teacher_id', me.id);
+      if((count||0) >= FREE_MAX_CLASSES){
+        toast(T('Free plan allows 1 class. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་དཔྱེ་སློབ་གཅིག་རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
+        closeModal(); go('billing');
+        return;
+      }
+    }
     const { error } = await supabase.from('classes').insert({
       teacher_id: me.id, name, class_level: fv('f-class-level'), class_code: canonName(name)
     });
     if(error){
       const taken = error.code === '23505' || /duplicate|unique/i.test(error.message || '');
-      toast(taken ? 'That class name is already taken. Add something to make it different (e.g. "Class 9 Dzongkha - Paro").' : 'Error: '+error.message, true);
+      toast(taken ? T('That class name is already taken. Add something to make it different (e.g. "Class 9 Dzongkha - Paro").','དཔྱེ་སློབ་མིང་འདི་ཧེ་མ་ལས་བེད་སྤྱོད་འབད་ཡོདཔ་ལས་ཁྱད་པར་ཅིག་ཁ་སྐོང་འབད (དཔེར་ན "Class 9 Dzongkha - Paro")') : T('Error: ','འཛོལ་བ: ')+error.message, true);
       return;
     }
-    toast('Class created ✓'); closeModal(); renderClasses();
+    toast(T('Class created ✓','དཔྱེ་སློབ་གསར་བསྐྲུན་འབད་ཚར་ཡོད ✓')); closeModal(); renderClasses();
   };
   document.getElementById('overlay').classList.add('open');
 };
@@ -373,31 +377,49 @@ document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id
 // ── STUDENTS ──
 async function renderStudents(){
   const { data } = await supabase.from('class_students').select('*').eq('class_id', currentClassId).order('created_at',{ascending:true});
+  const note = document.getElementById('plan-note-students');
+  if(note) note.innerHTML = subActive ? '' : `🆓 ${T('Free plan:','རིན་མེད་འཆར་གཞི:')} ${(data||[]).length} / ${FREE_MAX_STUDENTS} ${T('students.','སློབ་ཕྲུག།')} <a onclick="go('billing')" style="cursor:pointer;color:var(--gold-text,var(--gold))">${T('Upgrade','འོས་སྦྱོར')}</a>`;
   const el = document.getElementById('students-list');
   el.innerHTML = data?.length ? data.map(s=>`
     <div class="irow">
       <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">PIN: ${esc(s.pin)}</div></div>
       <div class="ibtns">
-        <button class="btn btn-edit btn-sm" onclick="openEditStudentForm('${esc(s.id)}','${esc(s.display_name)}')">✏ Edit</button>
-        <button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">✕ Remove</button>
+        <button class="btn btn-edit btn-sm" onclick="openEditStudentForm('${esc(s.id)}','${esc(s.display_name)}')">${T('✏ Edit','✏ ཞུན་དག')}</button>
+        <button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">${T('✕ Remove','✕ བཏོན་གཏང་')}</button>
       </div>
-    </div>`).join('') : `<div class="empty"><div class="ei">🧒</div><p>No students yet. Click + Add Student!</p></div>`;
+    </div>`).join('') : `<div class="empty"><div class="ei">🧒</div><p>${T('No students yet. Click + Add Student!','ད་ལྟོ་སློབ་ཕྲུག་མིན་འདུག। + སློབ་ཕྲུག་ཁ་སྐོང་ལུ་ཨེབ་གནང་!')}</p></div>`;
 }
 
-window.openStudentForm = function(){
-  document.getElementById('m-title').textContent = 'Add Student';
+window.openStudentForm = async function(){
+  if(!subActive){
+    const { count } = await supabase.from('class_students').select('id', { count:'exact', head:true }).eq('class_id', currentClassId);
+    if((count||0) >= FREE_MAX_STUDENTS){
+      toast(T('Free plan allows 20 students. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་སློབ་ཕྲུག་ ༢༠ རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
+      go('billing');
+      return;
+    }
+  }
+  document.getElementById('m-title').textContent = T('Add Student','སློབ་ཕྲུག་ཁ་སྐོང་།');
   document.getElementById('m-body').innerHTML = `
-    <div class="field"><label>Student Display Name</label><input id="f-student-name" placeholder="e.g. Student 1"/></div>
-    <div class="field"><label>Password / PIN (optional)</label><input id="f-student-pin" placeholder="Leave blank to auto-generate a 6-digit PIN"/></div>
+    <div class="field"><label>${T('Student Display Name','སློབ་ཕྲུག་གི་མིང་།')}</label><input id="f-student-name" placeholder="e.g. Student 1"/></div>
+    <div class="field"><label>${T('Password / PIN (optional)','གསང་ཨང་ / PIN (དགོས་མཁོ་མེད་ཡང་རུང་)')}</label><input id="f-student-pin" placeholder="Leave blank to auto-generate a 6-digit PIN"/></div>
   `;
   const btn = document.getElementById('m-save-btn');
-  btn.textContent = 'Add';
+  btn.textContent = T('Add','ཁ་སྐོང་།');
   btn.onclick = async ()=>{
     const name = fv('f-student-name');
-    if(!name){ toast('Please enter a name.', true); return; }
+    if(!name){ toast(T('Please enter a name.','མིང་བཙུགས་གནང་།'), true); return; }
     const customPin = fv('f-student-pin');
-    if(customPin && customPin.length < 6){ toast('Password/PIN must be at least 6 characters.', true); return; }
-    btn.disabled = true; btn.textContent = 'Adding…';
+    if(customPin && customPin.length < 6){ toast(T('Password/PIN must be at least 6 characters.','གསང་ཨང་/PIN་དེ་ཡིག་འབྲུ་ ༦ལས་ཉུང་སུ་མི་ཆོག'), true); return; }
+    if(!subActive){
+      const { count } = await supabase.from('class_students').select('id', { count:'exact', head:true }).eq('class_id', currentClassId);
+      if((count||0) >= FREE_MAX_STUDENTS){
+        toast(T('Free plan allows 20 students. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་སློབ་ཕྲུག་ ༢༠ རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
+        closeModal(); go('billing');
+        return;
+      }
+    }
+    btn.disabled = true; btn.textContent = T('Adding…','ཁ་སྐོང་འབད་བཞིནམ...');
     try{
       const code = document.getElementById('detail-class-code').textContent;
       const pin = customPin || genPin();
@@ -423,18 +445,18 @@ window.openStudentForm = function(){
       if(enrollErr) throw enrollErr;
 
       closeModal();
-      toast('Student added ✓');
+      toast(T('Student added ✓','སློབ་ཕྲུག་ཁ་སྐོང་འབད་ཚར་ཡོད ✓'));
       renderStudents();
       document.getElementById('login-card-body').innerHTML = `
-        Class Name: <b>${esc(code)}</b><br>
-        Student Name: <b>${esc(name)}</b><br>
+        ${T('Class Name','དཔྱེ་སློབ་མིང་')}: <b>${esc(code)}</b><br>
+        ${T('Student Name','སློབ་ཕྲུག་མིང་')}: <b>${esc(name)}</b><br>
         PIN: <b>${esc(pin)}</b><br><br>
-        Give the student this info and send them to <b>${esc(window.location.origin)}/login.html</b> → Student tab.`;
+        ${T('Give the student this info and send them to','གནད་སྡུད་འདི་སློབ་ཕྲུག་ལུ་སྤྲོད་ཞིནམ་ལས་')} <b>${esc(window.location.origin)}/login.html</b> → ${T('Student tab.','སློབ་ཕྲུག་ཨིབ་ལུ་གཏང་།')}`;
       document.getElementById('login-card-overlay').classList.add('open');
     }catch(err){
-      toast('Error: '+err.message, true);
+      toast(T('Error: ','འཛོལ་བ: ')+err.message, true);
     }
-    btn.disabled = false; btn.textContent = 'Add';
+    btn.disabled = false; btn.textContent = T('Add','ཁ་སྐོང་།');
   };
   document.getElementById('overlay').classList.add('open');
 };
@@ -447,26 +469,26 @@ window.openStudentForm = function(){
 // enrollment row at it. The old login is simply abandoned — nobody has
 // its credentials, so it can't be used, but it isn't deleted.
 window.openEditStudentForm = function(rowId, currentName){
-  document.getElementById('m-title').textContent = 'Edit Student';
+  document.getElementById('m-title').textContent = T('Edit Student','སློབ་ཕྲུག་ཞུན་དག');
   document.getElementById('m-body').innerHTML = `
-    <div class="field"><label>Student Display Name</label><input id="f-edit-name" value="${esc(currentName)}"/></div>
-    <div class="field"><label>New Password / PIN</label><input id="f-edit-pin" placeholder="Leave blank to keep the current one"/></div>
+    <div class="field"><label>${T('Student Display Name','སློབ་ཕྲུག་གི་མིང་།')}</label><input id="f-edit-name" value="${esc(currentName)}"/></div>
+    <div class="field"><label>${T('New Password / PIN','གསང་ཨང་/PIN་གསརཔ།')}</label><input id="f-edit-pin" placeholder="Leave blank to keep the current one"/></div>
   `;
   const btn = document.getElementById('m-save-btn');
-  btn.textContent = 'Save';
+  btn.textContent = T('Save','སྲུང་བཞག');
   btn.onclick = async ()=>{
     const name = fv('f-edit-name');
-    if(!name){ toast('Please enter a name.', true); return; }
+    if(!name){ toast(T('Please enter a name.','མིང་བཙུགས་གནང་།'), true); return; }
     const newPin = fv('f-edit-pin');
-    if(newPin && newPin.length < 6){ toast('Password/PIN must be at least 6 characters.', true); return; }
-    btn.disabled = true; btn.textContent = 'Saving…';
+    if(newPin && newPin.length < 6){ toast(T('Password/PIN must be at least 6 characters.','གསང་ཨང་/PIN་དེ་ཡིག་འབྲུ་ ༦ལས་ཉུང་སུ་མི་ཆོག'), true); return; }
+    btn.disabled = true; btn.textContent = T('Saving…','སྲུང་བཞག་འབད་བཞིནམ...');
     try{
       if(!newPin){
         // Rename only.
         const { error } = await supabase.from('class_students').update({ display_name: name }).eq('id', rowId);
         if(error) throw error;
         closeModal();
-        toast('Updated ✓');
+        toast(T('Updated ✓','གསར་བསྐྱར་འབད་ཚར་ཡོད ✓'));
         renderStudents();
       } else {
         // Full credential reset: create a brand-new login and swap the
@@ -486,28 +508,28 @@ window.openEditStudentForm = function(rowId, currentName){
         if(updErr) throw updErr;
 
         closeModal();
-        toast('Password reset ✓');
+        toast(T('Password reset ✓','གསང་ཨང་སླར་གསོ་འབད་ཚར་ཡོད ✓'));
         renderStudents();
         document.getElementById('login-card-body').innerHTML = `
-          Class Name: <b>${esc(code)}</b><br>
-          Student Name: <b>${esc(name)}</b><br>
+          ${T('Class Name','དཔྱེ་སློབ་མིང་')}: <b>${esc(code)}</b><br>
+          ${T('Student Name','སློབ་ཕྲུག་མིང་')}: <b>${esc(name)}</b><br>
           PIN: <b>${esc(newPin)}</b><br><br>
-          This is a new login — the old PIN no longer works. Give the student these updated details.`;
+          ${T('This is a new login — the old PIN no longer works. Give the student these updated details.','འདི་ནང་འཛུལ་གསརཔ་ཨིན — PIN་རྙིངམ་འདི་ལག་ལེན་མི་འཐབ། སློབ་ཕྲུག་ལུ་གནད་སྡུད་གསར་བསྐྱར་འདི་ཚུ་སྤྲོད།')}`;
         document.getElementById('login-card-overlay').classList.add('open');
       }
     }catch(err){
-      toast('Error: '+err.message, true);
+      toast(T('Error: ','འཛོལ་བ: ')+err.message, true);
     }
-    btn.disabled = false; btn.textContent = 'Save';
+    btn.disabled = false; btn.textContent = T('Save','སྲུང་བཞག');
   };
   document.getElementById('overlay').classList.add('open');
 };
 
 window.deleteStudent = async function(id){
-  if(!confirm('Remove this student from the class?')) return;
+  if(!confirm(T('Remove this student from the class?','སློབ་ཕྲུག་འདི་དཔྱེ་སློབ་ནང་ལས་བཏོན་གཏང་ནི་ག?'))) return;
   const { error } = await supabase.from('class_students').delete().eq('id', id);
-  if(error){ toast('Error: '+error.message, true); return; }
-  toast('Removed.'); renderStudents();
+  if(error){ toast(T('Error: ','འཛོལ་བ: ')+error.message, true); return; }
+  toast(T('Removed.','བཏོན་གཏང་ཡོད།')); renderStudents();
 };
 
 // ── ASSIGNMENTS ──
@@ -525,7 +547,10 @@ async function ensureV2(){
   return v2;
 }
 
-const Q_TYPE_LABEL = { short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False' };
+const Q_TYPE_LABEL_DZ = { short:'ལན་ཐུང་ཀུ', long:'དོན་ཚན།', choice:'གདམ་ཁ་མང་པོ།', truefalse:'བདེན་/རྫུན།' };
+const Q_TYPE_LABEL = new Proxy({ short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False' }, {
+  get(target, key){ return T(target[key], Q_TYPE_LABEL_DZ[key]); }
+});
 let taskAttachments = []; // [{ url, label, type }]
 let taskQuestions = [];   // [{ id, type, text, options[], correct (option index or null) }]
 function newQid(){ return 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
@@ -533,7 +558,7 @@ function newQid(){ return 'q' + Date.now().toString(36) + Math.random().toString
 async function renderAssignments(){
   const el = document.getElementById('assignments-list');
   const { data } = await supabase.from('assignments').select('*').eq('class_id', currentClassId).order('created_at',{ascending:false});
-  if(!data?.length){ el.innerHTML = `<div class="empty"><div class="ei">📋</div><p>No assignments yet.</p></div>`; return; }
+  if(!data?.length){ el.innerHTML = `<div class="empty"><div class="ei">📋</div><p>${T('No assignments yet.','ད་ལྟོ་ལཱ་ཁག་མིན་འདུག')}</p></div>`; return; }
 
   const ids = data.map(a => a.id);
   const [{ data: statuses }, { count: totalStudents }] = await Promise.all([
@@ -557,17 +582,17 @@ async function renderAssignments(){
     const attCount = parseAttachments(a).length;
     const qCount = parseQuestions(a).length;
     const meta = [
-      a.due_date ? 'Due ' + esc(a.due_date) : '',
-      attCount ? '📎 ' + attCount + ' resource' + (attCount>1?'s':'') : '',
-      qCount ? '❓ ' + qCount + ' question' + (qCount>1?'s':'') : '',
-      (doneBy[a.id]||0) + '/' + (totalStudents||0) + ' completed'
+      a.due_date ? T('Due ','འབྱུང་ཉིནམ ') + esc(a.due_date) : '',
+      attCount ? '📎 ' + attCount + ' ' + T('resource'+(attCount>1?'s':''),'ཡིག་ཆ') : '',
+      qCount ? '❓ ' + qCount + ' ' + T('question'+(qCount>1?'s':''),'དྲི་བ') : '',
+      (doneBy[a.id]||0) + '/' + (totalStudents||0) + ' ' + T('completed','མཇུག་བསྡུ་ཡོད')
     ].filter(Boolean).join(' · ');
     return `<div class="irow">
       <div><div class="iname">${esc(label)}</div><div class="imeta">${meta}</div></div>
       <div class="ibtns">
-        <button class="btn btn-ghost btn-sm" onclick="viewAnswers('${esc(a.id)}')">✍ Answers</button>
-        <button class="btn btn-ghost btn-sm" onclick="presentStudent('${esc(a.id)}')">🖥 Present</button>
-        <button class="btn btn-edit btn-sm" onclick="openAssignmentForm('${esc(a.id)}')">✏ Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewAnswers('${esc(a.id)}')">${T('✍ Answers','✍ ལན།')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="presentStudent('${esc(a.id)}')">${T('🖥 Present','🖥 སྟོན།')}</button>
+        <button class="btn btn-edit btn-sm" onclick="openAssignmentForm('${esc(a.id)}')">${T('✏ Edit','✏ ཞུན་དག')}</button>
         <button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button>
       </div>
     </div>`;
@@ -575,10 +600,10 @@ async function renderAssignments(){
 }
 
 window.deleteAssignment = async function(id){
-  if(!confirm('Delete this assignment? Students\' answers for it will be deleted too.')) return;
+  if(!confirm(T('Delete this assignment? Students\' answers for it will be deleted too.','ལཱ་ཁག་འདི་བཏོན་གཏང་ནི་ག? སློབ་ཕྲུག་གི་ལན་ཡང་བཏོན་གཏང་འོང་།'))) return;
   const { error } = await supabase.from('assignments').delete().eq('id', id);
-  if(error){ toast('Error: '+error.message, true); return; }
-  toast('Deleted.'); renderAssignments();
+  if(error){ toast(T('Error: ','འཛོལ་བ: ')+error.message, true); return; }
+  toast(T('Deleted.','བཏོན་གཏང་ཡོད།')); renderAssignments();
 };
 
 // ── Create / edit a task ──
@@ -599,61 +624,61 @@ window.openAssignmentForm = async function(editId){
   taskAttachments = editing ? parseAttachments(existing).map(a => ({ ...a, label: a.label || defaultLabel(a.url), type: a.type || classifyUrl(a.url).kind })) : [];
   taskQuestions = editing ? parseQuestions(existing).map(q => ({ ...q, correct: (q.type === 'choice' || q.type === 'truefalse') && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null })) : [];
 
-  document.getElementById('m-title').textContent = editing ? 'Edit Task' : 'Assign a Task';
+  document.getElementById('m-title').textContent = editing ? T('Edit Task','ལཱ་ཞུན་དག') : T('Assign a Task','ལཱ་སྤྲོད་');
   document.querySelector('#overlay .modal').style.maxWidth = '700px';
   document.getElementById('m-body').innerHTML = `
-    <div class="field"><label>Type</label>
+    <div class="field"><label>${T('Type','དབྱེ་བ།')}</label>
       <select id="f-kind" onchange="toggleAssignmentKind()" ${editing?'disabled':''}>
-        <option value="custom">📝 New task</option>
-        <option value="tlm">📚 Task based on my TLM library (lesson, video…)</option>
+        <option value="custom">📝 ${T('New task','ལཱ་གསརཔ།')}</option>
+        <option value="tlm">📚 ${T('Task based on my TLM library (lesson, video…)','ང་གི་ཡིག་ཆའི་བང་མཛོད་ལུ་གཞི་བཞག་པའི་ལཱ (སློབ་ཚན། བརྙན་ཐུང་…)')}</option>
       </select>
     </div>
     <div id="kind-tlm-fields" style="display:none">
-      <div class="field"><label>Content Type</label>
+      <div class="field"><label>${T('Content Type','ནང་དོན་གྱི་དབྱེ་བ།')}</label>
         <select id="f-item-type" onchange="loadTlmOptions()">
-          <option value="lessons">Lesson</option><option value="resources">Resource</option>
-          <option value="videos">Video</option><option value="articles">Article</option>
+          <option value="lessons">${T('Lesson','སློབ་ཚན།')}</option><option value="resources">${T('Resource','ཡིག་ཆ།')}</option>
+          <option value="videos">${T('Video','བརྙན་ཐུང་།')}</option><option value="articles">${T('Article','རྩོམ་ཡིག')}</option>
         </select>
       </div>
-      <div class="field"><label>Choose Item</label><select id="f-item-id"></select></div>
-      <div class="hint">Students will see this item, plus anything you add below.</div>
+      <div class="field"><label>${T('Choose Item','དོན་ཚན་སེལ་འཐུ།')}</label><select id="f-item-id"></select></div>
+      <div class="hint">${T('Students will see this item, plus anything you add below.','སློབ་ཕྲུག་ཚུ་གིས་དོན་ཚན་འདི་དང་ཁྱོད་ཀྱིས་འོག་ལུ་ཁ་སྐོང་འབད་མི་ཚུ་མཐོང་འོང་།')}</div>
     </div>
-    <div class="field"><label>Title</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3 and answer the questions"/></div>
-    <div class="field"><label>Instructions</label><textarea id="f-custom-desc" style="min-height:100px" placeholder="What should students do? Add tips, reading notes or steps here."></textarea></div>
+    <div class="field"><label>${T('Title','མགོ་མིང་།')}</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3 and answer the questions"/></div>
+    <div class="field"><label>${T('Instructions','ལམ་སྟོན།')}</label><textarea id="f-custom-desc" style="min-height:100px" placeholder="What should students do? Add tips, reading notes or steps here."></textarea></div>
 
-    <div class="field"><label>Resources for students (optional)</label>
+    <div class="field"><label>${T('Resources for students (optional)','སློབ་ཕྲུག་གི་དོན་ལུ་ཡིག་ཆ (དགོས་མཁོ་མེད་ཡང་རུང)')}</label>
       <div id="task-attach-list"></div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem">
         <input id="f-link-input" placeholder="Paste a link — YouTube, Google Docs / Slides / Drive, any website…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
-        <button type="button" class="btn btn-gold btn-sm" style="white-space:nowrap" onclick="addTaskLink()">＋ Add link</button>
+        <button type="button" class="btn btn-gold btn-sm" style="white-space:nowrap" onclick="addTaskLink()">${T('＋ Add link','＋ འབྲེལ་མཐུད་ཁ་སྐོང་')}</button>
       </div>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
         <input type="file" id="f-task-video" accept="video/*" style="display:none" onchange="handleTaskUpload(event,'video')"/>
         <input type="file" id="f-task-file" style="display:none" onchange="handleTaskUpload(event,'file')"/>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-video')">🎥 Upload video</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-file')">📎 Upload file / document / photo</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-video')">${T('🎥 Upload video','🎥 བརྙན་ཐུང་བཙུགས')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="pickTaskFile('f-task-file')">${T('📎 Upload file / document / photo','📎 ཡིག་ཆ/པར་བཙུགས')}</button>
       </div>
       <div id="assignment-upload-status" style="font-size:.78rem;color:var(--text2);margin-top:.5rem"></div>
       <div class="hint">Uploads are saved to the SherigSpace Google Drive (up to 25&nbsp;MB) and shared automatically. For a longer video, put it on YouTube as <b>Unlisted</b> and paste the link. <b>Google Docs, Slides, Sheets and Forms links must be shared as “Anyone with the link”</b> or students won't be able to open them. You can rename any resource by editing its title.</div>
     </div>
 
     ${cfg.extras ? `
-    <div class="field"><label>Questions for students (optional)</label>
+    <div class="field"><label>${T('Questions for students (optional)','སློབ་ཕྲུག་གི་དོན་ལུ་དྲི་བ (དགོས་མཁོ་མེད་ཡང་རུང)')}</label>
       <div id="q-builder"></div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('short')">＋ Short answer</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('long')">＋ Paragraph</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('choice')">＋ Multiple choice</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('truefalse')">＋ True / False</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('short')">${T('＋ Short answer','＋ ལན་ཐུང་ཀུ')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('long')">${T('＋ Paragraph','＋ དོན་ཚན།')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('choice')">${T('＋ Multiple choice','＋ གདམ་ཁ་མང་པོ')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('truefalse')">${T('＋ True / False','＋ བདེན/རྫུན')}</button>
       </div>
-      <div class="hint">Students answer these on their own page.${cfg.keys ? ' For multiple choice, tick the correct option and it will be checked for you — students never see which option is correct.' : ''}</div>
+      <div class="hint">${T('Students answer these on their own page.','སློབ་ཕྲུག་ཚུ་གིས་རང་སོའི་ཤོག་ལེབ་ནང་ལན་བྲིས')}${cfg.keys ? T(' For multiple choice, tick the correct option and it will be checked for you — students never see which option is correct.',' གདམ་ཁ་མང་པོ་ཡོད་མི་ནང་ལེགས་ཤོམ་གྱི་གདམ་ཁ་ལུ་རྟགས་བཞག་པ་ཅིན་རང་བཞིན་གྱིས་ཞིབ་དཔྱད་འབད་འོང་') : ''}</div>
       ${cfg.keys ? '' : '<div class="hint" style="color:var(--gold-text,var(--gold))">Automatic checking of multiple choice is off. Run <b>sherigspace_assignments_v2.sql</b> again in Supabase to turn it on.</div>'}
     </div>` : `
-    <div class="field"><label>Questions</label>
+    <div class="field"><label>${T('Questions','དྲི་བ')}</label>
       <div class="hint" style="color:var(--gold-text,var(--gold))">Questions, marks and editing are not switched on yet — run <b>sherigspace_assignments_v2.sql</b> once in Supabase (SQL Editor), then reload this page.</div>
     </div>`}
 
-    <div class="field"><label>Due Date (optional)</label><input type="date" id="f-due-date"/></div>
+    <div class="field"><label>${T('Due Date (optional)','འབྱུང་ཉིནམ (དགོས་མཁོ་མེད་ཡང་རུང)')}</label><input type="date" id="f-due-date"/></div>
   `;
 
   // Prefill when editing
@@ -693,7 +718,7 @@ window.openAssignmentForm = async function(editId){
       payload.item_type = fv('f-item-type');
       payload.item_id = itemId;
     } else if(!title){
-      toast('Please enter a title.', true); return;
+      toast(T('Please enter a title.','མགོ་མིང་བཙུགས་གནང་།'), true); return;
     }
 
     const keyOut = {};
@@ -707,7 +732,7 @@ window.openAssignmentForm = async function(editId){
         if(q.type === 'choice'){
           const opts = []; let correct = null;
           q.options.forEach((o, j) => { const t = o.trim(); if(!t) return; if(j === q.correct) correct = t; opts.push(t); });
-          if(opts.length < 2){ toast('Multiple-choice question "' + text.slice(0,30) + '" needs at least two options.', true); return; }
+          if(opts.length < 2){ toast(T('Multiple-choice question "','གདམ་ཁ་མང་པོའི་དྲི་བ "') + text.slice(0,30) + T('" needs at least two options.','" ལུ་གདམ་ཁ་གཉིས་ཡང་ན་དེ་ལས་མང་བ་དགོ'), true); return; }
           item.options = opts;
           if(correct) keyOut[q.id] = correct;
         } else if(q.type === 'truefalse'){
@@ -768,29 +793,29 @@ function renderQuestionBuilder(){
   el.innerHTML = taskQuestions.length ? taskQuestions.map((q,i)=>`
     <div class="qb" data-qi="${i}">
       <div class="qb-head">
-        <b>Question ${i+1}</b><span class="qb-type">${esc(Q_TYPE_LABEL[q.type])}</span>
+        <b>${T('Question','དྲི་བ')} ${i+1}</b><span class="qb-type">${esc(Q_TYPE_LABEL[q.type])}</span>
         <span class="qb-tools">
-          <button type="button" class="btn btn-ghost btn-sm" data-q-up title="Move up" ${i===0?'disabled':''}>↑</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-q-down title="Move down" ${i===taskQuestions.length-1?'disabled':''}>↓</button>
-          <button type="button" class="btn btn-del btn-sm" data-q-del title="Remove question">✕</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-q-up title="${T('Move up','ཡར་སྤོ')}" ${i===0?'disabled':''}>↑</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-q-down title="${T('Move down','མར་སྤོ')}" ${i===taskQuestions.length-1?'disabled':''}>↓</button>
+          <button type="button" class="btn btn-del btn-sm" data-q-del title="${T('Remove question','དྲི་བ་བཏོན་གཏང')}">✕</button>
         </span>
       </div>
-      <input data-q-text value="${esc(q.text)}" placeholder="Type your question…"/>
+      <input data-q-text value="${esc(q.text)}" placeholder="${T('Type your question…','ཁྱོད་ཀྱི་དྲི་བ་བྲིས…')}"/>
       ${q.type === 'choice' ? `<div class="qb-opts">
         ${q.options.map((o,j)=>`<div class="qb-opt">
-          ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="Mark as the correct option"/>` : ''}
-          <input data-q-opt="${j}" value="${esc(o)}" placeholder="Option ${j+1}"/>
-          <button type="button" class="btn btn-del btn-sm" data-q-optdel="${j}" title="Remove option">✕</button>
+          ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="${T('Mark as the correct option','ལེགས་ཤོམ་གྱི་གདམ་ཁ་སྦེ་རྟགས་བཞག')}"/>` : ''}
+          <input data-q-opt="${j}" value="${esc(o)}" placeholder="${T('Option','གདམ་ཁ')} ${j+1}"/>
+          <button type="button" class="btn btn-del btn-sm" data-q-optdel="${j}" title="${T('Remove option','གདམ་ཁ་བཏོན་གཏང')}">✕</button>
         </div>`).join('')}
-        <button type="button" class="btn btn-ghost btn-sm" data-q-optadd>＋ Add option</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-q-optadd>${T('＋ Add option','＋ གདམ་ཁ་ཁ་སྐོང')}</button>
       </div>` : ''}
       ${q.type === 'truefalse' ? `<div class="qb-opts">
         ${q.options.map((o,j)=>`<div class="qb-opt">
-          ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="Mark as the correct answer"/>` : ''}
-          <span style="flex:1">${esc(o)}</span>
+          ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="${T('Mark as the correct answer','ལེགས_ཤོམ་གྱི་ལན་སྦེ་རྟགས་བཞག')}"/>` : ''}
+          <span style="flex:1">${esc(o==='True'?T('True','བདེན།'):o==='False'?T('False','རྫུན།'):o)}</span>
         </div>`).join('')}
       </div>` : ''}
-    </div>`).join('') : '<div class="hint">No questions yet.</div>';
+    </div>`).join('') : `<div class="hint">${T('No questions yet.','ད་ལྟོ་དྲི་བ་མིན་འདུག')}</div>`;
 }
 
 // One set of listeners on the container — it survives every re-render.
@@ -816,7 +841,7 @@ function wireQuestionBuilder(){
     else if(b.hasAttribute('data-q-down') && i < taskQuestions.length-1) [taskQuestions[i+1], taskQuestions[i]] = [taskQuestions[i], taskQuestions[i+1]];
     else if(b.hasAttribute('data-q-optadd')) q.options.push('');
     else if(b.hasAttribute('data-q-optdel')){
-      if(q.options.length <= 2){ toast('A multiple-choice question needs at least two options.', true); return; }
+      if(q.options.length <= 2){ toast(T('A multiple-choice question needs at least two options.','གདམ་ཁ་མང་པོའི་དྲི་བ་ལུ་གདམ་ཁ་གཉིས་ཡང་ན་དེ་ལས་མང་བ་དགོ'), true); return; }
       const j = Number(b.getAttribute('data-q-optdel'));
       q.options.splice(j, 1);
       if(q.correct === j) q.correct = null; else if(q.correct != null && q.correct > j) q.correct--;
@@ -827,12 +852,12 @@ function wireQuestionBuilder(){
 
 // ── Viewing what students submitted (and marking it) ──
 window.viewAnswers = async function(assignmentId){
-  document.getElementById('m-title').textContent = 'Student answers';
+  document.getElementById('m-title').textContent = T('Student answers','སློབ་ཕྲུག་གི་ལན།');
   document.querySelector('#overlay .modal').style.maxWidth = '700px';
   const body = document.getElementById('m-body');
-  body.innerHTML = '<div class="empty"><p>Loading…</p></div>';
+  body.innerHTML = `<div class="empty"><p>${T('Loading…','འདྲེན་བཞིནམ...')}</p></div>`;
   const btn = document.getElementById('m-save-btn');
-  btn.textContent = 'Close'; btn.disabled = false; btn.onclick = closeModal;
+  btn.textContent = T('Close','ཁ་བསྡམས།'); btn.disabled = false; btn.onclick = closeModal;
   document.getElementById('overlay').classList.add('open');
 
   const cfg = await ensureV2();
@@ -843,8 +868,8 @@ window.viewAnswers = async function(assignmentId){
     cfg.keys ? supabase.from('assignment_keys').select('answers').eq('assignment_id', assignmentId).maybeSingle() : Promise.resolve({ data: null })
   ]);
   const students = stuRes.data, rows = rowRes.data, error = rowRes.error;
-  if(error){ body.innerHTML = `<div class="empty"><p>Could not load answers: ${esc(error.message)}</p></div>`; return; }
-  if(!(students||[]).length){ body.innerHTML = '<div class="empty"><p>No students in this class yet.</p></div>'; return; }
+  if(error){ body.innerHTML = `<div class="empty"><p>${T('Could not load answers: ','ལན་འདྲེན་མ་ཚུགས: ')}${esc(error.message)}</p></div>`; return; }
+  if(!(students||[]).length){ body.innerHTML = `<div class="empty"><p>${T('No students in this class yet.','དཔྱེ་སློབ་འདི་ནང་ད་ལྟོ་སློབ་ཕྲུག་མིན་འདུག')}</p></div>`; return; }
 
   const asg = asgRes.data || {};
   const questions = parseQuestions(asg);
@@ -855,8 +880,8 @@ window.viewAnswers = async function(assignmentId){
 
   const cards = await Promise.all(students.map(async st => {
     const r = byStudent[st.student_id];
-    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">Not submitted</span></div>
-      <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">🖥 Present to class</button></div>`;
+    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">${T('Not submitted','སྙན་ཞུ་མ་འབད་བར')}</span></div>
+      <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">${T('🖥 Present to class','🖥 དཔྱེ་སློབ་ལུ་སྟོན')}</button></div>`;
 
     const links = String(r.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
     const paths = String(r.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
@@ -875,32 +900,32 @@ window.viewAnswers = async function(assignmentId){
       let mark = '';
       if((q.type === 'choice' || q.type === 'truefalse') && key[q.id] != null){
         autoTotal++;
-        if(ans && ans === key[q.id]){ autoOk++; mark = '<span class="qa-mark ok">✓ Correct</span>'; }
-        else mark = `<span class="qa-mark bad">✗ Correct: ${esc(key[q.id])}</span>`;
+        if(ans && ans === key[q.id]){ autoOk++; mark = `<span class="qa-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>`; }
+        else mark = `<span class="qa-mark bad">✗ ${T('Correct:','ལེགས་ཤོམ:')} ${esc(key[q.id])}</span>`;
       }
-      return `<div class="qa"><div class="qa-q">${i+1}. ${esc(q.text)}</div><div class="qa-a">${ans ? esc(ans) : '<i style="color:var(--text2)">No answer</i>'}${mark}</div></div>`;
+      return `<div class="qa"><div class="qa-q">${i+1}. ${esc(q.text)}</div><div class="qa-a">${ans ? esc(ans) : `<i style="color:var(--text2)">${T('No answer','ལན་མིན་འདུག')}</i>`}${mark}</div></div>`;
     }).join('');
 
     const hasAnswer = answeredQ || (r.answer_text || '').trim() || links.length || paths.length;
-    const badge = hasAnswer ? '<span class="ans-badge sub">Submitted</span>' : '<span class="ans-badge plain">Marked complete</span>';
-    const late = asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ' <span class="ans-badge none">Late</span>' : '';
+    const badge = hasAnswer ? `<span class="ans-badge sub">${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</span>` : `<span class="ans-badge plain">${T('Marked complete','མཇུག་བསྡུ་སྦེ་རྟགས་བཞག')}</span>`;
+    const late = asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ` <span class="ans-badge none">${T('Late','དུས་ལས་བརྒལ')}</span>` : '';
 
     return `<div class="ans-card">
       <div class="ans-head"><b>${esc(st.display_name)}</b><span>${badge}${late}</span>
-        <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">🖥 Present to class</button></div>
+        <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">${T('🖥 Present to class','🖥 དཔྱེ་སློབ་ལུ་སྟོན')}</button></div>
       ${qaHtml}
-      ${autoTotal ? `<div class="ans-auto">Auto-checked: ${autoOk} / ${autoTotal} multiple-choice correct</div>` : ''}
+      ${autoTotal ? `<div class="ans-auto">${T('Auto-checked:','རང་བཞིན་ཞིབ་དཔྱད:')} ${autoOk} / ${autoTotal} ${T('multiple-choice correct','གདམ་ཁ་མང་པོ་ལེགས་ཤོམ')}</div>` : ''}
       ${(r.answer_text || '').trim() ? `<div class="ans-text">${esc(r.answer_text)}</div>` : ''}
       ${(links.length || fileLinks.length) ? `<div class="ans-links">${links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(u.replace(/^https?:\/\//,'').slice(0,40))}</a>`).join('')}${fileLinks.join('')}</div>` : ''}
-      ${cfg.extras ? `<div class="ans-grade"><input data-score-input="${esc(st.student_id)}" placeholder="Marks (e.g. 8/10)" value="${esc(r.score || '')}"/></div>` : ''}
-      <div class="ans-fb"><textarea data-fb-input="${esc(st.student_id)}" placeholder="Feedback for ${esc(st.display_name)}…">${esc(r.teacher_feedback || '')}</textarea>
-        <button type="button" class="btn btn-gold btn-sm" data-fb-save="${esc(st.student_id)}">Save</button></div>
+      ${cfg.extras ? `<div class="ans-grade"><input data-score-input="${esc(st.student_id)}" placeholder="${T('Marks (e.g. 8/10)','ལེན་ཐང (དཔེར་ན 8/10)')}" value="${esc(r.score || '')}"/></div>` : ''}
+      <div class="ans-fb"><textarea data-fb-input="${esc(st.student_id)}" placeholder="${T('Feedback for','དོན་ལུ་བསམ་བཀོད')} ${esc(st.display_name)}…">${esc(r.teacher_feedback || '')}</textarea>
+        <button type="button" class="btn btn-gold btn-sm" data-fb-save="${esc(st.student_id)}">${T('Save','སྲུང་བཞག')}</button></div>
     </div>`;
   }));
 
-  body.innerHTML = (needsSetup ? '<div class="hint" style="margin-bottom:.7rem">Written answers are not switched on yet — run <b>sherigspace_task_answers.sql</b> in Supabase to enable them.</div>' : '')
-    + `<div class="hint" style="margin-bottom:.5rem">${submittedCount} of ${students.length} students have submitted.</div>`
-    + `<div style="margin-bottom:.9rem"><button type="button" class="btn btn-gold btn-sm" id="present-all-btn">🖥 Present to Class</button></div>`
+  body.innerHTML = (needsSetup ? `<div class="hint" style="margin-bottom:.7rem">${T('Written answers are not switched on yet — run','ལན་བྲིས་ད་ལྟོ་ཁ་ཕྱེ་མིན་འདུག —')} <b>sherigspace_task_answers.sql</b> ${T('in Supabase to enable them.','Supabase ནང་ལག་ལེན་འཐབ')}</div>` : '')
+    + `<div class="hint" style="margin-bottom:.5rem">${submittedCount} ${T('of','/')} ${students.length} ${T('students have submitted.','སློབ་ཕྲུག་གིས་སྙན་ཞུ་འབད་ཡོད')}</div>`
+    + `<div style="margin-bottom:.9rem"><button type="button" class="btn btn-gold btn-sm" id="present-all-btn">${T('🖥 Present to Class','🖥 དཔྱེ་སློབ་ལུ་སྟོན')}</button></div>`
     + cards.join('');
 
   const pCtx = { assignmentId, asg, students, rows: byStudent, questions, key, idx: 0 };
@@ -917,8 +942,8 @@ window.viewAnswers = async function(assignmentId){
     const { error: upErr } = await supabase.from('assignment_status').update(patch)
       .eq('assignment_id', assignmentId).eq('student_id', sid);
     b.disabled = false;
-    if(upErr){ toast('Could not save: ' + upErr.message, true); return; }
-    toast('Feedback saved ✓');
+    if(upErr){ toast(T('Could not save: ','སྲུང་བཞག་མ་ཚུགས: ') + upErr.message, true); return; }
+    toast(T('Feedback saved ✓','བསམ་བཀོད་སྲུང་བཞག་འབད་ཡོད ✓'));
   }));
 };
 
@@ -933,8 +958,8 @@ async function loadPresentCtx(assignmentId){
     supabase.from('assignment_status').select('*').eq('assignment_id', assignmentId),
     cfg.keys ? supabase.from('assignment_keys').select('answers').eq('assignment_id', assignmentId).maybeSingle() : Promise.resolve({ data: null })
   ]);
-  if(rowRes.error){ toast('Could not load answers: ' + rowRes.error.message, true); return null; }
-  if(!(stuRes.data||[]).length){ toast('No students in this class yet.', true); return null; }
+  if(rowRes.error){ toast(T('Could not load answers: ','ལན་འདྲེན་མ་ཚུགས: ') + rowRes.error.message, true); return null; }
+  if(!(stuRes.data||[]).length){ toast(T('No students in this class yet.','དཔྱེ་སློབ་འདི་ནང་ད་ལྟོ་སློབ་ཕྲུག་མིན་འདུག'), true); return null; }
   const byStudent = {}; (rowRes.data||[]).forEach(r => { byStudent[r.student_id] = r; });
   const asg = asgRes.data || {};
   return { assignmentId, asg, students: stuRes.data, rows: byStudent, questions: parseQuestions(asg), key: (keyRes.data && keyRes.data.answers) || {}, idx: 0 };
@@ -946,15 +971,15 @@ function ensurePresentOverlay(){
   ov.id = 'present-overlay';
   ov.innerHTML = `
     <div class="present-bar">
-      <button type="button" class="btn btn-ghost btn-sm" onclick="closePresent()">✕ Close</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closePresent()">✕ ${T('Close','ཁ་བསྡམས')}</button>
       <div id="present-title" class="present-title"></div>
       <div id="present-count" class="present-count"></div>
     </div>
     <div id="present-body" class="present-content"></div>
     <div class="present-nav">
-      <button type="button" id="present-prev" class="btn btn-ghost" onclick="presentNav(-1)">← Previous</button>
+      <button type="button" id="present-prev" class="btn btn-ghost" onclick="presentNav(-1)">← ${T('Previous','ཧེ་མམ')}</button>
       <select id="present-jump" onchange="presentJump(this.value)"></select>
-      <button type="button" id="present-next" class="btn btn-gold" onclick="presentNav(1)">Next →</button>
+      <button type="button" id="present-next" class="btn btn-gold" onclick="presentNav(1)">${T('Next','ཤུལ་མམ')} →</button>
     </div>`;
   document.body.appendChild(ov);
 }
@@ -963,16 +988,16 @@ async function presentAnswerHtml(ctx, idx){
   const st = ctx.students[idx];
   const row = ctx.rows[st.student_id];
   if(!row){
-    return `<div class="present-student">${esc(st.display_name)}</div><div class="present-empty">Has not submitted yet.</div>`;
+    return `<div class="present-student">${esc(st.display_name)}</div><div class="present-empty">${T('Has not submitted yet.','ད་ལྟོ་སྙན་ཞུ་མ་འབད་བར')}</div>`;
   }
   const answers = (row.answers && typeof row.answers === 'object') ? row.answers : {};
   const qaHtml = ctx.questions.map((q,i) => {
     const ans = String(answers[q.id] == null ? '' : answers[q.id]).trim();
     let mark = '';
     if((q.type === 'choice' || q.type === 'truefalse') && ctx.key[q.id] != null){
-      mark = ans && ans === ctx.key[q.id] ? '<span class="present-mark ok">✓ Correct</span>' : `<span class="present-mark bad">✗ Correct answer: ${esc(ctx.key[q.id])}</span>`;
+      mark = ans && ans === ctx.key[q.id] ? `<span class="present-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>` : `<span class="present-mark bad">✗ ${T('Correct answer:','ལེགས་ཤོམ་གྱི་ལན:')} ${esc(ctx.key[q.id])}</span>`;
     }
-    return `<div class="present-qa"><div class="present-q">${i+1}. ${esc(q.text)}</div><div class="present-a">${ans ? esc(ans) : '<i>No answer</i>'}${mark}</div></div>`;
+    return `<div class="present-qa"><div class="present-q">${i+1}. ${esc(q.text)}</div><div class="present-a">${ans ? esc(ans) : `<i>${T('No answer','ལན་མིན་འདུག')}</i>`}${mark}</div></div>`;
   }).join('');
 
   const links = String(row.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
@@ -987,7 +1012,7 @@ async function presentAnswerHtml(ctx, idx){
   return `
     <div class="present-student">${esc(st.display_name)}</div>
     ${qaHtml}
-    ${note ? `<div class="present-qa"><div class="present-q">Note</div><div class="present-a">${esc(note)}</div></div>` : ''}
+    ${note ? `<div class="present-qa"><div class="present-q">${T('Note','བསམ་བཀོད')}</div><div class="present-a">${esc(note)}</div></div>` : ''}
     ${(links.length || fileLinks.some(Boolean)) ? `<div class="present-links">${links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(u)}</a>`).join('')}${fileLinks.join('')}</div>` : ''}
   `;
 }
@@ -995,13 +1020,13 @@ async function presentAnswerHtml(ctx, idx){
 async function renderPresent(){
   const ctx = presentCtx;
   if(!ctx) return;
-  document.getElementById('present-title').textContent = ctx.asg.title || 'Task';
+  document.getElementById('present-title').textContent = ctx.asg.title || T('Task','ལཱ་ཁག');
   document.getElementById('present-count').textContent = (ctx.idx+1) + ' / ' + ctx.students.length;
   document.getElementById('present-prev').disabled = ctx.idx <= 0;
   document.getElementById('present-next').disabled = ctx.idx >= ctx.students.length - 1;
   document.getElementById('present-jump').innerHTML = ctx.students.map((s,i) =>
-    `<option value="${esc(s.student_id)}" ${i===ctx.idx?'selected':''}>${esc(s.display_name)}${ctx.rows[s.student_id]?'':' (not submitted)'}</option>`).join('');
-  document.getElementById('present-body').innerHTML = '<div class="present-loading">Loading…</div>';
+    `<option value="${esc(s.student_id)}" ${i===ctx.idx?'selected':''}>${esc(s.display_name)}${ctx.rows[s.student_id]?'':T(' (not submitted)',' (སྙན་ཞུ་མ་འབད་བར)')}</option>`).join('');
+  document.getElementById('present-body').innerHTML = `<div class="present-loading">${T('Loading…','འདྲེན་བཞིནམ...')}</div>`;
   document.getElementById('present-body').innerHTML = await presentAnswerHtml(ctx, ctx.idx);
 }
 
@@ -1045,7 +1070,7 @@ function renderTaskAttachments(){
   if(!el) return;
   el.innerHTML = taskAttachments.length
     ? taskAttachments.map((a,i)=>`<div class="task-att"><span>${(KIND_META[a.type] || KIND_META.link).icon}</span><input class="att-label" data-att-label="${i}" value="${esc(a.label)}" aria-label="Resource title"/><button type="button" class="btn btn-del btn-sm" data-rm-att="${i}">✕</button></div>`).join('')
-    : '<div class="hint">Nothing added yet.</div>';
+    : `<div class="hint">${T('Nothing added yet.','ད་ལྟོ་ག་ནི་ཡང་ཁ་སྐོང་མ་འབད་བར')}</div>`;
   el.querySelectorAll('[data-rm-att]').forEach(b => b.addEventListener('click', () => {
     taskAttachments.splice(Number(b.getAttribute('data-rm-att')), 1);
     renderTaskAttachments();
@@ -1061,8 +1086,8 @@ window.addTaskLink = function(){
   if(!v) return;
   if(!/^https?:\/\//i.test(v)) v = 'https://' + v;
   let u;
-  try{ u = new URL(v); }catch(e){ toast('That does not look like a valid link.', true); return; }
-  if(u.protocol !== 'http:' && u.protocol !== 'https:'){ toast('Only web links (http/https) can be added.', true); return; }
+  try{ u = new URL(v); }catch(e){ toast(T('That does not look like a valid link.','འདི་འབྲེལ་མཐུད་ཁག་ཏོ་ཅིག་སྦེ་མི་མཐོང་།'), true); return; }
+  if(u.protocol !== 'http:' && u.protocol !== 'https:'){ toast(T('Only web links (http/https) can be added.','ཝེབ་འབྲེལ་མཐུད (http/https) རྐྱངམ་ཅིག་ཁ་སྐོང་འབད་ཆོག'), true); return; }
   taskAttachments.push({ url: u.href, label: defaultLabel(u.href), type: classifyUrl(u.href).kind });
   inp.value = '';
   renderTaskAttachments();
@@ -1074,14 +1099,15 @@ window.pickTaskFile = async function(inputId){
   const st = document.getElementById('assignment-upload-status');
   if(hasValidDriveToken()){ document.getElementById(inputId).click(); return; }
   st.style.color = 'var(--text2)';
-  st.textContent = 'Connecting to Google… allow the popup and sign in.';
+  st.textContent = T('Connecting to Google… allow the popup and sign in.','Google ལུ་འབྲེལ་མཐུད་འབད་བཞིནམ... པོཔ་ཨཔ་ཆོག་བཞག་སྟེ་ནང་འཛུལ་འབད།');
   try{
     await connectGoogleDrive(GOOGLE_CLIENT_ID);
     st.style.color = 'var(--green)';
-    st.textContent = 'Google connected ✓ — click the upload button again to choose your file.';
+    st.textContent = T('Google connected ✓ — click the upload button again to choose your file.','Google འབྲེལ་མཐུད་འབད་ཡོད ✓ — ཡིག་ཆ་སེལ་འཐུ་འབད་ནི་ལུ་ལོག་ཨེབ།');
   }catch(err){
     st.style.color = 'var(--red)';
-    st.textContent = 'Could not connect to Google: ' + err.message + ' You can still paste a link instead.';
+    st.textContent = T('Could not connect to Google: ','Google ལུ་འབྲེལ་མཐུད་འབད་མ་ཚུགས: ') + err.message + T(' You can still paste a link instead.',' ཁྱོད་ཀྱིས་འབྲེལ་མཐུད་ཅིག་བཙུགས་ཆོག')
+;
   }
 };
 
@@ -1091,7 +1117,7 @@ window.handleTaskUpload = async function(e, kind){
   if(!file) return;
   const st = document.getElementById('assignment-upload-status');
   st.style.color = 'var(--text2)';
-  st.textContent = 'Uploading "' + file.name + '"… (a video can take a few minutes — keep this window open)';
+  st.textContent = T('Uploading "','བཙུགས་བཞིནམ "') + file.name + T('"… (a video can take a few minutes — keep this window open)','"… (བརྙན་ཐུང་ལུ་སྐར་མ་ལེ་ཤཱ་འགྱོ་སྲིད། སྒོ་སྒྲིག་འདི་ཁ་ཕྱེ་བཞག)');
   try{
     let result;
     try{ result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID); }
@@ -1105,25 +1131,75 @@ window.handleTaskUpload = async function(e, kind){
     taskAttachments.push({ url: result.viewUrl, label: result.name, type: isVideo ? 'video' : 'file' });
     renderTaskAttachments();
     st.style.color = 'var(--green)';
-    st.textContent = 'Uploaded "' + result.name + '" ✓';
+    st.textContent = T('Uploaded "','བཙུགས་ཚར་ཡོད "') + result.name + '" ✓';
   }catch(err){
     st.style.color = 'var(--red)';
-    st.textContent = 'Upload failed: ' + err.message;
+    st.textContent = T('Upload failed: ','བཙུགས་མ་ཚུགས: ') + err.message;
   }
 };
 
-// ── BILLING ──
-function renderBilling(sub){
+// ── BILLING / FREE PLAN ──
+async function planUsage(){
+  const { count: classCount } = await supabase.from('classes').select('id', { count:'exact', head:true }).eq('teacher_id', me.id);
+  let studentCount = 0;
+  if((classCount||0) > 0){
+    const { data: classIds } = await supabase.from('classes').select('id').eq('teacher_id', me.id);
+    if(classIds?.length){
+      const { count } = await supabase.from('class_students').select('id', { count:'exact', head:true }).in('class_id', classIds.map(c=>c.id));
+      studentCount = count || 0;
+    }
+  }
+  return { classCount: classCount||0, studentCount };
+}
+
+async function renderBilling(sub){
   const el = document.getElementById('billing-status');
-  if(!sub){ el.innerHTML = `<p style="color:var(--text2)">No subscription history.</p>`; return; }
-  const active = sub.status==='approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+  el.innerHTML = `<p>${T('Loading…','འདྲེན་བཞིནམ...')}</p>`;
+
+  if(subActive){
+    el.innerHTML = `
+      <p><b style="color:var(--green)">${T('✅ Active','✅ ཤུགས་ལྡན')}</b></p>
+      <p style="color:var(--text2);font-size:.85rem;margin-top:.3rem">${T('Unlimited classes and students.','དཔྱེ་སློབ་དང་སློབ་ཕྲུག་ཚད་མེད།')}</p>
+      ${sub?.expires_at?`<p style="color:var(--text2);font-size:.85rem;margin-top:.4rem">${T('Renews/expires:','གསར་བསྐྱར/དུས་ཡོལ:')} ${esc(new Date(sub.expires_at).toLocaleDateString())}</p>`:''}
+    `;
+    return;
+  }
+
+  const usage = await planUsage();
+  const qr = siteSettings.qr_image_url;
+  let statusNote = '';
+  if(sub && sub.status === 'pending') statusNote = `<p style="color:var(--gold-text,var(--gold));font-size:.85rem;margin-top:1rem">⏳ ${T('Your last payment is under review.','ཁྱོད་ཀྱི་ཤུལ་མའི་སྤྲོད་ལེན་ཞིབ་དཔྱད་འབད་བཞིནམ་ཨིན།')}</p>`;
+  else if(sub && sub.status === 'rejected') statusNote = `<p style="color:var(--red);font-size:.85rem;margin-top:1rem">${T('Your last payment was not approved. You can submit again below.','ཁྱོད་ཀྱི་ཤུལ་མའི་སྤྲོད་ལེན་དེ་གནང་བ་མིན་འདུག། འོག་ལུ་ལོག་སྟེ་སྙན་ཞུ་འབད་ཆོག')}</p>`;
+
   el.innerHTML = `
-    <p><b style="color:${active?'var(--green)':'var(--red)'}">${active?'✅ Active':sub.status==='pending'?'⏳ Pending review':'❌ '+sub.status}</b></p>
-    ${sub.expires_at?`<p style="color:var(--text2);font-size:.85rem;margin-top:.4rem">Renews/expires: ${esc(new Date(sub.expires_at).toLocaleDateString())}</p>`:''}
+    <div style="background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;margin-bottom:1.2rem">
+      <b style="color:var(--gold-text,var(--gold))">${T('🆓 Free Plan','🆓 རིན་མེད་འཆར་གཞི')}</b>
+      <p style="color:var(--text2);font-size:.85rem;margin-top:.4rem">${T('Classes:','དཔྱེ་སློབ:')} ${usage.classCount} / ${FREE_MAX_CLASSES} &nbsp;·&nbsp; ${T('Students:','སློབ་ཕྲུག:')} ${usage.studentCount} / ${FREE_MAX_STUDENTS}</p>
+    </div>
+    <h4 style="margin-bottom:.6rem">${T('Upgrade for unlimited classes and students','དཔྱེ་སློབ་དང་སློབ་ཕྲུག་ཚད་མེད་དོན་ལུ་འོས་སྦྱོར')}</h4>
+    <p>${T('Subscribe for','འོས་སྦྱོར་འབད')} Nu. ${esc(siteSettings.teacher_plan_price || 'X')}${T('/month.','/ཟླཝ་རེ།')}</p>
+    ${qr?`<img src="${esc(qr)}" style="width:160px;margin:.6rem 0 1rem;display:block;border-radius:6px"/>`:''}
+    <div style="background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.82rem;line-height:1.8">
+      ${siteSettings.bank_name?`<div><b>${T('Bank/App:','བང་ཁི/ཨཔ:')}</b> ${esc(siteSettings.bank_name)}</div>`:''}
+      ${siteSettings.account_name?`<div><b>${T('Account Name:','ཁ་ཡིག་མིང་:')}</b> ${esc(siteSettings.account_name)}</div>`:''}
+      ${siteSettings.account_number?`<div><b>${T('Account Number:','ཁ་ཡིག་ཨང་:')}</b> ${esc(siteSettings.account_number)}</div>`:''}
+    </div>
+    <div class="field"><label>${T('Upload Payment Screenshot','སྤྲོད་ལེན་གྱི་པར་བཙུགས།')}</label><input type="file" id="teacher-proof-file" accept="image/*"/></div>
+    <p id="teacher-proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
+    <button class="btn btn-gold" onclick="submitTeacherProof()">${T('Submit for Review','ཞིབ་དཔྱད་དོན་ལུ་སྙན་ཞུ།')}</button>
+    ${statusNote}
   `;
 }
 
 checkAccess();
+window.addEventListener('sherig:langchange', function(){
+  if(typeof me !== 'undefined' && me){
+    renderClasses();
+    renderBilling(subRow);
+    if(currentClassId){ renderStudents(); renderAssignments(); }
+  }
+});
+
 </script>
 </body>
 </html>
