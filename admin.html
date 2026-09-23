@@ -126,6 +126,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
     <div class="logo"><h2>SherigSpace</h2><small>Admin Panel</small></div>
     <nav class="sidenav">
       <div class="sitem on"  onclick="go('dash')">🏠 &nbsp;Dashboard</div>
+      <div class="sitem"     onclick="go('teachers')">🏫 &nbsp;Teachers &amp; Classes</div>
       <div class="sitem"     onclick="go('lessons')">📚 &nbsp;Lessons</div>
       <div class="sitem"     onclick="go('resources')">📁 &nbsp;Resources</div>
       <div class="sitem"     onclick="go('videos')">🎥 &nbsp;Videos</div>
@@ -149,6 +150,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="stats" id="d-stats"></div>
       <div class="card"><div class="card-head"><h3>Recent Lessons</h3><button class="btn btn-ghost btn-sm" onclick="go('lessons')">View All</button></div><div id="d-lessons"></div></div>
       <div class="card"><div class="card-head"><h3>Recent Videos</h3><button class="btn btn-ghost btn-sm" onclick="go('videos')">View All</button></div><div id="d-videos"></div></div>
+    </div>
+
+    <div class="page" id="p-teachers">
+      <div class="phead"><div><div class="ptitle">Teachers &amp; Classes</div><div class="psub">How many teachers, classes and students are using SherigSpace</div></div></div>
+      <div class="stats" id="t-stats"></div>
+      <div class="card">
+        <div class="card-head"><h3>Every Teacher</h3><span class="cbadge" id="c-teachers">0</span></div>
+        <div id="l-teachers" style="overflow-x:auto;padding:.5rem 0"></div>
+      </div>
     </div>
 
     <div class="page" id="p-lessons">
@@ -301,7 +311,7 @@ window.go = function(p){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
   document.getElementById('p-'+p).classList.add('on');
-  const map={dash:'dashboard',lessons:'lessons',resources:'resources',videos:'videos',articles:'articles',payments:'payments',users:'users',settings:'settings'};
+  const map={dash:'dashboard',teachers:'teachers',lessons:'lessons',resources:'resources',videos:'videos',articles:'articles',payments:'payments',users:'users',settings:'settings'};
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
 };
@@ -335,9 +345,16 @@ async function renderAll(){
   const totalDownloads = [L,R,V,A].reduce((sum, arr) =>
     sum + (arr||[]).reduce((s,i)=>s+(i.download_count||0), 0), 0);
 
+  const [csc, ssc] = await Promise.all([
+    supabase.from('classes').select('id',{count:'exact',head:true}),
+    supabase.from('class_students').select('id',{count:'exact',head:true})
+  ]);
+  const adminVisibilityReady = !csc.error && !ssc.error;
+
   document.getElementById('d-stats').innerHTML =
     stat(lc||0,'Lessons')+stat(rc||0,'Resources')+stat(vc||0,'Videos')+stat(uc||0,'Members')
-    + stat(visitCount||0,'Site Visits') + stat(totalDownloads,'Total Downloads');
+    + stat(visitCount||0,'Site Visits') + stat(totalDownloads,'Total Downloads')
+    + (adminVisibilityReady ? stat(csc.count||0,'Classes')+stat(ssc.count||0,'Students') : '');
   document.getElementById('c-lessons').textContent   = lc||0;
   document.getElementById('c-resources').textContent = rc||0;
   document.getElementById('c-videos').textContent    = vc||0;
@@ -356,6 +373,75 @@ async function renderAll(){
     : empty('📢','No announcements yet. Click + New Announcement!');
   renderUsers(U||[]);
   renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[]});
+  renderTeachersOverview(U||[]);
+}
+
+// ── TEACHERS & CLASSES (admin's view across every teacher) ──
+async function renderTeachersOverview(allProfiles){
+  const statsEl = document.getElementById('t-stats');
+  const listEl = document.getElementById('l-teachers');
+  if(!statsEl || !listEl) return;   // page not in the DOM (shouldn't happen, but stay safe)
+
+  const [subsRes, classesRes, studentsRes] = await Promise.all([
+    supabase.from('teacher_subscriptions').select('teacher_id,status,expires_at,created_at').order('created_at',{ascending:false}),
+    supabase.from('classes').select('id,teacher_id,name,created_at'),
+    supabase.from('class_students').select('id,class_id')
+  ]);
+  const errs = [['teacher_subscriptions', subsRes.error], ['classes', classesRes.error], ['class_students', studentsRes.error]];
+  const missingPolicy = errs.some(([,e]) => e && /permission|policy/i.test(e.message || ''));
+  errs.forEach(([name, err]) => { if(err) console.error('Could not load ' + name + ':', err); });
+  if(missingPolicy){
+    listEl.innerHTML = empty('🔒', 'Admin access to classes and students isn\'t enabled yet — run <b>sherigspace_admin_visibility.sql</b> once in Supabase, then reload this page.');
+    statsEl.innerHTML = '';
+    document.getElementById('c-teachers').textContent = 0;
+    return;
+  }
+
+  const subs = subsRes.data || [], classes = classesRes.data || [], students = studentsRes.data || [];
+  const profileById = {}; (allProfiles||[]).forEach(p => { profileById[p.id] = p; });
+
+  // One teacher can have several subscription rows over time (renewals, a rejected
+  // request followed by a new one) — keep only their most recent.
+  const latestSub = {};
+  subs.forEach(s => { if(!latestSub[s.teacher_id]) latestSub[s.teacher_id] = s; });   // already newest-first
+
+  const classesByTeacher = {};
+  classes.forEach(c => { (classesByTeacher[c.teacher_id] = classesByTeacher[c.teacher_id] || []).push(c); });
+  const studentCountByClass = {};
+  students.forEach(cs => { studentCountByClass[cs.class_id] = (studentCountByClass[cs.class_id] || 0) + 1; });
+
+  const teacherIds = Object.keys(latestSub);
+  const totalClasses = classes.length;
+  const totalStudents = students.length;
+  const approvedCount = teacherIds.filter(id => latestSub[id].status === 'approved').length;
+  const pendingCount = teacherIds.filter(id => latestSub[id].status === 'pending').length;
+
+  statsEl.innerHTML = stat(teacherIds.length,'Teachers') + stat(approvedCount,'Approved') + stat(pendingCount,'Pending')
+    + stat(totalClasses,'Classes') + stat(totalStudents,'Students')
+    + stat(totalClasses ? Math.round(totalStudents/totalClasses*10)/10 : 0,'Avg. Students / Class');
+  document.getElementById('c-teachers').textContent = teacherIds.length;
+
+  if(!teacherIds.length){ listEl.innerHTML = empty('🏫','No one has signed up as a teacher yet.'); return; }
+
+  const statusBadge = st => st === 'approved' ? '✅ Approved' : st === 'rejected' ? '❌ Rejected' : '⏳ Pending';
+  const rows = teacherIds
+    .map(id => {
+      const prof = profileById[id];
+      const myClasses = classesByTeacher[id] || [];
+      const myStudents = myClasses.reduce((sum,c) => sum + (studentCountByClass[c.id]||0), 0);
+      return { id, prof, sub: latestSub[id], classCount: myClasses.length, studentCount: myStudents };
+    })
+    .sort((a,b) => b.studentCount - a.studentCount || b.classCount - a.classCount);
+
+  listEl.innerHTML = `<table class="utbl"><thead><tr>
+      <th>Teacher</th><th>Email</th><th>Status</th><th>Classes</th><th>Students</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td>${esc(r.prof?.name || '(no profile)')}</td>
+      <td>${esc(r.prof?.email || '—')}</td>
+      <td>${statusBadge(r.sub.status)}</td>
+      <td>${r.classCount}</td>
+      <td>${r.studentCount}</td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
 
