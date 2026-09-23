@@ -122,3 +122,109 @@
     if (e.key === KEY) { root.setAttribute('data-theme', read()); refresh(); }
   });
 })();
+
+/* ─────────────────────────────────────────────────────────────
+   SherigSpace — shared EN / DZONGKHA language toggle for every
+   page (login, student, teacher, admin). index.html has its own
+   copy of this same toggle, but both read/write the same 'eduLang'
+   key, so the choice follows the visitor from page to page.
+
+   Two ways to mark text as translatable:
+   1. Static HTML:  <span data-en="Save" data-dz="སྲུང་བཞག">Save</span>
+      — applyLang() swaps the element's content to match.
+   2. Text built by JS at render time: window.T('Save','སྲུང་བཞག')
+      returns the right string for whichever language is active
+      right now. Pages that keep dynamic lists (assignments,
+      classes, students…) should listen for 'sherig:langchange'
+      and re-run their render function so already-drawn content
+      updates too — see teacher.html / student.html for examples.
+   ───────────────────────────────────────────────────────────── */
+(function () {
+  var KEY = 'eduLang';
+  var root = document.documentElement;
+
+  function read() {
+    try { return localStorage.getItem(KEY) === 'dz' ? 'dz' : 'en'; }
+    catch (e) { return 'en'; }
+  }
+
+  // Apply immediately (before paint) so there's no flash / no font jump.
+  root.setAttribute('data-lang', read());
+
+  var css = [
+    "@font-face{font-family:'ThinWangTJoyig';src:url('ThinWangTJoyig-Regular.ttf') format('truetype');font-weight:normal;font-style:normal;font-display:swap}",
+    ":root{--font-en:'DM Sans',sans-serif;--font-dz:'ThinWangTJoyig','Noto Serif Tibetan',sans-serif}",
+    '[data-lang="dz"] :is(h1,h2,h3,h4,h5,p,span,a,li,button,label,div,td,th,option){font-family:var(--font-dz)}',
+    '[data-lang="dz"] input,[data-lang="dz"] textarea,[data-lang="dz"] select{font-family:var(--font-dz)}',
+
+    /* ── toggle button, same look as index.html's nav toggle ── */
+    '.sherig-lang-toggle{display:inline-flex;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:20px;overflow:hidden;flex-shrink:0}',
+    '.sherig-lang-btn{padding:5px 11px;font-size:.75rem;font-weight:600;color:var(--text2,rgba(255,255,255,.6));background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s;line-height:1.4;font-family:var(--font-en)!important}',
+    ".sherig-lang-btn[data-lang-btn='dz']{font-family:'ThinWangTJoyig',sans-serif!important;font-size:.8rem}",
+    '.sherig-lang-btn.on{background:var(--gold);color:#1a2340;border-radius:18px}',
+    '.sfoot .sherig-lang-toggle{width:100%;justify-content:center;border-radius:4px}',
+    '.sfoot .sherig-lang-btn{flex:1;padding:8px 6px}',
+    '.sherig-lang-float{position:fixed;top:14px;right:98px;z-index:3000;box-shadow:0 6px 20px rgba(0,0,0,.25);background:var(--surface)}'
+  ].join('\n');
+  var style = document.createElement('style');
+  style.id = 'sherig-lang-css';
+  style.textContent = css;
+  (document.head || root).appendChild(style);
+
+  function applyLang(l) {
+    root.setAttribute('data-lang', l);
+    try { localStorage.setItem(KEY, l); } catch (e) {}
+    document.querySelectorAll('[data-en]').forEach(function (el) {
+      var val = el.getAttribute('data-' + l);
+      if (!val) return;
+      if (el.hasAttribute('placeholder')) { /* handled separately below */ }
+      if (val.indexOf('<') >= 0) el.innerHTML = val; else el.textContent = val;
+    });
+    document.querySelectorAll('[data-en-ph]').forEach(function (el) {
+      var val = el.getAttribute('data-' + l + '-ph');
+      if (val) el.setAttribute('placeholder', val);
+    });
+    document.querySelectorAll('.sherig-lang-btn').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-lang-btn') === l);
+    });
+    window.dispatchEvent(new CustomEvent('sherig:langchange', { detail: { lang: l } }));
+  }
+  window.sherigApplyLang = applyLang;
+
+  // Translation helper for text built inside JS template strings at
+  // render time, e.g. T('Save','སྲུང་བཞག'). Always reflects the
+  // CURRENT language — call it at render time, not once and cache it.
+  window.T = function (en, dz) { return (root.getAttribute('data-lang') === 'dz' && dz) ? dz : en; };
+  window.sherigLang = function () { return root.getAttribute('data-lang'); };
+
+  function makeToggle(extraClass) {
+    var wrap = document.createElement('div');
+    wrap.className = 'sherig-lang-toggle' + (extraClass ? ' ' + extraClass : '');
+    ['en', 'dz'].forEach(function (l) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sherig-lang-btn';
+      b.setAttribute('data-lang-btn', l);
+      b.textContent = l === 'en' ? 'EN' : 'རྫོང་ཁ།';
+      b.addEventListener('click', function () { applyLang(l); });
+      wrap.appendChild(b);
+    });
+    return wrap;
+  }
+
+  function mount() {
+    // Unlike the theme toggle, the language toggle only appears where a
+    // page explicitly opts in with [data-lang-slot] — no floating
+    // fallback, since some pages (e.g. admin.html) don't want it at all.
+    var slots = document.querySelectorAll('[data-lang-slot]');
+    for (var i = 0; i < slots.length; i++) slots[i].appendChild(makeToggle());
+    applyLang(read());
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+  else mount();
+
+  // keep several open tabs / pages in step
+  window.addEventListener('storage', function (e) {
+    if (e.key === KEY) applyLang(read());
+  });
+})();
