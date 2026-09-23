@@ -106,8 +106,8 @@ a.btn{text-decoration:none;display:inline-block}
 <div id="gate">
   <div class="gate-card" id="gate-inner">
     <div class="gate-icon">🎓</div>
-    <h2>Checking access…</h2>
-    <p>One moment…</p>
+    <h2 data-en="Checking access…" data-dz="འཛུལ་སྒོ་ཞིབ་དཔྱད་འབད་བཞིནམ...">Checking access…</h2>
+    <p data-en="One moment…" data-dz="སྐར་ཆ་ཅིག...">One moment…</p>
   </div>
 </div>
 
@@ -115,13 +115,14 @@ a.btn{text-decoration:none;display:inline-block}
   <nav>
     <div class="nav-logo">SherigSpace</div>
     <div class="nav-right">
+      <span data-lang-slot></span>
       <span data-theme-slot></span>
       <span id="student-name">Student</span>
-      <button onclick="logout()">Log Out</button>
+      <button onclick="logout()" data-en="Log Out" data-dz="ཕྱིར་འཐོན།">Log Out</button>
     </div>
   </nav>
   <main id="assignments-wrap">
-    <div class="empty"><div class="ei">📋</div><p>Loading your assignments…</p></div>
+    <div class="empty"><div class="ei">📋</div><p data-en="Loading your assignments…" data-dz="ཁྱོད་ཀྱི་ལཱ་ཁག་འདྲེན་བཞིནམ...">Loading your assignments…</p></div>
   </main>
 </div>
 
@@ -139,7 +140,7 @@ async function init(){
   const { data: { session } } = await supabase.auth.getSession();
   const gate = document.getElementById('gate-inner');
   if(!session){
-    gate.innerHTML = `<div class="gate-icon">🔒</div><h2>Please log in</h2><p>Use the Student tab on the login page.</p><a class="gate-btn" href="login.html">Go to Login</a>`;
+    gate.innerHTML = `<div class="gate-icon">🔒</div><h2>${T('Please log in','ནང་འཛུལ་གནང་།')}</h2><p>${T('Use the Student tab on the login page.','ནང་འཛུལ་ཤོག་ལེབ་ནང་གི་སློབ་ཕྲུག་ཨིབ་ལག་ལེན་འཐབ།')}</p><a class="gate-btn" href="login.html">${T('Go to Login','ནང་འཛུལ་ལུ་འགྱོ།')}</a>`;
     return;
   }
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
@@ -150,6 +151,7 @@ async function init(){
   document.getElementById('student-name').textContent = me.name;
   await checkAnswersEnabled();
   await renderAssignments();
+  window.addEventListener('sherig:langchange', renderAssignments);
 }
 
 window.logout = async function(){ await supabase.auth.signOut(); window.location.href = 'login.html'; };
@@ -159,7 +161,7 @@ async function renderAssignments(){
 
   const { data: enrollments } = await supabase.from('class_students').select('class_id, classes(id,name)').eq('student_id', me.id);
   if(!enrollments?.length){
-    wrap.innerHTML = `<div class="empty"><div class="ei">🏫</div><p>You're not enrolled in any class yet. Ask your teacher to add you to a class.</p></div>`;
+    wrap.innerHTML = `<div class="empty"><div class="ei">🏫</div><p>${T("You're not enrolled in any class yet. Ask your teacher to add you to a class.","ཁྱོད་ད་ལྟོ་དཔྱེ་སློབ་ནང་ཐོ་བཀོད་མིན་འདུག། སློབ་དཔོན་ལུ་དཔྱེ་སློབ་ནང་ཁ་སྐོང་འབད་བཅུག")}</p></div>`;
     return;
   }
 
@@ -177,14 +179,14 @@ async function renderAssignments(){
   });
 
   if(!assignments?.length){
-    wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>No assignments yet — check back soon!</p></div>`;
+    wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>${T('No assignments yet — check back soon!','ད་ལྟོ་ལཱ་ཁག་མིན་འདུག — ཤུལ་ལས་ལོག་བལྟ།')}</p></div>`;
     return;
   }
   assignments.forEach(a => { assignmentsById[String(a.id)] = a; });
 
   // Group by class
   const byClass = {};
-  enrollments.forEach(e=>{ byClass[e.class_id] = { name: e.classes?.name || 'Class', items: [] }; });
+  enrollments.forEach(e=>{ byClass[e.class_id] = { name: e.classes?.name || T('Class','དཔྱེ་སློབ།'), items: [] }; });
   assignments.forEach(a=>{ if(byClass[a.class_id]) byClass[a.class_id].items.push(a); });
 
   let html = '';
@@ -195,7 +197,7 @@ async function renderAssignments(){
     const cards = await Promise.all(group.items.map(a => renderAssignmentCard(a, statusMap[a.id] === 'done')));
     html += cards.join('');
   }
-  wrap.innerHTML = html || `<div class="empty"><div class="ei">📋</div><p>No assignments yet.</p></div>`;
+  wrap.innerHTML = html || `<div class="empty"><div class="ei">📋</div><p>${T('No assignments yet.','ད་ལྟོ་ལཱ་ཁག་མིན་འདུག')}</p></div>`;
 
   wrap.querySelectorAll('[data-mark-done]').forEach(btn=>{
     btn.addEventListener('click', ()=>markDone(btn.getAttribute('data-mark-done')));
@@ -207,13 +209,13 @@ async function renderAssignments(){
   wrap.querySelectorAll('[data-preview]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const box = btn.closest('.res-tile').querySelector('.res-preview');
-      if(box.firstChild){ box.innerHTML = ''; btn.textContent = 'Preview'; return; }
+      if(box.firstChild){ box.innerHTML = ''; btn.textContent = T('Preview','སྔོན་བལྟ།'); return; }
       const f = document.createElement('iframe');
       f.src = btn.dataset.preview; f.title = 'Preview'; f.loading = 'lazy';
       f.setAttribute('allowfullscreen', '');
       f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms');
       f.referrerPolicy = 'strict-origin-when-cross-origin';
-      box.appendChild(f); btn.textContent = 'Hide preview';
+      box.appendChild(f); btn.textContent = T('Hide preview','སྔོན་བལྟ་སྦ།');
     });
   });
   wireAnswerBoxes(wrap);
@@ -268,10 +270,10 @@ function questionsHtml(a){
     const val = d.answers[q.id] == null ? '' : String(d.answers[q.id]);
     const attrs = `data-q-input data-id="${esc(id)}" data-qid="${esc(q.id)}"`;
     let input;
-    if(q.type === 'long') input = `<textarea ${attrs} placeholder="Write your answer…">${esc(val)}</textarea>`;
+    if(q.type === 'long') input = `<textarea ${attrs} placeholder="${T('Write your answer…','ཁྱོད་ཀྱི་ལན་བྲིས…')}">${esc(val)}</textarea>`;
     else if(q.type === 'choice' || q.type === 'truefalse') input = `<div class="q-opts">${q.options.map(o =>
-      `<label class="q-opt"><input type="radio" name="qr-${esc(id)}-${esc(q.id)}" ${attrs} data-val="${esc(o)}" ${val === o ? 'checked' : ''}/><span>${esc(o)}</span></label>`).join('')}</div>`;
-    else input = `<input type="text" ${attrs} value="${esc(val)}" placeholder="Your answer…"/>`;
+      `<label class="q-opt"><input type="radio" name="qr-${esc(id)}-${esc(q.id)}" ${attrs} data-val="${esc(o)}" ${val === o ? 'checked' : ''}/><span>${esc(q.type==='truefalse' ? (o==='True' ? T('True','བདེན།') : T('False','རྫུན།')) : o)}</span></label>`).join('')}</div>`;
+    else input = `<input type="text" ${attrs} value="${esc(val)}" placeholder="${T('Your answer…','ཁྱོད་ཀྱི་ལན…')}"/>`;
     return `<div class="q-item"><div class="q-text"><span class="q-num">${i+1}.</span>${esc(q.text)}</div>${input}</div>`;
   }).join('') + `</div>`;
 }
@@ -281,24 +283,24 @@ function answerBoxHtml(a){
   const submitted = !!row.submitted_at;
   const hasQ = questionsFor(a).length > 0;
   const fb = [];
-  if(row.score) fb.push(`<b>⭐ Marks: ${esc(row.score)}</b>`);
-  if(row.teacher_feedback) fb.push(`<b>💬 Teacher feedback</b>`, esc(row.teacher_feedback));
+  if(row.score) fb.push(`<b>⭐ ${T('Marks:','ལེན་ཐང:')} ${esc(row.score)}</b>`);
+  if(row.teacher_feedback) fb.push(`<b>💬 ${T('Teacher feedback','སློབ་དཔོན་གྱི་བསམ་བཀོད')}</b>`, esc(row.teacher_feedback));
   return `<div class="answer-box">
-    <div class="answer-title">✍️ ${hasQ ? 'Your answers' : 'Your answer'}</div>
-    ${submitted ? `<div class="submitted-note">✓ Submitted ${esc(new Date(row.submitted_at).toLocaleString())} — you can edit and submit again.</div>` : ''}
+    <div class="answer-title">✍️ ${hasQ ? T('Your answers','ཁྱོད་ཀྱི་ལན་ཚུ') : T('Your answer','ཁྱོད་ཀྱི་ལན')}</div>
+    ${submitted ? `<div class="submitted-note">✓ ${T('Submitted','སྙན་ཞུ་འབད་ཡོད')} ${esc(new Date(row.submitted_at).toLocaleString())} — ${T('you can edit and submit again.','ཞུན་དག་འབད་དེ་ལོག་སྙན་ཞུ་འབད་ཆོག')}</div>` : ''}
     ${questionsHtml(a)}
-    ${hasQ ? `<div class="answer-sub">Anything else you want to tell your teacher? (optional)</div>` : ''}
-    <textarea data-answer-text data-id="${esc(id)}" style="${hasQ ? 'min-height:70px' : ''}" placeholder="${hasQ ? 'Add a note…' : 'Write your answer here…'}">${esc(d.text)}</textarea>
+    ${hasQ ? `<div class="answer-sub">${T('Anything else you want to tell your teacher? (optional)','སློབ་དཔོན་ལུ་གཞན་ཡང་ལབ་ནི་ཡོད་ག? (དགོས་མཁོ་མེད་ཡང་རུང)')}</div>` : ''}
+    <textarea data-answer-text data-id="${esc(id)}" style="${hasQ ? 'min-height:70px' : ''}" placeholder="${hasQ ? T('Add a note…','བསམ་བཀོད་ཁ་སྐོང…') : T('Write your answer here…','ཁྱོད་ཀྱི་ལན་འ་ནཱ་བྲིས…')}">${esc(d.text)}</textarea>
     <div class="answer-add">
-      <input type="text" data-link-input data-id="${esc(id)}" placeholder="Add a link (optional)"/>
-      <button type="button" class="btn btn-ghost" data-add-link data-id="${esc(id)}">＋ Link</button>
-      <label class="btn btn-ghost filebtn">📷 Photo / file
+      <input type="text" data-link-input data-id="${esc(id)}" placeholder="${T('Add a link (optional)','འབྲེལ་མཐུད་ཁ་སྐོང (དགོས་མཁོ་མེད་ཡང་རུང)')}"/>
+      <button type="button" class="btn btn-ghost" data-add-link data-id="${esc(id)}">${T('＋ Link','＋ འབྲེལ་མཐུད')}</button>
+      <label class="btn btn-ghost filebtn">${T('📷 Photo / file','📷 པར/ཡིག་ཆ')}
         <input type="file" hidden data-answer-file data-id="${esc(id)}" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.txt"/>
       </label>
     </div>
     <div class="chips" data-id="${esc(id)}">${chipsHtml(id)}</div>
     <div class="ans-status" data-id="${esc(id)}"></div>
-    <button type="button" class="btn btn-gold" data-submit-answer data-id="${esc(id)}">${submitted ? 'Update my answers' : 'Submit answers'}</button>
+    <button type="button" class="btn btn-gold" data-submit-answer data-id="${esc(id)}">${submitted ? T('Update my answers','ང་གི་ལན་ཚུ་གསར་བསྐྱར') : T('Submit answers','ལན་སྙན་ཞུ')}</button>
   </div>${fb.length ? `<div class="feedback-box">${fb.join('<br>')}</div>` : ''}`;
 }
 function wireAnswerBoxes(root){
@@ -314,7 +316,7 @@ function wireAnswerBoxes(root){
     let v = (inp.value || '').trim(); if(!v) return;
     if(!/^https?:\/\//i.test(v)) v = 'https://' + v;
     const ok = safeUrl(v);
-    if(!ok){ setAnsStatus(id, 'That does not look like a valid link.', 'err'); return; }
+    if(!ok){ setAnsStatus(id, T('That does not look like a valid link.','འདི་འབྲེལ་མཐུད་ཁག་ཏོ་ཅིག་སྦེ་མི་མཐོང་།'), 'err'); return; }
     getDraft(id).links.push(ok); saveLocalDraft(id); inp.value = ''; setAnsStatus(id, '', ''); refreshChips(id);
   }));
   root.querySelectorAll('[data-link-input]').forEach(i => i.addEventListener('keydown', e => {
@@ -323,14 +325,14 @@ function wireAnswerBoxes(root){
   root.querySelectorAll('[data-answer-file]').forEach(inp => inp.addEventListener('change', async () => {
     const id = inp.dataset.id, file = inp.files[0]; inp.value = '';
     if(!file) return;
-    if(file.size > 20 * 1024 * 1024){ setAnsStatus(id, 'Please choose a file under 20 MB.', 'err'); return; }
-    setAnsStatus(id, 'Uploading "' + file.name + '"…', 'wait');
+    if(file.size > 20 * 1024 * 1024){ setAnsStatus(id, T('Please choose a file under 20 MB.','ཡིག་ཆ་ 20MB ལས་ཉུང་སུ་ཅིག་སེལ་འཐུ་འབད'), 'err'); return; }
+    setAnsStatus(id, T('Uploading "','བཙུགས་བཞིནམ "') + file.name + '"…', 'wait');
     try{
       const path = `${me.id}/${id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
       const { error } = await supabase.storage.from('task-answers').upload(path, file);
       if(error) throw error;
-      getDraft(id).files.push(path); saveLocalDraft(id); refreshChips(id); setAnsStatus(id, 'Added ✓ — press Submit when you are ready.', 'ok');
-    }catch(err){ setAnsStatus(id, 'Upload failed: ' + err.message, 'err'); }
+      getDraft(id).files.push(path); saveLocalDraft(id); refreshChips(id); setAnsStatus(id, T('Added ✓ — press Submit when you are ready.','ཁ་སྐོང་འབད་ཚར་ཡོད ✓ — གྲ་སྒྲིག་ཚར་བའི་ཤུལ་ལུ་སྙན་ཞུ་ལུ་ཨེབ།'), 'ok');
+    }catch(err){ setAnsStatus(id, T('Upload failed: ','བཙུགས་མ་ཚུགས: ') + err.message, 'err'); }
   }));
   root.querySelectorAll('[data-submit-answer]').forEach(b => b.addEventListener('click', () => submitAnswer(b.dataset.id, b)));
   root.querySelectorAll('.chips').forEach(c => refreshChips(c.dataset.id));
@@ -343,13 +345,13 @@ async function submitAnswer(id, btn){
   const answered = Object.keys(cleanAnswers).length;
 
   if(!answered && !d.text.trim() && !d.links.length && !d.files.length){
-    setAnsStatus(id, qs.length ? 'Please answer at least one question, or add a note, link or file.' : 'Please write an answer, or add a link or file, first.', 'err');
+    setAnsStatus(id, qs.length ? T('Please answer at least one question, or add a note, link or file.','ལེ་ཤཱལ་གཅིག་ལུ་ལན་བྲིས་ ཡང་ན་ བསམ་བཀོད/འབྲེལ་མཐུད/ཡིག་ཆ་ཁ་སྐོང་འབད') : T('Please write an answer, or add a link or file, first.','དང་པ་ལན་བྲིས་ ཡང་ན་ འབྲེལ་མཐུད/ཡིག་ཆ་ཁ་སྐོང་འབད'), 'err');
     return;
   }
   const blank = qs.length - answered;
-  if(blank > 0 && !confirm('You left ' + blank + ' question' + (blank > 1 ? 's' : '') + ' unanswered. Submit anyway?')) return;
+  if(blank > 0 && !confirm(T('You left ','ཁྱོད་ཀྱིས་') + blank + ' ' + T('question'+(blank > 1 ? 's' : ''),'དྲི་བ') + T(' unanswered. Submit anyway?',' ལན་མ་བྲིས་པར་བཞག་ཡོདཔ། ད་རུང་སྙན་ཞུ་འབད་ནི་ག?'))) return;
 
-  btn.disabled = true; const label = btn.textContent; btn.textContent = 'Submitting…';
+  btn.disabled = true; const label = btn.textContent; btn.textContent = T('Submitting…','སྙན་ཞུ་འབད་བཞིནམ...');
   const now = new Date().toISOString();
   const payload = {
     assignment_id: id, student_id: me.id, status: 'done', completed_at: now, submitted_at: now,
@@ -357,7 +359,7 @@ async function submitAnswer(id, btn){
   };
   if(questionsEnabled) payload.answers = cleanAnswers;
   const { error } = await supabase.from('assignment_status').upsert(payload, { onConflict: 'assignment_id,student_id' });
-  if(error){ setAnsStatus(id, 'Could not submit: ' + error.message, 'err'); btn.disabled = false; btn.textContent = label; return; }
+  if(error){ setAnsStatus(id, T('Could not submit: ','སྙན་ཞུ་འབད་མ་ཚུགས: ') + error.message, 'err'); btn.disabled = false; btn.textContent = label; return; }
   clearLocalDraft(id);
   await renderAssignments();
 }
@@ -368,7 +370,7 @@ function resourceHtml(att){
   const kind = att.type && KIND_META[att.type] ? att.type : c.kind;
   const meta = KIND_META[kind] || KIND_META.link;
   const label = att.label || defaultLabel(att.url);
-  const open = `<a href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">↗ Open in a new tab</a>`;
+  const open = `<a href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">↗ ${T('Open in a new tab','ཤོག་ལེབ་གསརཔ་ནང་ཁ་ཕྱེ')}</a>`;
 
   if(kind === 'video' && c.embed){
     return `<div class="res-video"><div class="task-embed"><iframe src="${esc(c.embed)}" title="${esc(label)}" loading="lazy" allowfullscreen
@@ -383,44 +385,44 @@ function resourceHtml(att){
     <span class="res-ico">${meta.icon}</span>
     <div class="res-info"><div class="res-name">${esc(label)}</div><div class="res-sub">${esc(c.name || meta.label)} · ${esc(c.host)}</div></div>
     <div class="res-btns">
-      ${c.embed ? `<button type="button" class="btn btn-ghost btn-sm" data-preview="${esc(c.embed)}">Preview</button>` : ''}
-      <a class="btn btn-gold btn-sm" href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">${kind === 'form' ? 'Open form' : 'Open'}</a>
-      ${c.download ? `<a class="btn btn-ghost btn-sm" href="${esc(c.download)}" target="_blank" rel="noopener noreferrer">Download</a>` : ''}
+      ${c.embed ? `<button type="button" class="btn btn-ghost btn-sm" data-preview="${esc(c.embed)}">${T('Preview','སྔོན་བལྟ།')}</button>` : ''}
+      <a class="btn btn-gold btn-sm" href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">${kind === 'form' ? T('Open form','ཟུར་སྦྲགས་ཁ་ཕྱེ') : T('Open','ཁ་ཕྱེ')}</a>
+      ${c.download ? `<a class="btn btn-ghost btn-sm" href="${esc(c.download)}" target="_blank" rel="noopener noreferrer">${T('Download','ཕབ་ལེན')}</a>` : ''}
     </div></div><div class="res-preview"></div></div>`;
 }
 function resourcesHtml(list){
   if(!list.length) return '';
-  return `<div class="res-block"><div class="res-head">📎 Resources for this task</div>${list.map(resourceHtml).join('')}</div>`;
+  return `<div class="res-block"><div class="res-head">📎 ${T('Resources for this task','ལཱ་ཁག་འདིའི་དོན་ལུ་ཡིག་ཆ')}</div>${list.map(resourceHtml).join('')}</div>`;
 }
 
 function dueHtml(a, done){
   if(!a.due_date) return '';
   const d = new Date(a.due_date + 'T00:00:00');
-  if(isNaN(d)) return `<div class="assign-meta">📅 Due ${esc(a.due_date)}</div>`;
+  if(isNaN(d)) return `<div class="assign-meta">📅 ${T('Due','འབྱུང་ཉིནམ')} ${esc(a.due_date)}</div>`;
   const today = new Date(); today.setHours(0,0,0,0);
   const days = Math.round((d - today) / 86400000);
   let tag = '';
   if(!done){
-    if(days < 0) tag = '<span class="due-tag late">Overdue</span>';
-    else if(days === 0) tag = '<span class="due-tag soon">Due today</span>';
-    else if(days === 1) tag = '<span class="due-tag soon">Due tomorrow</span>';
+    if(days < 0) tag = `<span class="due-tag late">${T('Overdue','དུས་ལས་བརྒལ')}</span>`;
+    else if(days === 0) tag = `<span class="due-tag soon">${T('Due today','དེ་རིང་འབྱུང')}</span>`;
+    else if(days === 1) tag = `<span class="due-tag soon">${T('Due tomorrow','ནངས་པར་འབྱུང')}</span>`;
   }
-  return `<div class="assign-meta">📅 Due ${esc(d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }))}${tag}</div>`;
+  return `<div class="assign-meta">📅 ${T('Due','འབྱུང་ཉིནམ')} ${esc(d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }))}${tag}</div>`;
 }
 
 async function renderAssignmentCard(a, done){
   let title, desc, lockedNote = '', resources = parseAttachments(a);
 
   if(a.kind === 'custom'){
-    title = a.title || 'Task';
+    title = a.title || T('Task','ལཱ་ཁག');
     desc = a.description || '';
   } else {
     const { data: item } = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
-    title = a.title || (item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : '(content unavailable)');
+    title = a.title || (item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : T('(content unavailable)','(ནང་དོན་མིན་འདུག)'));
     desc = [a.description, item?.description].filter(Boolean).join('\n\n');
     if(item){
       if(item.is_premium && !item.url){
-        lockedNote = `<div class="locked-note">🔒 This is premium content — visit the <a href="index.html" style="color:var(--gold-text,var(--gold))">TLM Store</a> to unlock it first.</div>`;
+        lockedNote = `<div class="locked-note">🔒 ${T('This is premium content — visit the','འདི་གོང་ཅན་གྱི་ནང་དོན་ཨིན —')} <a href="index.html" style="color:var(--gold-text,var(--gold))">TLM Store</a> ${T('to unlock it first.','ལུ་འགྱོ་སྟེ་དང་པ་ཁ་ཕྱེ།')}</div>`;
       } else {
         // the library item first, then whatever the teacher added on top
         resources = parseAttachments({ attachment_url: item.url }).concat(resources);
@@ -438,8 +440,8 @@ async function renderAssignmentCard(a, done){
     ${answersEnabled && !lockedNote ? answerBoxHtml(a) : ''}
     <div class="assign-actions">
       ${done
-        ? `<button class="btn btn-green" disabled>✓ Completed</button>`
-        : (hasQ ? '' : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">Mark Complete</button>`)}
+        ? `<button class="btn btn-green" disabled>✓ ${T('Completed','མཇུག་བསྡུ་ཡོད')}</button>`
+        : (hasQ ? '' : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">${T('Mark Complete','མཇུག་བསྡུ་བརྟགས')}</button>`)}
     </div>
   </div>`;
 }
@@ -448,7 +450,7 @@ window.markDone = async function(assignmentId){
   const { error } = await supabase.from('assignment_status').upsert({
     assignment_id: assignmentId, student_id: me.id, status: 'done', completed_at: new Date().toISOString()
   }, { onConflict: 'assignment_id,student_id' });
-  if(error){ alert('Error: ' + error.message); return; }
+  if(error){ alert(T('Error: ','འཛོལ་བ: ') + error.message); return; }
   renderAssignments();
 };
 
