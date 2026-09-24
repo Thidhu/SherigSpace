@@ -324,8 +324,8 @@ async function renderClasses(){
 
 window.openClassForm = async function(){
   if(!subActive){
-    const { count } = await supabase.from('classes').select('id', { count:'exact', head:true }).eq('teacher_id', me.id);
-    if((count||0) >= FREE_MAX_CLASSES){
+    const { data: myClasses } = await supabase.from('classes').select('id').eq('teacher_id', me.id);
+    if((myClasses?.length||0) >= FREE_MAX_CLASSES){
       toast(T('Free plan allows 1 class. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་དཔྱེ་སློབ་གཅིག་རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
       go('billing');
       return;
@@ -342,8 +342,8 @@ window.openClassForm = async function(){
     const name = fv('f-class-name');
     if(!name){ toast(T('Please enter a class name.','དཔྱེ་སློབ་མིང་བཙུགས་གནང་།'), true); return; }
     if(!subActive){
-      const { count } = await supabase.from('classes').select('id', { count:'exact', head:true }).eq('teacher_id', me.id);
-      if((count||0) >= FREE_MAX_CLASSES){
+      const { data: myClasses } = await supabase.from('classes').select('id').eq('teacher_id', me.id);
+      if((myClasses?.length||0) >= FREE_MAX_CLASSES){
         toast(T('Free plan allows 1 class. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་དཔྱེ་སློབ་གཅིག་རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
         closeModal(); go('billing');
         return;
@@ -392,8 +392,8 @@ async function renderStudents(){
 
 window.openStudentForm = async function(){
   if(!subActive){
-    const { count } = await supabase.from('class_students').select('id', { count:'exact', head:true }).eq('class_id', currentClassId);
-    if((count||0) >= FREE_MAX_STUDENTS){
+    const { data: myStudents } = await supabase.from('class_students').select('id').eq('class_id', currentClassId);
+    if((myStudents?.length||0) >= FREE_MAX_STUDENTS){
       toast(T('Free plan allows 20 students. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་སློབ་ཕྲུག་ ༢༠ རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
       go('billing');
       return;
@@ -412,8 +412,8 @@ window.openStudentForm = async function(){
     const customPin = fv('f-student-pin');
     if(customPin && customPin.length < 6){ toast(T('Password/PIN must be at least 6 characters.','གསང་ཨང་/PIN་དེ་ཡིག་འབྲུ་ ༦ལས་ཉུང་སུ་མི་ཆོག'), true); return; }
     if(!subActive){
-      const { count } = await supabase.from('class_students').select('id', { count:'exact', head:true }).eq('class_id', currentClassId);
-      if((count||0) >= FREE_MAX_STUDENTS){
+      const { data: myStudents } = await supabase.from('class_students').select('id').eq('class_id', currentClassId);
+      if((myStudents?.length||0) >= FREE_MAX_STUDENTS){
         toast(T('Free plan allows 20 students. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་སློབ་ཕྲུག་ ༢༠ རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
         closeModal(); go('billing');
         return;
@@ -1140,16 +1140,16 @@ window.handleTaskUpload = async function(e, kind){
 
 // ── BILLING / FREE PLAN ──
 async function planUsage(){
-  const { count: classCount } = await supabase.from('classes').select('id', { count:'exact', head:true }).eq('teacher_id', me.id);
+  const { data: myClasses, error: e1 } = await supabase.from('classes').select('id').eq('teacher_id', me.id);
+  if(e1) console.error('planUsage classes error:', e1);
+  const classIds = (myClasses||[]).map(c=>c.id);
   let studentCount = 0;
-  if((classCount||0) > 0){
-    const { data: classIds } = await supabase.from('classes').select('id').eq('teacher_id', me.id);
-    if(classIds?.length){
-      const { count } = await supabase.from('class_students').select('id', { count:'exact', head:true }).in('class_id', classIds.map(c=>c.id));
-      studentCount = count || 0;
-    }
+  if(classIds.length){
+    const { data: myStudents, error: e2 } = await supabase.from('class_students').select('id').in('class_id', classIds);
+    if(e2) console.error('planUsage students error:', e2);
+    studentCount = (myStudents||[]).length;
   }
-  return { classCount: classCount||0, studentCount };
+  return { classCount: classIds.length, studentCount };
 }
 
 async function renderBilling(sub){
