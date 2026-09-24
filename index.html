@@ -16,7 +16,8 @@ body{font-family:var(--font-en);background:var(--bg);color:var(--text);overflow-
 [data-lang="dz"] h1,[data-lang="dz"] h2,[data-lang="dz"] h3,[data-lang="dz"] h4,[data-lang="dz"] p,[data-lang="dz"] span:not(.t-icon),[data-lang="dz"] a,[data-lang="dz"] li,[data-lang="dz"] button{font-family:var(--font-dz)!important;line-height:2;letter-spacing:0}
 [data-lang="dz"] .hero-title,[data-lang="dz"] .section-title{font-family:'ThinWangTJoyig',sans-serif!important;line-height:1.8}
 nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:68px;border-bottom:1px solid var(--border);gap:1rem}
-.nav-logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold);text-decoration:none;flex-shrink:0}
+.nav-logo{display:flex;align-items:center;gap:.6rem;font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold);text-decoration:none;flex-shrink:0}
+.nav-logo-img{height:54px;width:54px;object-fit:contain;border-radius:50%;display:block;flex-shrink:0}
 .nav-links{display:flex;gap:1.8rem;list-style:none}
 .nav-links a{color:rgba(255,255,255,.8);text-decoration:none;font-size:.85rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;transition:color .2s;position:relative;padding-bottom:4px}
 .nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1.5px;background:var(--gold);transition:width .25s}
@@ -242,8 +243,8 @@ html[data-lang="dz"] span.pill,html[data-lang="dz"] :is(.lock-bar) :is(span,a){f
 .fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
 .fade-in.visible{opacity:1;transform:translateY(0)}
 @media(max-width:768px){.hero-inner,.about-inner{grid-template-columns:1fr;gap:2.5rem}.hero-stats{flex-direction:row;flex-wrap:wrap}.stat-card{flex:1;min-width:110px}}
-@media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}.admin-lock{display:none}.nav-right{gap:.4rem}.nav-logo{font-size:1.1rem}.login-btn{padding:6px 9px;font-size:.7rem}nav{padding:0 4%}.hamburger{width:26px}.lang-btn{padding:4px 7px}nav{gap:.5rem}.about-avatar{max-width:320px;margin:auto}.about-signature{font-size:1.4rem}.about-role{font-size:.62rem;letter-spacing:.12em}}
-@media(max-width:400px){.nav-logo{font-size:.95rem}.login-btn{padding:6px 7px;font-size:.64rem}.theme-toggle{width:34px}.lang-btn{padding:3px 5px;font-size:.66rem}.nav-right{gap:.3rem}nav{gap:.3rem}}
+@media(max-width:560px){.nav-logo-img{height:44px;width:44px}.nav-links{display:none}.hamburger{display:flex}.admin-lock{display:none}.nav-right{gap:.4rem}.nav-logo{font-size:1.1rem}.login-btn{padding:6px 9px;font-size:.7rem}nav{padding:0 4%}.hamburger{width:26px}.lang-btn{padding:4px 7px}nav{gap:.5rem}.about-avatar{max-width:320px;margin:auto}.about-signature{font-size:1.4rem}.about-role{font-size:.62rem;letter-spacing:.12em}}
+@media(max-width:400px){.search-btn{width:28px;height:28px}.nav-logo-img{height:38px;width:38px}.nav-logo{font-size:.95rem}.login-btn{padding:6px 7px;font-size:.64rem}.theme-toggle{width:34px}.lang-btn{padding:3px 5px;font-size:.66rem}.nav-right{gap:.3rem}nav{gap:.3rem}}
 @media(max-width:340px){.theme-toggle{display:none}}
 img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .blog-thumb{position:relative;overflow:hidden}
@@ -258,12 +259,31 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cover-sheet{--c1:#1f8a5b;--c2:#3fbf86}.cover-image{--c1:#7b4bc0;--c2:#a877ee}.cover-video{--c1:#1a2340;--c2:#3a4a86}
 .cover-audio{--c1:#b8437a;--c2:#e56aa0}.cover-form{--c1:#5b3fa8;--c2:#8a6fdc}.cover-file{--c1:#4a5568;--c2:#718096}
 .cover-lesson{--c1:#1a2340;--c2:#34457f}.cover-article{--c1:#9a6a1f;--c2:#d19a3d}
+
+/* ═══ Resource cards: big 16:9 cover on top, same as lessons/videos ═══ */
+.resources-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
+.resource-card{flex-direction:column;align-items:stretch;gap:0;padding:0}
+.resource-card.is-locked{padding-bottom:0!important}
+.resource-card .card-body{padding:1.25rem 1.4rem 1.4rem}
+.resource-card.is-locked .card-body{padding-bottom:4.2rem}
+.resource-card .card-body h4{font-family:var(--font-en);font-weight:700;font-size:1.05rem;line-height:1.4;color:var(--text);margin-bottom:.45rem}
+.resource-card .card-body p{font-size:.85rem;color:var(--text2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.6rem}
+/* ═══ Search ═══ */
+.search-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,.1);border:1px solid var(--border);color:var(--gold);cursor:pointer;font-size:.85rem;flex-shrink:0;transition:background .2s}
+.search-btn:hover{background:rgba(201,168,76,.2)}
+.search-panel{display:none;position:fixed;top:68px;left:0;right:0;z-index:198;background:var(--nav-bg);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:.8rem 5%}
+.search-panel.open{display:block}
+.search-box{max-width:700px;margin:auto;display:flex;align-items:center;gap:.6rem;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:6px 8px 6px 14px}
+.search-box:focus-within{border-color:var(--gold)}
+.search-box input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font-en);font-size:.95rem;padding:6px 0}
+.search-box input::placeholder{color:var(--text2)}
+.search-box button{background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer;padding:4px 8px}
 </style>
 </head>
 <body>
 
 <nav>
-  <a href="#home" class="nav-logo">SherigSpace</a>
+  <a href="#home" class="nav-logo"><img src="android-chrome-192x192.png" alt="SherigSpace" class="nav-logo-img"/></a>
   <ul class="nav-links">
     <li><a href="#home"      data-en="Home"      data-dz="གདོང་ཤོག">Home</a></li>
     <li><a href="#lessons"   data-en="Lessons"   data-dz="སློབ་སྟོན།">Lessons</a></li>
@@ -272,6 +292,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     <li><a href="#blog"      data-en="Articles"  data-dz="རྩོམ་ཡིག།">Articles</a></li>
   </ul>
   <div class="nav-right">
+    <button class="search-btn" id="searchBtn" aria-label="Search">🔍</button>
     <div class="lang-toggle">
       <button class="lang-btn on" data-lang-btn="en">EN</button>
       <button class="lang-btn"    data-lang-btn="dz">རྫོང་ཁ།</button>
@@ -282,6 +303,13 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </nav>
+<div class="search-panel" id="searchPanel">
+  <div class="search-box">
+    <span>🔍</span>
+    <input id="searchInput" type="search" placeholder="Search lessons, resources, videos, articles…" autocomplete="off"/>
+    <button id="searchClose" aria-label="Close search">✕</button>
+  </div>
+</div>
 <div class="mobile-nav" id="mobileNav">
   <a href="#home">Home</a>
   <a href="#lessons">Lessons</a>
@@ -513,7 +541,14 @@ function renderClassTabs(){
 
 // An item matches the current class filter if it's tagged "All Classes"
 // (general material) or matches the picked class exactly.
+let searchQuery = '';
+function matchesSearch(item){
+  const hay = [item.title,item.dz,item.description,item.subject,item.class_level,item.rtype].join(' ').toLowerCase();
+  return searchQuery.split(/\s+/).every(w=>hay.includes(w));
+}
+function emptyMsg(name){ return searchQuery ? `No ${name} match “${esc(searchQuery)}”` : `No ${name} for ${esc(selectedClass)} yet`; }
 function matchesClass(item){
+  if(searchQuery) return matchesSearch(item);   // searching looks through every class
   if(selectedClass === 'All Classes') return true;
   const c = item.class_level || 'All Classes';
   return c === selectedClass || c === 'All Classes';
@@ -746,7 +781,7 @@ async function renderLessons(){
   if(loadErr) console.error('Could not load lessons:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('lessons-grid');
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>No lessons for ${esc(selectedClass)} yet</p></div>`; return; }
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>${emptyMsg('lessons')}</p></div>`; return; }
   g.innerHTML = items.map(l => {
     const icon = ICONS[l.subject]||'📖';
     const title = lang()==='dz' && l.dz ? l.dz : l.title;
@@ -786,7 +821,7 @@ async function renderResources(){
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('resources-grid');
   const s = session();
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📁</div><p>No resources for ${esc(selectedClass)} yet</p></div>`; return; }
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📁</div><p>${emptyMsg('resources')}</p></div>`; return; }
   g.innerHTML = items.map(r => {
     const icon = RICONS[r.rtype]||'📁';
     const title = lang()==='dz' && r.dz ? r.dz : r.title;
@@ -797,10 +832,10 @@ async function renderResources(){
     const state = loginLocked ? 'locked-anon' : accessState('resources', r);
     const overlay = lockOverlayHtml(state, r);
     return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(r.id)}" data-title="${esc(title)}" data-price="${esc(r.price||0)}">
-      ${thumb
-        ? thumbImg(thumb, ` data-kind="${rk}" style="position:static;width:64px;height:64px;object-fit:cover;border-radius:14px;flex-shrink:0"`)
-        : miniCover(rk)}
-      <div class="resource-info"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.rtype||'')}${r.filesize?' · '+esc(r.filesize):''}${r.class_level && r.class_level!=='All Classes'?' · 🎓 '+esc(r.class_level):''}</div></div>
+      <div class="card-media">${coverHtml(rk)}${thumb ? thumbImg(thumb) : ''}
+        <div class="pill-row">${r.rtype?`<span class="pill">${esc(r.rtype)}</span>`:''}${r.class_level && r.class_level!=='All Classes'?`<span class="pill">${esc(r.class_level)}</span>`:''}</div>
+      </div>
+      <div class="card-body"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.filesize||'')}</div></div>
       ${overlay}
     </div>`;
   }).join('');
@@ -823,7 +858,7 @@ async function renderVideos(){
   if(loadErr) console.error('Could not load videos:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('videos-grid');
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>No videos for ${esc(selectedClass)} yet</p></div>`; return; }
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>${emptyMsg('videos')}</p></div>`; return; }
   g.innerHTML = items.map(v => {
     const title = lang()==='dz' && v.dz ? v.dz : v.title;
     const icon = ICONS[v.subject]||'🎬';
@@ -853,7 +888,7 @@ async function renderArticles(){
   if(loadErr) console.error('Could not load articles:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('blog-grid');
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>No articles for ${esc(selectedClass)} yet</p></div>`; return; }
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>${emptyMsg('articles')}</p></div>`; return; }
   const s = session();
   g.innerHTML = items.map((a,i) => {
     const title = lang()==='dz' && a.dz ? a.dz : a.title;
@@ -926,6 +961,34 @@ async function renderAll(){
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), loadStats()]);
   observeFadeIns();
 }
+
+// ── SEARCH ──
+const searchPanel = document.getElementById('searchPanel');
+const searchInput = document.getElementById('searchInput');
+let searchTimer = null;
+async function runSearch(){
+  searchQuery = searchInput.value.trim().toLowerCase();
+  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles()]);
+  observeFadeIns();
+}
+document.getElementById('searchBtn').addEventListener('click', ()=>{
+  searchPanel.classList.toggle('open');
+  if(searchPanel.classList.contains('open')) searchInput.focus();
+});
+document.getElementById('searchClose').addEventListener('click', ()=>{
+  searchPanel.classList.remove('open'); searchInput.value=''; if(searchQuery) runSearch();
+});
+searchInput.addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 250); });
+searchInput.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') document.getElementById('searchClose').click();
+  if(e.key === 'Enter'){
+    clearTimeout(searchTimer);
+    runSearch().then(()=>{
+      const hit = [['lessons','.lesson-card'],['resources','.resource-card'],['videos','.video-card'],['blog','.blog-card']].find(([id,c])=>document.querySelector('#'+id+' '+c));
+      if(hit) document.getElementById(hit[0]).scrollIntoView({behavior:'smooth'});
+    });
+  }
+});
 
 // ── THEME ──
 html.setAttribute('data-theme', localStorage.getItem('eduTheme')||'dark');
