@@ -730,10 +730,10 @@ window.submitPaymentProof = async function(type, id, price, title){
 
 // ── LOAD STATS (live from Supabase) ──
 async function loadStats(){
-  const [{ count: lCount }, { count: vCount }, { count: uCount }] = await Promise.all([
-    supabase.from('lessons').select('*',{count:'exact',head:true}),
-    supabase.from('videos').select('*',{count:'exact',head:true}),
-    supabase.from('profiles').select('*',{count:'exact',head:true})
+  const [{ count: lCount }, { count: vCount }, { data: uCount }] = await Promise.all([
+    supabase.from('lessons_public').select('*',{count:'exact',head:true}),
+    supabase.from('videos_public').select('*',{count:'exact',head:true}),
+    supabase.rpc('get_member_count')
   ]);
   document.getElementById('st-lessons').textContent = lCount ?? 0;
   document.getElementById('st-videos').textContent  = vCount ?? 0;
@@ -742,7 +742,7 @@ async function loadStats(){
 
 // ── RENDER LESSONS ──
 async function renderLessons(){
-  const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('lessons_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   if(loadErr) console.error('Could not load lessons:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('lessons-grid');
@@ -781,7 +781,7 @@ async function renderLessons(){
 
 // ── RENDER RESOURCES ──
 async function renderResources(){
-  const { data: raw, error: loadErr } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('resources_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   if(loadErr) console.error('Could not load resources:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('resources-grid');
@@ -819,7 +819,7 @@ async function renderResources(){
 
 // ── RENDER VIDEOS ──
 async function renderVideos(){
-  const { data: raw, error: loadErr } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('videos_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   if(loadErr) console.error('Could not load videos:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('videos-grid');
@@ -849,7 +849,7 @@ async function renderVideos(){
 
 // ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
-  const { data: raw, error: loadErr } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('articles_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   if(loadErr) console.error('Could not load articles:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('blog-grid');
