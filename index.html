@@ -4,6 +4,21 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SherigSpace</title>
+<script>
+// Runs immediately, before the page paints, so there is never a flash of
+// the wrong theme. If the visitor has explicitly chosen a theme before,
+// that always wins. Otherwise, a sensible guess is made from the time of
+// day — the module script further down may refine this using a light
+// sensor where the browser actually supports one (most don't; see there).
+(function(){
+  try{
+    var saved = localStorage.getItem('eduTheme');
+    if(saved === 'light' || saved === 'dark'){ document.documentElement.setAttribute('data-theme', saved); return; }
+    var h = new Date().getHours();
+    document.documentElement.setAttribute('data-theme', (h >= 6 && h < 18) ? 'light' : 'dark');
+  }catch(e){ document.documentElement.setAttribute('data-theme','dark'); }
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 @font-face{font-family:'ThinWangTJoyig';src:url('ThinWangTJoyig-Regular.ttf') format('truetype');font-weight:normal;font-style:normal;font-display:swap}
@@ -82,6 +97,25 @@ section{padding:80px 5%}
 .divider{width:48px;height:3px;background:var(--gold);border-radius:2px;margin:1rem 0 1.5rem}
 .class-tabs{display:flex;flex-wrap:wrap;gap:.5rem}
 .class-tab{padding:7px 16px;border-radius:20px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text2);font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+
+/* ── Class-picker sidebar (desktop): a persistent left panel, like the admin dashboard's sidebar ── */
+.browse-layout{display:flex;align-items:flex-start;max-width:1400px;margin:0 auto}
+.class-sidebar{position:sticky;top:68px;align-self:flex-start;width:230px;flex-shrink:0;max-height:calc(100vh - 68px);overflow-y:auto;padding:2.2rem 0 2.2rem 5%}
+.class-sidebar-inner{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:1.3rem 1.1rem;margin-right:1.4rem}
+.class-sidebar-title{font-size:1.05rem;margin:.2rem 0 1rem;padding:0 .3rem}
+.class-sidebar .class-tabs{flex-direction:column;flex-wrap:nowrap;gap:.35rem}
+.class-sidebar .class-tab{width:100%;text-align:left;border-radius:10px}
+.browse-content{flex:1;min-width:0}
+.browse-content section{padding-left:3%}
+
+@media(max-width:900px){
+  .browse-layout{flex-direction:column}
+  .class-sidebar{position:static;width:auto;max-height:none;padding:1.6rem 5% 0}
+  .class-sidebar-inner{margin-right:0}
+  .class-sidebar .class-tabs{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding-bottom:.3rem;-webkit-overflow-scrolling:touch}
+  .class-sidebar .class-tab{width:auto}
+  .browse-content section{padding-left:5%}
+}
 .class-tab:hover{border-color:var(--gold);color:var(--gold-text)}
 .class-tab.active{background:var(--gold);border-color:var(--gold);color:var(--navy)}
 #lessons{background:var(--surface);transition:background .35s}
@@ -341,14 +375,18 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   </div>
 </section>
 
-<!-- CLASS PICKER — the TLM Store's classwise browsing bar -->
-<section id="class-picker-section" style="padding:2rem 5% 0">
-  <div class="inner">
-    <p class="section-label">✦ TLM Store</p>
-    <h2 class="section-title" style="font-size:1.5rem;margin-bottom:1rem">Browse by Class</h2>
-    <div id="class-tabs" class="class-tabs"></div>
-  </div>
-</section>
+<!-- BROWSE — class picker sits fixed on the left (like the admin panel's sidebar); -->
+<!-- Lessons/Resources/Videos/Articles share it, since one class choice filters all four. -->
+<div class="browse-layout">
+  <aside class="class-sidebar">
+    <div class="class-sidebar-inner">
+      <p class="section-label" data-en="✦ TLM Store" data-dz="✦ ཡིག་ཆའི་བང་མཛོད།">✦ TLM Store</p>
+      <h2 class="class-sidebar-title" data-en="Browse by Class" data-dz="དབྱེ་རིམ་བརྒྱུད་འཚོལ་ཞིབ།">Browse by Class</h2>
+      <div id="class-tabs" class="class-tabs"></div>
+    </div>
+  </aside>
+
+  <div class="browse-content">
 
 <!-- LESSONS -->
 <section id="lessons">
@@ -401,6 +439,10 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     <div class="blog-grid" id="blog-grid"></div>
   </div>
 </section>
+
+  </div>
+</div>
+
 
 <!-- ABOUT -->
 <section id="about">
@@ -765,10 +807,10 @@ window.submitPaymentProof = async function(type, id, price, title){
 
 // ── LOAD STATS (live from Supabase) ──
 async function loadStats(){
-  const [{ count: lCount }, { count: vCount }, { count: uCount }] = await Promise.all([
-    supabase.from('lessons').select('*',{count:'exact',head:true}),
-    supabase.from('videos').select('*',{count:'exact',head:true}),
-    supabase.from('profiles').select('*',{count:'exact',head:true})
+  const [{ count: lCount }, { count: vCount }, { data: uCount }] = await Promise.all([
+    supabase.from('lessons_public').select('*',{count:'exact',head:true}),
+    supabase.from('videos_public').select('*',{count:'exact',head:true}),
+    supabase.rpc('get_member_count')
   ]);
   document.getElementById('st-lessons').textContent = lCount ?? 0;
   document.getElementById('st-videos').textContent  = vCount ?? 0;
@@ -777,7 +819,7 @@ async function loadStats(){
 
 // ── RENDER LESSONS ──
 async function renderLessons(){
-  const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('lessons_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   if(loadErr) console.error('Could not load lessons:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('lessons-grid');
@@ -816,7 +858,7 @@ async function renderLessons(){
 
 // ── RENDER RESOURCES ──
 async function renderResources(){
-  const { data: raw, error: loadErr } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('resources_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   if(loadErr) console.error('Could not load resources:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('resources-grid');
@@ -854,7 +896,7 @@ async function renderResources(){
 
 // ── RENDER VIDEOS ──
 async function renderVideos(){
-  const { data: raw, error: loadErr } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('videos_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   if(loadErr) console.error('Could not load videos:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('videos-grid');
@@ -884,7 +926,7 @@ async function renderVideos(){
 
 // ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
-  const { data: raw, error: loadErr } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await supabase.from('articles_public').select('*').order('created_at',{ascending:false,nullsFirst:false});
   if(loadErr) console.error('Could not load articles:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('blog-grid');
@@ -991,10 +1033,39 @@ searchInput.addEventListener('keydown', e=>{
 });
 
 // ── THEME ──
-html.setAttribute('data-theme', localStorage.getItem('eduTheme')||'dark');
+// The inline script in <head> already set the right theme before paint —
+// this just keeps it current for as long as the page stays open, and only
+// while the visitor hasn't explicitly picked a theme themselves (that
+// choice, once made, always wins — this never overrides it).
+function hasExplicitTheme(){ return localStorage.getItem('eduTheme') === 'light' || localStorage.getItem('eduTheme') === 'dark'; }
+function timeBasedTheme(){ const h = new Date().getHours(); return (h >= 6 && h < 18) ? 'light' : 'dark'; }
+function applyAutoTheme(){ if(!hasExplicitTheme()) html.setAttribute('data-theme', timeBasedTheme()); }
+
+applyAutoTheme();
+setInterval(applyAutoTheme, 5 * 60 * 1000);   // catches sunrise/sunset if the tab is left open
+
+// Best-effort: use the device's actual light level instead of just the
+// clock, on the few browsers that support it. As of today that's
+// essentially none — Safari and Firefox never shipped it, and Chrome
+// removed it from general use over fingerprinting concerns — so in
+// practice almost everyone gets the time-based guess above, which is
+// why it's the one actually relied on. This upgrades things silently
+// wherever a browser does allow it, and does nothing otherwise.
+if('AmbientLightSensor' in window){
+  try{
+    const sensor = new window.AmbientLightSensor({ frequency: 0.2 });
+    sensor.addEventListener('reading', () => {
+      if(hasExplicitTheme()) return;
+      html.setAttribute('data-theme', sensor.illuminance < 15 ? 'dark' : 'light');
+    });
+    sensor.addEventListener('error', () => {});   // permission denied / not supported here either — fine, time-based guess stands
+    sensor.start();
+  }catch(e){ /* not available in this browser — the time-based guess above already applied */ }
+}
+
 document.getElementById('themeToggle').addEventListener('click',()=>{
   const n = html.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme',n); localStorage.setItem('eduTheme',n);
+  html.setAttribute('data-theme',n); localStorage.setItem('eduTheme',n);   // an explicit choice — auto mode steps aside from here on
 });
 
 // ── LANGUAGE ──
