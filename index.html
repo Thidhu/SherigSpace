@@ -311,7 +311,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .dash-wrap #about .section-label{color:var(--gold-text)}
 .dash-wrap #about .section-desc{color:var(--text2)}
 .dash-wrap footer{margin:0 -5% -3rem;border-radius:0}
-.banner{position:relative;border-radius:18px;overflow:hidden;min-height:190px;display:flex;align-items:center;padding:2rem 2.4rem;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 60%,var(--hero3) 100%);margin-bottom:1.8rem}
+.banner{position:relative;border-radius:18px;overflow:hidden;min-height:190px;display:flex;align-items:center;padding:2rem 2.4rem;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 60%,var(--hero3) 100%);background-size:cover;background-position:center;transition:background-image .3s;margin-bottom:1.8rem}
 .banner::before{content:'';position:absolute;top:-70px;right:-70px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.14) 0%,transparent 70%);pointer-events:none}
 .banner-slide{display:none;position:relative;z-index:1;max-width:640px}
 .banner-slide.active{display:block;animation:fadeUp .6s ease both}
@@ -390,21 +390,6 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 
     <div class="dash-wrap">
       <div class="banner" id="home">
-        <div class="banner-slide active">
-          <div class="banner-tag" data-en="✦ Welcome to My Teaching & Learning Space" data-dz="✦ ངེའི་སློབ་སྟོན་གྱི་ཞིང་ཁམས་ནང་བྱོན་པ་ལེགས་སོ།">✦ Welcome to My Teaching & Learning Space</div>
-          <h1 class="banner-title" data-en="Enhancing Dzongkha Learning through <span>Modern Digital Tools</span>" data-dz="དེང་སང་གློག་རིག་ཐོག་ <span>རྫོང་ཁ་ལྷབ་སྦྱང་ཡར་རྒྱས།</span>">Enhancing Dzongkha Learning through <span>Modern Digital Tools</span></h1>
-          <p class="banner-desc" data-en="Browse lessons, download resources, watch videos, and join the learning community." data-dz="རྫོང་ཁའི་སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཕན་ཚུན་འབྲེལ་བའི་བརྙན་ཐུང་གི་བང་མཛོད།">Browse lessons, download resources, watch videos, and join the learning community.</p>
-        </div>
-        <div class="banner-slide">
-          <div class="banner-tag" data-en="✦ Teaching Lessons" data-dz="✦ སློབ་སྟོན།">✦ Teaching Lessons</div>
-          <h1 class="banner-title" data-en="Structured Lessons for <span>Every Class</span>" data-dz="<span>འཛིན་གྲྭ་རེ་རེ</span>བཞིན་གྱི་སློབ་སྟོན།">Structured Lessons for <span>Every Class</span></h1>
-          <p class="banner-desc" data-en="Clear, well-organized lessons designed for real classroom understanding." data-dz="གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།">Clear, well-organized lessons designed for real classroom understanding.</p>
-        </div>
-        <div class="banner-slide">
-          <div class="banner-tag" data-en="✦ Resources & Videos" data-dz="✦ ཡིག་ཆ་དང་བརྙན་ཐུང་།">✦ Resources & Videos</div>
-          <h1 class="banner-title" data-en="Worksheets, Guides & <span>Video Lessons</span>" data-dz="ཡིག་ཆ་དང་<span>བརྙན་ཐུང་།</span>">Worksheets, Guides & <span>Video Lessons</span></h1>
-          <p class="banner-desc" data-en="Everything you need to practice and learn at your own pace." data-dz="ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་མཁོ་ཆས།">Everything you need to practice and learn at your own pace.</p>
-        </div>
         <div class="banner-dots" id="bannerDots"></div>
       </div>
 
@@ -1034,7 +1019,7 @@ async function renderAll(){
   renderNav();
   renderClassTabs();
   await Promise.all([loadSiteSettings(), loadMyPurchases()]);
-  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), loadStats()]);
+  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), loadStats(), renderBanner()]);
   observeFadeIns();
 }
 
@@ -1059,22 +1044,62 @@ searchInput.addEventListener('keydown', e=>{
 });
 
 // ── BANNER CAROUSEL ──
-(function(){
-  const slides = Array.from(document.querySelectorAll('#home .banner-slide'));
+// Slides come from the admin's "Banners" section; when none have been added
+// yet, these three built-in slides are shown instead (same as before).
+const DEFAULT_BANNERS = [
+  { title:'Enhancing Dzongkha Learning through <span>Modern Digital Tools</span>', dz:'དེང་སང་གློག་རིག་ཐོག་ <span>རྫོང་ཁ་ལྷབ་སྦྱང་ཡར་རྒྱས།</span>',
+    tag:'✦ Welcome to My Teaching & Learning Space', tag_dz:'✦ ངེའི་སློབ་སྟོན་གྱི་ཞིང་ཁམས་ནང་བྱོན་པ་ལེགས་སོ།',
+    description:'Browse lessons, download resources, watch videos, and join the learning community.',
+    description_dz:'རྫོང་ཁའི་སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཕན་ཚུན་འབྲེལ་བའི་བརྙན་ཐུང་གི་བང་མཛོད།', image_url:null, _default:true },
+  { title:'Structured Lessons for <span>Every Class</span>', dz:'<span>འཛིན་གྲྭ་རེ་རེ</span>བཞིན་གྱི་སློབ་སྟོན།',
+    tag:'✦ Teaching Lessons', tag_dz:'✦ སློབ་སྟོན།',
+    description:'Clear, well-organized lessons designed for real classroom understanding.',
+    description_dz:'གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།', image_url:null, _default:true },
+  { title:'Worksheets, Guides & <span>Video Lessons</span>', dz:'ཡིག་ཆ་དང་<span>བརྙན་ཐུང་།</span>',
+    tag:'✦ Resources & Videos', tag_dz:'✦ ཡིག་ཆ་དང་བརྙན་ཐུང་།',
+    description:'Everything you need to practice and learn at your own pace.',
+    description_dz:'ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་མཁོ་ཆས།', image_url:null, _default:true }
+];
+let bannerData = null;         // fetched once, then just re-read on language change
+let bannerRestart = null;      // set once the carousel is wired up
+async function renderBanner(){
+  if(!bannerData){
+    const { data, error } = await supabase.from('banners').select('*').order('sort_order',{ascending:true});
+    if(error) console.error('Could not load banners:', error);
+    bannerData = (data && data.length) ? data : DEFAULT_BANNERS;
+  }
+  const wrap = document.getElementById('home');
   const dotsWrap = document.getElementById('bannerDots');
+  wrap.querySelectorAll('.banner-slide').forEach(el=>el.remove());
+  bannerData.forEach((b,i)=>{
+    const title = lang()==='dz' && b.dz ? b.dz : (b.title||'');
+    const tag = lang()==='dz' && b.tag_dz ? b.tag_dz : (b.tag||'');
+    const desc = lang()==='dz' && b.description_dz ? b.description_dz : (b.description||'');
+    const el = document.createElement('div');
+    el.className = 'banner-slide' + (i===0?' active':'');
+    el.innerHTML = `${tag?`<div class="banner-tag">${esc(tag)}</div>`:''}<h1 class="banner-title">${b._default ? title : esc(title)}</h1>${desc?`<p class="banner-desc">${esc(desc)}</p>`:''}`;
+    wrap.insertBefore(el, dotsWrap);
+  });
+  const slides = Array.from(wrap.querySelectorAll('.banner-slide'));
   if(!slides.length) return;
   dotsWrap.innerHTML = slides.map((_,i)=>`<span class="banner-dot${i===0?' active':''}" data-i="${i}"></span>`).join('');
   const dots = Array.from(dotsWrap.children);
   let cur = 0, timer = null;
+  function applyBg(i){
+    const img = safeUrl(bannerData[i] && bannerData[i].image_url);
+    wrap.style.backgroundImage = img ? `linear-gradient(135deg,rgba(15,22,35,.72),rgba(26,47,80,.5)), url('${img.replace(/'/g,"%27")}')` : '';
+  }
   function show(i){
     cur = (i+slides.length)%slides.length;
     slides.forEach((s,j)=>s.classList.toggle('active', j===cur));
     dots.forEach((d,j)=>d.classList.toggle('active', j===cur));
+    applyBg(cur);
   }
   function restart(){ clearInterval(timer); timer = setInterval(()=>show(cur+1), 6000); }
   dots.forEach(d=>d.addEventListener('click', ()=>{ show(Number(d.getAttribute('data-i'))); restart(); }));
+  applyBg(0);
   restart();
-})();
+}
 
 // ── THEME ──
 html.setAttribute('data-theme', localStorage.getItem('eduTheme')||'dark');
