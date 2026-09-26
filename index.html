@@ -286,6 +286,12 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .side-link:hover{background:rgba(201,168,76,.07);color:var(--gold-light)}
 .side-link.active{background:rgba(201,168,76,.12);color:var(--gold);border-left-color:var(--gold)}
 .sidebar-footer{border-top:1px solid var(--border);padding:.6rem 0;flex-shrink:0}
+.sidebar-classes{border-top:1px solid var(--border);padding:.9rem 1.3rem 1.1rem;flex-shrink:0}
+.sidebar-classes h6{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-text);margin-bottom:.7rem;font-weight:700}
+.sidebar-classes .class-tabs{display:flex;flex-direction:column;gap:.3rem;flex-wrap:nowrap}
+.sidebar-classes .class-tab{width:100%;text-align:left;border-radius:8px;padding:.5rem .7rem;font-size:.8rem;font-weight:500;background:transparent;border:1px solid transparent;color:rgba(255,255,255,.65);white-space:normal}
+.sidebar-classes .class-tab:hover{background:rgba(201,168,76,.08);color:var(--gold-light);border-color:transparent}
+.sidebar-classes .class-tab.active{background:rgba(201,168,76,.15);color:var(--gold);border-color:transparent}
 .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:149}
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
 .topbar{position:sticky;top:0;z-index:120;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;gap:1rem;padding:0 1.4rem;height:66px;border-bottom:1px solid var(--border)}
@@ -364,6 +370,10 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <a class="side-link" href="#about" data-section="about"><span class="si">👤</span><span data-en="About" data-dz="ང་རའི་སྐོར།">About</span></a>
     </nav>
     <div class="sidebar-footer" id="sidebarFooter"></div>
+    <div class="sidebar-classes">
+      <h6>✦ Browse by Class</h6>
+      <div id="class-tabs" class="class-tabs"></div>
+    </div>
   </aside>
 
   <div class="main">
@@ -387,12 +397,6 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <div class="banner" id="home">
         <div class="banner-dots" id="bannerDots"></div>
       </div>
-
-      <section id="class-picker-section" style="padding:0 0 1.6rem">
-        <p class="section-label">✦ Browse</p>
-        <h2 class="section-title" style="font-size:1.35rem;margin-bottom:1rem">Browse by Class</h2>
-        <div id="class-tabs" class="class-tabs"></div>
-      </section>
 
       <div class="dash-grid">
         <div class="dash-content">
@@ -586,13 +590,24 @@ document.addEventListener('error', function(e){
   img.remove();   // the icon underneath shows instead
 }, true);
 
-const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
-let selectedClass = localStorage.getItem('edu_selected_class') || 'All Classes';
+// Class levels are grouped into bands for browsing; each item is still tagged
+// with one specific class (or "All Classes" for general content) in the admin panel.
+const CLASS_GROUPS = [
+  { label:'PP & 1',  levels:['PP','Class 1'] },
+  { label:'2 & 3',   levels:['Class 2','Class 3'] },
+  { label:'4 to 6',  levels:['Class 4','Class 5','Class 6'] },
+  { label:'7 & 8',   levels:['Class 7','Class 8'] },
+  { label:'9 & 10',  levels:['Class 9','Class 10'] },
+  { label:'11 & 12', levels:['Class 11','Class 12'] },
+  { label:'General', levels:['All Classes'] }
+];
+const storedClass = localStorage.getItem('edu_selected_class');
+let selectedClass = CLASS_GROUPS.some(g=>g.label===storedClass) ? storedClass : CLASS_GROUPS[0].label;
 
 function renderClassTabs(){
   const wrap = document.getElementById('class-tabs');
-  wrap.innerHTML = CLASS_LEVELS.map(c =>
-    `<button class="class-tab${c===selectedClass?' active':''}" data-class="${esc(c)}">${c==='All Classes'?'All':esc(c)}</button>`
+  wrap.innerHTML = CLASS_GROUPS.map(g =>
+    `<button class="class-tab${g.label===selectedClass?' active':''}" data-class="${esc(g.label)}">${esc(g.label)}</button>`
   ).join('');
   wrap.querySelectorAll('.class-tab').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
@@ -617,9 +632,10 @@ function matchesSearch(item){
 function emptyMsg(name){ return searchQuery ? `No ${name} match “${esc(searchQuery)}”` : `No ${name} for ${esc(selectedClass)} yet`; }
 function matchesClass(item){
   if(searchQuery) return matchesSearch(item);   // searching looks through every class
-  if(selectedClass === 'All Classes') return true;
   const c = item.class_level || 'All Classes';
-  return c === selectedClass || c === 'All Classes';
+  if(c === 'All Classes') return true;          // general content shows under every group
+  const group = CLASS_GROUPS.find(g=>g.label===selectedClass);
+  return group ? group.levels.includes(c) : true;
 }
 
 function lang(){ return html.getAttribute('data-lang'); }
