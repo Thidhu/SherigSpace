@@ -88,7 +88,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .task-att span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
 .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
-.class-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
+.class-card{position:relative;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
+.class-del{position:absolute;top:.6rem;right:.6rem}
 .class-card:hover{transform:translateY(-3px)}
 .class-card h4{font-family:'Playfair Display',serif;color:var(--text);margin-bottom:.4rem}
 @media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
@@ -171,6 +172,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="phead">
         <div>
           <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem" data-en="← Back to Classes" data-dz="← དཔྱེ་སློབ་ལུ་ལོག">← Back to Classes</button>
+          <button class="btn btn-del btn-sm" onclick="deleteCurrentClass()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="🗑 Delete Class" data-dz="🗑 དཔྱེ་སློབ་བཏོན་གཏང">🗑 Delete Class</button>
           <div class="ptitle" id="detail-class-name">Class</div>
           <div class="psub"><span data-en="Students log in with this class name:" data-dz="སློབ་ཕྲུག་ཚུ་གིས་འ་ནི་དཔྱེ་སློབ་མིང་འདི་གིས་ནང་འཛུལ་འབད:">Students log in with this class name:</span> <span class="class-code-badge" id="detail-class-code">—</span></div>
         </div>
@@ -221,8 +223,8 @@ let currentClassId = null;
 let siteSettings = {};
 let subActive = false;
 let subRow = null;
-const FREE_MAX_CLASSES = 1;
-const FREE_MAX_STUDENTS = 20;
+const FREE_MAX_CLASSES = 3;
+const FREE_MAX_STUDENTS = 30;
 const CLASS_LEVELS=['PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
 
 function toast(msg, isErr=false){
@@ -316,6 +318,7 @@ async function renderClasses(){
   const el = document.getElementById('classes-list');
   el.innerHTML = data?.length ? data.map(c=>`
     <div class="class-card" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(loginText(c))}')">
+      <button type="button" class="btn btn-del btn-sm class-del" onclick="event.stopPropagation();deleteClass('${esc(c.id)}','${esc(c.name)}')" title="${T('Delete class','དཔྱེ་སློབ་བཏོན་གཏང')}">✕</button>
       <h4>${esc(c.name)}</h4>
       <div style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem">${esc(c.class_level||'')}</div>
       <span class="class-code-badge">${esc(loginText(c))}</span>
@@ -326,7 +329,7 @@ window.openClassForm = async function(){
   if(!subActive){
     const { data: myClasses } = await supabase.from('classes').select('id').eq('teacher_id', me.id);
     if((myClasses?.length||0) >= FREE_MAX_CLASSES){
-      toast(T('Free plan allows 1 class. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་དཔྱེ་སློབ་གཅིག་རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
+      toast(T('Free plan allows 3 classes. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་དཔྱེ་སློབ་གསུམ་རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
       go('billing');
       return;
     }
@@ -344,7 +347,7 @@ window.openClassForm = async function(){
     if(!subActive){
       const { data: myClasses } = await supabase.from('classes').select('id').eq('teacher_id', me.id);
       if((myClasses?.length||0) >= FREE_MAX_CLASSES){
-        toast(T('Free plan allows 1 class. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་དཔྱེ་སློབ་གཅིག་རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
+        toast(T('Free plan allows 3 classes. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་དཔྱེ་སློབ་གསུམ་རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
         closeModal(); go('billing');
         return;
       }
@@ -360,6 +363,23 @@ window.openClassForm = async function(){
     toast(T('Class created ✓','དཔྱེ་སློབ་གསར་བསྐྲུན་འབད་ཚར་ཡོད ✓')); closeModal(); renderClasses();
   };
   document.getElementById('overlay').classList.add('open');
+};
+
+window.deleteClass = async function(id, name){
+  const warn = T(
+    'Delete "' + name + '"? This also removes its students and assignments — this cannot be undone.',
+    '"' + name + '" བཏོན་གཏང་ནི་ག? འདི་གིས་དེའི་སློབ་ཕྲུག་དང་ལཱ་ཁག་ཡང་བཏོན་གཏང་འོང་། ཤུལ་ལས་སླར་གསོ་མི་ཚུགས།'
+  );
+  if(!confirm(warn)) return;
+  const { error } = await supabase.from('classes').delete().eq('id', id);
+  if(error){ toast(T('Error: ','འཛོལ་བ: ')+error.message, true); return; }
+  toast(T('Class deleted.','དཔྱེ་སློབ་བཏོན་གཏང་ཡོད།'));
+  if(currentClassId === id){ currentClassId = null; go('classes'); }
+  renderClasses();
+};
+window.deleteCurrentClass = function(){
+  if(!currentClassId) return;
+  deleteClass(currentClassId, document.getElementById('detail-class-name').textContent);
 };
 
 window.openClass = function(id, name, code){
@@ -394,7 +414,7 @@ window.openStudentForm = async function(){
   if(!subActive){
     const { data: myStudents } = await supabase.from('class_students').select('id').eq('class_id', currentClassId);
     if((myStudents?.length||0) >= FREE_MAX_STUDENTS){
-      toast(T('Free plan allows 20 students. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་སློབ་ཕྲུག་ ༢༠ རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
+      toast(T('Free plan allows 30 students. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་སློབ་ཕྲུག་ ༣༠ རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
       go('billing');
       return;
     }
@@ -414,7 +434,7 @@ window.openStudentForm = async function(){
     if(!subActive){
       const { data: myStudents } = await supabase.from('class_students').select('id').eq('class_id', currentClassId);
       if((myStudents?.length||0) >= FREE_MAX_STUDENTS){
-        toast(T('Free plan allows 20 students. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་སློབ་ཕྲུག་ ༢༠ རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
+        toast(T('Free plan allows 30 students. Upgrade for more.','རིན་མེད་འཆར་གཞིའི་ཐོག་ལུ་སློབ་ཕྲུག་ ༣༠ རྐྱངམ་ཅིག་ཆོག། མང་སུ་དོན་ལུ་འོས་སྦྱོར་འབད'), true);
         closeModal(); go('billing');
         return;
       }
