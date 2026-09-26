@@ -294,7 +294,8 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .sidebar-classes .class-tab.active{background:rgba(201,168,76,.15);color:var(--gold);border-color:transparent}
 .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:149}
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
-.topbar{position:sticky;top:0;z-index:120;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;gap:1rem;padding:0 1.4rem;height:66px;border-bottom:1px solid var(--border)}
+.topbar{position:fixed;top:0;left:230px;right:0;z-index:120;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;gap:1rem;padding:0 1.4rem;height:66px;border-bottom:1px solid var(--border)}
+.main{padding-top:66px}
 .sidebar-hamburger{display:none;width:26px;height:20px;flex-direction:column;justify-content:space-between;cursor:pointer;background:none;border:none;padding:0;flex-shrink:0}
 .sidebar-hamburger span{display:block;height:2px;width:100%;background:var(--gold);border-radius:2px}
 .topbar-search{flex:1;max-width:440px;display:flex;align-items:center;gap:.55rem;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:8px 14px;transition:border-color .2s}
@@ -323,27 +324,22 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .banner-dots{position:absolute;bottom:1.3rem;left:5%;display:flex;gap:.4rem;z-index:1}
 .banner-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:background .2s}
 .banner-dot.active{background:var(--gold)}
-.dash-grid{display:grid;grid-template-columns:1fr 300px;gap:1.8rem;align-items:start}
 .dash-content{min-width:0}
-.right-panel{display:flex;flex-direction:column;gap:1.2rem;position:sticky;top:88px}
-.rp-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:1.4rem;box-shadow:var(--shadow)}
-.rp-avatar{width:56px;height:56px;border-radius:50%;background:var(--gold);color:#1a2340;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.25rem;margin:0 auto .7rem}
-.rp-name{text-align:center;font-family:'Playfair Display',serif;font-weight:700;color:var(--text);font-size:1.02rem}
-.rp-role{text-align:center;font-size:.76rem;color:var(--gold-text);margin-bottom:1rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.rp-stat-row{display:flex;justify-content:space-between;font-size:.83rem;color:var(--text2);padding:.5rem 0;border-bottom:1px solid var(--card-border)}
-.rp-stat-row:last-child{border-bottom:none}
-.rp-stat-row b{color:var(--text);font-family:'Playfair Display',serif}
-.rp-card h5{font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-text);margin-bottom:.9rem;font-weight:700}
-.rp-link{display:flex;align-items:center;gap:.6rem;padding:.55rem 0;color:var(--text2);text-decoration:none;font-size:.85rem;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--font-en)}
-.rp-link:hover{color:var(--gold-text)}
-.rp-link.danger{color:#e05c5c}
+.sidebar-profile{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.3rem;cursor:pointer;border-top:1px solid var(--border);transition:background .15s;flex-shrink:0}
+.sidebar-profile:hover{background:rgba(201,168,76,.07)}
+.sp-avatar{width:38px;height:38px;border-radius:50%;background:var(--gold);color:#1a2340;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+.sp-info{min-width:0}
+.sp-name{font-size:.85rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-role{font-size:.7rem;color:var(--gold-text);text-transform:uppercase;letter-spacing:.04em}
+.sidebar-stats{display:flex;justify-content:space-between;gap:.4rem;padding:.7rem 1.3rem;border-top:1px solid var(--border);flex-shrink:0}
+.sidebar-stats div{display:flex;flex-direction:column;align-items:center;font-size:.66rem;color:rgba(255,255,255,.55);text-align:center}
+.sidebar-stats b{font-family:'Playfair Display',serif;font-size:1rem;color:var(--gold);font-weight:700}
 @media(max-width:900px){
   .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%)}
   .sidebar.open{transform:translateX(0)}
   .sidebar-backdrop.open{display:block}
   .sidebar-hamburger{display:flex}
-  .dash-grid{grid-template-columns:1fr}
-  .right-panel{position:static}
+  .topbar{left:0}
 }
 @media(max-width:560px){
   .topbar{padding:0 4%;gap:.6rem}
@@ -369,6 +365,18 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
       <a class="side-link" href="#about" data-section="about"><span class="si">👤</span><span data-en="About" data-dz="ང་རའི་སྐོར།">About</span></a>
     </nav>
+    <div class="sidebar-profile" onclick="openProfile()">
+      <div class="sp-avatar" id="rpAvatar">··</div>
+      <div class="sp-info">
+        <div class="sp-name" id="rpName">…</div>
+        <div class="sp-role" id="rpRole">Member</div>
+      </div>
+    </div>
+    <div class="sidebar-stats">
+      <div><b id="st-lessons">…</b><span data-en="Lessons" data-dz="སློབ་ཚན།">Lessons</span></div>
+      <div><b id="st-videos">…</b><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></div>
+      <div><b id="st-users">…</b><span data-en="Members" data-dz="འཐུས་མི།">Members</span></div>
+    </div>
     <div class="sidebar-footer" id="sidebarFooter"></div>
     <div class="sidebar-classes">
       <h6>✦ Browse by Class</h6>
@@ -398,8 +406,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
         <div class="banner-dots" id="bannerDots"></div>
       </div>
 
-      <div class="dash-grid">
-        <div class="dash-content">
+      <div class="dash-content">
 
 <!-- LESSONS -->
 <section id="lessons">
@@ -487,23 +494,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   </div>
 </section>
 
-        </div><!-- /dash-content -->
-
-        <aside class="right-panel">
-          <div class="rp-card" style="cursor:pointer" onclick="openProfile()">
-            <div class="rp-avatar" id="rpAvatar">··</div>
-            <div class="rp-name" id="rpName">…</div>
-            <div class="rp-role" id="rpRole">Member</div>
-          </div>
-          <div class="rp-card">
-            <h5>SherigSpace</h5>
-            <div class="rp-stat-row"><span data-en="Lessons" data-dz="སློབ་ཚན།">Lessons</span><b id="st-lessons">…</b></div>
-            <div class="rp-stat-row"><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span><b id="st-videos">…</b></div>
-            <div class="rp-stat-row"><span data-en="Members" data-dz="འཐུས་མི།">Members</span><b id="st-users">…</b></div>
-          </div>
-          <div class="rp-card" id="rpLinks"></div>
-        </aside>
-      </div><!-- /dash-grid -->
+      </div><!-- /dash-content -->
 
       <footer><p>© 2026 <span class="gold">ཤེས་རིགSpace</span> · <span data-en="Built with care for better education, particularly Dzongkha" data-dz="རྫོང་ཁའི་ཤེས་ཡོན་ཡར་རྒྱས་གཏང་ཐབས་ལུ་དམིགས་ཏེ་བཟོ་ཡོདཔ་ཨིན།">Built with care for better education</span></p></footer>
     </div><!-- /dash-wrap -->
@@ -660,9 +651,6 @@ function renderNav(){
   document.getElementById('rpAvatar').textContent = initials;
   document.getElementById('rpName').textContent = s.name;
   document.getElementById('rpRole').textContent = s.class_grade || s.role || 'Member';
-  const adminLink = s.role === 'admin' ? `<a class="rp-link" href="admin.html">🛠️ <span>Admin Panel</span></a>` : '';
-  document.getElementById('rpLinks').innerHTML =
-    `<a class="rp-link" href="teacher.html">👨‍🏫 <span>Teacher Dashboard</span></a>${adminLink}<a class="rp-link danger" onclick="logout()">🔒 <span>Log Out</span></a>`;
   const adminSide = s.role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
   document.getElementById('sidebarFooter').innerHTML =
     `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher</span></a>${adminSide}<a class="side-link" onclick="logout()"><span class="si">🔒</span><span>Log Out</span></a>`;
