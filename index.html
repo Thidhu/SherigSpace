@@ -277,77 +277,145 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .search-box input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font-en);font-size:.95rem;padding:6px 0}
 .search-box input::placeholder{color:var(--text2)}
 .search-box button{background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer;padding:4px 8px}
+
+/* ═══════════════════ DASHBOARD LAYOUT (sidebar + topbar + banner + right panel) ═══════════════════ */
+#gate-loader{position:fixed;inset:0;z-index:9999;background:#0f1623;color:#e8e4dc;display:flex;align-items:center;justify-content:center;font-family:var(--font-en);text-align:center}
+#gate-loader .gl-icon{font-size:2.2rem;margin-bottom:.6rem}
+#gate-loader p{color:#9aa3b8;font-size:.9rem}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:#0d1420;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:150;transition:transform .25s}
+.sidebar-logo{padding:1.3rem 1.3rem 1.1rem;font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--gold);text-decoration:none;display:block;border-bottom:1px solid var(--border);flex-shrink:0}
+.side-nav{flex:1;overflow-y:auto;padding:.7rem 0}
+.side-link{display:flex;align-items:center;gap:.8rem;padding:.7rem 1.3rem;color:rgba(255,255,255,.72);text-decoration:none;font-size:.87rem;font-weight:500;cursor:pointer;border-left:3px solid transparent;transition:background .15s,color .15s}
+.side-link .si{width:18px;text-align:center;font-size:.95rem;flex-shrink:0}
+.side-link:hover{background:rgba(201,168,76,.07);color:var(--gold-light)}
+.side-link.active{background:rgba(201,168,76,.12);color:var(--gold);border-left-color:var(--gold)}
+.sidebar-footer{border-top:1px solid var(--border);padding:.6rem 0;flex-shrink:0}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:149}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:120;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;gap:1rem;padding:0 1.4rem;height:66px;border-bottom:1px solid var(--border)}
+.sidebar-hamburger{display:none;width:26px;height:20px;flex-direction:column;justify-content:space-between;cursor:pointer;background:none;border:none;padding:0;flex-shrink:0}
+.sidebar-hamburger span{display:block;height:2px;width:100%;background:var(--gold);border-radius:2px}
+.topbar-search{flex:1;max-width:440px;display:flex;align-items:center;gap:.55rem;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:8px 14px;transition:border-color .2s}
+.topbar-search:focus-within{border-color:var(--gold)}
+.topbar-search input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font-en);font-size:.88rem}
+.topbar-search input::placeholder{color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:.6rem;margin-left:auto;flex-shrink:0}
+.topbar-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold);color:#1a2340;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;cursor:pointer;flex-shrink:0}
+.dash-wrap{padding:1.6rem 5% 3rem;flex:1;width:100%}
+.dash-wrap .inner{max-width:100%;margin:0}
+.dash-wrap section{padding:0 0 2.6rem}
+.dash-wrap #about{background:none;padding:1.5rem 0 2.6rem}
+.dash-wrap #about .about-inner{gap:2.5rem;grid-template-columns:220px 1fr}
+.dash-wrap #about .section-title,.dash-wrap #about .section-label,.dash-wrap #about .section-desc{color:var(--text)}
+.dash-wrap #about .section-label{color:var(--gold-text)}
+.dash-wrap #about .section-desc{color:var(--text2)}
+.dash-wrap footer{margin:0 -5% -3rem;border-radius:0}
+.banner{position:relative;border-radius:18px;overflow:hidden;min-height:190px;display:flex;align-items:center;padding:2rem 2.4rem;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 60%,var(--hero3) 100%);margin-bottom:1.8rem}
+.banner::before{content:'';position:absolute;top:-70px;right:-70px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.14) 0%,transparent 70%);pointer-events:none}
+.banner-slide{display:none;position:relative;z-index:1;max-width:640px}
+.banner-slide.active{display:block;animation:fadeUp .6s ease both}
+.banner-tag{display:inline-block;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold-light);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:1rem}
+.banner-title{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,3vw,2.1rem);font-weight:700;color:#fff;line-height:1.25;margin-bottom:.6rem}
+.banner-title span{color:var(--gold)}
+.banner-desc{color:rgba(255,255,255,.65);font-size:.92rem;line-height:1.6}
+.banner-dots{position:absolute;bottom:1.1rem;left:2.4rem;display:flex;gap:.4rem;z-index:1}
+.banner-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:background .2s}
+.banner-dot.active{background:var(--gold)}
+.dash-grid{display:grid;grid-template-columns:1fr 300px;gap:1.8rem;align-items:start}
+.dash-content{min-width:0}
+.right-panel{display:flex;flex-direction:column;gap:1.2rem;position:sticky;top:88px}
+.rp-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:1.4rem;box-shadow:var(--shadow)}
+.rp-avatar{width:56px;height:56px;border-radius:50%;background:var(--gold);color:#1a2340;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.25rem;margin:0 auto .7rem}
+.rp-name{text-align:center;font-family:'Playfair Display',serif;font-weight:700;color:var(--text);font-size:1.02rem}
+.rp-role{text-align:center;font-size:.76rem;color:var(--gold-text);margin-bottom:1rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.rp-stat-row{display:flex;justify-content:space-between;font-size:.83rem;color:var(--text2);padding:.5rem 0;border-bottom:1px solid var(--card-border)}
+.rp-stat-row:last-child{border-bottom:none}
+.rp-stat-row b{color:var(--text);font-family:'Playfair Display',serif}
+.rp-card h5{font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-text);margin-bottom:.9rem;font-weight:700}
+.rp-link{display:flex;align-items:center;gap:.6rem;padding:.55rem 0;color:var(--text2);text-decoration:none;font-size:.85rem;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--font-en)}
+.rp-link:hover{color:var(--gold-text)}
+.rp-link.danger{color:#e05c5c}
+@media(max-width:900px){
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-backdrop.open{display:block}
+  .sidebar-hamburger{display:flex}
+  .dash-grid{grid-template-columns:1fr}
+  .right-panel{position:static}
+}
+@media(max-width:560px){
+  .topbar{padding:0 4%;gap:.6rem}
+  .topbar-search{max-width:none}
+  .dash-wrap{padding:1.2rem 4% 2rem}
+  .banner{padding:1.6rem}
+}
 </style>
 </head>
 <body>
 
-<nav>
-  <a href="#home" class="nav-logo">SherigSpace</a>
-  <ul class="nav-links">
-    <li><a href="#home"      data-en="Home"      data-dz="གདོང་ཤོག">Home</a></li>
-    <li><a href="#lessons"   data-en="Lessons"   data-dz="སློབ་སྟོན།">Lessons</a></li>
-    <li><a href="#resources" data-en="Resources" data-dz="ཡིག་ཆ།">Resources</a></li>
-    <li><a href="#videos"    data-en="Videos"    data-dz="བརྙན་ཐུང་།">Videos</a></li>
-    <li><a href="#blog"      data-en="Articles"  data-dz="རྩོམ་ཡིག།">Articles</a></li>
-  </ul>
-  <div class="nav-right">
-    <button class="search-btn" id="searchBtn" aria-label="Search">🔍</button>
-    <div class="lang-toggle">
-      <button class="lang-btn on" data-lang-btn="en">EN</button>
-      <button class="lang-btn"    data-lang-btn="dz">རྫོང་ཁ།</button>
-    </div>
-    <div class="theme-toggle" id="themeToggle"><span class="t-icon moon">🌙</span><span class="t-icon sun">☀️</span></div>
-    <a class="admin-lock" href="admin.html" title="Admin">🔐</a>
-    <div id="nav-auth"></div>
-    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
-  </div>
-</nav>
-<div class="search-panel" id="searchPanel">
-  <div class="search-box">
-    <span>🔍</span>
-    <input id="searchInput" type="search" placeholder="Search lessons, resources, videos, articles…" autocomplete="off"/>
-    <button id="searchClose" aria-label="Close search">✕</button>
-  </div>
-</div>
-<div class="mobile-nav" id="mobileNav">
-  <a href="#home">Home</a>
-  <a href="#lessons">Lessons</a>
-  <a href="#resources">Resources</a>
-  <a href="#videos">Videos</a>
-  <a href="#blog">Articles</a>
-  <a href="#about">About</a>
-  <a href="teacher.html">👨‍🏫 Teacher Dashboard</a>
-  <a href="admin.html">🔐 Admin</a>
-</div>
+<div id="gate-loader"><div><div class="gl-icon">🔒</div><p>Checking your session…</p></div></div>
 
-<!-- HERO -->
-<section id="home">
-  <div class="hero-inner">
-    <div>
-      <div class="hero-tag" data-en="✦ Welcome to My Teaching & Learning Space" data-dz="✦ ངེའི་སློབ་སྟོན་གྱི་ཞིང་ཁམས་ནང་བྱོན་པ་ལེགས་སོ།">✦ Welcome to My Teaching & Learning Space</div>
-      <h1 class="hero-title" data-en="Enhancing Dzongkha Learning through <span>Modern Digital Tools</span>" data-dz="དེང་སང་གློག་རིག་ཐོག་ <span>རྫོང་ཁ་ལྷབ་སྦྱང་ཡར་རྒྱས།</span>">Empowering Minds Through <span>Quality Education</span></h1>
-      <p class="hero-desc" data-en="Browse lessons, download resources, watch videos, and join the learning community." data-dz="རྫོང་ཁའི་སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཕན་ཚུན་འབྲེལ་བའི་བརྙན་ཐུང་གི་བང་མཛོད།">Browse lessons, download resources, watch videos, and join the learning community.</p>
-      <div class="hero-cta">
-        <a href="#lessons" class="btn-primary" data-en="Explore Lessons" data-dz="སློབ་ཚན་འཚོལ་ཞིབ།">Explore Lessons</a>
-        <a href="login.html" class="btn-outline" id="hero-join-btn" data-en="Join Free" data-dz="རིན་མེད་སྟོང་པ་སྦེ་འཛུལ།">Join Free</a>
+<div class="app" id="app" style="visibility:hidden">
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <a href="#home" class="sidebar-logo">SherigSpace</a>
+    <nav class="side-nav">
+      <a class="side-link" href="#home" data-section="home"><span class="si">🏠</span><span data-en="Home" data-dz="གདོང་ཤོག">Home</span></a>
+      <a class="side-link" href="#lessons" data-section="lessons"><span class="si">📖</span><span data-en="Lessons" data-dz="སློབ་སྟོན།">Lessons</span></a>
+      <a class="side-link" href="#resources" data-section="resources"><span class="si">📁</span><span data-en="Resources" data-dz="ཡིག་ཆ།">Resources</span></a>
+      <a class="side-link" href="#videos" data-section="videos"><span class="si">🎥</span><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></a>
+      <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
+      <a class="side-link" href="#about" data-section="about"><span class="si">👤</span><span data-en="About" data-dz="ང་རའི་སྐོར།">About</span></a>
+    </nav>
+    <div class="sidebar-footer" id="sidebarFooter"></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="sidebar-hamburger" id="sidebarHamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input id="searchInput" type="search" placeholder="Search lessons, resources, videos, articles…" autocomplete="off"/>
       </div>
-    </div>
-    <div class="hero-stats">
-      <div class="stat-card"><h3 id="st-lessons">…</h3><p data-en="Lessons" data-dz="སློབ་ཚན།">Lessons</p></div>
-      <div class="stat-card"><h3 id="st-videos">…</h3><p data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</p></div>
-      <div class="stat-card"><h3 id="st-users">…</h3><p data-en="Members" data-dz="འཐུས་མི།">Members</p></div>
-    </div>
-  </div>
-</section>
+      <div class="topbar-right">
+        <div class="lang-toggle">
+          <button class="lang-btn on" data-lang-btn="en">EN</button>
+          <button class="lang-btn"    data-lang-btn="dz">རྫོང་ཁ།</button>
+        </div>
+        <div class="theme-toggle" id="themeToggle"><span class="t-icon moon">🌙</span><span class="t-icon sun">☀️</span></div>
+        <div class="topbar-avatar" id="topbarAvatar" onclick="openProfile()">··</div>
+      </div>
+    </header>
 
-<!-- CLASS PICKER — the TLM Store's classwise browsing bar -->
-<section id="class-picker-section" style="padding:2rem 5% 0">
-  <div class="inner">
-    <p class="section-label">✦ TLM Store</p>
-    <h2 class="section-title" style="font-size:1.5rem;margin-bottom:1rem">Browse by Class</h2>
-    <div id="class-tabs" class="class-tabs"></div>
-  </div>
-</section>
+    <div class="dash-wrap">
+      <div class="banner" id="home">
+        <div class="banner-slide active">
+          <div class="banner-tag" data-en="✦ Welcome to My Teaching & Learning Space" data-dz="✦ ངེའི་སློབ་སྟོན་གྱི་ཞིང་ཁམས་ནང་བྱོན་པ་ལེགས་སོ།">✦ Welcome to My Teaching & Learning Space</div>
+          <h1 class="banner-title" data-en="Enhancing Dzongkha Learning through <span>Modern Digital Tools</span>" data-dz="དེང་སང་གློག་རིག་ཐོག་ <span>རྫོང་ཁ་ལྷབ་སྦྱང་ཡར་རྒྱས།</span>">Enhancing Dzongkha Learning through <span>Modern Digital Tools</span></h1>
+          <p class="banner-desc" data-en="Browse lessons, download resources, watch videos, and join the learning community." data-dz="རྫོང་ཁའི་སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཕན་ཚུན་འབྲེལ་བའི་བརྙན་ཐུང་གི་བང་མཛོད།">Browse lessons, download resources, watch videos, and join the learning community.</p>
+        </div>
+        <div class="banner-slide">
+          <div class="banner-tag" data-en="✦ Teaching Lessons" data-dz="✦ སློབ་སྟོན།">✦ Teaching Lessons</div>
+          <h1 class="banner-title" data-en="Structured Lessons for <span>Every Class</span>" data-dz="<span>འཛིན་གྲྭ་རེ་རེ</span>བཞིན་གྱི་སློབ་སྟོན།">Structured Lessons for <span>Every Class</span></h1>
+          <p class="banner-desc" data-en="Clear, well-organized lessons designed for real classroom understanding." data-dz="གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།">Clear, well-organized lessons designed for real classroom understanding.</p>
+        </div>
+        <div class="banner-slide">
+          <div class="banner-tag" data-en="✦ Resources & Videos" data-dz="✦ ཡིག་ཆ་དང་བརྙན་ཐུང་།">✦ Resources & Videos</div>
+          <h1 class="banner-title" data-en="Worksheets, Guides & <span>Video Lessons</span>" data-dz="ཡིག་ཆ་དང་<span>བརྙན་ཐུང་།</span>">Worksheets, Guides & <span>Video Lessons</span></h1>
+          <p class="banner-desc" data-en="Everything you need to practice and learn at your own pace." data-dz="ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་མཁོ་ཆས།">Everything you need to practice and learn at your own pace.</p>
+        </div>
+        <div class="banner-dots" id="bannerDots"></div>
+      </div>
+
+      <section id="class-picker-section" style="padding:0 0 1.6rem">
+        <p class="section-label">✦ Browse</p>
+        <h2 class="section-title" style="font-size:1.35rem;margin-bottom:1rem">Browse by Class</h2>
+        <div id="class-tabs" class="class-tabs"></div>
+      </section>
+
+      <div class="dash-grid">
+        <div class="dash-content">
 
 <!-- LESSONS -->
 <section id="lessons">
@@ -435,7 +503,28 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   </div>
 </section>
 
-<footer><p>© 2026 <span class="gold">ཤེས་རིགSpace</span> · <span data-en="Built with care for better education, particularly Dzongkha" data-dz="རྫོང་ཁའི་ཤེས་ཡོན་ཡར་རྒྱས་གཏང་ཐབས་ལུ་དམིགས་ཏེ་བཟོ་ཡོདཔ་ཨིན།">Built with care for better education</span></p></footer>
+        </div><!-- /dash-content -->
+
+        <aside class="right-panel">
+          <div class="rp-card" style="cursor:pointer" onclick="openProfile()">
+            <div class="rp-avatar" id="rpAvatar">··</div>
+            <div class="rp-name" id="rpName">…</div>
+            <div class="rp-role" id="rpRole">Member</div>
+          </div>
+          <div class="rp-card">
+            <h5>SherigSpace</h5>
+            <div class="rp-stat-row"><span data-en="Lessons" data-dz="སློབ་ཚན།">Lessons</span><b id="st-lessons">…</b></div>
+            <div class="rp-stat-row"><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span><b id="st-videos">…</b></div>
+            <div class="rp-stat-row"><span data-en="Members" data-dz="འཐུས་མི།">Members</span><b id="st-users">…</b></div>
+          </div>
+          <div class="rp-card" id="rpLinks"></div>
+        </aside>
+      </div><!-- /dash-grid -->
+
+      <footer><p>© 2026 <span class="gold">ཤེས་རིགSpace</span> · <span data-en="Built with care for better education, particularly Dzongkha" data-dz="རྫོང་ཁའི་ཤེས་ཡོན་ཡར་རྒྱས་གཏང་ཐབས་ལུ་དམིགས་ཏེ་བཟོ་ཡོདཔ་ཨིན།">Built with care for better education</span></p></footer>
+    </div><!-- /dash-wrap -->
+  </div><!-- /main -->
+</div><!-- /app -->
 
 <!-- PROFILE MODAL -->
 <div class="modal-overlay" id="profile-modal">
@@ -556,43 +645,31 @@ function matchesClass(item){
 function lang(){ return html.getAttribute('data-lang'); }
 function session(){ try{ return JSON.parse(localStorage.getItem('edu_session')||'null') }catch{ return null } }
 
-// ── MOBILE NAV ──
-const hamburger = document.getElementById('hamburger');
-const mobileNav  = document.getElementById('mobileNav');
-hamburger.addEventListener('click', ()=>{
-  hamburger.classList.toggle('open');
-  mobileNav.classList.toggle('open');
+// ── SIDEBAR (mobile drawer) ──
+const sidebar = document.getElementById('sidebar');
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+function closeSidebar(){ sidebar.classList.remove('open'); sidebarBackdrop.classList.remove('open'); }
+document.getElementById('sidebarHamburger').addEventListener('click', ()=>{
+  sidebar.classList.toggle('open'); sidebarBackdrop.classList.toggle('open');
 });
-mobileNav.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=>{
-  hamburger.classList.remove('open'); mobileNav.classList.remove('open');
-}));
+sidebarBackdrop.addEventListener('click', closeSidebar);
+sidebar.querySelectorAll('.side-link').forEach(a=>a.addEventListener('click', closeSidebar));
 
-// ── AUTH NAV ──
+// ── SIDEBAR / RIGHT-PANEL USER INFO ── (page is login-only, s is always set here)
 function renderNav(){
   const s = session();
-  const el = document.getElementById('nav-auth');
-  const joinBtn = document.getElementById('hero-join-btn');
-  if(s){
-    const initials = esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const adminLink = s.role === 'admin'
-      ? `<a class="udrop-item" href="admin.html">🛠️ Admin Panel</a><div class="udrop-sep"></div>`
-      : '';
-    el.innerHTML=`<div class="user-btn" tabindex="0">
-      <div class="user-avatar">${initials}</div>
-      <span>${esc(s.name.split(' ')[0])}</span>
-      <div class="user-dropdown">
-        <a class="udrop-item" onclick="openProfile()">👤 My Profile</a>
-        <a class="udrop-item" href="teacher.html">👨‍🏫 Teacher Dashboard</a>
-        <div class="udrop-sep"></div>
-        ${adminLink}
-        <a class="udrop-item danger" onclick="logout()">🔒 Log Out</a>
-      </div>
-    </div>`;
-    if(joinBtn) joinBtn.style.display='none';
-  } else {
-    el.innerHTML=`<a href="login.html" class="login-btn" data-en="Log In / Sign Up" data-dz="ནང་འཛུལ">Log In / Sign Up</a>`;
-    if(joinBtn) joinBtn.style.display='';
-  }
+  if(!s) return;
+  const initials = esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('topbarAvatar').textContent = initials;
+  document.getElementById('rpAvatar').textContent = initials;
+  document.getElementById('rpName').textContent = s.name;
+  document.getElementById('rpRole').textContent = s.class_grade || s.role || 'Member';
+  const adminLink = s.role === 'admin' ? `<a class="rp-link" href="admin.html">🛠️ <span>Admin Panel</span></a>` : '';
+  document.getElementById('rpLinks').innerHTML =
+    `<a class="rp-link" href="teacher.html">👨‍🏫 <span>Teacher Dashboard</span></a>${adminLink}<a class="rp-link danger" onclick="logout()">🔒 <span>Log Out</span></a>`;
+  const adminSide = s.role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
+  document.getElementById('sidebarFooter').innerHTML =
+    `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher</span></a>${adminSide}<a class="side-link" onclick="logout()"><span class="si">🔒</span><span>Log Out</span></a>`;
 }
 
 window.logout = async function(){
@@ -962,7 +1039,6 @@ async function renderAll(){
 }
 
 // ── SEARCH ──
-const searchPanel = document.getElementById('searchPanel');
 const searchInput = document.getElementById('searchInput');
 let searchTimer = null;
 async function runSearch(){
@@ -970,16 +1046,9 @@ async function runSearch(){
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles()]);
   observeFadeIns();
 }
-document.getElementById('searchBtn').addEventListener('click', ()=>{
-  searchPanel.classList.toggle('open');
-  if(searchPanel.classList.contains('open')) searchInput.focus();
-});
-document.getElementById('searchClose').addEventListener('click', ()=>{
-  searchPanel.classList.remove('open'); searchInput.value=''; if(searchQuery) runSearch();
-});
 searchInput.addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 250); });
 searchInput.addEventListener('keydown', e=>{
-  if(e.key === 'Escape') document.getElementById('searchClose').click();
+  if(e.key === 'Escape'){ searchInput.value=''; if(searchQuery) runSearch(); searchInput.blur(); }
   if(e.key === 'Enter'){
     clearTimeout(searchTimer);
     runSearch().then(()=>{
@@ -988,6 +1057,24 @@ searchInput.addEventListener('keydown', e=>{
     });
   }
 });
+
+// ── BANNER CAROUSEL ──
+(function(){
+  const slides = Array.from(document.querySelectorAll('#home .banner-slide'));
+  const dotsWrap = document.getElementById('bannerDots');
+  if(!slides.length) return;
+  dotsWrap.innerHTML = slides.map((_,i)=>`<span class="banner-dot${i===0?' active':''}" data-i="${i}"></span>`).join('');
+  const dots = Array.from(dotsWrap.children);
+  let cur = 0, timer = null;
+  function show(i){
+    cur = (i+slides.length)%slides.length;
+    slides.forEach((s,j)=>s.classList.toggle('active', j===cur));
+    dots.forEach((d,j)=>d.classList.toggle('active', j===cur));
+  }
+  function restart(){ clearInterval(timer); timer = setInterval(()=>show(cur+1), 6000); }
+  dots.forEach(d=>d.addEventListener('click', ()=>{ show(Number(d.getAttribute('data-i'))); restart(); }));
+  restart();
+})();
 
 // ── THEME ──
 html.setAttribute('data-theme', localStorage.getItem('eduTheme')||'dark');
@@ -1017,29 +1104,38 @@ function observeFadeIns(){
   document.querySelectorAll('.fade-in:not(.visible)').forEach(el=>io.observe(el));
 }
 
-// ── ACTIVE NAV ──
-const secs = document.querySelectorAll('section[id]');
-const nls  = document.querySelectorAll('.nav-links a');
+// ── ACTIVE SIDEBAR LINK ──
+const secs = document.querySelectorAll('.dash-wrap section[id], #home');
+const sideLinks = document.querySelectorAll('.side-link[href^="#"]');
 window.addEventListener('scroll',()=>{
-  let cur='';
-  secs.forEach(s=>{ if(window.scrollY>=s.offsetTop-100) cur=s.id; });
-  nls.forEach(a=>{ a.style.color=a.getAttribute('href')==='#'+cur?'var(--gold)':''; });
+  let cur='home';
+  secs.forEach(s=>{ if(window.scrollY>=s.offsetTop-140) cur=s.id; });
+  sideLinks.forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+cur));
 });
 
-// ── SYNC SUPABASE SESSION → localStorage on load AND on change ──
+// ── AUTH GATE + SYNC SUPABASE SESSION → localStorage on load AND on change ──
+// This page is for logged-in members only: anyone without a session is sent
+// straight to login.html, before any dashboard content is ever shown.
+let gateOpened = false;
 async function syncSessionAndRender(){
   const { data } = await supabase.auth.getSession();
-  if(data.session){
-    const uid = data.session.user.id;
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id',uid).single();
-    if(profile){
-      localStorage.setItem('edu_session', JSON.stringify({
-        id: uid, name: profile.name, email: profile.email,
-        role: profile.role, class_grade: profile.class_grade
-      }));
-    }
-  } else {
+  if(!data.session){
     localStorage.removeItem('edu_session');
+    window.location.replace('login.html');
+    return;
+  }
+  const uid = data.session.user.id;
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id',uid).single();
+  if(profile){
+    localStorage.setItem('edu_session', JSON.stringify({
+      id: uid, name: profile.name, email: profile.email,
+      role: profile.role, class_grade: profile.class_grade
+    }));
+  }
+  if(!gateOpened){
+    gateOpened = true;
+    document.getElementById('gate-loader').remove();
+    document.getElementById('app').style.visibility = 'visible';
   }
   renderAll();
 }
