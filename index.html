@@ -81,7 +81,6 @@ section{padding:80px 5%}
 .class-tab:hover{border-color:var(--gold);color:var(--gold-text)}
 .class-tab.active{background:var(--gold);border-color:var(--gold);color:var(--navy)}
 #lessons{background:var(--surface);transition:background .35s}
-.lessons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
 .lesson-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-top:3px solid var(--gold);border-radius:5px;padding:1.8rem;transition:transform .2s,box-shadow .2s,background .35s;cursor:pointer;overflow:hidden}
 .lesson-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
 .lesson-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--navy),var(--navy-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:1rem}
@@ -91,7 +90,6 @@ section{padding:80px 5%}
 .badge{display:inline-block;background:rgba(201,168,76,.15);font-size:.7rem;font-weight:600;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;margin-bottom:.8rem;color:#8a6820}
 [data-theme="dark"] .badge{color:var(--gold-light)}
 #resources{background:var(--section-alt);transition:background .35s}
-.resources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.5rem}
 .resource-card{background:var(--surface);border:1px solid var(--card-border);border-radius:5px;padding:1.5rem;display:flex;align-items:flex-start;gap:1rem;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;position:relative;overflow:hidden}
 .resource-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.14)}
 .resource-icon{width:40px;height:40px;flex-shrink:0;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
@@ -106,7 +104,6 @@ section{padding:80px 5%}
 .lock-bar a.lb-cta{border-bottom:1px solid rgba(26,35,64,.4)}
 .lock-bar.pending{background:var(--surface);color:var(--text2);border-top:1px solid var(--card-border)}
 #videos{background:var(--surface);transition:background .35s}
-.videos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
 .video-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;display:block}
 .video-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
 .video-thumb{height:160px;background:linear-gradient(135deg,#1a2340,#253056);display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative}
@@ -116,7 +113,6 @@ section{padding:80px 5%}
 .video-body p{font-size:.83rem;color:var(--text2);line-height:1.5}
 .video-meta{display:flex;gap:.8rem;font-size:.75rem;color:var(--text2);margin-top:.6rem}
 #blog{background:var(--section-alt);transition:background .35s}
-.blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
 .blog-card{border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s}
 .blog-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.16)}
 .blog-thumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:3rem}
@@ -172,7 +168,7 @@ section{padding:80px 5%}
 .pstat{text-align:center;background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem 1.1rem}
 .pstat .pn{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-text);font-weight:700}
 .pstat .pl{font-size:.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
-.empty-state{text-align:center;padding:3rem 1rem;color:var(--text2);grid-column:1/-1}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text2);width:100%}
 .empty-state .ei{font-size:2.5rem;margin-bottom:.75rem}
 .empty-state p{font-size:.88rem;margin-bottom:.75rem}
 .empty-state a{color:var(--gold-text);font-size:.82rem;text-decoration:none}
@@ -255,7 +251,6 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cover-lesson{--c1:#1a2340;--c2:#34457f}.cover-article{--c1:#9a6a1f;--c2:#d19a3d}
 
 /* ═══ Resource cards: big 16:9 cover on top, same as lessons/videos ═══ */
-.resources-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem}
 .resource-card{flex-direction:column;align-items:stretch;gap:0;padding:0}
 .resource-card.is-locked{padding-bottom:0!important}
 .resource-card .card-body{padding:1.25rem 1.4rem 1.4rem}
@@ -347,6 +342,20 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .dash-wrap{padding:1.2rem 4% 2rem}
   .banner{padding:2rem 4%;margin:0 -4% 1.4rem;min-height:280px}
 }
+
+/* ═══ Horizontal scrolling rows (lessons/resources/videos/articles) instead of stacking down the page ═══ */
+.scroll-row{position:relative}
+.scroll-track{display:flex;gap:1.8rem;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;padding-bottom:.6rem;scrollbar-width:thin;scrollbar-color:var(--card-border) transparent}
+.scroll-track::-webkit-scrollbar{height:8px}
+.scroll-track::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:8px}
+.scroll-track::-webkit-scrollbar-track{background:transparent}
+.scroll-track>*{flex:0 0 300px;scroll-snap-align:start}
+.scroll-track .empty-state{flex:1 0 100%}
+.scroll-arrow{display:flex;align-items:center;justify-content:center;position:absolute;top:calc(50% - 1.1rem);width:38px;height:38px;border-radius:50%;background:var(--card-bg);border:1px solid var(--card-border);box-shadow:var(--shadow);color:var(--gold-text);font-size:1rem;cursor:pointer;z-index:2;transition:background .15s,opacity .15s}
+.scroll-arrow:hover{background:var(--gold-soft)}
+.scroll-arrow.left{left:-14px}
+.scroll-arrow.right{right:-14px}
+@media(max-width:700px){.scroll-arrow{display:none}.scroll-track>*{flex-basis:82%}}
 </style>
 </head>
 <body>
@@ -417,7 +426,11 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <div class="divider"></div>
       <p class="section-desc" data-en="Structured lessons designed for clarity and deep understanding." data-dz="གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།">Structured lessons designed for clarity and deep understanding.</p>
     </div>
-    <div class="lessons-grid" id="lessons-grid"></div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="lessons-grid" aria-label="Scroll left">‹</button>
+      <div class="lessons-grid scroll-track" id="lessons-grid"></div>
+      <button class="scroll-arrow right" data-scroll="lessons-grid" aria-label="Scroll right">›</button>
+    </div>
   </div>
 </section>
 
@@ -430,7 +443,11 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <div class="divider"></div>
       <p class="section-desc" data-en="Sign in to download worksheets, guides, and materials." data-dz="མཁོ་ཆས་དང་ཡིག་ཆ་ཕབ་ལེན་གྱི་དོན་ལུ་ (Sign IN) མཛད་གནང་།">Sign in to download worksheets, guides, and materials.</p>
     </div>
-    <div class="resources-grid" id="resources-grid"></div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="resources-grid" aria-label="Scroll left">‹</button>
+      <div class="resources-grid scroll-track" id="resources-grid"></div>
+      <button class="scroll-arrow right" data-scroll="resources-grid" aria-label="Scroll right">›</button>
+    </div>
   </div>
 </section>
 
@@ -443,7 +460,11 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <div class="divider"></div>
       <p class="section-desc" data-en="Video tutorials to help you learn at your own pace." data-dz="ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་བརྙན་ཐུང་།">Video tutorials to help you learn at your own pace.</p>
     </div>
-    <div class="videos-grid" id="videos-grid"></div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="videos-grid" aria-label="Scroll left">‹</button>
+      <div class="videos-grid scroll-track" id="videos-grid"></div>
+      <button class="scroll-arrow right" data-scroll="videos-grid" aria-label="Scroll right">›</button>
+    </div>
   </div>
 </section>
 
@@ -456,7 +477,11 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <div class="divider"></div>
       <p class="section-desc" data-en="Reflections and strategies from the classroom." data-dz="སློབ་ཁང་གི་ཐབས་ལམ་དང་བསམ་ཞིབ།">Reflections and strategies from the classroom.</p>
     </div>
-    <div class="blog-grid" id="blog-grid"></div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="blog-grid" aria-label="Scroll left">‹</button>
+      <div class="blog-grid scroll-track" id="blog-grid"></div>
+      <button class="scroll-arrow right" data-scroll="blog-grid" aria-label="Scroll right">›</button>
+    </div>
   </div>
 </section>
 
@@ -631,6 +656,16 @@ function matchesClass(item){
 
 function lang(){ return html.getAttribute('data-lang'); }
 function session(){ try{ return JSON.parse(localStorage.getItem('edu_session')||'null') }catch{ return null } }
+
+// ── SCROLL ARROWS (horizontal card rows) ──
+document.querySelectorAll('.scroll-arrow').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const track = document.getElementById(btn.getAttribute('data-scroll'));
+    if(!track) return;
+    const step = track.clientWidth * 0.9;
+    track.scrollBy({ left: btn.classList.contains('left') ? -step : step, behavior:'smooth' });
+  });
+});
 
 // ── SIDEBAR (mobile drawer) ──
 const sidebar = document.getElementById('sidebar');
