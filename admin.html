@@ -659,6 +659,15 @@ function bannerImageField(v){
       </div>
       <input id="f-image_url" placeholder="…or paste an image link (https://…)" value="${esc(img)}" oninput="refreshBannerImgPreview()"/>
       <div class="thumb-preview" id="banner-img-preview"></div>
+      #banner-img-preview img{
+    width:100%;
+    max-width:1080px;
+    height:360px;
+    object-fit:cover;
+    border-radius:8px;
+    display:block;
+    margin-top:.5rem;
+}
     </div>`;
 }
 window.refreshBannerImgPreview = function(){
