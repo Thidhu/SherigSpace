@@ -126,7 +126,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
     <div class="logo"><h2>SherigSpace</h2><small>Admin Panel</small></div>
     <nav class="sidenav">
       <div class="sitem on"  onclick="go('dash')">🏠 &nbsp;Dashboard</div>
-      <div class="sitem"     onclick="go('teachers')">🏫 &nbsp;Teachers &amp; Classes</div>
+      <div class="sitem"     onclick="go('banners')">🖼️ &nbsp;Banners</div>
       <div class="sitem"     onclick="go('lessons')">📚 &nbsp;Lessons</div>
       <div class="sitem"     onclick="go('resources')">📁 &nbsp;Resources</div>
       <div class="sitem"     onclick="go('videos')">🎥 &nbsp;Videos</div>
@@ -152,13 +152,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="card"><div class="card-head"><h3>Recent Videos</h3><button class="btn btn-ghost btn-sm" onclick="go('videos')">View All</button></div><div id="d-videos"></div></div>
     </div>
 
-    <div class="page" id="p-teachers">
-      <div class="phead"><div><div class="ptitle">Teachers &amp; Classes</div><div class="psub">How many teachers, classes and students are using SherigSpace</div></div></div>
-      <div class="stats" id="t-stats"></div>
-      <div class="card">
-        <div class="card-head"><h3>Every Teacher</h3><span class="cbadge" id="c-teachers">0</span></div>
-        <div id="l-teachers" style="overflow-x:auto;padding:.5rem 0"></div>
-      </div>
+    <div class="page" id="p-banners">
+      <div class="phead"><div><div class="ptitle">Banners</div><div class="psub">Manage the rotating banner slides shown at the top of the member homepage</div></div><button class="btn btn-gold" onclick="openForm('banner')">+ Add Banner</button></div>
+      <div class="card"><div class="card-head"><h3>All Banner Slides</h3><span class="cbadge" id="c-banners">0</span></div><div id="l-banners"></div></div>
     </div>
 
     <div class="page" id="p-lessons">
@@ -311,7 +307,7 @@ window.go = function(p){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
   document.getElementById('p-'+p).classList.add('on');
-  const map={dash:'dashboard',teachers:'teachers',lessons:'lessons',resources:'resources',videos:'videos',articles:'articles',payments:'payments',users:'users',settings:'settings'};
+  const map={dash:'dashboard',banners:'banners',lessons:'lessons',resources:'resources',videos:'videos',articles:'articles',payments:'payments',users:'users',settings:'settings'};
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
 };
@@ -325,6 +321,7 @@ async function renderAll(){
     { data: A, count: ac, error: aErr },
     { data: U, count: uc, error: uErr },
     { data: AN, count: anc, error: anErr },
+    { data: BN, count: bnc, error: bnErr },
     { count: visitCount }
   ] = await Promise.all([
     supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
@@ -333,28 +330,22 @@ async function renderAll(){
     supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
     supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('banners').select('*',{count:'exact'}).order('sort_order',{ascending:true}),
     supabase.from('page_views').select('*',{count:'exact',head:true})
   ]);
 
   // Surface load errors instead of silently showing "No lessons yet".
   [['lessons',lErr],['resources',rErr],['videos',vErr],
-   ['articles',aErr],['profiles',uErr],['announcements',anErr]].forEach(([name,err])=>{
+   ['articles',aErr],['profiles',uErr],['announcements',anErr],['banners',bnErr]].forEach(([name,err])=>{
     if(err){ console.error('Could not load '+name+':', err); toast('Could not load '+name+': '+err.message, true); }
   });
 
   const totalDownloads = [L,R,V,A].reduce((sum, arr) =>
     sum + (arr||[]).reduce((s,i)=>s+(i.download_count||0), 0), 0);
 
-  const [csc, ssc] = await Promise.all([
-    supabase.from('classes').select('id',{count:'exact',head:true}),
-    supabase.from('class_students').select('id',{count:'exact',head:true})
-  ]);
-  const adminVisibilityReady = !csc.error && !ssc.error;
-
   document.getElementById('d-stats').innerHTML =
     stat(lc||0,'Lessons')+stat(rc||0,'Resources')+stat(vc||0,'Videos')+stat(uc||0,'Members')
-    + stat(visitCount||0,'Site Visits') + stat(totalDownloads,'Total Downloads')
-    + (adminVisibilityReady ? stat(csc.count||0,'Classes')+stat(ssc.count||0,'Students') : '');
+    + stat(visitCount||0,'Site Visits') + stat(totalDownloads,'Total Downloads');
   document.getElementById('c-lessons').textContent   = lc||0;
   document.getElementById('c-resources').textContent = rc||0;
   document.getElementById('c-videos').textContent    = vc||0;
@@ -371,77 +362,12 @@ async function renderAll(){
   document.getElementById('l-announce').innerHTML  = AN?.length
     ? AN.map(a=>`<div class="irow"><div><div class="iname">${esc(a.emoji||'📢')} ${esc(a.message||'')}</div><div class="imeta">${a.active?'✅ Active':'❌ Hidden'}${a.link_label?' · '+esc(a.link_label):''}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('announce','${esc(a.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('announce','${esc(a.id)}')">✕</button></div></div>`).join('')
     : empty('📢','No announcements yet. Click + New Announcement!');
+  document.getElementById('c-banners').textContent = bnc||0;
+  document.getElementById('l-banners').innerHTML = BN?.length
+    ? BN.map(b=>`<div class="irow"><div class="irow-left">${b.image_url?`<img class="irow-thumb" src="${esc(b.image_url)}" referrerpolicy="no-referrer"/>`:''}<div><div class="iname">${esc(b.title||'Untitled')}</div><div class="imeta">Order ${esc(b.sort_order??0)}${b.dz?' · has Dzongkha text':''}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('banner','${esc(b.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('banner','${esc(b.id)}')">✕</button></div></div>`).join('')
+    : empty('🖼️','No banner slides yet — the homepage shows its built-in default slides. Click + Add Banner to replace them!');
   renderUsers(U||[]);
   renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[]});
-  renderTeachersOverview(U||[]);
-}
-
-// ── TEACHERS & CLASSES (admin's view across every teacher) ──
-async function renderTeachersOverview(allProfiles){
-  const statsEl = document.getElementById('t-stats');
-  const listEl = document.getElementById('l-teachers');
-  if(!statsEl || !listEl) return;   // page not in the DOM (shouldn't happen, but stay safe)
-
-  const [subsRes, classesRes, studentsRes] = await Promise.all([
-    supabase.from('teacher_subscriptions').select('teacher_id,status,expires_at,created_at').order('created_at',{ascending:false}),
-    supabase.from('classes').select('id,teacher_id,name,created_at'),
-    supabase.from('class_students').select('id,class_id')
-  ]);
-  const errs = [['teacher_subscriptions', subsRes.error], ['classes', classesRes.error], ['class_students', studentsRes.error]];
-  const missingPolicy = errs.some(([,e]) => e && /permission|policy/i.test(e.message || ''));
-  errs.forEach(([name, err]) => { if(err) console.error('Could not load ' + name + ':', err); });
-  if(missingPolicy){
-    listEl.innerHTML = empty('🔒', 'Admin access to classes and students isn\'t enabled yet — run <b>sherigspace_admin_visibility.sql</b> once in Supabase, then reload this page.');
-    statsEl.innerHTML = '';
-    document.getElementById('c-teachers').textContent = 0;
-    return;
-  }
-
-  const subs = subsRes.data || [], classes = classesRes.data || [], students = studentsRes.data || [];
-  const profileById = {}; (allProfiles||[]).forEach(p => { profileById[p.id] = p; });
-
-  // One teacher can have several subscription rows over time (renewals, a rejected
-  // request followed by a new one) — keep only their most recent.
-  const latestSub = {};
-  subs.forEach(s => { if(!latestSub[s.teacher_id]) latestSub[s.teacher_id] = s; });   // already newest-first
-
-  const classesByTeacher = {};
-  classes.forEach(c => { (classesByTeacher[c.teacher_id] = classesByTeacher[c.teacher_id] || []).push(c); });
-  const studentCountByClass = {};
-  students.forEach(cs => { studentCountByClass[cs.class_id] = (studentCountByClass[cs.class_id] || 0) + 1; });
-
-  const teacherIds = Object.keys(latestSub);
-  const totalClasses = classes.length;
-  const totalStudents = students.length;
-  const approvedCount = teacherIds.filter(id => latestSub[id].status === 'approved').length;
-  const pendingCount = teacherIds.filter(id => latestSub[id].status === 'pending').length;
-
-  statsEl.innerHTML = stat(teacherIds.length,'Teachers') + stat(approvedCount,'Approved') + stat(pendingCount,'Pending')
-    + stat(totalClasses,'Classes') + stat(totalStudents,'Students')
-    + stat(totalClasses ? Math.round(totalStudents/totalClasses*10)/10 : 0,'Avg. Students / Class');
-  document.getElementById('c-teachers').textContent = teacherIds.length;
-
-  if(!teacherIds.length){ listEl.innerHTML = empty('🏫','No one has signed up as a teacher yet.'); return; }
-
-  const statusBadge = st => st === 'approved' ? '✅ Approved' : st === 'rejected' ? '❌ Rejected' : '⏳ Pending';
-  const rows = teacherIds
-    .map(id => {
-      const prof = profileById[id];
-      const myClasses = classesByTeacher[id] || [];
-      const myStudents = myClasses.reduce((sum,c) => sum + (studentCountByClass[c.id]||0), 0);
-      return { id, prof, sub: latestSub[id], classCount: myClasses.length, studentCount: myStudents };
-    })
-    .sort((a,b) => b.studentCount - a.studentCount || b.classCount - a.classCount);
-
-  listEl.innerHTML = `<table class="utbl"><thead><tr>
-      <th>Teacher</th><th>Email</th><th>Status</th><th>Classes</th><th>Students</th>
-    </tr></thead><tbody>${rows.map(r => `<tr>
-      <td>${esc(r.prof?.name || '(no profile)')}</td>
-      <td>${esc(r.prof?.email || '—')}</td>
-      <td>${statusBadge(r.sub.status)}</td>
-      <td>${r.classCount}</td>
-      <td>${r.studentCount}</td>
-    </tr>`).join('')}</tbody></table>`;
 }
 
 
@@ -600,7 +526,7 @@ window.openForm = async function(type, id=null){
     const { data } = await supabase.from(readTable).select('*').eq('id',id).single();
     item = data || {};
   }
-  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement'}[type];
+  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement',banner:'Banner Slide'}[type];
   document.getElementById('m-body').innerHTML = buildForm(type,item);
   initThumbUi();
   document.getElementById('overlay').classList.add('open');
@@ -721,6 +647,41 @@ function imageUploadField(v){
     </div>`;
 }
 
+function bannerImageField(v){
+  const img = v('image_url');
+  return `
+    <div class="field">
+      <label>Banner Image (optional — a plain gradient is used if left empty)</label>
+      <div class="upload-row">
+        <input type="file" id="f-bannerimgfile" accept="image/*" style="display:none" onchange="handleBannerImgPick(event)"/>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('f-bannerimgfile','banner-img-status')">📤 Upload image</button>
+        <span class="upload-status" id="banner-img-status"></span>
+      </div>
+      <input id="f-image_url" placeholder="…or paste an image link (https://…)" value="${esc(img)}" oninput="refreshBannerImgPreview()"/>
+      <div class="thumb-preview" id="banner-img-preview"></div>
+    </div>`;
+}
+window.refreshBannerImgPreview = function(){
+  const url = fv('f-image_url');
+  document.getElementById('banner-img-preview').innerHTML = url
+    ? `<img src="${esc(url)}" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'upload-status',textContent:'No preview yet.'}))"/>` : '';
+};
+window.handleBannerImgPick = async function(e){
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  const st = document.getElementById('banner-img-status');
+  st.className = 'upload-status'; st.textContent = 'Uploading…';
+  try{
+    const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
+    document.getElementById('f-image_url').value = result.thumbnailUrl;
+    st.textContent = 'Uploaded ✓'; st.className = 'upload-status ok';
+    refreshBannerImgPreview();
+  }catch(err){
+    st.textContent = 'Upload failed: ' + err.message; st.className = 'upload-status err';
+  }
+};
+
 function classField(v){
   const current = v('class_level') || 'All Classes';
   return `
@@ -745,6 +706,17 @@ function premiumField(v){
 
 function buildForm(type,d={}){
   const v=k=>d[k]!==undefined && d[k]!==null ? d[k] : '';
+  if(type==='banner') return`
+    <div class="field"><label>Title (English) *</label><input id="f-title" placeholder="e.g. Enhancing Dzongkha Learning" value="${esc(v('title'))}"/></div>
+    <div class="field"><label>Title (Dzongkha, optional)</label><input id="f-dz" placeholder="རྫོང་ཁའི་མིང་" value="${esc(v('dz'))}"/></div>
+    <div class="row2">
+      <div class="field"><label>Small Tag (English, optional)</label><input id="f-tag" placeholder="e.g. ✦ Welcome" value="${esc(v('tag'))}"/></div>
+      <div class="field"><label>Small Tag (Dzongkha, optional)</label><input id="f-tag_dz" placeholder="✦ ..." value="${esc(v('tag_dz'))}"/></div>
+    </div>
+    <div class="field"><label>Description (English, optional)</label><textarea id="f-description" placeholder="One or two sentences shown under the title">${esc(v('description'))}</textarea></div>
+    <div class="field"><label>Description (Dzongkha, optional)</label><textarea id="f-description_dz" placeholder="...">${esc(v('description_dz'))}</textarea></div>
+    ${bannerImageField(v)}
+    <div class="field"><label>Order</label><input id="f-sort_order" type="number" step="1" placeholder="0 = first" value="${esc(v('sort_order') ?? 0)}"/></div>`;
   if(type==='lesson') return`
     <div class="field"><label>Lesson Title *</label><input id="f-title" placeholder="e.g. Introduction to Algebra" value="${esc(v('title'))}"/></div>
     <div class="row2"><div class="field"><label>Subject</label><select id="f-subject"><option value="">-- Select --</option>${sel(SUBJECTS,v('subject'))}</select></div><div class="field"><label>Level</label><select id="f-level"><option value="">-- Select --</option>${sel(LEVELS,v('level'))}</select></div></div>
@@ -854,16 +826,19 @@ window.fillMissingThumbnails = async function(){
 
 window.saveItem = async function(){
   const isAnnounce = _type === 'announce';
+  const isBanner = _type === 'banner';
 
   if(isAnnounce){
     if(!fv('f-message')){ toast('Please enter a message.', true); return; }
+  } else if(isBanner){
+    if(!fv('f-title')){ toast('Please enter a title.', true); return; }
   } else {
     if(!fv('f-title')){ toast('Please enter a title.', true); return; }
     if(_type==='video' && !fv('f-url')){ toast('Please enter a video URL.', true); return; }
     if(fv('f-is_premium')==='true' && !fv('f-price')){ toast('Please enter a price for premium content.', true); return; }
   }
   // Validate any URL field before saving so a bad link can't reach the public site
-  const urlField = isAnnounce ? fv('f-link_url') : fv('f-url');
+  const urlField = isAnnounce ? fv('f-link_url') : (isBanner ? fv('f-image_url') : fv('f-url'));
   if(urlField && !isValidUrl(urlField)){ toast('Please enter a valid http(s):// URL.', true); return; }
 
   const saveBtn = document.getElementById('save-btn');
@@ -872,6 +847,10 @@ window.saveItem = async function(){
   const table = isAnnounce ? 'announcements' : _type + 's';
   const base = isAnnounce
     ? { message: fv('f-message') }
+    : isBanner
+    ? { title: fv('f-title'), dz: fv('f-dz'), tag: fv('f-tag'), tag_dz: fv('f-tag_dz'),
+        description: fv('f-description'), description_dz: fv('f-description_dz'),
+        image_url: fv('f-image_url'), sort_order: fv('f-sort_order') ? Number(fv('f-sort_order')) : 0 }
     : {
         title: fv('f-title'), dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url'), thumbnail_url: fv('f-thumbnail_url'),
         class_level: fv('f-class_level') || 'All Classes',
@@ -883,7 +862,8 @@ window.saveItem = async function(){
     resource: { rtype: fv('f-rtype'), filesize: fv('f-filesize') },
     video:    { subject: fv('f-subject'), duration: fv('f-duration') },
     article:  { article_date: fv('f-article_date') || null, category: fv('f-category') },
-    announce: { emoji: fv('f-emoji'), active: fv('f-active') === 'true', link_label: fv('f-link_label'), link_url: fv('f-link_url') }
+    announce: { emoji: fv('f-emoji'), active: fv('f-active') === 'true', link_label: fv('f-link_label'), link_url: fv('f-link_url') },
+    banner:   {}
   }[_type] || {};
 
   const newItem = { ...base, ...extra };
