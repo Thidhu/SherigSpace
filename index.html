@@ -248,7 +248,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cover-pdf{--c1:#c0392b;--c2:#e5643a}.cover-doc{--c1:#2b5fc0;--c2:#4f8ff0}.cover-slides{--c1:#d9822b;--c2:#f2b04d}
 .cover-sheet{--c1:#1f8a5b;--c2:#3fbf86}.cover-image{--c1:#7b4bc0;--c2:#a877ee}.cover-video{--c1:#1a2340;--c2:#3a4a86}
 .cover-audio{--c1:#b8437a;--c2:#e56aa0}.cover-form{--c1:#5b3fa8;--c2:#8a6fdc}.cover-file{--c1:#4a5568;--c2:#718096}
-.cover-lesson{--c1:#1a2340;--c2:#34457f}.cover-article{--c1:#9a6a1f;--c2:#d19a3d}
+.cover-lesson{--c1:#1a2340;--c2:#34457f}.cover-article{--c1:#9a6a1f;--c2:#d19a3d}.cover-game{--c1:#1f8a5b;--c2:#3fbf86}
 
 /* ═══ Resource cards: big 16:9 cover on top, same as lessons/videos ═══ */
 .resource-card{flex-direction:column;align-items:stretch;gap:0;padding:0}
@@ -371,6 +371,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <a class="side-link" href="#lessons" data-section="lessons"><span class="si">📖</span><span data-en="Lessons" data-dz="སློབ་སྟོན།">Lessons</span></a>
       <a class="side-link" href="#resources" data-section="resources"><span class="si">📁</span><span data-en="Resources" data-dz="ཡིག་ཆ།">Resources</span></a>
       <a class="side-link" href="#videos" data-section="videos"><span class="si">🎥</span><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></a>
+      <a class="side-link" href="#games" data-section="games"><span class="si">🎮</span><span data-en="EduGames" data-dz="རྩེད་མོ།">EduGames</span></a>
       <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
       <a class="side-link" href="#about" data-section="about"><span class="si">👤</span><span data-en="About" data-dz="ང་རའི་སྐོར།">About</span></a>
     </nav>
@@ -414,6 +415,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <div class="banner" id="home">
         <div class="banner-dots" id="bannerDots"></div>
       </div>
+      <div id="membership-notice" style="display:none"></div>
 
       <div class="dash-content">
 
@@ -464,6 +466,23 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <button class="scroll-arrow left" data-scroll="videos-grid" aria-label="Scroll left">‹</button>
       <div class="videos-grid scroll-track" id="videos-grid"></div>
       <button class="scroll-arrow right" data-scroll="videos-grid" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- GAMES -->
+<section id="games">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Play & Learn" data-dz="✦ རྩེད་མོ་དང་ལྷབ་སྦྱང་།">✦ Play & Learn</p>
+      <h2 class="section-title" data-en="EduGames" data-dz="རྩེད་མོ།">EduGames</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="Interactive games that make practicing Dzongkha fun." data-dz="རྫོང་ཁ་སློབ་སྦྱང་དགའ་སྤྲོ་ཅན་སྦེ་བཟོ་མི་རྩེད་མོ།">Interactive games that make practicing Dzongkha fun.</p>
+    </div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="games-grid" aria-label="Scroll left">‹</button>
+      <div class="games-grid scroll-track" id="games-grid"></div>
+      <button class="scroll-arrow right" data-scroll="games-grid" aria-label="Scroll right">›</button>
     </div>
   </div>
 </section>
@@ -583,7 +602,7 @@ function thumbImg(u, extra){
 const COVER = {
   pdf:{icon:'📄',label:'PDF'}, doc:{icon:'📝',label:'DOC'}, slides:{icon:'📽️',label:'SLIDES'}, sheet:{icon:'📊',label:'SHEET'},
   image:{icon:'🖼️',label:'IMAGE'}, video:{icon:'🎬',label:'VIDEO'}, audio:{icon:'🎧',label:'AUDIO'}, form:{icon:'📋',label:'FORM'},
-  file:{icon:'📎',label:'FILE'}, lesson:{icon:'📖',label:'LESSON'}, article:{icon:'✍️',label:'ARTICLE'}
+  file:{icon:'📎',label:'FILE'}, lesson:{icon:'📖',label:'LESSON'}, article:{icon:'✍️',label:'ARTICLE'}, game:{icon:'🎮',label:'GAME'}
 };
 function coverHtml(kind, emoji){
   const m = COVER[kind] || COVER.file;
@@ -609,13 +628,14 @@ document.addEventListener('error', function(e){
 // Class levels are grouped into bands for browsing; each item is still tagged
 // with one specific class (or "All Classes" for general content) in the admin panel.
 const CLASS_GROUPS = [
-  { label:'PP & 1',  levels:['PP','Class 1'] },
-  { label:'2 & 3',   levels:['Class 2','Class 3'] },
-  { label:'4 to 6',  levels:['Class 4','Class 5','Class 6'] },
-  { label:'7 & 8',   levels:['Class 7','Class 8'] },
-  { label:'9 & 10',  levels:['Class 9','Class 10'] },
-  { label:'11 & 12', levels:['Class 11','Class 12'] },
-  { label:'General', levels:['All Classes'] }
+  { label:'All',            levels:null },   // null = show every class, no filtering
+  { label:'Class PP & 1',   levels:['PP','Class 1'] },
+  { label:'Class 2 & 3',    levels:['Class 2','Class 3'] },
+  { label:'Class 4 to 6',   levels:['Class 4','Class 5','Class 6'] },
+  { label:'Class 7 & 8',    levels:['Class 7','Class 8'] },
+  { label:'Class 9 & 10',   levels:['Class 9','Class 10'] },
+  { label:'Class 11 & 12',  levels:['Class 11','Class 12'] },
+  { label:'General',        levels:['All Classes'] }
 ];
 const storedClass = localStorage.getItem('edu_selected_class');
 let selectedClass = CLASS_GROUPS.some(g=>g.label===storedClass) ? storedClass : CLASS_GROUPS[0].label;
@@ -642,16 +662,17 @@ function renderClassTabs(){
 // (general material) or matches the picked class exactly.
 let searchQuery = '';
 function matchesSearch(item){
-  const hay = [item.title,item.dz,item.description,item.subject,item.class_level,item.rtype].join(' ').toLowerCase();
+  const hay = [item.title,item.dz,item.description,item.subject,item.class_level,item.rtype,item.gtype].join(' ').toLowerCase();
   return searchQuery.split(/\s+/).every(w=>hay.includes(w));
 }
 function emptyMsg(name){ return searchQuery ? `No ${name} match “${esc(searchQuery)}”` : `No ${name} for ${esc(selectedClass)} yet`; }
 function matchesClass(item){
   if(searchQuery) return matchesSearch(item);   // searching looks through every class
+  const group = CLASS_GROUPS.find(g=>g.label===selectedClass);
+  if(!group || !group.levels) return true;      // "All" — no filtering
   const c = item.class_level || 'All Classes';
   if(c === 'All Classes') return true;          // general content shows under every group
-  const group = CLASS_GROUPS.find(g=>g.label===selectedClass);
-  return group ? group.levels.includes(c) : true;
+  return group.levels.includes(c);
 }
 
 function lang(){ return html.getAttribute('data-lang'); }
@@ -747,6 +768,7 @@ document.getElementById('video-modal').addEventListener('click', e=>{ if(e.targe
 // ── PREMIUM / PAYMENT SYSTEM ──
 // Phone number for instant "I've paid" notifications (WhatsApp + direct call).
 const CONTACT_PHONE = '97517272018'; // Bhutan country code + number, no "+" (required by wa.me)
+const MEMBERSHIP_PRICE = 59; // Nu. — one-time site access fee every signed-up member must pay to unlock standard (non-premium) content
 let siteSettings = {};
 let myPurchases = {}; // "type:id" -> 'pending' | 'approved'
 
@@ -765,24 +787,31 @@ async function loadMyPurchases(){
 
 // Returns 'free' | 'approved' | 'pending' | 'locked-anon' | 'locked-pay'
 function accessState(type, item){
-  if(!item.is_premium) return 'free';
   const s = session();
   if(!s) return 'locked-anon';
-  const st = myPurchases[`${type}:${item.id}`];
-  if(st === 'approved') return 'approved';
+  if(item.is_premium){
+    const st = myPurchases[`${type}:${item.id}`];
+    if(st === 'approved') return 'approved';
+    if(st === 'pending') return 'pending';
+    return 'locked-pay';
+  }
+  // Standard (non-premium) content: everyone who has signed up still needs to
+  // pay the one-time site membership fee once before any of it opens.
+  const st = myPurchases['membership:general'];
+  if(st === 'approved') return 'free';
   if(st === 'pending') return 'pending';
   return 'locked-pay';
 }
 
 function lockOverlayHtml(state, item){
   if(state === 'free' || state === 'approved') return '';
-  const price = item.price != null ? `Nu. ${item.price}` : 'Paid';
-  const left = item.is_premium ? `🔒 ${esc(price)}` : '🔒 Free';
+  const price = item.is_premium ? (item.price != null ? `Nu. ${item.price}` : 'Paid') : `Nu. ${MEMBERSHIP_PRICE}`;
+  const left = `🔒 ${esc(price)}`;
   if(state === 'pending'){
     const waText = encodeURIComponent(`Hi Thinley, I already submitted payment for "${item.title || 'an item'}" — could you please review it?`);
     return `<div class="lock-bar pending"><span>⏳ Payment under review</span><a class="lb-cta" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 Notify me</a></div>`;
   }
-  if(state === 'locked-anon') return `<div class="lock-bar"><span>${left}</span><a class="lb-cta" href="login.html">${item.is_premium ? 'Log in to unlock' : 'Log in to download'} →</a></div>`;
+  if(state === 'locked-anon') return `<div class="lock-bar"><span>${left}</span><a class="lb-cta" href="login.html">Log in to unlock →</a></div>`;
   if(state === 'locked-pay') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">Tap to unlock →</span></div>`;
   return '';
 }
@@ -884,7 +913,7 @@ async function renderLessons(){
     const thumb = thumbFor(l);
     const lk = fileKindFor(url) || 'lesson';
     const state = accessState('lessons', l);
-    return `<div class="lesson-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}">
+    return `<div class="lesson-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}" data-premium="${l.is_premium?'1':''}">
       <div class="card-media">${coverHtml(lk, lk==='lesson' ? icon : null)}${thumb ? thumbImg(thumb) : ''}
         <div class="pill-row"><span class="pill">${esc(l.subject||'General')}</span>${l.class_level && l.class_level!=='All Classes' ? `<span class="pill">${esc(l.class_level)}</span>` : ''}</div>
       </div>
@@ -901,7 +930,10 @@ async function renderLessons(){
     const id = card.getAttribute('data-id');
     const state = card.getAttribute('data-state');
     card.addEventListener('click', ()=>{
-      if(state === 'locked-pay') openPaymentModal('lessons', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+      if(state === 'locked-pay'){
+        if(card.getAttribute('data-premium')) openPaymentModal('lessons', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+      }
       else if(state === 'locked-anon'){ window.location='login.html'; return; }
       else if(state === 'pending') return;
       else if(url){ trackOpen('lessons', id); window.open(url,'_blank','noopener'); }
@@ -940,9 +972,48 @@ async function renderResources(){
       const url = card.getAttribute('data-url');
       const id = card.getAttribute('data-id');
       if(state === 'locked-anon') window.location='login.html';
-      else if(state === 'locked-pay') openPaymentModal('resources', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+      else if(state === 'locked-pay'){
+        if(card.getAttribute('data-premium')) openPaymentModal('resources', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+      }
       else if(state === 'pending') return;
       else if(url){ trackOpen('resources', id); window.open(url,'_blank','noopener'); }
+    });
+  });
+}
+
+// ── RENDER GAMES ──
+async function renderGames(){
+  const { data: raw, error: loadErr } = await supabase.from('games').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load games:', loadErr);
+  const items = (raw||[]).filter(matchesClass);
+  const g = document.getElementById('games-grid');
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎮</div><p>${emptyMsg('games')}</p></div>`; return; }
+  g.innerHTML = items.map(gm => {
+    const title = lang()==='dz' && gm.dz ? gm.dz : gm.title;
+    const url = safeUrl(gm.url);
+    const thumb = thumbFor(gm);
+    const state = accessState('games', gm);
+    return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(gm.id)}" data-title="${esc(title)}" data-price="${esc(gm.price||0)}" data-premium="${gm.is_premium?'1':''}">
+      <div class="card-media">${coverHtml('game')}${thumb ? thumbImg(thumb) : ''}
+        <div class="pill-row">${gm.gtype?`<span class="pill">${esc(gm.gtype)}</span>`:''}${gm.class_level && gm.class_level!=='All Classes'?`<span class="pill">${esc(gm.class_level)}</span>`:''}</div>
+      </div>
+      <div class="card-body"><h4>${esc(title)}</h4><p>${esc(gm.description||'')}</p></div>
+      ${lockOverlayHtml(state, gm)}
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.resource-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const state = card.getAttribute('data-state');
+      const url = card.getAttribute('data-url');
+      const id = card.getAttribute('data-id');
+      if(state === 'locked-anon') window.location='login.html';
+      else if(state === 'locked-pay'){
+        if(card.getAttribute('data-premium')) openPaymentModal('games', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+      }
+      else if(state === 'pending') return;
+      else if(url){ trackOpen('games', id); window.open(url,'_blank','noopener'); }
     });
   });
 }
@@ -960,7 +1031,7 @@ async function renderVideos(){
     const url = safeUrl(v.url);
     const thumb = thumbFor(v);
     const state = accessState('videos', v);
-    return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}">
+    return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}" data-premium="${v.is_premium?'1':''}">
       <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div><div class="play-btn">▶</div></div>
       <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}</div></div>
       ${lockOverlayHtml(state, v)}
@@ -970,7 +1041,11 @@ async function renderVideos(){
     const state = card.getAttribute('data-state');
     card.addEventListener('click', ()=>{
       if(state === 'locked-anon') { window.location='login.html'; return; }
-      if(state === 'locked-pay') { openPaymentModal('videos', card.getAttribute('data-id'), card.getAttribute('data-title'), card.getAttribute('data-price')); return; }
+      if(state === 'locked-pay') {
+        if(card.getAttribute('data-premium')) openPaymentModal('videos', card.getAttribute('data-id'), card.getAttribute('data-title'), card.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        return;
+      }
       if(state === 'pending') return;
       openVideoModal(card.getAttribute('data-url'), card.getAttribute('data-id'), card.getAttribute('data-title'));
     });
@@ -991,14 +1066,15 @@ async function renderArticles(){
     const url = safeUrl(a.url);
     const thumb = thumbFor(a);
     const state = accessState('articles', a);
-    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 Nu.${esc(a.price||0)} — log in</span>`
-                    : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 Nu.${esc(a.price||0)} — tap to unlock</span>`
+    const displayPrice = a.is_premium ? (a.price||0) : MEMBERSHIP_PRICE;
+    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 Nu.${esc(displayPrice)} — log in</span>`
+                    : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 Nu.${esc(displayPrice)} — tap to unlock</span>`
                     : state==='pending' ? ` <span style="color:var(--text2);font-size:.78rem">⏳ Under review</span>` : '';
     return `<div class="blog-card fade-in">
       <div class="blog-thumb">${coverHtml('article', EMOJIS[i%6])}${thumb ? thumbImg(thumb) : ''}</div>
       <div class="blog-body">
         <div class="blog-date">${esc(date)}</div>
-        <h3 data-state="${state}" data-url="${esc(url)}" data-id="${esc(a.id)}" data-title="${esc(title)}" data-price="${esc(a.price||0)}" style="${state==='free'||state==='approved'?'cursor:pointer':''}">${esc(title)}${priceTag}</h3>
+        <h3 data-state="${state}" data-url="${esc(url)}" data-id="${esc(a.id)}" data-title="${esc(title)}" data-price="${esc(a.price||0)}" data-premium="${a.is_premium?'1':''}" style="${state==='free'||state==='approved'?'cursor:pointer':''}">${esc(title)}${priceTag}</h3>
         <p>${esc(a.description||'')}</p>
         <div class="comments-wrap" data-article="${esc(a.id)}">
           <h4>💬 Comments</h4>
@@ -1015,7 +1091,11 @@ async function renderArticles(){
       const state = h.getAttribute('data-state');
       const id = h.getAttribute('data-id');
       if(state === 'locked-anon'){ window.location='login.html'; return; }
-      if(state === 'locked-pay'){ openPaymentModal('articles', id, h.getAttribute('data-title'), h.getAttribute('data-price')); return; }
+      if(state === 'locked-pay'){
+        if(h.getAttribute('data-premium')) openPaymentModal('articles', id, h.getAttribute('data-title'), h.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        return;
+      }
       if(state === 'pending') return;
       const url = h.getAttribute('data-url');
       if(url){ trackOpen('articles', id); window.open(url,'_blank','noopener'); }
@@ -1049,11 +1129,25 @@ async function loadComments(wrap, s){
   }
 }
 
+function renderMembershipNotice(){
+  const el = document.getElementById('membership-notice');
+  if(!el) return;
+  const st = myPurchases['membership:general'];
+  if(st === 'approved'){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  if(st === 'pending'){
+    el.innerHTML = `<div class="lock-bar pending" style="position:static;border-radius:12px;margin-bottom:1.6rem"><span>⏳ Your Nu. ${MEMBERSHIP_PRICE} membership payment is under review — content unlocks once it's approved.</span></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="lock-bar" style="position:static;border-radius:12px;margin-bottom:1.6rem;cursor:pointer" onclick="openPaymentModal('membership','general','Site Membership',${MEMBERSHIP_PRICE})"><span>🔒 Pay a one-time Nu. ${MEMBERSHIP_PRICE} access fee to unlock all lessons, resources, videos, games and articles.</span><span class="lb-cta">Pay now →</span></div>`;
+}
+
 async function renderAll(){
   renderNav();
   renderClassTabs();
   await Promise.all([loadSiteSettings(), loadMyPurchases()]);
-  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), loadStats(), renderBanner()]);
+  renderMembershipNotice();
+  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), loadStats(), renderBanner()]);
   observeFadeIns();
 }
 
@@ -1062,7 +1156,7 @@ const searchInput = document.getElementById('searchInput');
 let searchTimer = null;
 async function runSearch(){
   searchQuery = searchInput.value.trim().toLowerCase();
-  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles()]);
+  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames()]);
   observeFadeIns();
 }
 searchInput.addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 250); });
@@ -1071,7 +1165,7 @@ searchInput.addEventListener('keydown', e=>{
   if(e.key === 'Enter'){
     clearTimeout(searchTimer);
     runSearch().then(()=>{
-      const hit = [['lessons','.lesson-card'],['resources','.resource-card'],['videos','.video-card'],['blog','.blog-card']].find(([id,c])=>document.querySelector('#'+id+' '+c));
+      const hit = [['lessons','.lesson-card'],['resources','.resource-card'],['videos','.video-card'],['games','.resource-card'],['blog','.blog-card']].find(([id,c])=>document.querySelector('#'+id+' '+c));
       if(hit) document.getElementById(hit[0]).scrollIntoView({behavior:'smooth'});
     });
   }
