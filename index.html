@@ -356,6 +356,16 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .scroll-arrow.left{left:-14px}
 .scroll-arrow.right{right:-14px}
 @media(max-width:700px){.scroll-arrow{display:none}.scroll-track>*{flex-basis:82%}}
+.membership-cta{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:14px;padding:1.1rem 1.5rem;margin-bottom:1.8rem;box-shadow:0 8px 24px rgba(201,168,76,.25)}
+.membership-cta.pending{background:var(--card-bg);border:1px solid var(--card-border);box-shadow:none}
+.mc-icon{font-size:1.8rem;flex-shrink:0}
+.mc-text{flex:1;min-width:220px;color:#1a2340}
+.mc-text b{display:block;font-size:1.15rem;font-weight:800;letter-spacing:-.01em}
+.mc-text span{display:block;font-size:.85rem;font-weight:500;opacity:.85;margin-top:.15rem}
+.membership-cta.pending .mc-text{color:var(--text)}
+.membership-cta.pending .mc-text span{color:var(--text2);opacity:1}
+.mc-btn{flex-shrink:0;background:#1a2340;color:#fff;border:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:var(--font-en);white-space:nowrap;transition:transform .15s}
+.mc-btn:hover{transform:translateY(-2px)}
 </style>
 </head>
 <body>
@@ -566,7 +576,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 <!-- PAYMENT MODAL -->
 <div class="modal-overlay" id="payment-modal">
   <div class="modal-box" style="max-width:440px">
-    <div class="modal-head"><h3>🔒 Unlock Premium Content</h3><button class="modal-close" onclick="closePaymentModal()">✕</button></div>
+    <div class="modal-head"><h3 id="payment-modal-title">🔒 Unlock Premium Content</h3><button class="modal-close" onclick="closePaymentModal()">✕</button></div>
     <div class="modal-body" id="payment-modal-body"></div>
   </div>
 </div>
@@ -768,7 +778,7 @@ document.getElementById('video-modal').addEventListener('click', e=>{ if(e.targe
 // ── PREMIUM / PAYMENT SYSTEM ──
 // Phone number for instant "I've paid" notifications (WhatsApp + direct call).
 const CONTACT_PHONE = '97517272018'; // Bhutan country code + number, no "+" (required by wa.me)
-const MEMBERSHIP_PRICE = 59; // Nu. — one-time site access fee every signed-up member must pay to unlock standard (non-premium) content
+const MEMBERSHIP_PRICE = 50; // Nu. — one-time site access fee every signed-up member must pay to unlock standard (non-premium) content
 let siteSettings = {};
 let myPurchases = {}; // "type:id" -> 'pending' | 'approved'
 
@@ -805,8 +815,10 @@ function accessState(type, item){
 
 function lockOverlayHtml(state, item){
   if(state === 'free' || state === 'approved') return '';
-  const price = item.is_premium ? (item.price != null ? `Nu. ${item.price}` : 'Paid') : `Nu. ${MEMBERSHIP_PRICE}`;
-  const left = `🔒 ${esc(price)}`;
+  // Premium items show their own price; standard members-only content just says
+  // "Members Only" on the card itself — the actual price only appears once they
+  // click through, in the payment popup, so cards don't look priced item-by-item.
+  const left = item.is_premium ? `🔒 ${esc(item.price != null ? 'Nu. ' + item.price : 'Paid')}` : '🔒 Members Only';
   if(state === 'pending'){
     const waText = encodeURIComponent(`Hi Thinley, I already submitted payment for "${item.title || 'an item'}" — could you please review it?`);
     return `<div class="lock-bar pending"><span>⏳ Payment under review</span><a class="lb-cta" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 Notify me</a></div>`;
@@ -821,8 +833,13 @@ function lockCls(state){ return (state === 'free' || state === 'approved') ? '' 
 window.openPaymentModal = function(type, id, title, price){
   const body = document.getElementById('payment-modal-body');
   const qr = safeUrl(siteSettings.qr_image_url);
+  const isMembership = type === 'membership';
+  document.getElementById('payment-modal-title').textContent = isMembership ? '🔓 Become a Member' : '🔒 Unlock Premium Content';
+  const introText = isMembership
+    ? `Pay <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong> to become a SherigSpace member and unlock every lesson, resource, video, game and article. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.`
+    : `Unlock <strong style="color:var(--text)">${esc(title)}</strong> for <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong>. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.`;
   body.innerHTML = `
-    <p style="font-size:.9rem;color:var(--text2);margin-bottom:1rem">Unlock <strong style="color:var(--text)">${esc(title)}</strong> for <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong>. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.</p>
+    <p style="font-size:.9rem;color:var(--text2);margin-bottom:1rem">${introText}</p>
     ${qr ? `<img src="${esc(qr)}" style="width:100%;max-width:220px;display:block;margin:0 auto 1rem;border-radius:6px;border:1px solid var(--border)"/>` : ''}
     <div style="background:var(--gold-soft);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;margin-bottom:1rem;font-size:.85rem;line-height:1.8">
       ${siteSettings.bank_name?`<div><strong>Bank/App:</strong> ${esc(siteSettings.bank_name)}</div>`:''}
@@ -834,7 +851,7 @@ window.openPaymentModal = function(type, id, title, price){
       <input type="file" id="proof-file" accept="image/*" style="margin-top:.4rem"/>
     </div>
     <p id="proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
-    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${esc(type)}','${esc(id)}',${Number(price)||0},'${esc(title)}')">Submit for Review</button>
+    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${esc(type)}','${esc(id)}',${Number(price)||0},'${esc(title)}')">${isMembership ? 'Become a Member' : 'Submit for Review'}</button>
   `;
   document.getElementById('payment-modal').classList.add('open');
 };
@@ -1066,9 +1083,9 @@ async function renderArticles(){
     const url = safeUrl(a.url);
     const thumb = thumbFor(a);
     const state = accessState('articles', a);
-    const displayPrice = a.is_premium ? (a.price||0) : MEMBERSHIP_PRICE;
-    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 Nu.${esc(displayPrice)} — log in</span>`
-                    : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 Nu.${esc(displayPrice)} — tap to unlock</span>`
+    const lockLabel = a.is_premium ? `Nu.${esc(a.price||0)}` : 'Members Only';
+    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 ${lockLabel} — log in</span>`
+                    : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 ${lockLabel} — tap to unlock</span>`
                     : state==='pending' ? ` <span style="color:var(--text2);font-size:.78rem">⏳ Under review</span>` : '';
     return `<div class="blog-card fade-in">
       <div class="blog-thumb">${coverHtml('article', EMOJIS[i%6])}${thumb ? thumbImg(thumb) : ''}</div>
@@ -1136,10 +1153,10 @@ function renderMembershipNotice(){
   if(st === 'approved'){ el.style.display = 'none'; el.innerHTML = ''; return; }
   el.style.display = 'block';
   if(st === 'pending'){
-    el.innerHTML = `<div class="lock-bar pending" style="position:static;border-radius:12px;margin-bottom:1.6rem"><span>⏳ Your Nu. ${MEMBERSHIP_PRICE} membership payment is under review — content unlocks once it's approved.</span></div>`;
+    el.innerHTML = `<div class="membership-cta pending"><div class="mc-icon">⏳</div><div class="mc-text"><b>Membership payment under review</b><span>Your Nu. ${MEMBERSHIP_PRICE} payment is being checked — content unlocks once it's approved.</span></div></div>`;
     return;
   }
-  el.innerHTML = `<div class="lock-bar" style="position:static;border-radius:12px;margin-bottom:1.6rem;cursor:pointer" onclick="openPaymentModal('membership','general','Site Membership',${MEMBERSHIP_PRICE})"><span>🔒 Pay a one-time Nu. ${MEMBERSHIP_PRICE} access fee to unlock all lessons, resources, videos, games and articles.</span><span class="lb-cta">Pay now →</span></div>`;
+  el.innerHTML = `<div class="membership-cta"><div class="mc-icon">🔒</div><div class="mc-text"><b>Pay Nu. ${MEMBERSHIP_PRICE} to become a member</b><span>Unlock every lesson, resource, video, game and article on SherigSpace.</span></div><button class="mc-btn" onclick="openPaymentModal('membership','general','Site Membership',${MEMBERSHIP_PRICE})">Become a Member →</button></div>`;
 }
 
 async function renderAll(){
