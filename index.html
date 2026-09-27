@@ -366,11 +366,15 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .membership-cta.pending .mc-text span{color:var(--text2);opacity:1}
 .mc-btn{flex-shrink:0;background:#1a2340;color:#fff;border:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:var(--font-en);white-space:nowrap;transition:transform .15s}
 .mc-btn:hover{transform:translateY(-2px)}
+.pay-choice{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem}
+.pay-opt{display:flex;align-items:center;gap:.6rem;border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;cursor:pointer;font-size:.85rem;color:var(--text);transition:border-color .15s,background .15s}
+.pay-opt input{accent-color:var(--gold);flex-shrink:0}
+.pay-opt:has(input:checked){border-color:var(--gold);background:var(--gold-soft)}
 </style>
 </head>
 <body>
 
-<div id="gate-loader"><div><div class="gl-icon">🔒</div><p>Checking your session…</p></div></div>
+<div id="gate-loader"><div><div class="gl-icon">📖</div><p>Loading SherigSpace…</p></div></div>
 
 <div class="app" id="app" style="visibility:hidden">
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -711,12 +715,27 @@ sidebar.querySelectorAll('.side-link').forEach(a=>a.addEventListener('click', cl
 // ── SIDEBAR / RIGHT-PANEL USER INFO ── (page is login-only, s is always set here)
 function renderNav(){
   const s = session();
-  if(!s) return;
+  const topbarAvatar = document.getElementById('topbarAvatar');
+  const spBlock = document.querySelector('.sidebar-profile');
+  if(!s){
+    // Guest — browsing is open, but there's no profile to show yet.
+    topbarAvatar.textContent = '👤';
+    topbarAvatar.onclick = () => window.location.href = 'login.html';
+    document.getElementById('rpAvatar').textContent = '👤';
+    document.getElementById('rpName').textContent = 'Guest';
+    document.getElementById('rpRole').textContent = 'Not logged in';
+    if(spBlock) spBlock.onclick = () => window.location.href = 'login.html';
+    document.getElementById('sidebarFooter').innerHTML =
+      `<a class="side-link" href="login.html"><span class="si">🔑</span><span>Log In / Sign Up</span></a>`;
+    return;
+  }
   const initials = esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  document.getElementById('topbarAvatar').textContent = initials;
+  topbarAvatar.textContent = initials;
+  topbarAvatar.onclick = () => openProfile();
   document.getElementById('rpAvatar').textContent = initials;
   document.getElementById('rpName').textContent = s.name;
   document.getElementById('rpRole').textContent = s.class_grade || s.role || 'Member';
+  if(spBlock) spBlock.onclick = () => openProfile();
   const adminSide = s.role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
   document.getElementById('sidebarFooter').innerHTML =
     `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher</span></a>${adminSide}<a class="side-link" onclick="logout()"><span class="si">🔒</span><span>Log Out</span></a>`;
@@ -800,9 +819,13 @@ function accessState(type, item){
   const s = session();
   if(!s) return 'locked-anon';
   if(item.is_premium){
+    // A Premium Membership subscription unlocks every premium item at once,
+    // as an alternative to buying this one item on its own.
+    const pm = myPurchases['premium_membership:general'];
+    if(pm === 'approved') return 'approved';
     const st = myPurchases[`${type}:${item.id}`];
     if(st === 'approved') return 'approved';
-    if(st === 'pending') return 'pending';
+    if(pm === 'pending' || st === 'pending') return 'pending';
     return 'locked-pay';
   }
   // Standard (non-premium) content: everyone who has signed up still needs to
@@ -830,16 +853,44 @@ function lockOverlayHtml(state, item){
 // Adds the "leave room for the price bar" class to locked/pending cards.
 function lockCls(state){ return (state === 'free' || state === 'approved') ? '' : ' is-locked'; }
 
+// The price for the all-premium-content subscription. Falls back to 200 until
+// you set a real value in Admin → Settings → "Premium Membership Price".
+function premiumPrice(){ return siteSettings.premium_plan_price || 200; }
+
+// Which purchase the payment modal will actually submit — set whenever the
+// modal opens, and updated live if the person switches between "just this
+// item" and "Premium Membership" using the radio choice below.
+let paymentChoice = null;
+
 window.openPaymentModal = function(type, id, title, price){
   const body = document.getElementById('payment-modal-body');
   const qr = safeUrl(siteSettings.qr_image_url);
   const isMembership = type === 'membership';
-  document.getElementById('payment-modal-title').textContent = isMembership ? '🔓 Become a Member' : '🔒 Unlock Premium Content';
+  const isPremiumMembership = type === 'premium_membership';
+  const isItem = !isMembership && !isPremiumMembership;   // a specific lesson/resource/video/game/article
+
+  paymentChoice = { type, id, price: Number(price)||0, title };
+
+  document.getElementById('payment-modal-title').textContent =
+    isMembership ? '🔓 Become a Member' : isPremiumMembership ? '⭐ Premium Membership' : '🔒 Unlock Premium Content';
+
   const introText = isMembership
     ? `Pay <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong> to become a SherigSpace member and unlock every lesson, resource, video, game and article. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.`
-    : `Unlock <strong style="color:var(--text)">${esc(title)}</strong> for <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong>. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.`;
+    : isPremiumMembership
+    ? `Pay <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong> to become a Premium Member and unlock <strong>every</strong> premium lesson, resource, video, game and article — no more paying per item.`
+    : `Choose how you'd like to unlock <strong style="color:var(--text)">${esc(title)}</strong>.`;
+
+  const optionsHtml = isItem ? `
+    <div class="pay-choice">
+      <label class="pay-opt"><input type="radio" name="pay-opt" checked onchange="selectPayOption('${esc(type)}','${esc(id)}',${Number(price)||0},'${esc(title)}')"/>
+        <span>Just this item — <b>Nu. ${esc(price)}</b></span></label>
+      <label class="pay-opt"><input type="radio" name="pay-opt" onchange="selectPayOption('premium_membership','general',${premiumPrice()},'Premium Membership')"/>
+        <span>⭐ Premium Membership — <b>Nu. ${esc(premiumPrice())}</b> · unlocks every premium item</span></label>
+    </div>` : '';
+
   body.innerHTML = `
     <p style="font-size:.9rem;color:var(--text2);margin-bottom:1rem">${introText}</p>
+    ${optionsHtml}
     ${qr ? `<img src="${esc(qr)}" style="width:100%;max-width:220px;display:block;margin:0 auto 1rem;border-radius:6px;border:1px solid var(--border)"/>` : ''}
     <div style="background:var(--gold-soft);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;margin-bottom:1rem;font-size:.85rem;line-height:1.8">
       ${siteSettings.bank_name?`<div><strong>Bank/App:</strong> ${esc(siteSettings.bank_name)}</div>`:''}
@@ -851,14 +902,24 @@ window.openPaymentModal = function(type, id, title, price){
       <input type="file" id="proof-file" accept="image/*" style="margin-top:.4rem"/>
     </div>
     <p id="proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
-    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof('${esc(type)}','${esc(id)}',${Number(price)||0},'${esc(title)}')">${isMembership ? 'Become a Member' : 'Submit for Review'}</button>
+    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof()">${isMembership ? 'Become a Member' : isPremiumMembership ? 'Become a Premium Member' : 'Submit for Review'}</button>
   `;
   document.getElementById('payment-modal').classList.add('open');
 };
+
+// Fired when someone switches the radio choice between "just this item" and "Premium Membership".
+window.selectPayOption = function(type, id, price, title){
+  paymentChoice = { type, id, price: Number(price)||0, title };
+  const btn = document.getElementById('proof-submit-btn');
+  if(btn) btn.textContent = type === 'premium_membership' ? 'Become a Premium Member' : 'Submit for Review';
+};
+
 window.closePaymentModal = function(){ document.getElementById('payment-modal').classList.remove('open'); };
 document.getElementById('payment-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('payment-modal')) closePaymentModal(); });
 
-window.submitPaymentProof = async function(type, id, price, title){
+window.submitPaymentProof = async function(){
+  if(!paymentChoice) return;
+  const { type, id, price, title } = paymentChoice;
   const s = session();
   if(!s){ window.location='login.html'; return; }
   const fileInput = document.getElementById('proof-file');
@@ -866,6 +927,7 @@ window.submitPaymentProof = async function(type, id, price, title){
   const statusEl = document.getElementById('proof-status');
   const submitBtn = document.getElementById('proof-submit-btn');
   if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red,#e05c5c)'; return; }
+  const submitLabel = submitBtn ? submitBtn.textContent : 'Submit for Review';
   if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
   statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
   try{
@@ -900,7 +962,7 @@ window.submitPaymentProof = async function(type, id, price, title){
   }catch(err){
     console.error('Payment proof submit failed:', err);
     statusEl.textContent = 'Failed: ' + (err && err.message ? err.message : 'please try again.'); statusEl.style.color = 'var(--red,#e05c5c)';
-    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit for Review'; }
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = submitLabel; }
   }
 };
 
@@ -1149,6 +1211,11 @@ async function loadComments(wrap, s){
 function renderMembershipNotice(){
   const el = document.getElementById('membership-notice');
   if(!el) return;
+  if(!session()){
+    el.style.display = 'block';
+    el.innerHTML = `<div class="membership-cta"><div class="mc-icon">🔒</div><div class="mc-text"><b>Log in or sign up to unlock SherigSpace</b><span>Create a free account, then pay a one-time Nu. ${MEMBERSHIP_PRICE} membership fee to access every lesson, resource, video, game and article.</span></div><a href="login.html" class="mc-btn" style="text-decoration:none;display:inline-flex;align-items:center">Log In / Sign Up →</a></div>`;
+    return;
+  }
   const st = myPurchases['membership:general'];
   if(st === 'approved'){ el.style.display = 'none'; el.innerHTML = ''; return; }
   el.style.display = 'block';
@@ -1283,24 +1350,24 @@ window.addEventListener('scroll',()=>{
   sideLinks.forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+cur));
 });
 
-// ── AUTH GATE + SYNC SUPABASE SESSION → localStorage on load AND on change ──
-// This page is for logged-in members only: anyone without a session is sent
-// straight to login.html, before any dashboard content is ever shown.
+// ── SYNC SUPABASE SESSION → localStorage on load AND on change ──
+// The site is open to browse for anyone. Signed-out visitors see every
+// section and card; only opening/downloading something checks accessState()
+// and asks them to log in or pay, per-click — there is no page-level gate.
 let gateOpened = false;
 async function syncSessionAndRender(){
   const { data } = await supabase.auth.getSession();
-  if(!data.session){
+  if(data.session){
+    const uid = data.session.user.id;
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id',uid).single();
+    if(profile){
+      localStorage.setItem('edu_session', JSON.stringify({
+        id: uid, name: profile.name, email: profile.email,
+        role: profile.role, class_grade: profile.class_grade
+      }));
+    }
+  } else {
     localStorage.removeItem('edu_session');
-    window.location.replace('login.html');
-    return;
-  }
-  const uid = data.session.user.id;
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id',uid).single();
-  if(profile){
-    localStorage.setItem('edu_session', JSON.stringify({
-      id: uid, name: profile.name, email: profile.email,
-      role: profile.role, class_grade: profile.class_grade
-    }));
   }
   if(!gateOpened){
     gateOpened = true;
