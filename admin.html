@@ -130,6 +130,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="sitem"     onclick="go('lessons')">📚 &nbsp;Lessons</div>
       <div class="sitem"     onclick="go('resources')">📁 &nbsp;Resources</div>
       <div class="sitem"     onclick="go('videos')">🎥 &nbsp;Videos</div>
+      <div class="sitem"     onclick="go('games')">🎮 &nbsp;EduGames</div>
       <div class="sitem"     onclick="go('articles')">✍️ &nbsp;Articles</div>
       <div class="sitem"     onclick="go('announce')">📢 &nbsp;Announcements</div>
       <div class="sitem"     onclick="go('payments')">💳 &nbsp;Payments</div>
@@ -170,6 +171,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
     <div class="page" id="p-videos">
       <div class="phead"><div><div class="ptitle">Videos</div><div class="psub">Manage your video lessons</div></div><button class="btn btn-gold" onclick="openForm('video')">+ Add Video</button></div>
       <div class="card"><div class="card-head"><h3>All Videos</h3><span class="cbadge" id="c-videos">0</span></div><div id="l-videos"></div></div>
+    </div>
+
+    <div class="page" id="p-games">
+      <div class="phead"><div><div class="ptitle">EduGames</div><div class="psub">Manage the interactive games shown in the EduGames panel</div></div><button class="btn btn-gold" onclick="openForm('game')">+ Add Game</button></div>
+      <div class="card"><div class="card-head"><h3>All Games</h3><span class="cbadge" id="c-games">0</span></div><div id="l-games"></div></div>
     </div>
 
     <div class="page" id="p-articles">
@@ -307,7 +313,7 @@ window.go = function(p){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
   document.getElementById('p-'+p).classList.add('on');
-  const map={dash:'dashboard',banners:'banners',lessons:'lessons',resources:'resources',videos:'videos',articles:'articles',payments:'payments',users:'users',settings:'settings'};
+  const map={dash:'dashboard',banners:'banners',lessons:'lessons',resources:'resources',videos:'videos',games:'edugames',articles:'articles',payments:'payments',users:'users',settings:'settings'};
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
 };
@@ -322,6 +328,7 @@ async function renderAll(){
     { data: U, count: uc, error: uErr },
     { data: AN, count: anc, error: anErr },
     { data: BN, count: bnc, error: bnErr },
+    { data: GM, count: gmc, error: gmErr },
     { count: visitCount }
   ] = await Promise.all([
     supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
@@ -331,12 +338,13 @@ async function renderAll(){
     supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
     supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('banners').select('*',{count:'exact'}).order('sort_order',{ascending:true}),
+    supabase.from('games').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('page_views').select('*',{count:'exact',head:true})
   ]);
 
   // Surface load errors instead of silently showing "No lessons yet".
   [['lessons',lErr],['resources',rErr],['videos',vErr],
-   ['articles',aErr],['profiles',uErr],['announcements',anErr],['banners',bnErr]].forEach(([name,err])=>{
+   ['articles',aErr],['profiles',uErr],['announcements',anErr],['banners',bnErr],['games',gmErr]].forEach(([name,err])=>{
     if(err){ console.error('Could not load '+name+':', err); toast('Could not load '+name+': '+err.message, true); }
   });
 
@@ -366,8 +374,11 @@ async function renderAll(){
   document.getElementById('l-banners').innerHTML = BN?.length
     ? BN.map(b=>`<div class="irow"><div class="irow-left">${b.image_url?`<img class="irow-thumb" src="${esc(b.image_url)}" referrerpolicy="no-referrer"/>`:''}<div><div class="iname">${esc(b.title||'Untitled')}</div><div class="imeta">Order ${esc(b.sort_order??0)}${b.dz?' · has Dzongkha text':''}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('banner','${esc(b.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('banner','${esc(b.id)}')">✕</button></div></div>`).join('')
     : empty('🖼️','No banner slides yet — the homepage shows its built-in default slides. Click + Add Banner to replace them!');
+  document.getElementById('c-games').textContent = gmc||0;
+  document.getElementById('l-games').innerHTML = GM?.length ? GM.map(i=>row(i,'game')).join('') : empty('🎮','No games yet. Click + Add Game!');
+
   renderUsers(U||[]);
-  renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[]});
+  renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[], games:GM||[]});
 }
 
 
@@ -406,8 +417,8 @@ async function renderPayments(itemsByType){
   document.getElementById('c-payments-pending').textContent = pending.length + teacherPending.length;
 
   const renderRow = (p) => {
-    const item = findItem(p.item_type, p.item_id);
-    const itemTitle = item ? item.title : '(item removed)';
+    const itemTitle = p.item_type === 'membership' ? '🔓 Site Membership'
+      : (findItem(p.item_type, p.item_id)?.title || '(item removed)');
     const buyer = p.profiles ? `${esc(p.profiles.name)} (${esc(p.profiles.email)})` : 'Unknown member';
     const statusBadge = p.status === 'approved' ? '✅ Approved' : p.status === 'rejected' ? '❌ Rejected' : '⏳ Pending';
     return `<div class="irow">
@@ -500,7 +511,8 @@ function row(item,type){
     lesson:`${item.subject||'—'} · ${item.level||'—'} · ${item.duration||'—'}`,
     resource:`${item.rtype||'—'} · ${item.filesize||'—'}`,
     video:`${item.subject||'—'} · ${item.duration||'—'}`,
-    article:`${item.article_date||'—'} · ${item.category||'—'}`
+    article:`${item.article_date||'—'} · ${item.category||'—'}`,
+    game:`${item.gtype||'—'}`
   }[type]||'';
   const thumb = item.thumbnail_url ? `<img class="irow-thumb" src="${esc(item.thumbnail_url)}"/>` : '';
   const downloads = `⬇ ${item.download_count||0}`;
@@ -513,6 +525,7 @@ function row(item,type){
 const SUBJECTS=['Dzongkha','English','Mathematics','Science','Language Arts','History','Technology','Social Studies','Arts','Physical Education','Other'];
 const LEVELS=['Beginner','Intermediate','Advanced'];
 const RTYPES=['PDF','DOCX','Image','Video Link','Spreadsheet','Presentation','Other'];
+const GTYPES=['Web Game','Quiz Game','Printable Game','Other'];
 const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
 let _type=null, _id=null;
 
@@ -526,7 +539,7 @@ window.openForm = async function(type, id=null){
     const { data } = await supabase.from(readTable).select('*').eq('id',id).single();
     item = data || {};
   }
-  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement',banner:'Banner Slide'}[type];
+  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement',banner:'Banner Slide',game:'Game'}[type];
   document.getElementById('m-body').innerHTML = buildForm(type,item);
   initThumbUi();
   document.getElementById('overlay').classList.add('open');
@@ -659,15 +672,6 @@ function bannerImageField(v){
       </div>
       <input id="f-image_url" placeholder="…or paste an image link (https://…)" value="${esc(img)}" oninput="refreshBannerImgPreview()"/>
       <div class="thumb-preview" id="banner-img-preview"></div>
-      #banner-img-preview img{
-    width:100%;
-    max-width:1080px;
-    height:360px;
-    object-fit:cover;
-    border-radius:8px;
-    display:block;
-    margin-top:.5rem;
-}
     </div>`;
 }
 window.refreshBannerImgPreview = function(){
@@ -745,6 +749,15 @@ function buildForm(type,d={}){
     ${imageUploadField(v)}
     ${premiumField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="ཡིག་ཆའི་མིང་" value="${esc(v('dz'))}"/></div>`;
+  if(type==='game') return`
+    <div class="field"><label>Game Title *</label><input id="f-title" placeholder="e.g. Dzongkha Word Match" value="${esc(v('title'))}"/></div>
+    <div class="field"><label>Game Type</label><select id="f-gtype"><option value="">-- Select --</option>${sel(GTYPES,v('gtype'))}</select></div>
+    <div class="field"><label>Description</label><textarea id="f-description" placeholder="What does this game teach or practice?">${esc(v('description'))}</textarea></div>
+    <div class="field"><label>Game Link URL</label><input id="f-url" placeholder="https://..." value="${esc(v('url'))}"/></div>
+    ${classField(v)}
+    ${imageUploadField(v)}
+    ${premiumField(v)}
+    <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="རྩེད་མོའི་མིང་" value="${esc(v('dz'))}"/></div>`;
   if(type==='video') return`
     <div class="field"><label>Video Title *</label><input id="f-title" placeholder="e.g. Coding Basics Part 1" value="${esc(v('title'))}"/></div>
     <div class="field"><label>YouTube / Video URL *</label><input id="f-url" placeholder="https://youtube.com/watch?v=..." value="${esc(v('url'))}"/></div>
@@ -872,7 +885,8 @@ window.saveItem = async function(){
     video:    { subject: fv('f-subject'), duration: fv('f-duration') },
     article:  { article_date: fv('f-article_date') || null, category: fv('f-category') },
     announce: { emoji: fv('f-emoji'), active: fv('f-active') === 'true', link_label: fv('f-link_label'), link_url: fv('f-link_url') },
-    banner:   {}
+    banner:   {},
+    game:     { gtype: fv('f-gtype') }
   }[_type] || {};
 
   const newItem = { ...base, ...extra };
