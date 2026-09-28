@@ -55,6 +55,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .btn-del{background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);color:var(--red)}
 .btn-sm{padding:5px 9px;font-size:.76rem}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+.qbank-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.7rem}.qbank-card{background:#19253e;border:1px solid var(--border);border-radius:7px;padding:.8rem}.qbank-card:hover{border-color:var(--gold)}.qbank-meta{font-size:.72rem;color:var(--text2);margin-top:.3rem}.qbank-preview{font-size:.82rem;line-height:1.45;margin:.45rem 0}.qbank-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}.qbank-select{display:flex;gap:.6rem;align-items:flex-start}.qbank-select input{margin-top:4px}.qbank-toolbar{display:grid;grid-template-columns:1fr 160px 160px;gap:.55rem}@media(max-width:700px){.qbank-toolbar{grid-template-columns:1fr}.qbank-grid{grid-template-columns:1fr}}
 .overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem}
 .overlay.open{display:flex}
 .modal{background:#131c2e;border:1px solid var(--border);border-radius:8px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
@@ -86,6 +87,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .ans-fb textarea{flex:1;min-height:52px;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;padding:8px 10px;outline:none;resize:vertical}
 .task-att{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.45rem .7rem;border:1px solid var(--border);border-radius:6px;margin-bottom:.4rem;font-size:.84rem;background:rgba(201,168,76,.06)}
 .task-att span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ── AI Teaching Assistant ── */
+.ai-grid{display:grid;grid-template-columns:320px 1fr;gap:1rem}@media(max-width:850px){.ai-grid{grid-template-columns:1fr}}
+.ai-tool-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem}.ai-tool-card h4{margin-bottom:.35rem}.ai-tool-card p{font-size:.78rem;color:var(--text2);line-height:1.5}.ai-result{white-space:pre-wrap;line-height:1.65;background:#10182a;border:1px solid var(--border);border-radius:7px;padding:1rem;min-height:180px;font-size:.9rem}.ai-q-card{border:1px solid var(--border);border-radius:7px;padding:.8rem;margin-bottom:.65rem;background:rgba(201,168,76,.04)}.ai-q-card textarea{width:100%;min-height:65px;background:#202b4a;border:1px solid var(--border);border-radius:5px;color:var(--text);padding:8px;font-family:inherit}.ai-q-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem}.ai-badge{display:inline-block;padding:3px 8px;border-radius:999px;background:rgba(201,168,76,.14);color:var(--gold-text,var(--gold));font-size:.7rem;font-weight:700}
 .class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
 .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
 .class-card{position:relative;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
@@ -152,6 +156,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
     <div class="logo"><h2>SherigSpace</h2><small data-en="Teacher Dashboard" data-dz="སློབ་དཔོན་ཌེཤ་བོརཌི།">Teacher Dashboard</small></div>
     <nav class="sidenav">
       <div class="sitem on" onclick="go('classes')">🏫 &nbsp;<span data-en="My Classes" data-dz="ང་གི་དཔྱེ་སློབ།">My Classes</span></div>
+      <div class="sitem" onclick="go('analytics')">📊 &nbsp;<span data-en="Analytics" data-dz="གྲངས་ཐོ་དབྱེ་ཞིབ།">Analytics</span></div>
+      <div class="sitem" onclick="go('ai')">🤖 &nbsp;<span data-en="AI Teaching Tools" data-dz="AI སློབ་ཁྲིད་ལག་ཆས།">AI Teaching Tools</span></div>
       <div class="sitem" onclick="go('billing')">💳 &nbsp;<span data-en="Subscription" data-dz="འོས་སྦྱོར།">Subscription</span></div>
     </nav>
     <div class="sfoot">
@@ -182,6 +188,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="card"><div class="card-head"><h3 data-en="Assignments" data-dz="ལཱ་ཁག">Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()" data-en="＋ Assign Task" data-dz="＋ ལཱ་སྤྲོད་">＋ Assign Task</button></div><div id="assignments-list"></div></div>
     </div>
 
+    <div class="page" id="p-analytics">
+      <div class="phead"><div><div class="ptitle" data-en="Learning Analytics" data-dz="ཤེས་ཡོན་གྲངས་ཐོ་དབྱེ་ཞིབ།">Learning Analytics</div><div class="psub" data-en="See how your classes and students are progressing" data-dz="ཁྱོད་ཀྱི་དཔྱེ་སློབ་དང་སློབ་ཕྲུག་གི་ཡར་རྒྱས་བལྟ།">See how your classes and students are progressing</div></div></div>
+      <div class="card"><div class="card-head"><h3>Class</h3><select id="analytics-class-select" style="max-width:260px"></select></div></div>
+      <div id="analytics-stats" class="stats"></div>
+      <div class="card"><div class="card-head"><h3>Assignment performance</h3><div style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" id="gradebook-open">📘 Gradebook</button><button class="btn btn-ghost btn-sm" id="class-gradebook-open">📊 Class Gradebook</button><button class="btn btn-ghost btn-sm" id="report-card-open">📄 Report Cards</button><button class="btn btn-ghost btn-sm" id="analytics-export">⬇ Export CSV</button></div></div><div id="analytics-assignments" style="overflow-x:auto"></div></div>
+      <div class="card"><div class="card-head"><h3>Student progress</h3></div><div id="analytics-students" style="overflow-x:auto"></div></div>
+    </div>
+
+    <div class="page" id="p-ai">
+      <div class="phead"><div><div class="ptitle">🤖 AI Teaching Assistant</div><div class="psub">Create teaching materials with Gemini, then review and edit before using them.</div></div><span class="ai-badge">FREE-TIER READY</span></div>
+      <div class="ai-grid">
+        <div>
+          <div class="ai-tool-card">
+            <h4>What do you want to create?</h4>
+            <div class="field" style="margin-top:.8rem"><label>AI Tool</label><select id="ai-mode"><option value="questions">📝 Question Generator</option><option value="lesson">📚 Lesson Plan</option><option value="competency">🎯 Competency-Based Questions</option><option value="worksheet">📄 Worksheet</option><option value="activity">💡 Classroom Activities</option><option value="rubric">📊 Rubric</option><option value="simplify">✏️ Simplify Explanation</option></select></div>
+            <div class="field"><label>Class</label><select id="ai-class"></select></div>
+            <div class="row2">
+              <div class="field"><label>Subject</label><input id="ai-subject" placeholder="e.g. ICT, Dzongkha"/></div>
+              <div class="field"><label>Language</label><select id="ai-language"><option>English</option><option>Dzongkha</option><option>English + Dzongkha</option></select></div>
+            </div>
+            <div class="field"><label>Topic</label><input id="ai-topic" placeholder="e.g. Computer Hardware"/></div>
+            <div class="row2" id="ai-question-options">
+              <div class="field"><label>Questions</label><select id="ai-count"><option>5</option><option>10</option><option>15</option><option>20</option></select></div>
+              <div class="field"><label>Difficulty</label><select id="ai-difficulty"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+            </div>
+            <div class="field"><label>Extra instructions</label><textarea id="ai-context" placeholder="Tell the AI about your students, competency, lesson duration, or requirements…"></textarea></div>
+            <button class="btn btn-gold" id="ai-generate">✨ Generate with AI</button>
+            <div class="hint">AI output is a draft. Always review it for curriculum accuracy and suitability before giving it to students.</div>
+          </div>
+        </div>
+        <div>
+          <div class="card"><div class="card-head"><h3>Generated material</h3><div style="display:flex;gap:.4rem"><button class="btn btn-ghost btn-sm" id="ai-copy">Copy</button><button class="btn btn-ghost btn-sm" id="ai-clear">Clear</button></div></div><div style="padding:1rem"><div id="ai-status" style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem"></div><div id="ai-result" class="ai-result">Choose a tool and click <b>Generate with AI</b>.</div><div id="ai-questions" style="display:none;margin-top:1rem"></div></div></div>
+        </div>
+      </div>
+    </div>
+
     <div class="page" id="p-billing">
       <div class="phead"><div><div class="ptitle" data-en="Subscription" data-dz="འོས་སྦྱོར།">Subscription</div><div class="psub" data-en="Your teacher plan status" data-dz="ཁྱོད་ཀྱི་སློབ་དཔོན་འཆར་གཞིའི་གནས་སྟངས།">Your teacher plan status</div></div></div>
       <div class="card"><div id="billing-status" style="padding:1.4rem"></div></div>
@@ -198,6 +240,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
   </div>
 </div>
 
+<!-- Question Bank -->
+<div class="overlay" id="qbank-overlay">
+  <div class="modal" style="max-width:1050px">
+    <div class="mhead"><h3>📚 Question Bank</h3><button class="mclose" onclick="closeQuestionBank()">✕</button></div>
+    <div class="mbody">
+      <div class="qbank-toolbar">
+        <input id="qbank-search" placeholder="Search questions or topics…"/>
+        <select id="qbank-type"><option value="">All types</option><option value="short">Short answer</option><option value="long">Paragraph</option><option value="choice">Multiple choice</option><option value="truefalse">True / False</option><option value="fillblank">Fill in the blank</option><option value="image">Image question</option><option value="audio">Audio question</option></select>
+        <select id="qbank-topic"><option value="">All topics</option></select>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap"><span id="qbank-count" style="font-size:.78rem;color:var(--text2)"></span><button class="btn btn-gold btn-sm" id="qbank-add-selected">＋ Add selected to assignment</button></div>
+      <div id="qbank-list" class="qbank-grid"></div>
+    </div>
+    <div class="mfoot"><button class="btn btn-ghost" onclick="closeQuestionBank()">Close</button></div>
+  </div>
+</div>
+
 <!-- Student login card (shown once, after creating a student) -->
 <div class="overlay" id="login-card-overlay">
   <div class="modal" style="max-width:420px">
@@ -207,6 +266,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="login-card" id="login-card-body"></div>
     </div>
     <div class="mfoot"><button class="btn btn-gold" onclick="document.getElementById('login-card-overlay').classList.remove('open')" data-en="Done" data-dz="མཇུག་བསྡུ།">Done</button></div>
+  </div>
+</div>
+
+<!-- Class learning progress -->
+<div class="overlay" id="progress-overlay">
+  <div class="modal progress-modal">
+    <div class="mhead"><h3 id="progress-title">📊 Class Progress</h3><button class="mclose" onclick="closeProgress()">✕</button></div>
+    <div class="mbody" id="progress-body"></div>
+    <div class="mfoot"><button class="btn btn-ghost" onclick="closeProgress()">Close</button></div>
   </div>
 </div>
 
@@ -242,30 +310,73 @@ function genPin(){ return String(Math.floor(100000+Math.random()*900000)); }
 function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,20) || 'student'; }
 
 // ── ACCESS CHECK ──
-async function checkAccess(){
-  const { data: { session } } = await supabase.auth.getSession();
+// Keep the access screen from hanging forever if Supabase is slow, offline,
+// blocked by a browser extension, or returns an unexpected error.
+function withTimeout(promise, ms=12000, label='Request') {
+  return Promise.race([
+    promise,
+    new Promise((_, reject)=>setTimeout(()=>reject(new Error(label+' timed out. Please check your internet connection and try again.')), ms))
+  ]);
+}
+
+function showAccessError(err){
   const gate = document.getElementById('gate-inner');
-  if(!session){
-    gate.innerHTML = `<div class="gate-icon">🔒</div><h2>${T('Please log in','ནང་འཛུལ་གནང་།')}</h2><p>${T('Log in with your SherigSpace account first, then come back here to set up your teacher plan.','དང་པ་ SherigSpace ཀྱི་ཐོ་བཀོད་ཐོག་ནང་འཛུལ་འབད་ཞིནམ་ལས་ལོག་འོང་སྟེ་སློབ་དཔོན་གྱི་འཆར་གཞི་གཞི་བཙུགས་འབད།')}</p><a class="gate-btn" href="login.html">${T('Go to Login','ནང་འཛུལ་ལུ་འགྱོ།')}</a>`;
-    return;
+  const msg = String(err?.message || err || 'Unknown error');
+  console.error('SherigSpace teacher access error:', err);
+  gate.innerHTML = `
+    <div class="gate-icon">⚠️</div>
+    <h2>${typeof T==='function' ? T('Could not check access','འཛུལ་སྒོ་ཞིབ་དཔྱད་འབད་མ་ཚུགས།') : 'Could not check access'}</h2>
+    <p>${typeof T==='function' ? T('SherigSpace could not connect to the account service. Please try again.','SherigSpace གིས་ཁ་ཡིག་ཞབས་ཏོག་ལུ་མཐུད་མ་ཚུགས། ལོག་སྟེ་འབད་གནང་།') : 'SherigSpace could not connect to the account service. Please try again.'}</p>
+    <div style="font-size:.74rem;color:var(--text2);margin:-.5rem 0 1rem;word-break:break-word">${esc(msg)}</div>
+    <div style="display:flex;gap:.6rem;flex-direction:column">
+      <button class="gate-btn" type="button" onclick="checkAccess()">🔄 ${typeof T==='function' ? T('Try Again','ལོག་སྟེ་འབད།') : 'Try Again'}</button>
+      <a class="gate-btn" href="login.html" style="background:transparent;color:var(--gold);border:1px solid var(--border)">${typeof T==='function' ? T('Go to Login','ནང་འཛུལ་ལུ་འགྱོ།') : 'Go to Login'}</a>
+    </div>`;
+}
+
+async function checkAccess(){
+  const gate = document.getElementById('gate-inner');
+  try {
+    gate.innerHTML = `<div class="gate-icon">🍎</div><h2>${typeof T==='function' ? T('Checking access…','འཛུལ་སྒོ་ཞིབ་དཔྱད་འབད་བཞིནམ...') : 'Checking access…'}</h2><p>${typeof T==='function' ? T('One moment…','སྐར་ཆ་ཅིག...') : 'One moment…'}</p>`;
+
+    const sessionResult = await withTimeout(supabase.auth.getSession(), 12000, 'Authentication check');
+    const session = sessionResult?.data?.session || null;
+
+    if(!session){
+      gate.innerHTML = `<div class="gate-icon">🔒</div><h2>${T('Please log in','ནང་འཛུལ་གནང་།')}</h2><p>${T('Log in with your SherigSpace account first, then come back here to set up your teacher plan.','དང་པ་ SherigSpace ཀྱི་ཐོ་བཀོད་ཐོག་ནང་འཛུལ་འབད་ཞིནམ་ལས་ལོག་འོང་སྟེ་སློབ་དཔོན་གྱི་འཆར་གཞི་གཞི་བཙུགས་འབད།')}</p><a class="gate-btn" href="login.html">${T('Go to Login','ནང་འཛུལ་ལུ་འགྱོ།')}</a>`;
+      return;
+    }
+
+    const { data: profile, error: profileError } = await withTimeout(
+      supabase.from('profiles').select('*').eq('id', session.user.id).single(),
+      12000, 'Profile check'
+    );
+    if(profileError && profileError.code !== 'PGRST116') throw profileError;
+    me = { id: session.user.id, name: profile?.name || session.user.email, email: session.user.email };
+
+    const { data: sub, error: subError } = await withTimeout(
+      supabase.from('teacher_subscriptions').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+      12000, 'Subscription check'
+    );
+    if(subError) console.warn('Subscription check:', subError);
+    subRow = sub || null;
+    subActive = !!(sub && sub.status === 'approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date()));
+
+    const { data: settings, error: settingsError } = await withTimeout(
+      supabase.from('site_settings').select('*').eq('id',1).single(),
+      12000, 'Site settings check'
+    );
+    if(settingsError) console.warn('Site settings check:', settingsError);
+    siteSettings = settings || {};
+
+    // Everyone gets in — the Free plan is enforced when creating classes/students.
+    document.getElementById('gate').classList.add('hide');
+    document.getElementById('app-layout').style.display = 'flex';
+    await renderClasses();
+    renderBilling(subRow);
+  } catch(err) {
+    showAccessError(err);
   }
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-  me = { id: session.user.id, name: profile?.name || session.user.email, email: session.user.email };
-
-  const { data: sub } = await supabase.from('teacher_subscriptions')
-    .select('*').eq('teacher_id', me.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
-  subRow = sub;
-  subActive = !!(sub && sub.status === 'approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date()));
-
-  const { data: settings } = await supabase.from('site_settings').select('*').eq('id',1).single();
-  siteSettings = settings || {};
-
-  // Everyone gets in — the Free plan (1 class / 20 students) is enforced at
-  // the point of creating a class or adding a student, not at the door.
-  document.getElementById('gate').classList.add('hide');
-  document.getElementById('app-layout').style.display = 'flex';
-  renderClasses();
-  renderBilling(sub);
 }
 
 window.submitTeacherProof = async function(){
@@ -297,17 +408,283 @@ window.logout = async function(){ await supabase.auth.signOut(); window.location
 
 window.go = function(p){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
-  document.getElementById('p-'+p).classList.add('on');
+  const page=document.getElementById('p-'+p); if(page) page.classList.add('on');
   document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
-  if(p==='classes') document.querySelector('.sitem').classList.add('on');
-  if(p==='billing') document.querySelectorAll('.sitem')[1].classList.add('on');
+  if(p==='classes') document.querySelectorAll('.sitem')[0]?.classList.add('on');
+  if(p==='analytics'){ document.querySelectorAll('.sitem')[1]?.classList.add('on'); renderAnalytics(); }
+  if(p==='ai'){ document.querySelectorAll('.sitem')[2]?.classList.add('on'); initAITools(); }
+  if(p==='billing') document.querySelectorAll('.sitem')[3]?.classList.add('on');
 };
+
+
+// ── AI TEACHING TOOLS ──
+let aiClassesCache = [];
+let aiLastQuestions = [];
+let aiInitialized = false;
+async function initAITools(){
+  if(!me) return;
+  const sel=document.getElementById('ai-class');
+  if(!sel) return;
+  if(!aiInitialized){
+    document.getElementById('ai-generate')?.addEventListener('click', generateAITeachingMaterial);
+    document.getElementById('ai-copy')?.addEventListener('click', async()=>{
+      const qbox=document.getElementById('ai-questions');
+      const text=qbox && qbox.style.display!=='none' ? aiLastQuestions.map((q,i)=>`${i+1}. ${q.text||''}`).join('\n') : document.getElementById('ai-result')?.innerText||'';
+      try{ await navigator.clipboard.writeText(text); toast('Copied ✓'); }catch{ toast('Could not copy.',true); }
+    });
+    document.getElementById('ai-clear')?.addEventListener('click',()=>{aiLastQuestions=[];document.getElementById('ai-result').textContent='';document.getElementById('ai-questions').style.display='none';document.getElementById('ai-status').textContent='';});
+    document.getElementById('ai-mode')?.addEventListener('change',()=>{ const m=fv('ai-mode'); document.getElementById('ai-question-options').style.display=['questions','competency'].includes(m)?'grid':'none'; });
+    aiInitialized=true;
+  }
+  let classes = aiClassesCache || [];
+  const {data,error}=await supabase.from('classes').select('id,name,class_level').eq('teacher_id',me.id).order('created_at',{ascending:false});
+  if(!error && Array.isArray(data)){ classes=data; aiClassesCache=data; }
+  else if(error){ console.error('AI class list:', error); }
+  const previous=sel.value||currentClassId||classes[0]?.id||'';
+  sel.innerHTML=classes.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.class_level?' · '+esc(c.class_level):''}</option>`).join('') || '<option value="">No classes</option>';
+  if(previous) sel.value=previous;
+}
+function aiPrompt(mode, data){
+  const cls=data.classLevel||'primary school';
+  const base=`You are an educational assistant helping a Bhutanese school teacher. Create practical, age-appropriate material for ${cls}. Subject: ${data.subject||'not specified'}. Topic: ${data.topic||'not specified'}. Output language: ${data.language}. Extra teacher instructions: ${data.context||'none'}. Do not invent curriculum standards or claim official requirements unless the teacher supplied them. Prefer clear, classroom-ready content.`;
+  if(mode==='questions'||mode==='competency') return `${base}\nGenerate exactly ${data.count} questions. Difficulty: ${data.difficulty}. ${mode==='competency'?'Focus on competency/application/scenario-based questions rather than simple recall.':''}\nReturn ONLY valid JSON with this shape: {"questions":[{"text":"...","type":"choice|truefalse|fillblank|short|long","options":["..."],"correct":0,"accepted_answers":["..."],"points":1}]}. For choice, correct is the zero-based option index. For truefalse, options must be ["True","False"] and correct must be 0 or 1. For fillblank/short, provide accepted_answers. For long, accepted_answers can be []. Do not include markdown fences.`;
+  if(mode==='lesson') return `${base}\nCreate a 40-minute lesson plan with: learning objectives, competency focus, prior knowledge, materials, teacher steps, student-centered activities, differentiation/support, formative assessment, and closure. Use headings and concise bullets.`;
+  if(mode==='worksheet') return `${base}\nCreate a printable worksheet with a short learner-friendly introduction followed by varied questions and an answer key at the end. Keep the answer key clearly separated from the student section.`;
+  if(mode==='activity') return `${base}\nCreate 5 student-centered classroom activities. For each give objective, time, materials, steps, and a quick assessment/check for understanding.`;
+  if(mode==='rubric') return `${base}\nCreate a 4-level rubric for a classroom task. Use levels: Beginning, Developing, Proficient, Advanced. Include 4-6 criteria and observable descriptors.`;
+  return `${base}\nRewrite/explain the topic in simple language suitable for the class level. Include a simple example and 3 quick check questions.`;
+}
+async function generateAITeachingMaterial(){
+  const status=document.getElementById('ai-status'), result=document.getElementById('ai-result'), qbox=document.getElementById('ai-questions'), btn=document.getElementById('ai-generate');
+  const classId=fv('ai-class'); const cls=aiClassesCache.find(c=>String(c.id)===String(classId));
+  if(!classId){toast('Create/select a class first.',true);return;}
+  const mode=fv('ai-mode'); const data={mode,classLevel:cls?.class_level||cls?.name||'',subject:fv('ai-subject'),language:fv('ai-language'),topic:fv('ai-topic'),count:Number(fv('ai-count')||5),difficulty:fv('ai-difficulty'),context:fv('ai-context')};
+  if(!data.topic && mode!=='lesson'){toast('Enter a topic first.',true);return;}
+  btn.disabled=true; status.textContent='Generating…'; result.textContent=''; qbox.style.display='none'; qbox.innerHTML=''; aiLastQuestions=[];
+  try{
+    const {data:resp,error}=await supabase.functions.invoke('ai-teacher-assistant',{body:data});
+    if(error) throw error;
+    if(!resp?.ok) throw new Error(resp?.error||'AI request failed');
+    if(Array.isArray(resp.questions)){
+      aiLastQuestions=resp.questions; result.textContent=`Generated ${aiLastQuestions.length} questions. Review each question before saving.`;
+      qbox.style.display='block'; qbox.innerHTML=aiLastQuestions.map((q,i)=>`<div class="ai-q-card"><div style="display:flex;justify-content:space-between;gap:.5rem"><span class="ai-badge">${esc(q.type||'question')} · ${esc(q.points??1)} pt</span><button class="btn btn-del btn-sm" data-ai-remove="${i}">Remove</button></div><textarea data-ai-q="${i}">${esc(q.text||'')}</textarea>${q.options?.length?`<div style="margin-top:.45rem;font-size:.78rem;color:var(--text2)">${q.options.map((o,j)=>`${j===Number(q.correct)?'✓ ':''}${esc(o)}`).join(' · ')}</div>`:''}<div class="ai-q-actions"><button class="btn btn-gold btn-sm" data-ai-save="${i}">＋ Save to Question Bank</button></div></div>`).join('');
+      qbox.querySelectorAll('[data-ai-remove]').forEach(b=>b.onclick=()=>{aiLastQuestions.splice(Number(b.dataset.aiRemove),1);generateAIQuestionCards();});
+      qbox.querySelectorAll('[data-ai-save]').forEach(b=>b.onclick=()=>saveAIQuestion(Number(b.dataset.aiSave)));
+    }else{
+      result.textContent=resp.text||'No content returned.';
+    }
+    status.textContent='Generated successfully ✓';
+  }catch(err){
+    console.error('AI:',err); status.textContent='AI generation failed'; result.textContent='';
+    const msg=String(err?.message||err); result.innerHTML=`<div style="color:var(--red)"><b>Could not generate.</b><br><span style="font-size:.82rem">${esc(msg)}</span><br><br><span style="font-size:.8rem;color:var(--text2)">Make sure the Supabase Edge Function <code>ai-teacher-assistant</code> is deployed and its Gemini secret is configured.</span></div>`;
+  }finally{btn.disabled=false;}
+}
+function generateAIQuestionCards(){
+  const qbox=document.getElementById('ai-questions'); if(!qbox)return;
+  qbox.innerHTML=aiLastQuestions.map((q,i)=>`<div class="ai-q-card"><div style="display:flex;justify-content:space-between;gap:.5rem"><span class="ai-badge">${esc(q.type||'question')} · ${esc(q.points??1)} pt</span><button class="btn btn-del btn-sm" data-ai-remove="${i}">Remove</button></div><textarea data-ai-q="${i}">${esc(q.text||'')}</textarea>${q.options?.length?`<div style="margin-top:.45rem;font-size:.78rem;color:var(--text2)">${q.options.map((o,j)=>`${j===Number(q.correct)?'✓ ':''}${esc(o)}`).join(' · ')}</div>`:''}<div class="ai-q-actions"><button class="btn btn-gold btn-sm" data-ai-save="${i}">＋ Save to Question Bank</button></div></div>`).join('')||'<div class="empty">All generated questions removed.</div>';
+  qbox.querySelectorAll('[data-ai-remove]').forEach(b=>b.onclick=()=>{aiLastQuestions.splice(Number(b.dataset.aiRemove),1);generateAIQuestionCards();});
+  qbox.querySelectorAll('[data-ai-save]').forEach(b=>b.onclick=()=>saveAIQuestion(Number(b.dataset.aiSave)));
+}
+async function saveAIQuestion(i){
+  const q=aiLastQuestions[i]; if(!q||!me)return;
+  const ta=document.querySelector(`[data-ai-q="${CSS.escape(String(i))}"]`); if(ta)q.text=ta.value.trim(); if(!q.text){toast('Question text is empty.',true);return;}
+  const cls=aiClassesCache.find(c=>String(c.id)===String(fv('ai-class'))); const payload={teacher_id:me.id,class_level:cls?.class_level||cls?.name||'',topic:fv('ai-topic')||'AI Generated',question:{type:q.type||'short',text:q.text,options:Array.isArray(q.options)?q.options:[],correct:q.correct==null?null:Number(q.correct),accepted:q.accepted_answers?.join(', ')||'',accepted_answers:Array.isArray(q.accepted_answers)?q.accepted_answers:[],media_url:q.media_url||'',points:Math.max(0,Number(q.points||1))}};
+  const {error}=await supabase.from('question_bank').insert(payload); if(error){toast('Could not save: '+error.message,true);return;} toast('Saved to Question Bank ✓');
+}
+
+// ── LEARNING ANALYTICS ──
+function statCard(label,value){ return `<div class="stat"><b>${esc(String(value))}</b><span>${esc(label)}</span></div>`; }
+let analyticsCache = null;
+async function renderAnalytics(){
+  const sel=document.getElementById('analytics-class-select'); if(!sel || !me) return;
+  const {data: classes,error:ce}=await supabase.from('classes').select('id,name,class_level').eq('teacher_id',me.id).order('created_at',{ascending:false});
+  if(ce){ toast('Could not load classes: '+ce.message,true); return; }
+  const previous=sel.value || currentClassId || classes?.[0]?.id || '';
+  sel.innerHTML=(classes||[]).map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.class_level?' · '+esc(c.class_level):''}</option>`).join('') || '<option value="">No classes</option>';
+  if(previous) sel.value=previous;
+  sel.onchange=()=>renderAnalyticsData(sel.value);
+  await renderAnalyticsData(sel.value);
+}
+function csvCell(v){ return '"'+String(v??'').replace(/"/g,'""')+'"'; }
+function exportAnalyticsCsv(){
+  if(!analyticsCache) return;
+  const {students,assignments,statuses,videos}=analyticsCache;
+  const sm=new Map(students.map(s=>[String(s.student_id),s.display_name||'Student']));
+  const am=new Map(assignments.map(a=>[String(a.id),a.title||'Untitled']));
+  const rows=[['Student','Assignment','Status','Score','Submitted','Due date','Video completion']];
+  const all = statuses.slice();
+  const key=(sid,aid)=>videos.filter(v=>String(v.student_id)===String(sid)&&String(v.assignment_id)===String(aid));
+  students.forEach(st=>assignments.forEach(a=>{
+    const r=all.find(x=>String(x.student_id)===String(st.student_id)&&String(x.assignment_id)===String(a.id));
+    const vp=key(st.student_id,a.id), vd=vp.length?Math.round(vp.reduce((n,v)=>n+Number(v.completion_percentage||0),0)/vp.length):'';
+    rows.push([sm.get(String(st.student_id)),am.get(String(a.id)),r?.status||'Not started',r?.score??'',r?.submitted_at||'',a.due_date||'',vd===''?'':vd+'%']);
+  }));
+  const blob=new Blob([rows.map(r=>r.map(csvCell).join(',')).join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='sherigspace-assessment-report.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function openAnalyticsStudent(studentId){
+  const c=analyticsCache; if(!c) return;
+  const st=c.students.find(s=>String(s.student_id)===String(studentId)); if(!st) return;
+  const rows=c.statuses.filter(r=>String(r.student_id)===String(studentId));
+  const vids=c.videos.filter(v=>String(v.student_id)===String(studentId));
+  document.getElementById('m-title').textContent='Student assessment report';
+  document.querySelector('#overlay .modal').style.maxWidth='850px';
+  document.getElementById('m-save-btn').style.display='none';
+  document.querySelector('#overlay .mfoot .btn-ghost').textContent='Close';
+  document.getElementById('m-body').innerHTML=`<div><h3 style="margin-bottom:.25rem">${esc(st.display_name||'Student')}</h3><div style="color:var(--text2);font-size:.8rem">${rows.filter(r=>r.status==='done').length}/${c.assignments.length} assignments completed</div></div><div id="student-report-body" class="empty">Loading…</div>`;
+  document.getElementById('overlay').classList.add('open');
+  const body=document.getElementById('student-report-body');
+  const report=c.assignments.map(a=>{
+    const r=rows.find(x=>String(x.assignment_id)===String(a.id));
+    const vp=vids.filter(v=>String(v.assignment_id)===String(a.id));
+    const videoPct=vp.length?Math.round(vp.reduce((n,v)=>n+Number(v.completion_percentage||0),0)/vp.length):null;
+    return `<tr><td><b>${esc(a.title||'Untitled')}</b></td><td>${r?.status==='done'?'Completed':r?.status||'Not started'}</td><td>${r?.score!=null?esc(r.score)+'%':'—'}</td><td>${videoPct==null?'—':videoPct+'%'}</td><td>${a.due_date?esc(a.due_date):'—'}</td><td>${r?.submitted_at?esc(new Date(r.submitted_at).toLocaleString()):'—'}</td></tr>`;
+  }).join('');
+  const scored=rows.map(r=>Number(r.score)).filter(Number.isFinite); const avg=scored.length?Math.round(scored.reduce((a,b)=>a+b,0)/scored.length):null;
+  body.className=''; body.innerHTML=`<div class="stats" style="margin-bottom:1rem">${statCard('Completed',rows.filter(r=>r.status==='done').length+'/'+c.assignments.length)}${statCard('Average score',avg==null?'—':avg+'%')}${statCard('Video activities',vids.length)}</div><div style="overflow-x:auto"><table class="progress-table"><thead><tr><th>Assignment</th><th>Status</th><th>Score</th><th>Video progress</th><th>Due</th><th>Submitted</th></tr></thead><tbody>${report||'<tr><td colspan="6">No assignments</td></tr>'}</tbody></table></div>`;
+}
+async function renderAnalyticsData(classId){
+  if(!classId) return;
+  const statsEl=document.getElementById('analytics-stats'), aEl=document.getElementById('analytics-assignments'), sEl=document.getElementById('analytics-students');
+  if(!statsEl||!aEl||!sEl) return;
+  statsEl.innerHTML=statCard('Loading','…'); aEl.innerHTML='<div class="present-loading">Loading…</div>'; sEl.innerHTML='';
+  try{
+    const [{data:students,error:e1},{data:assignments,error:e2}] = await Promise.all([
+      supabase.from('class_students').select('student_id,display_name').eq('class_id',classId).order('display_name'),
+      supabase.from('assignments').select('id,title,due_date,created_at').eq('class_id',classId).order('created_at',{ascending:false})
+    ]);
+    if(e1) throw e1; if(e2) throw e2;
+    const ids=(assignments||[]).map(a=>String(a.id));
+    const [{data:statuses,error:e3},{data:videos,error:e4}]=await Promise.all([
+      ids.length ? supabase.from('assignment_status').select('assignment_id,student_id,status,score,submitted_at').in('assignment_id',ids) : Promise.resolve({data:[],error:null}),
+      ids.length ? supabase.from('assignment_video_progress').select('assignment_id,student_id,completed,completion_percentage').in('assignment_id',ids) : Promise.resolve({data:[],error:null})
+    ]);
+    if(e3) throw e3; if(e4) console.warn('Video analytics:',e4);
+    analyticsCache={classId,className:document.getElementById('analytics-class-select')?.selectedOptions?.[0]?.textContent||classId,students:students||[],assignments:assignments||[],statuses:statuses||[],videos:videos||[]};
+    document.getElementById('analytics-export').onclick=exportAnalyticsCsv; const gb=document.getElementById('gradebook-open'); if(gb) gb.onclick=()=>openGradebook((assignments||[])[0]?.id); const cgb=document.getElementById('class-gradebook-open'); if(cgb) cgb.onclick=openClassGradebook; const rcb=document.getElementById('report-card-open'); if(rcb) rcb.onclick=openReportCards;
+    const totalStudents=(students||[]).length, totalAssignments=(assignments||[]).length, totalPossible=totalStudents*totalAssignments;
+    const completed=(statuses||[]).filter(x=>x.status==='done').length, scored=(statuses||[]).map(x=>Number(x.score)).filter(Number.isFinite);
+    const avg=scored.length?Math.round(scored.reduce((a,b)=>a+b,0)/scored.length):null, completion=totalPossible?Math.round(completed/totalPossible*100):0, videoDone=(videos||[]).filter(v=>v.completed).length;
+    statsEl.innerHTML=statCard('Students',totalStudents)+statCard('Assignments',totalAssignments)+statCard('Completion',completion+'%')+statCard('Average score',avg===null?'—':avg+'%')+statCard('Video completions',videoDone);
+    const assignmentRows=(assignments||[]).map(a=>{
+      const rows=(statuses||[]).filter(x=>String(x.assignment_id)===String(a.id)), done=rows.filter(x=>x.status==='done').length, scores=rows.map(x=>Number(x.score)).filter(Number.isFinite), av=scores.length?Math.round(scores.reduce((x,y)=>x+y,0)/scores.length):null, vp=(videos||[]).filter(v=>String(v.assignment_id)===String(a.id)), vd=vp.filter(v=>v.completed).length;
+      return `<tr><td><b>${esc(a.title||'Untitled')}</b></td><td>${done}/${totalStudents}</td><td>${av===null?'—':av+'%'}</td><td>${vp.length?Math.round(vd/vp.length*100)+'%':'—'}</td><td>${a.due_date?esc(a.due_date):'—'}</td></tr>`;
+    });
+    aEl.innerHTML=assignmentRows.length?`<table class="progress-table"><thead><tr><th>Assignment</th><th>Completed</th><th>Avg. score</th><th>Video completion</th><th>Due</th></tr></thead><tbody>${assignmentRows.join('')}</tbody></table>`:'<div class="empty">No assignments yet.</div>';
+    const studentRows=(students||[]).map(st=>{
+      const id=String(st.student_id), rows=(statuses||[]).filter(x=>String(x.student_id)===id), done=rows.filter(x=>x.status==='done').length, scores=rows.map(x=>Number(x.score)).filter(Number.isFinite), av=scores.length?Math.round(scores.reduce((x,y)=>x+y,0)/scores.length):null, vids=(videos||[]).filter(x=>String(x.student_id)===id), vd=vids.filter(x=>x.completed).length, pct=totalAssignments?Math.round(done/totalAssignments*100):0;
+      return `<tr><td><button type="button" class="btn btn-ghost btn-sm" data-analytics-student="${esc(id)}">${esc(st.display_name||'Student')}</button></td><td>${done}/${totalAssignments}</td><td>${pct}%</td><td>${av===null?'—':av+'%'}</td><td>${vids.length?vd+'/'+vids.length:'—'}</td></tr>`;
+    });
+    sEl.innerHTML=studentRows.length?`<table class="progress-table"><thead><tr><th>Student</th><th>Assignments</th><th>Completion</th><th>Avg. score</th><th>Videos</th></tr></thead><tbody>${studentRows.join('')}</tbody></table>`:'<div class="empty">No students yet.</div>';
+    sEl.querySelectorAll('[data-analytics-student]').forEach(b=>b.addEventListener('click',()=>openAnalyticsStudent(b.dataset.analyticsStudent)));
+  }catch(err){
+    console.error('Analytics:',err); statsEl.innerHTML=statCard('Error','!'); aEl.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Could not load analytics.</p><p style="font-size:.78rem;color:var(--text2)">${esc(err.message||err)}</p></div>`; sEl.innerHTML='';
+  }
+}
+
+
+// ── V13 REPORTS & CLASS GRADEBOOK ──
+function closeReportOverlay(){
+  const o=document.getElementById('report-overlay'); if(o) o.remove();
+}
+function reportModal(title,body){
+  closeReportOverlay();
+  const o=document.createElement('div'); o.id='report-overlay'; o.className='overlay open';
+  o.innerHTML=`<div class="modal" style="max-width:1100px;max-height:92vh"><div class="mhead"><h3>${esc(title)}</h3><button class="mclose" onclick="closeReportOverlay()">✕</button></div><div class="mbody" id="report-modal-body">${body}</div><div class="mfoot"><button class="btn btn-ghost" onclick="closeReportOverlay()">Close</button></div></div>`;
+  document.body.appendChild(o); return o;
+}
+function reportPrint(title,html){
+  const w=window.open('','_blank','width=1000,height=800'); if(!w){toast('Please allow pop-ups to print reports.',true);return;}
+  w.document.write(`<!doctype html><html><head><title>${esc(title)}</title><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;padding:32px;color:#222}h1,h2,h3{margin:.2rem 0 .6rem}.meta{color:#666;font-size:13px;margin-bottom:18px}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 20px}.stat{border:1px solid #ddd;border-radius:8px;padding:10px 16px}.stat b{display:block;font-size:20px}.stat span{font-size:12px;color:#666}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f3f3f3}.right{text-align:right}@media print{body{padding:12mm}.noprint{display:none!important}}</style></head><body>${html}<div class="noprint" style="margin-top:25px"><button onclick="window.print()">Print</button></div></body></html>`); w.document.close(); w.focus();
+}
+function reportDateValue(v){return v?new Date(v).toLocaleDateString():'';}
+async function openClassGradebook(){
+  const c=analyticsCache; if(!c){toast('Load a class first.',true);return;}
+  const opts=(c.assignments||[]).map(a=>`<option value="${esc(a.id)}">${esc(a.title||'Untitled')}</option>`).join('');
+  reportModal('Class Gradebook',`<div class="qbank-toolbar"><select id="cg-assignment"><option value="">All assignments</option>${opts}</select><input id="cg-search" placeholder="Search student…"><button class="btn btn-gold btn-sm" id="cg-print">🖨 Print</button></div><div id="cg-body" class="present-loading">Loading…</div>`);
+  const render=()=>{
+    const aid=document.getElementById('cg-assignment')?.value||''; const q=(document.getElementById('cg-search')?.value||'').toLowerCase();
+    const students=c.students.filter(s=>(s.display_name||'Student').toLowerCase().includes(q));
+    const asgs=aid?c.assignments.filter(a=>String(a.id)===String(aid)):c.assignments;
+    const rows=students.map(st=>{const cells=asgs.map(a=>{const r=c.statuses.find(x=>String(x.student_id)===String(st.student_id)&&String(x.assignment_id)===String(a.id)); return `<td>${r?.score!=null?esc(r.score)+'%':'—'}</td>`}).join(''); const scored=asgs.map(a=>c.statuses.find(x=>String(x.student_id)===String(st.student_id)&&String(x.assignment_id)===String(a.id))).map(r=>Number(r?.score)).filter(Number.isFinite); const avg=scored.length?Math.round(scored.reduce((x,y)=>x+y,0)/scored.length):null; return `<tr><td><b>${esc(st.display_name||'Student')}</b></td>${cells}<td><b>${avg==null?'—':avg+'%'}</b></td></tr>`;}).join('');
+    const head=asgs.map(a=>`<th>${esc(a.title||'Assignment')}</th>`).join(''); document.getElementById('cg-body').innerHTML=`<div style="overflow-x:auto"><table class="progress-table"><thead><tr><th>Student</th>${head}<th>Average</th></tr></thead><tbody>${rows||'<tr><td colspan="2">No students found.</td></tr>'}</tbody></table></div>`;
+  };
+  document.getElementById('cg-assignment').onchange=render; document.getElementById('cg-search').oninput=render;
+  document.getElementById('cg-print').onclick=()=>{const body=document.getElementById('cg-body').innerHTML; reportPrint('SherigSpace Class Gradebook',`<h1>SherigSpace Class Gradebook</h1><div class="meta">Class: ${esc(c.className||c.classId)} · Generated: ${new Date().toLocaleString()}</div>${body}`)};
+  render();
+}
+async function openReportCards(){
+  const c=analyticsCache; if(!c){toast('Load a class first.',true);return;}
+  const studentOpts=c.students.map(s=>`<option value="${esc(s.student_id)}">${esc(s.display_name||'Student')}</option>`).join('');
+  reportModal('Student Report Card',`<div class="qbank-toolbar"><select id="rc-student">${studentOpts||'<option value="">No students</option>'}</select><input type="date" id="rc-from"><input type="date" id="rc-to"><button class="btn btn-gold btn-sm" id="rc-print">🖨 Print</button></div><div id="rc-body" class="present-loading">Loading…</div>`);
+  const render=()=>{
+    const sid=document.getElementById('rc-student')?.value; const from=document.getElementById('rc-from')?.value; const to=document.getElementById('rc-to')?.value;
+    const st=c.students.find(s=>String(s.student_id)===String(sid)); let asgs=c.assignments.slice(); if(from) asgs=asgs.filter(a=>(a.created_at||'').slice(0,10)>=from); if(to) asgs=asgs.filter(a=>(a.created_at||'').slice(0,10)<=to);
+    const status=c.statuses.filter(r=>String(r.student_id)===String(sid)); const rows=asgs.map(a=>{const r=status.find(x=>String(x.assignment_id)===String(a.id)); return {a,r};}); const scored=rows.map(x=>Number(x.r?.score)).filter(Number.isFinite); const avg=scored.length?Math.round(scored.reduce((x,y)=>x+y,0)/scored.length):null; const completed=rows.filter(x=>x.r?.status==='done').length; const table=rows.map(({a,r})=>`<tr><td>${esc(a.title||'Untitled')}</td><td>${r?.status==='done'?'Completed':r?.status||'Not started'}</td><td>${r?.score!=null?esc(r.score)+'%':'—'}</td><td>${reportDateValue(a.due_date)||'—'}</td><td>${reportDateValue(r?.submitted_at)||'—'}</td></tr>`).join('');
+    document.getElementById('rc-body').innerHTML=`<div><h2>${esc(st?.display_name||'Student')}</h2><div class="meta">Class: ${esc(c.className||c.classId)} · Report period: ${from||'All'} to ${to||'All'}</div></div><div class="stats">${statCard('Assignments',rows.length)}${statCard('Completed',completed)}${statCard('Average score',avg==null?'—':avg+'%')}${statCard('Completion',rows.length?Math.round(completed/rows.length*100)+'%':'—')}</div><div style="overflow-x:auto"><table class="progress-table"><thead><tr><th>Assignment</th><th>Status</th><th>Score</th><th>Due</th><th>Submitted</th></tr></thead><tbody>${table||'<tr><td colspan="5">No assignments in this period.</td></tr>'}</tbody></table></div>`;
+  };
+  document.getElementById('rc-student').onchange=render; document.getElementById('rc-from').onchange=render; document.getElementById('rc-to').onchange=render;
+  document.getElementById('rc-print').onclick=()=>{const body=document.getElementById('rc-body').innerHTML; reportPrint('SherigSpace Student Report Card',body)};
+  render();
+}
+
+// ── QUESTION-LEVEL GRADEBOOK ──
+async function openGradebook(assignmentId){
+  const c=analyticsCache; if(!c) return;
+  const asg=(c.assignments||[]).find(a=>String(a.id)===String(assignmentId)) || c.assignments?.[0];
+  if(!asg){ toast('No assignments available.',true); return; }
+  document.getElementById('m-title').textContent='Question-level Gradebook';
+  document.querySelector('#overlay .modal').style.maxWidth='1050px';
+  document.getElementById('m-save-btn').style.display='none';
+  document.querySelector('#overlay .mfoot .btn-ghost').textContent='Close';
+  document.getElementById('m-body').innerHTML='<div class="present-loading">Loading gradebook…</div>';
+  document.getElementById('overlay').classList.add('open');
+  const [{data:full,error:ae},{data:students,error:se},{data:statuses,error:re},{data:grades,error:ge}]=await Promise.all([
+    supabase.from('assignments').select('*').eq('id',asg.id).single(),
+    supabase.from('class_students').select('student_id,display_name').eq('class_id',c.classId).order('display_name'),
+    supabase.from('assignment_status').select('student_id,status,score,answers,submitted_at').eq('assignment_id',asg.id),
+    supabase.from('assignment_question_grades').select('student_id,question_id,points_awarded,feedback').eq('assignment_id',asg.id)
+  ]);
+  if(ae||se||re||ge){ document.getElementById('m-body').innerHTML='<div class="empty"><p>Could not load the gradebook.</p><p style="font-size:.78rem;color:var(--text2)">'+esc((ae||se||re||ge)?.message||'Database setup may be required.')+'</p></div>'; return; }
+  const qs=parseQuestions(full||asg), byStatus=new Map((statuses||[]).map(x=>[String(x.student_id),x])), gkey=x=>String(x.student_id)+'::'+String(x.question_id), gm=new Map((grades||[]).map(x=>[gkey(x),x]));
+  const objective=q=>['choice','truefalse','short','fillblank','image','audio'].includes(q.type);
+  const max=qs.reduce((n,q)=>n+Math.max(0,Number(q.points||1)),0);
+  const totalMax=qs.reduce((n,q)=>n+(Number(q.points||1)||1),0);
+  const head='<div style="display:flex;gap:.6rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:.8rem"><div><b>'+esc(full?.title||asg.title||'Assignment')+'</b><div style="font-size:.76rem;color:var(--text2)">'+qs.length+' questions · '+totalMax+' points</div></div><select id="gb-q-select" style="max-width:420px"><option value="">Select a question to inspect</option>'+qs.map((q,i)=>'<option value="'+esc(q.id)+'">Q'+(i+1)+' · '+esc((q.text||'Question').slice(0,70))+' · '+(q.points||1)+' pt</option>').join('')+'</select></div>';
+  const rows=(students||[]).map(st=>{const r=byStatus.get(String(st.student_id)); const scored=r?.score!=null?esc(r.score)+'%':'—'; return '<tr><td><b>'+esc(st.display_name||'Student')+'</b></td><td>'+esc(r?.status==='done'?'Completed':r?.status||'Not started')+'</td><td>'+scored+'</td><td>'+qs.map(q=>{const gr=gm.get(gkey({student_id:st.student_id,question_id:q.id})); return '<span style="display:inline-block;min-width:44px;margin:2px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;text-align:center;font-size:.74rem">'+(gr?.points_awarded!=null?esc(gr.points_awarded):'·')+'/'+(q.points||1)+'</span>';}).join('')+'</td><td><button class="btn btn-ghost btn-sm" data-gb-student="'+esc(st.student_id)+'">Inspect</button></td></tr>';}).join('');
+  document.getElementById('m-body').innerHTML=head+'<div style="overflow:auto"><table class="progress-table"><thead><tr><th>Student</th><th>Status</th><th>Final score</th><th>Question marks</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">No students</td></tr>')+'</tbody></table></div><div id="gb-detail" style="margin-top:1rem"></div>';
+  const showDetail=async sid=>{
+    const st=(students||[]).find(x=>String(x.student_id)===String(sid)); const r=byStatus.get(String(sid)); if(!st||!r) return;
+    const answers=(r.answers&&typeof r.answers==='object')?r.answers:{};
+    const keyRes=await supabase.from('assignment_keys').select('answers').eq('assignment_id',asg.id).maybeSingle(); const key=(keyRes.data&&keyRes.data.answers)||{};
+    const chosen=document.getElementById('gb-q-select').value;
+    const list=qs.filter(q=>!chosen||String(q.id)===String(chosen));
+    document.getElementById('gb-detail').innerHTML = `<div class="card" style="margin-top:.8rem"><div class="card-head"><h3>${esc(st.display_name||'Student')}</h3><span style="font-size:.8rem;color:var(--text2)">Final: ${r.score!=null?esc(r.score)+'%':'Not graded'}</span></div>${list.map((q,i)=>{const ans=String(answers[q.id]??''); const gr=gm.get(gkey({student_id:sid,question_id:q.id})); let auto=''; if(objective(q)&&key[q.id]!=null){const exp=Array.isArray(key[q.id])?key[q.id]:[key[q.id]]; const norm=x=>String(x??'').trim().toLowerCase().replace(/\s+/g,' '); auto=exp.some(x=>norm(x)===norm(ans))?'✓ Correct':'✗ Incorrect';} const markControl=q.type==='long'?`<label style="font-size:.8rem">Marks <input data-gb-mark="${esc(q.id)}" type="number" min="0" max="${esc(q.points||1)}" step="0.01" value="${gr?.points_awarded??''}" style="width:90px"></label>`:`<span style="font-size:.76rem;color:var(--text2)">Automatically graded</span>`; const saveControl=q.type==='long'?`<button class="btn btn-gold btn-sm" data-gb-save="${esc(q.id)}">Save</button>`:''; return `<div style="padding:.8rem 0;border-top:1px solid var(--border)"><div><b>Q${qs.indexOf(q)+1}.</b> ${esc(q.text||'')} <span style="color:var(--text2)">(${esc(q.points||1)} pt)</span></div><div style="margin:.45rem 0;color:var(--text2);font-size:.82rem"><b>Answer:</b> ${ans?esc(ans):'<i>No answer</i>'} ${auto?`<span class="qa-mark ${auto[0]==='✓'?'ok':'bad'}">${auto}</span>`:''}</div><div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">${markControl}<input data-gb-fb="${esc(q.id)}" placeholder="Question feedback (optional)" value="${esc(gr?.feedback||'')}" style="flex:1;min-width:240px">${saveControl}</div></div>`;}).join('')}</div>`;
+    document.querySelectorAll('[data-gb-save]').forEach(btn=>btn.onclick=async()=>{const qid=btn.dataset.gbSave; const markEl=document.querySelector('[data-gb-mark="'+CSS.escape(qid)+'"]'); const fbEl=document.querySelector('[data-gb-fb="'+CSS.escape(qid)+'"]'); const q=qs.find(x=>String(x.id)===String(qid)); const val=markEl.value.trim(); const payload={assignment_id:String(asg.id),student_id:sid,question_id:String(qid),points_awarded:val===''?null:Math.min(Number(q.points||1),Math.max(0,Number(val))),feedback:fbEl.value.trim()||null,graded_by:me.id,graded_at:new Date().toISOString()}; btn.disabled=true; const {error}=await supabase.from('assignment_question_grades').upsert(payload,{onConflict:'assignment_id,student_id,question_id'}); if(error){toast('Could not save: '+error.message,true);btn.disabled=false;return;} const rpc=await supabase.rpc('grade_assignment_submission',{p_assignment_id:String(asg.id),p_student_id:sid}); btn.disabled=false; if(rpc.error){toast('Saved, but final score could not be recalculated: '+rpc.error.message,true);} else {toast('Question mark saved ✓'); await openGradebook(asg.id); setTimeout(()=>showDetail(sid),80);}});
+  };
+  document.querySelectorAll('[data-gb-student]').forEach(b=>b.onclick=()=>showDetail(b.dataset.gbStudent));
+  document.getElementById('gb-q-select').onchange=()=>{const sid=document.querySelector('[data-gb-student]')?.dataset.gbStudent;if(sid)showDetail(sid);};
+  if(students?.[0]) showDetail(students[0].student_id);
+}
 
 // ── CLASSES ──
 async function renderClasses(){
-  const { data } = await supabase.from('classes').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false});
+  const { data, error } = await supabase.from('classes').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false});
+  if(error){
+    console.error('Could not load teacher classes:', error);
+    toast(T('Could not load classes: ','དཔྱེ་སློབ་འདྲེན་མ་ཚུགས: ')+error.message, true);
+    return;
+  }
+  const classList = data || [];
+  aiClassesCache = classList.map(c=>({id:c.id,name:c.name,class_level:c.class_level}));
+  const aiSel = document.getElementById('ai-class');
+  if(aiSel){
+    const previous = aiSel.value || currentClassId || classList[0]?.id || '';
+    aiSel.innerHTML = classList.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.class_level?' · '+esc(c.class_level):''}</option>`).join('') || '<option value="">No classes</option>';
+    if(previous) aiSel.value = previous;
+  }
   const note = document.getElementById('plan-note-classes');
-  if(note) note.innerHTML = subActive ? '' : `🆓 ${T('Free plan:','རིན་མེད་འཆར་གཞི:')} ${(data||[]).length} / ${FREE_MAX_CLASSES} ${T('classes.','དཔྱེ་སློབ།')} <a onclick="go('billing')" style="cursor:pointer;color:var(--gold-text,var(--gold))">${T('Upgrade','འོས་སྦྱོར')}</a>`;
+  if(note) note.innerHTML = subActive ? '' : `🆓 ${T('Free plan:','རིན་མེད་འཆར་གཞི:')} ${classList.length} / ${FREE_MAX_CLASSES} ${T('classes.','དཔྱེ་སློབ།')} <a onclick="go('billing')" style="cursor:pointer;color:var(--gold-text,var(--gold))">${T('Upgrade','འོས་སྦྱོར')}</a>`;
   // Older classes still have a random code. Switch them to their class name so
   // students can just type the name. (If a name is already taken by another
   // class the update is refused and the old code keeps working.)
@@ -317,7 +694,7 @@ async function renderClasses(){
     else console.warn('Could not switch class to name login:', c.name, error.message);
   }));
   const el = document.getElementById('classes-list');
-  el.innerHTML = data?.length ? data.map(c=>`
+  el.innerHTML = classList.length ? classList.map(c=>`
     <div class="class-card" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(loginText(c))}')">
       <button type="button" class="btn btn-del btn-sm class-del" onclick="event.stopPropagation();deleteClass('${esc(c.id)}','${esc(c.name)}')" title="${T('Delete class','དཔྱེ་སློབ་བཏོན་གཏང')}">✕</button>
       <h4>${esc(c.name)}</h4>
@@ -385,6 +762,8 @@ window.deleteCurrentClass = function(){
 
 window.openClass = function(id, name, code){
   currentClassId = id;
+  const aiSel = document.getElementById('ai-class');
+  if(aiSel) aiSel.value = String(id);
   document.getElementById('detail-class-name').textContent = name;
   document.getElementById('detail-class-code').textContent = code;
   go('class-detail');
@@ -392,7 +771,7 @@ window.openClass = function(id, name, code){
   renderAssignments();
 };
 
-window.closeModal = function(){ document.getElementById('overlay').classList.remove('open'); document.querySelector('#overlay .modal').style.maxWidth = ''; };
+window.closeModal = function(){ document.getElementById('overlay').classList.remove('open'); document.querySelector('#overlay .modal').style.maxWidth = ''; document.getElementById('m-save-btn').style.display = ''; };
 document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
 
 // ── STUDENTS ──
@@ -568,8 +947,8 @@ async function ensureV2(){
   return v2;
 }
 
-const Q_TYPE_LABEL_DZ = { short:'ལན་ཐུང་ཀུ', long:'དོན་ཚན།', choice:'གདམ་ཁ་མང་པོ།', truefalse:'བདེན་/རྫུན།' };
-const Q_TYPE_LABEL = new Proxy({ short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False' }, {
+const Q_TYPE_LABEL_DZ = { short:'ལན་ཐུང་ཀུ', long:'དོན་ཚན།', choice:'གདམ་ཁ་མང་པོ།', truefalse:'བདེན་/རྫུན།', fillblank:'ས་སྟོང་བཀང་བ།', image:'པར་གྱི་དྲི་བ།', audio:'སྒྲའི་དྲི་བ།' };
+const Q_TYPE_LABEL = new Proxy({ short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False', fillblank:'Fill in the blank', image:'Image question', audio:'Audio question' }, {
   get(target, key){ return T(target[key], Q_TYPE_LABEL_DZ[key]); }
 });
 let taskAttachments = []; // [{ url, label, type, resource_key, interactiveQuestions }]
@@ -614,6 +993,7 @@ async function renderAssignments(){
       <div><div class="iname">${esc(label)}</div><div class="imeta">${meta}</div></div>
       <div class="ibtns">
         <button class="btn btn-ghost btn-sm" onclick="viewAnswers('${esc(a.id)}')">${T('✍ Answers','✍ ལན།')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewProgress('${esc(a.id)}')">${T('📊 Progress','📊 ཡར་རྒྱས།')}</button>
         <button class="btn btn-ghost btn-sm" onclick="presentStudent('${esc(a.id)}')">${T('🖥 Present','🖥 སྟོན།')}</button>
         <button class="btn btn-edit btn-sm" onclick="openAssignmentForm('${esc(a.id)}')">${T('✏ Edit','✏ ཞུན་དག')}</button>
         <button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button>
@@ -621,6 +1001,53 @@ async function renderAssignments(){
     </div>`;
   }).join('');
 }
+
+
+window.closeProgress=function(){ document.getElementById('progress-overlay')?.classList.remove('open'); };
+window.viewProgress=async function(assignmentId){
+  if(!currentClassId) return;
+  const body=document.getElementById('progress-body');
+  document.getElementById('progress-overlay').classList.add('open');
+  body.innerHTML='<div class="present-loading">Loading class progress…</div>';
+  try{
+    const [{data: assignment,error:aErr},{data: students,error:sErr},{data: statuses,error:stErr},{data: videos,error:vErr}] = await Promise.all([
+      supabase.from('assignments').select('id,title').eq('id',assignmentId).single(),
+      supabase.from('class_students').select('student_id,display_name').eq('class_id',currentClassId).order('display_name'),
+      supabase.from('assignment_status').select('student_id,status,score,reviewed_at').eq('assignment_id',assignmentId),
+      supabase.from('assignment_video_progress').select('student_id,resource_key,completed,completion_percentage').eq('assignment_id',assignmentId)
+    ]);
+    if(aErr) throw aErr; if(sErr) throw sErr; if(stErr) throw stErr;
+    const sm=new Map((students||[]).map(s=>[String(s.student_id),s]));
+    const vm=new Map(); (videos||[]).forEach(v=>{const id=String(v.student_id); const x=vm.get(id)||{total:0,done:0,pct:0}; x.total++; if(v.completed)x.done++; x.pct=Math.max(x.pct,Number(v.completion_percentage)||0); vm.set(id,x);});
+    const rows=(students||[]).map(st=>{
+      const id=String(st.student_id), r=(statuses||[]).find(x=>String(x.student_id)===id), v=vm.get(id)||{total:0,done:0,pct:0};
+      const status=r?.status==='done'?'done':(r?.status?'progress':'not_started');
+      return {st,r,v,status};
+    });
+    const completed=rows.filter(x=>x.status==='done').length;
+    const started=rows.filter(x=>x.status!=='not_started').length;
+    const scored=rows.map(x=>Number(x.r?.score)).filter(Number.isFinite);
+    const avg=scored.length?Math.round(scored.reduce((a,b)=>a+b,0)/scored.length):null;
+    const pct=rows.length?Math.round(completed/rows.length*100):0;
+    body.innerHTML=`
+      <div style="margin-bottom:.8rem;color:var(--text2);font-size:.82rem">${esc(assignment?.title||'Assignment')}</div>
+      <div class="progress-summary">
+        <div class="progress-stat"><b>${rows.length}</b><span>Students</span></div>
+        <div class="progress-stat"><b>${completed}</b><span>Completed</span></div>
+        <div class="progress-stat"><b>${started}</b><span>Started</span></div>
+        <div class="progress-stat"><b>${avg===null?'—':avg+'%'}</b><span>Average score</span></div>
+      </div>
+      <div class="progress-table-wrap"><table class="progress-table"><thead><tr><th>Student</th><th>Status</th><th>Score</th><th>Video progress</th><th>Reviewed</th></tr></thead><tbody>
+      ${rows.map(x=>{
+        const label=x.status==='done'?'Completed':x.status==='progress'?'In progress':'Not started';
+        const sc=Number.isFinite(Number(x.r?.score))?Number(x.r.score)+'%':'—';
+        const vp=x.v.total?Math.round(x.v.pct)+'%':'—';
+        return `<tr><td><b>${esc(x.st.display_name||'Student')}</b></td><td><span class="progress-pill ${x.status==='done'?'done':'wait'}">${label}</span></td><td>${sc}</td><td>${x.v.total?`<div style="display:flex;align-items:center;gap:.5rem"><div class="progress-bar"><i style="width:${Math.min(100,Math.max(0,x.v.pct))}%"></i></div><span>${vp}</span></div>`:'—'}</td><td>${x.r?.reviewed_at?'✓':'—'}</td></tr>`;
+      }).join('')}
+      </tbody></table></div>
+      <div style="margin-top:.8rem;font-size:.76rem;color:var(--text2)">Overall class completion: ${pct}%</div>`;
+  }catch(err){ body.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Could not load progress.</p><p style="font-size:.78rem;color:var(--text2)">${esc(err.message||err)}</p></div>`; }
+};
 
 window.deleteAssignment = async function(id){
   if(!confirm(T('Delete this assignment? Students\' answers for it will be deleted too.','ལཱ་ཁག་འདི་བཏོན་གཏང་ནི་ག? སློབ་ཕྲུག་གི་ལན་ཡང་བཏོན་གཏང་འོང་།'))) return;
@@ -652,7 +1079,7 @@ window.openAssignmentForm = async function(editId){
       if(a){ a.interactive = true; (a.interactiveQuestions ||= []).push(q); }
     });
   }
-  taskQuestions = editing ? parseQuestions(existing).map(q => ({ ...q, correct: (q.type === 'choice' || q.type === 'truefalse') && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null })) : [];
+  taskQuestions = editing ? parseQuestions(existing).map(q => ({ ...q, accepted: Array.isArray(keyMap[q.id]) ? keyMap[q.id].join(', ') : (typeof keyMap[q.id] === 'string' ? keyMap[q.id] : (q.accepted_answers||[]).join(', ')), media_url: q.media_url || '', correct: (q.type === 'choice' || q.type === 'truefalse') && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null, points: Math.max(0, Number(q.points ?? 1) || 0) })) : [];
 
   document.getElementById('m-title').textContent = editing ? T('Edit Task','ལཱ་ཞུན་དག') : T('Assign a Task','ལཱ་སྤྲོད་');
   document.querySelector('#overlay .modal').style.maxWidth = '700px';
@@ -700,6 +1127,10 @@ window.openAssignmentForm = async function(editId){
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('long')">${T('＋ Paragraph','＋ དོན་ཚན།')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('choice')">${T('＋ Multiple choice','＋ གདམ་ཁ་མང་པོ')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('truefalse')">${T('＋ True / False','＋ བདེན/རྫུན')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('fillblank')">${T('＋ Fill in the blank','＋ ས་སྟོང་བཀང་བ')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('image')">${T('＋ Image question','＋ པར་གྱི་དྲི་བ')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('audio')">${T('＋ Audio question','＋ སྒྲའི་དྲི་བ')}</button>
+        <button type="button" class="btn btn-gold btn-sm" onclick="openQuestionBank()">📚 ${T('Question Bank','དྲི་བའི་མཛོད')}</button>
       </div>
       <div class="hint">${T('Students answer these on their own page.','སློབ་ཕྲུག་ཚུ་གིས་རང་སོའི་ཤོག་ལེབ་ནང་ལན་བྲིས')}${cfg.keys ? T(' For multiple choice, tick the correct option and it will be checked for you — students never see which option is correct.',' གདམ་ཁ་མང་པོ་ཡོད་མི་ནང་ལེགས་ཤོམ་གྱི་གདམ་ཁ་ལུ་རྟགས་བཞག་པ་ཅིན་རང་བཞིན་གྱིས་ཞིབ་དཔྱད་འབད་འོང་') : ''}</div>
       ${cfg.keys ? '' : '<div class="hint" style="color:var(--gold-text,var(--gold))">Automatic checking of multiple choice is off. Run <b>sherigspace_assignments_v2.sql</b> again in Supabase to turn it on.</div>'}
@@ -772,7 +1203,17 @@ window.openAssignmentForm = async function(editId){
         } else if(q.type === 'truefalse'){
           item.options = ['True', 'False'];
           if(q.correct === 0 || q.correct === 1) keyOut[q.id] = item.options[q.correct];
+        } else if(q.type === 'fillblank' || q.type === 'short'){
+          const accepted = String(q.accepted || '').split(/\n|,/).map(x=>x.trim()).filter(Boolean);
+          if(accepted.length) keyOut[q.id] = accepted;
+          item.accepted_answers = accepted;
+        } else if(q.type === 'image' || q.type === 'audio'){
+          item.media_url = String(q.media_url || '').trim();
+          const accepted = String(q.accepted || '').split(/\n|,/).map(x=>x.trim()).filter(Boolean);
+          item.accepted_answers = accepted;
+          if(accepted.length) keyOut[q.id] = accepted;
         }
+        item.points = Math.max(0, Number(q.points ?? 1) || 0);
         qs.push(item);
       }
       payload.questions = qs;
@@ -852,7 +1293,7 @@ window.loadTlmOptions = async function(){
 // ── Question builder ──
 window.addQuestion = function(type){
   const options = type === 'choice' ? ['',''] : type === 'truefalse' ? ['True', 'False'] : [];
-  taskQuestions.push({ id: newQid(), type, text: '', options, correct: null });
+  taskQuestions.push({ id: newQid(), type, text: '', options, correct: null, accepted: '', media_url: '', points: 1 });
   renderQuestionBuilder();
   const last = document.querySelector('#q-builder .qb:last-child [data-q-text]');
   if(last) last.focus();
@@ -868,10 +1309,11 @@ function renderQuestionBuilder(){
         <span class="qb-tools">
           <button type="button" class="btn btn-ghost btn-sm" data-q-up title="${T('Move up','ཡར་སྤོ')}" ${i===0?'disabled':''}>↑</button>
           <button type="button" class="btn btn-ghost btn-sm" data-q-down title="${T('Move down','མར་སྤོ')}" ${i===taskQuestions.length-1?'disabled':''}>↓</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-q-savebank title="Save this question to your private question bank">📚</button>
           <button type="button" class="btn btn-del btn-sm" data-q-del title="${T('Remove question','དྲི་བ་བཏོན་གཏང')}">✕</button>
         </span>
       </div>
-      <input data-q-text value="${esc(q.text)}" placeholder="${T('Type your question…','ཁྱོད་ཀྱི་དྲི་བ་བྲིས…')}"/>
+      <div style="display:flex;gap:.5rem;align-items:center"><input data-q-text value="${esc(q.text)}" placeholder="${T('Type your question…','ཁྱོད་ཀྱི་དྲི་བ་བྲིས…')}" style="flex:1"/><label style="display:flex;align-items:center;gap:.25rem;font-size:.78rem;white-space:nowrap">${T('Points','ཐོབ་ཐང')} <input data-q-points type="number" min="0" step="1" value="${Math.max(0,Number(q.points??1)||0)}" style="width:70px"/></label></div>
       ${q.type === 'choice' ? `<div class="qb-opts">
         ${q.options.map((o,j)=>`<div class="qb-opt">
           ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="${T('Mark as the correct option','ལེགས་ཤོམ་གྱི་གདམ་ཁ་སྦེ་རྟགས་བཞག')}"/>` : ''}
@@ -884,7 +1326,15 @@ function renderQuestionBuilder(){
         ${q.options.map((o,j)=>`<div class="qb-opt">
           ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="${T('Mark as the correct answer','ལེགས_ཤོམ་གྱི་ལན་སྦེ་རྟགས་བཞག')}"/>` : ''}
           <span style="flex:1">${esc(o==='True'?T('True','བདེན།'):o==='False'?T('False','རྫུན།'):o)}</span>
-        </div>`).join('')}
+          ${['fillblank','short','image','audio'].includes(q.type) ? `<div class="qb-extra">
+        ${q.type==='image'||q.type==='audio' ? `<input data-q-media value="${esc(q.media_url||'')}" placeholder="${q.type==='image'?T('Image URL…','པར་གྱི URL…'):T('Audio URL…','སྒྲའི URL…')}"/>` : ''}
+        <input data-q-accepted value="${esc(q.accepted||'')}" placeholder="${T('Accepted answers (comma or new line separated)…','ངོས་ལེན་ལན་ཚུ (comma ཡང་ན་གདོང་ཐིག་གིས་སོ་སོར་དབྱེ)…')}"/>
+      </div>` : ''}
+    </div>`).join('')}
+      </div>` : ''}
+      ${['fillblank','short','image','audio'].includes(q.type) ? `<div class="qb-extra">
+        ${q.type==='image'||q.type==='audio' ? `<input data-q-media value="${esc(q.media_url||'')}" placeholder="${q.type==='image'?T('Image URL…','པར་གྱི URL…'):T('Audio URL…','སྒྲའི URL…')}"/>` : ''}
+        <input data-q-accepted value="${esc(q.accepted||'')}" placeholder="${T('Accepted answers (comma or new line separated)…','ངོས་ལེན་ལན་ཚུ (comma ཡང་ན་གདོང་ཐིག་གིས་སོ་སོར་དབྱེ)…')}"/>
       </div>` : ''}
     </div>`).join('') : `<div class="hint">${T('No questions yet.','ད་ལྟོ་དྲི་བ་མིན་འདུག')}</div>`;
 }
@@ -898,6 +1348,9 @@ function wireQuestionBuilder(){
     const q = qOf(e.target); if(!q) return;
     if(e.target.hasAttribute('data-q-text')) q.text = e.target.value;
     else if(e.target.hasAttribute('data-q-opt')) q.options[Number(e.target.getAttribute('data-q-opt'))] = e.target.value;
+    else if(e.target.hasAttribute('data-q-accepted')) q.accepted = e.target.value;
+    else if(e.target.hasAttribute('data-q-media')) q.media_url = e.target.value;
+    else if(e.target.hasAttribute('data-q-points')) q.points = Math.max(0, Number(e.target.value || 0));
   });
   el.addEventListener('change', e => {
     const q = qOf(e.target); if(!q) return;
@@ -911,6 +1364,7 @@ function wireQuestionBuilder(){
     else if(b.hasAttribute('data-q-up') && i > 0) [taskQuestions[i-1], taskQuestions[i]] = [taskQuestions[i], taskQuestions[i-1]];
     else if(b.hasAttribute('data-q-down') && i < taskQuestions.length-1) [taskQuestions[i+1], taskQuestions[i]] = [taskQuestions[i], taskQuestions[i+1]];
     else if(b.hasAttribute('data-q-optadd')) q.options.push('');
+    else if(b.hasAttribute('data-q-savebank')){ saveQuestionToBank(q); return; }
     else if(b.hasAttribute('data-q-optdel')){
       if(q.options.length <= 2){ toast(T('A multiple-choice question needs at least two options.','གདམ་ཁ་མང་པོའི་དྲི་བ་ལུ་གདམ་ཁ་གཉིས་ཡང་ན་དེ་ལས་མང་བ་དགོ'), true); return; }
       const j = Number(b.getAttribute('data-q-optdel'));
@@ -919,6 +1373,57 @@ function wireQuestionBuilder(){
     } else return;
     renderQuestionBuilder();
   });
+}
+
+// ── Question Bank ──
+let questionBankItems = [];
+function questionBankClone(q){
+  return { id:newQid(), type:q.type||'short', text:q.text||'', options:Array.isArray(q.options)?q.options.slice():[], correct:q.correct==null?null:Number(q.correct), accepted:Array.isArray(q.accepted_answers)?q.accepted_answers.join(', '):(q.accepted||''), media_url:q.media_url||'', points:Math.max(0,Number(q.points??1)||0) };
+}
+function bankTopicForItem(x){ return String(x.topic||'General').trim() || 'General'; }
+window.openQuestionBank = async function(){
+  if(!me){ toast('Please sign in first.',true); return; }
+  document.getElementById('qbank-overlay').classList.add('open');
+  await loadQuestionBank();
+};
+window.closeQuestionBank = function(){ document.getElementById('qbank-overlay').classList.remove('open'); };
+async function loadQuestionBank(){
+  const list=document.getElementById('qbank-list'); list.innerHTML='<div class="empty"><p>Loading question bank…</p></div>';
+  const {data,error}=await supabase.from('question_bank').select('id,teacher_id,class_level,topic,question,created_at,updated_at').eq('teacher_id',me.id).order('updated_at',{ascending:false});
+  if(error){ list.innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Question Bank is not ready.</p><p style="font-size:.78rem;color:var(--text2)">${esc(error.message)}</p><p style="font-size:.78rem;color:var(--gold-text,var(--gold));margin-top:.4rem">Run the v11 SQL migration once in Supabase.</p></div>`; return; }
+  questionBankItems=(data||[]).map(x=>({...x, question:x.question||{}}));
+  populateBankTopics(); renderQuestionBank();
+}
+function populateBankTopics(){
+  const sel=document.getElementById('qbank-topic'); if(!sel) return;
+  const current=sel.value; const topics=[...new Set(questionBankItems.map(bankTopicForItem))].sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML='<option value="">All topics</option>'+topics.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join(''); if(topics.includes(current)) sel.value=current;
+}
+function renderQuestionBank(){
+  const search=(document.getElementById('qbank-search')?.value||'').trim().toLowerCase();
+  const type=document.getElementById('qbank-type')?.value||''; const topic=document.getElementById('qbank-topic')?.value||'';
+  const rows=questionBankItems.filter(x=>{ const q=x.question||{}; const hay=[q.text||'',x.topic||'',x.class_level||'',Q_TYPE_LABEL[q.type]||''].join(' ').toLowerCase(); return (!search||hay.includes(search))&&(!type||q.type===type)&&(!topic||bankTopicForItem(x)===topic); });
+  document.getElementById('qbank-count').textContent=`${rows.length} question${rows.length===1?'':'s'} found`;
+  const list=document.getElementById('qbank-list');
+  list.innerHTML=rows.length?rows.map(x=>{const q=x.question||{}; return `<div class="qbank-card"><label class="qbank-select"><input type="checkbox" data-bank-check="${esc(x.id)}"/><span><b>${esc(Q_TYPE_LABEL[q.type]||q.type||'Question')}</b><div class="qbank-preview">${esc(q.text||'Untitled question')}</div><div class="qbank-meta">${esc(bankTopicForItem(x))} · ${esc(x.class_level||'All classes')} · ${esc(q.points??1)} pt</div></span></label><div class="qbank-actions"><button class="btn btn-ghost btn-sm" data-bank-add="${esc(x.id)}">＋ Add</button><button class="btn btn-del btn-sm" data-bank-delete="${esc(x.id)}">Delete</button></div></div>`;}).join(''):`<div class="empty" style="grid-column:1/-1"><div class="ei">📚</div><p>No saved questions match your filters.</p></div>`;
+}
+function bankSelectedIds(){ return [...document.querySelectorAll('[data-bank-check]:checked')].map(x=>x.getAttribute('data-bank-check')); }
+function addBankItems(ids){ const picked=questionBankItems.filter(x=>ids.includes(String(x.id))); picked.forEach(x=>taskQuestions.push(questionBankClone(x.question||{}))); renderQuestionBuilder(); if(picked.length) toast(`${picked.length} question${picked.length===1?'':'s'} added ✓`); return picked.length; }
+document.getElementById('qbank-search')?.addEventListener('input',renderQuestionBank);
+document.getElementById('qbank-type')?.addEventListener('change',renderQuestionBank);
+document.getElementById('qbank-topic')?.addEventListener('change',renderQuestionBank);
+document.getElementById('qbank-add-selected')?.addEventListener('click',()=>{ const n=addBankItems(bankSelectedIds()); if(n) closeQuestionBank(); });
+document.getElementById('qbank-list')?.addEventListener('click',async e=>{
+  const add=e.target.closest('[data-bank-add]'); const del=e.target.closest('[data-bank-delete]');
+  if(add){ addBankItems([add.dataset.bankAdd]); closeQuestionBank(); return; }
+  if(del){ const id=del.dataset.bankDelete; if(!confirm('Delete this question from your question bank?')) return; const {error}=await supabase.from('question_bank').delete().eq('id',id).eq('teacher_id',me.id); if(error) toast('Could not delete: '+error.message,true); else {questionBankItems=questionBankItems.filter(x=>String(x.id)!==String(id)); populateBankTopics(); renderQuestionBank(); toast('Question deleted ✓');} }
+});
+async function saveQuestionToBank(q){
+  if(!me) return; const text=String(q.text||'').trim(); if(!text){ toast('Type the question before saving it.',true); return; }
+  const topic=prompt('Topic/category for this question:', 'General'); if(topic===null) return; let classLevel='';
+  try{ const {data}=await supabase.from('classes').select('class_level,name').eq('id',currentClassId).maybeSingle(); classLevel=data?.class_level||data?.name||''; }catch{}
+  const payload={teacher_id:me.id,class_level:classLevel,topic:String(topic).trim()||'General',question:{type:q.type,text,options:Array.isArray(q.options)?q.options:[],correct:q.correct==null?null:q.correct,accepted:q.accepted||'',accepted_answers:String(q.accepted||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean),media_url:q.media_url||'',points:Math.max(0,Number(q.points??1)||0)}};
+  const {error}=await supabase.from('question_bank').insert(payload); if(error) toast('Could not save to question bank: '+error.message,true); else toast('Saved to Question Bank ✓');
 }
 
 // ── Viewing what students submitted (and marking it) ──
