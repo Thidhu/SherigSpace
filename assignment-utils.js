@@ -113,11 +113,17 @@ export function parseAttachments(row) {
   if (!row) return [];
   if (Array.isArray(row.attachments) && row.attachments.length) {
     return row.attachments
-      .map(x => ({ url: safeUrl(x && x.url), label: String((x && x.label) || ''), type: String((x && x.type) || '') }))
+      .map((x, i) => ({
+        url: safeUrl(x && x.url),
+        label: String((x && x.label) || ''),
+        type: String((x && x.type) || ''),
+        resource_key: String((x && x.resource_key) || ('att_' + i)),
+        interactive: !!(x && x.interactive)
+      }))
       .filter(x => x.url);
   }
   return String(row.attachment_url || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean)
-    .map(url => ({ url, label: '', type: '' }));
+    .map((url, i) => ({ url, label: '', type: '', resource_key: 'att_' + i, interactive: false }));
 }
 
 /** Reads an assignment's questions: [{ id, type: short|long|choice|truefalse, text, options[] }] */
