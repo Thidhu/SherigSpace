@@ -370,6 +370,9 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pay-opt{display:flex;align-items:center;gap:.6rem;border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;cursor:pointer;font-size:.85rem;color:var(--text);transition:border-color .15s,background .15s}
 .pay-opt input{accent-color:var(--gold);flex-shrink:0}
 .pay-opt:has(input:checked){border-color:var(--gold);background:var(--gold-soft)}
+
+.learning-link{position:relative}
+.learning-badge{margin-left:auto;font-size:.55rem;letter-spacing:.08em;padding:2px 5px;border:1px solid var(--border);border-radius:999px;color:var(--gold-text,var(--gold));opacity:.9}
 </style>
 </head>
 <body>
@@ -382,6 +385,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     <a href="#home" class="sidebar-logo">SherigSpace</a>
     <nav class="side-nav">
       <a class="side-link" href="#home" data-section="home"><span class="si">🏠</span><span data-en="Home" data-dz="གདོང་ཤོག">Home</span></a>
+      <a class="side-link learning-link" href="student.html"><span class="si">🎓</span><span data-en="My Learning" data-dz="ངའི་ལྷབ་སྦྱང་།">My Learning</span><span class="learning-badge">TASKS</span></a>
       <a class="side-link" href="#lessons" data-section="lessons"><span class="si">📖</span><span data-en="Lessons" data-dz="སློབ་སྟོན།">Lessons</span></a>
       <a class="side-link" href="#resources" data-section="resources"><span class="si">📁</span><span data-en="Resources" data-dz="ཡིག་ཆ།">Resources</span></a>
       <a class="side-link" href="#videos" data-section="videos"><span class="si">🎥</span><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></a>
@@ -569,10 +573,10 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 
 <!-- VIDEO PLAYER MODAL -->
 <div class="modal-overlay" id="video-modal">
-  <div class="modal-box" style="max-width:900px;width:95%">
+  <div class="modal-box" style="max-width:1200px;width:95%">
     <div class="modal-head"><h3 id="video-modal-title">▶ Video</h3><button class="modal-close" onclick="closeVideoModal()">✕</button></div>
     <div class="modal-body" style="padding:0">
-      <div id="video-embed-wrap" style="position:relative;padding-top:56.25%;height:0;overflow:hidden;background:#000"></div>
+      <div id="video-embed-wrap" style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#000"></div>
     </div>
   </div>
 </div>
@@ -585,7 +589,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   </div>
 </div>
 
-<script src="interactive-video.js"></script>
+<script src="./interactive-video.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
@@ -769,60 +773,156 @@ window.openProfile = async function(){
 window.closeProfile = () => document.getElementById('profile-modal').classList.remove('open');
 document.getElementById('profile-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('profile-modal')) closeProfile(); });
 
-// ── VIDEO PLAYER MODAL + INTERACTIVE VIDEO ──
+// ── VIDEO PLAYER MODAL ──
+// YouTube videos with interactive questions use SherigInteractiveVideo.
+// Videos without questions, and Google Drive videos, keep the existing normal player.
+let activeInteractiveVideo = null;
+
+function getYouTubeId(url){
+  if(!url) return '';
+  const raw = String(url).trim();
+  if(/^[A-Za-z0-9_-]{6,}$/.test(raw) && !raw.includes('/')) return raw;
+  try{
+    const u = new URL(raw);
+    const host = u.hostname.replace(/^www\./,'').toLowerCase();
+    if(host === 'youtu.be') return u.pathname.replace(/^\/+/, '').split('/')[0] || '';
+    if(['youtube.com','m.youtube.com','youtube-nocookie.com'].includes(host)){
+      const v = u.searchParams.get('v');
+      if(v) return v;
+      const m = u.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/);
+      return m ? m[1] : '';
+    }
+  }catch(e){}
+  return '';
+}
+
 function getEmbedUrl(url){
   if(!url) return null;
-  const yt=url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
-  if(yt)return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0`;
-  const gd=url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if(gd)return `https://drive.google.com/file/d/${gd[1]}/preview`;
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+  if(yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0&modestbranding=1`;
+  const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(gd) return `https://drive.google.com/file/d/${gd[1]}/preview`;
   return null;
 }
-function getYouTubeId(url){try{return window.SherigInteractiveVideoUtils?.youtubeId(url)||'';}catch(_){return '';}}
-let activeInteractivePlayer=null;
+
 async function loadInteractiveQuestions(videoId){
-  if(!videoId)return [];
-  const {data,error}=await supabase.rpc('get_interactive_questions',{p_video_id:videoId});
-  if(error){if(error.code!=='42883')console.warn('Interactive questions unavailable:',error.message);return [];}
-  return (data||[]).map(q=>({...q,timestamp:q.timestamp_seconds,type:q.question_type,points:Number(q.points||1)}));
-}
-async function openInteractiveVideo(videoUrl,id,title){
-  trackOpen('videos',id);
-  const ytId=getYouTubeId(videoUrl), questions=await loadInteractiveQuestions(id);
-  if(!ytId||!questions.length){
-    const embed=getEmbedUrl(videoUrl);
-    if(!embed){window.open(videoUrl,'_blank','noopener');return;}
-    document.getElementById('video-modal-title').textContent=title||'▶ Video';
-    document.getElementById('video-embed-wrap').innerHTML=`<iframe src="${esc(embed)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-    document.getElementById('video-modal').classList.add('open');return;
-  }
-  document.getElementById('video-modal-title').textContent=(title||'▶ Video')+' · Interactive';
-  document.getElementById('video-embed-wrap').innerHTML='<div id="interactive-video-player" style="position:absolute;inset:0"></div>';
-  document.getElementById('video-modal').classList.add('open');
-  activeInteractivePlayer=new window.SherigInteractiveVideo({
-    container:'#interactive-video-player',videoId:ytId,questions,
-    answerChecker:async({questionId,answer})=>{
-      const {data,error}=await supabase.rpc('check_interactive_answer',{p_question_id:questionId,p_answer:String(answer)});
-      if(error)throw error;return data||{isCorrect:false,points:0,maxPoints:1};
-    },
-    onAnswer:async result=>{
-      const s=session();if(!s)return;
-      const {error}=await supabase.from('video_interactions').insert({video_id:id,question_id:result.questionId,user_id:s.id,answer:result.answer,is_correct:result.isCorrect,points_earned:result.points,answered_at:result.answeredAt});
-      if(error&&error.code!=='42P01')console.warn('Could not save interaction:',error.message);
-    },
-    onProgress:async progress=>{
-      const s=session();if(!s)return;
-      const {error}=await supabase.from('video_progress').upsert({video_id:id,user_id:s.id,watch_seconds:progress.watchSeconds,completion_percentage:progress.completionPercentage,completed:progress.completed,updated_at:progress.updatedAt},{onConflict:'video_id,user_id'});
-      if(error&&error.code!=='42P01')console.warn('Could not save video progress:',error.message);
+  if(!videoId) return [];
+  try{
+    const { data, error } = await supabase
+      .from('interactive_questions')
+      .select('*')
+      .eq('video_id', videoId)
+      .order('timestamp_seconds', { ascending:true });
+
+    if(error){
+      // The interactive table may not have been created yet. Normal video playback must still work.
+      console.warn('Interactive questions unavailable:', error.message || error);
+      return [];
     }
-  });
+
+    return (data || [])
+      .filter(q => q.enabled !== false)
+      .map(q => ({
+        ...q,
+        timestamp: q.timestamp_seconds ?? q.timestamp ?? q.time ?? 0,
+        type: q.question_type ?? q.type ?? 'multiple_choice',
+        correctAnswer: q.correct_answer ?? q.correctAnswer,
+        accepted_answers: q.accepted_answers ?? q.acceptedAnswers,
+        points: q.points ?? 1
+      }));
+  }catch(error){
+    console.warn('Could not load interactive questions:', error);
+    return [];
+  }
 }
-window.openVideoModal=function(url,id,title){openInteractiveVideo(url,id,title);};
-window.closeVideoModal=function(){
-  document.getElementById('video-modal').classList.remove('open');document.getElementById('video-embed-wrap').innerHTML='';
-  if(activeInteractivePlayer){try{activeInteractivePlayer.destroy();}catch(_){}activeInteractivePlayer=null;}
+
+function renderNormalVideo(embed){
+  document.getElementById('video-embed-wrap').innerHTML =
+    `<iframe src="${esc(embed)}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+}
+
+window.openVideoModal = async function(url, id, title){
+  trackOpen('videos', id);
+
+  const embed = getEmbedUrl(url);
+  if(!embed){
+    window.open(url,'_blank','noopener');
+    return;
+  }
+
+  document.getElementById('video-modal-title').textContent = title || '▶ Video';
+  const wrap = document.getElementById('video-embed-wrap');
+  wrap.innerHTML = '';
+  document.getElementById('video-modal').classList.add('open');
+
+  if(activeInteractiveVideo){
+    try{ activeInteractiveVideo.destroy(); }catch(e){}
+    activeInteractiveVideo = null;
+  }
+
+  const youtubeId = getYouTubeId(url);
+  const questions = youtubeId ? await loadInteractiveQuestions(id) : [];
+
+  // Interactive mode only applies to YouTube videos that have questions attached.
+  if(youtubeId && questions.length && window.SherigInteractiveVideo){
+    activeInteractiveVideo = new window.SherigInteractiveVideo({
+      container: wrap,
+      videoId: youtubeId,
+      questions,
+      onAnswer: async function(result){
+        // Save the student's answer if the table/RLS is available.
+        try{
+          const s = session();
+          if(!s) return;
+          const { error } = await supabase.from('video_interactions').insert({
+            video_id: id,
+            question_id: result.questionId,
+            user_id: s.id,
+            answer: result.answer,
+            is_correct: result.isCorrect,
+            points_earned: result.points
+          });
+          if(error) console.warn('Could not save interactive answer:', error.message || error);
+        }catch(e){
+          console.warn('Interactive answer save failed:', e);
+        }
+      },
+      onProgress: async function(progress){
+        try{
+          const s = session();
+          if(!s) return;
+          const payload = {
+            video_id: id,
+            user_id: s.id,
+            watch_seconds: progress.watchSeconds,
+            completion_percentage: progress.completionPercentage,
+            completed: progress.completed,
+            updated_at: new Date().toISOString()
+          };
+          const { error } = await supabase.from('video_progress').upsert(payload, { onConflict:'video_id,user_id' });
+          if(error) console.warn('Could not save video progress:', error.message || error);
+        }catch(e){
+          console.warn('Video progress save failed:', e);
+        }
+      }
+    });
+  }else{
+    renderNormalVideo(embed);
+  }
 };
-document.getElementById('video-modal').addEventListener('click',e=>{if(e.target===document.getElementById('video-modal'))closeVideoModal();});
+
+window.closeVideoModal = function(){
+  if(activeInteractiveVideo){
+    try{ activeInteractiveVideo.destroy(); }catch(e){}
+    activeInteractiveVideo = null;
+  }
+  document.getElementById('video-modal').classList.remove('open');
+  document.getElementById('video-embed-wrap').innerHTML = '';
+};
+
+document.getElementById('video-modal').addEventListener('click', e=>{
+  if(e.target === document.getElementById('video-modal')) closeVideoModal();
+});
 
 // ── PREMIUM / PAYMENT SYSTEM ──
 // Phone number for instant "I've paid" notifications (WhatsApp + direct call).
