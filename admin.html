@@ -29,6 +29,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .sitem{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.4rem;font-size:.87rem;font-weight:500;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .2s}
 .sitem:hover{color:var(--text);background:rgba(255,255,255,.04)}
 .sitem.on{color:var(--gold-text,var(--gold));background:rgba(201,168,76,.07);border-left-color:var(--gold)}
+.sitem:has(.payment-badge.show){color:var(--text)}
 .sfoot{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.6rem}
 .sfoot-user{font-size:.76rem;color:var(--text2);padding:0 .1rem;word-break:break-all}
 .sfoot a,.sfoot button{display:block;text-align:center;padding:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:4px;color:var(--gold-text,var(--gold));font-size:.8rem;text-decoration:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;width:100%}
@@ -48,6 +49,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .card-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.4rem;border-bottom:1px solid var(--border)}
 .card-head h3{font-size:.95rem;font-weight:600}
 .cbadge{background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px}
+.payment-badge{display:none;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#e05c5c;color:#fff;font-size:.68rem;font-weight:800;line-height:20px;text-align:center;margin-left:auto;box-shadow:0 0 0 2px #131c2e;animation:paymentPulse 1.8s ease-in-out infinite}
+.payment-badge.show{display:inline-block}
+@keyframes paymentPulse{0%,100%{box-shadow:0 0 0 2px #131c2e,0 0 0 0 rgba(224,92,92,.35)}50%{box-shadow:0 0 0 2px #131c2e,0 0 0 5px rgba(224,92,92,0)}}
 .irow{display:grid;grid-template-columns:1fr auto;align-items:center;padding:.85rem 1.4rem;border-bottom:1px solid rgba(255,255,255,.05);gap:1rem;transition:background .15s}
 .irow:last-child{border-bottom:none}
 .irow:hover{background:rgba(255,255,255,.03)}
@@ -103,6 +107,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .thumb-modes{display:flex;gap:1rem;flex-wrap:wrap;margin:.2rem 0 .4rem}
 .field .thumb-mode{display:inline-flex;align-items:center;gap:.4rem;font-size:.86rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)}
 .field .thumb-mode input{width:auto;padding:0;accent-color:var(--gold)}
+
+.iq-help{font-size:.76rem;color:var(--text2);line-height:1.5;margin-top:-.15rem}
+.iq-replay-badge{display:inline-block;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid var(--border);border-radius:10px;padding:2px 7px;font-size:.68rem;margin-left:.35rem}
 </style>
 <script src="theme.js"></script>
 </head>
@@ -133,7 +140,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="sitem"     onclick="go('games')">🎮 &nbsp;EduGames</div>
       <div class="sitem"     onclick="go('articles')">✍️ &nbsp;Articles</div>
       <div class="sitem"     onclick="go('announce')">📢 &nbsp;Announcements</div>
-      <div class="sitem"     onclick="go('payments')">💳 &nbsp;Payments</div>
+      <div class="sitem"     onclick="go('payments')">💳 &nbsp;Payments <span class="payment-badge" id="payments-nav-badge" aria-label="Pending payments">0</span></div>
       <div class="sitem"     onclick="go('users')">👥 &nbsp;Users</div>
       <div class="sitem"     onclick="go('settings')">⚙️ &nbsp;Settings</div>
     </nav>
@@ -415,7 +422,14 @@ async function renderPayments(itemsByType){
   const teacherPending  = (teacherSubs||[]).filter(t => t.status === 'pending');
   const teacherReviewed = (teacherSubs||[]).filter(t => t.status !== 'pending');
 
-  document.getElementById('c-payments-pending').textContent = pending.length + teacherPending.length;
+  const pendingCount = pending.length + teacherPending.length;
+  document.getElementById('c-payments-pending').textContent = pendingCount;
+  const navBadge = document.getElementById('payments-nav-badge');
+  if(navBadge){
+    navBadge.textContent = pendingCount;
+    navBadge.classList.toggle('show', pendingCount > 0);
+    navBadge.title = pendingCount === 1 ? '1 payment pending review' : `${pendingCount} payments pending review`;
+  }
 
   const renderRow = (p) => {
     const itemTitle = p.item_type === 'membership' ? '🔓 Site Membership'
@@ -773,7 +787,11 @@ function buildForm(type,d={}){
     <div class="card" style="margin-top:1rem;border:1px solid var(--border);background:rgba(201,168,76,.04)">
       <div class="card-head"><h3>🎯 Interactive Questions</h3><span class="cbadge">Optional</span></div>
       <div style="padding:1rem">
-        <p class="psub" style="margin-bottom:.8rem">Pause the YouTube video at selected times and ask students a question. Questions are stored separately from the video.</p>
+        <p class="psub" style="margin-bottom:.8rem">
+  Pause the YouTube video at selected times and ask students a question.
+  If <b>Require Correct Answer</b> is enabled and the student is wrong, the video will jump back by the configured
+  <b>Replay Before</b> seconds. The student must watch that section again and answer correctly before continuing.
+</p>
         <div id="interactive-question-list"></div>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addInteractiveQuestion()">＋ Add Question</button>
         <div id="interactive-question-status" class="upload-status" style="margin-top:.6rem"></div>
@@ -865,22 +883,82 @@ function interactiveQuestionRow(q={}){
   const type=q.question_type||q.type||'multiple_choice';
   const opts=Array.isArray(q.options)?q.options.join('\n'):(q.options||'');
   const accepted=Array.isArray(q.accepted_answers)?q.accepted_answers.join(', '):(q.accepted_answers||'');
+  const replay = Number(q.replay_before_seconds ?? q.replayBefore ?? 30) || 30;
+  const requireCorrect = q.require_correct !== false && q.requireCorrect !== false;
+
   return `<div class="iq-row" data-iq-id="${esc(q.id||'')}" style="border:1px solid var(--border);border-radius:8px;padding:.85rem;margin-bottom:.7rem;background:rgba(255,255,255,.025)">
-    <div class="row2"><div class="field"><label>Time (seconds or mm:ss)</label><input class="iq-time" value="${esc(q.timestamp_seconds??q.timestamp??'')}" placeholder="e.g. 45 or 01:20"/></div>
-    <div class="field"><label>Question Type</label><select class="iq-type" onchange="refreshInteractiveQuestionRow(this)"><option value="multiple_choice"${type==='multiple_choice'?' selected':''}>Multiple Choice</option><option value="true_false"${type==='true_false'?' selected':''}>True / False</option><option value="text"${type==='text'?' selected':''}>Fill in the Blank</option></select></div></div>
-    <div class="field"><label>Question</label><textarea class="iq-question" rows="2" placeholder="Ask students something about what they just watched...">${esc(q.question||'')}</textarea></div>
-    <div class="field iq-options-wrap" style="display:${type==='multiple_choice'?'block':'none'}"><label>Options (one per line)</label><textarea class="iq-options" rows="3" placeholder="Option A\nOption B\nOption C\nOption D">${esc(opts)}</textarea></div>
-    <div class="field"><label class="iq-correct-label">${type==='multiple_choice'?'Correct Answer':type==='true_false'?'Correct Answer (true or false)':'Accepted Answer(s)'}</label><input class="iq-correct" value="${esc(accepted)}" placeholder="e.g. Option B"/></div>
-    <div class="field"><label>Explanation (shown after answering)</label><textarea class="iq-explanation" rows="2" placeholder="Explain why the answer is correct...">${esc(q.explanation||'')}</textarea></div>
-    <div class="row2"><div class="field"><label>Points</label><input class="iq-points" type="number" min="0" step="1" value="${esc(q.points??1)}"/></div><div class="field"><label>Enabled</label><select class="iq-enabled"><option value="true"${q.enabled!==false?' selected':''}>Yes</option><option value="false"${q.enabled===false?' selected':''}>No</option></select></div></div>
-    <button type="button" class="btn btn-del btn-sm" onclick="this.closest('.iq-row').remove()">✕ Remove Question</button></div>`;
+    <div class="row2">
+      <div class="field"><label>Question Time</label><input class="iq-time" value="${esc(q.timestamp_seconds??q.timestamp??'')}" placeholder="e.g. 45 or 01:20"/></div>
+      <div class="field"><label>Question Type</label><select class="iq-type" onchange="refreshInteractiveQuestionRow(this)">
+        <option value="multiple_choice"${type==='multiple_choice'?' selected':''}>Multiple Choice</option>
+        <option value="true_false"${type==='true_false'?' selected':''}>True / False</option>
+        <option value="text"${type==='text'?' selected':''}>Fill in the Blank</option>
+      </select></div>
+    </div>
+
+    <div class="field"><label>Question</label>
+      <textarea class="iq-question" rows="2" placeholder="Ask students something about what they just watched...">${esc(q.question||'')}</textarea>
+    </div>
+
+    <div class="field iq-options-wrap" style="display:${type==='multiple_choice'?'block':'none'}">
+      <label>Options (one per line)</label>
+      <textarea class="iq-options" rows="3" placeholder="Option A\nOption B\nOption C\nOption D">${esc(opts)}</textarea>
+    </div>
+
+    <div class="field"><label class="iq-correct-label">${type==='multiple_choice'?'Correct Answer':type==='true_false'?'Correct Answer (true or false)':'Accepted Answer(s)'}</label>
+      <input class="iq-correct" value="${esc(accepted)}" placeholder="e.g. Option B"/>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Replay Before (seconds)</label>
+        <input class="iq-replay-before" type="number" min="0" step="1" value="${esc(replay)}" placeholder="30"/>
+      </div>
+      <div class="field">
+        <label>Require Correct Answer?</label>
+        <select class="iq-require-correct">
+          <option value="true"${requireCorrect?' selected':''}>Yes — must be correct</option>
+          <option value="false"${!requireCorrect?' selected':''}>No — allow continue</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field"><label>Explanation (shown after answering)</label>
+      <textarea class="iq-explanation" rows="2" placeholder="Explain why the answer is correct...">${esc(q.explanation||'')}</textarea>
+    </div>
+
+    <div class="row2">
+      <div class="field"><label>Points</label><input class="iq-points" type="number" min="0" step="1" value="${esc(q.points??1)}"/></div>
+      <div class="field"><label>Enabled</label><select class="iq-enabled">
+        <option value="true"${q.enabled!==false?' selected':''}>Yes</option>
+        <option value="false"${q.enabled===false?' selected':''}>No</option>
+      </select></div>
+    </div>
+
+    <button type="button" class="btn btn-del btn-sm" onclick="this.closest('.iq-row').remove()">✕ Remove Question</button>
+  </div>`;
 }
 window.refreshInteractiveQuestionRow=function(el){const row=el.closest('.iq-row'),type=el.value,wrap=row.querySelector('.iq-options-wrap'),label=row.querySelector('.iq-correct-label');if(wrap)wrap.style.display=type==='multiple_choice'?'block':'none';if(label)label.textContent=type==='multiple_choice'?'Correct Answer':type==='true_false'?'Correct Answer (true or false)':'Accepted Answer(s)';};
 window.addInteractiveQuestion=function(q={}){const list=document.getElementById('interactive-question-list');if(list)list.insertAdjacentHTML('beforeend',interactiveQuestionRow(q));};
 async function loadInteractiveQuestionsForAdmin(videoId){const list=document.getElementById('interactive-question-list');if(!list||!videoId)return;const {data,error}=await supabase.from('interactive_questions').select('*').eq('video_id',videoId).order('timestamp_seconds',{ascending:true}).order('sort_order',{ascending:true});if(error){const st=document.getElementById('interactive-question-status');if(st)st.textContent='Create the interactive_questions table first using INTERACTIVE_VIDEO_SETUP.sql.';return;}list.innerHTML='';(data||[]).forEach(q=>window.addInteractiveQuestion(q));}
 function parseInteractiveTime(v){const t=String(v||'').trim();if(/^\d+(?:\.\d+)?$/.test(t))return Number(t);const p=t.split(':').map(Number);if(p.length===2&&p.every(Number.isFinite))return p[0]*60+p[1];if(p.length===3&&p.every(Number.isFinite))return p[0]*3600+p[1]*60+p[2];return NaN;}
-function collectInteractiveQuestions(){return [...document.querySelectorAll('#interactive-question-list .iq-row')].map((row,i)=>({id:row.getAttribute('data-iq-id')||null,timestamp_seconds:parseInteractiveTime(row.querySelector('.iq-time')?.value),question:String(row.querySelector('.iq-question')?.value||'').trim(),question_type:row.querySelector('.iq-type')?.value||'multiple_choice',options:interactiveOptionsJson(row.querySelector('.iq-options')?.value),accepted_answers:interactiveOptionsJson(row.querySelector('.iq-correct')?.value),explanation:String(row.querySelector('.iq-explanation')?.value||'').trim(),points:Number(row.querySelector('.iq-points')?.value||1)||0,enabled:row.querySelector('.iq-enabled')?.value!=='false',sort_order:i}));}
-async function saveInteractiveQuestions(videoId){if(!videoId)return true;const list=document.getElementById('interactive-question-list');if(!list)return true;const rows=collectInteractiveQuestions();for(const q of rows){if(!Number.isFinite(q.timestamp_seconds)||!q.question){toast('Every interactive question needs a valid time and question text.',true);return false;}if(q.question_type==='multiple_choice'&&q.options.length<2){toast('Multiple-choice questions need at least two options.',true);return false;}if(!q.accepted_answers.length){toast('Every interactive question needs a correct/accepted answer.',true);return false;}}const {error:delErr}=await supabase.from('interactive_questions').delete().eq('video_id',videoId);if(delErr){toast('Could not save interactive questions: '+delErr.message,true);return false;}if(!rows.length)return true;const payload=rows.map(q=>({video_id:videoId,timestamp_seconds:q.timestamp_seconds,question:q.question,question_type:q.question_type,options:q.options,accepted_answers:q.accepted_answers,explanation:q.explanation,points:q.points,sort_order:q.sort_order,enabled:q.enabled}));const {error}=await supabase.from('interactive_questions').insert(payload);if(error){toast('Could not save interactive questions: '+error.message,true);return false;}return true;}
+function collectInteractiveQuestions(){
+  return [...document.querySelectorAll('#interactive-question-list .iq-row')].map((row,i)=>({
+    id:row.getAttribute('data-iq-id')||null,
+    timestamp_seconds:parseInteractiveTime(row.querySelector('.iq-time')?.value),
+    question:String(row.querySelector('.iq-question')?.value||'').trim(),
+    question_type:row.querySelector('.iq-type')?.value||'multiple_choice',
+    options:interactiveOptionsJson(row.querySelector('.iq-options')?.value),
+    accepted_answers:interactiveOptionsJson(row.querySelector('.iq-correct')?.value),
+    explanation:String(row.querySelector('.iq-explanation')?.value||'').trim(),
+    points:Number(row.querySelector('.iq-points')?.value||1)||0,
+    replay_before_seconds:Math.max(0,Number(row.querySelector('.iq-replay-before')?.value||30)||30),
+    require_correct:row.querySelector('.iq-require-correct')?.value!=='false',
+    enabled:row.querySelector('.iq-enabled')?.value!=='false',
+    sort_order:i
+  }));
+}
+async function saveInteractiveQuestions(videoId){if(!videoId)return true;const list=document.getElementById('interactive-question-list');if(!list)return true;const rows=collectInteractiveQuestions();for(const q of rows){if(!Number.isFinite(q.timestamp_seconds)||!q.question){toast('Every interactive question needs a valid time and question text.',true);return false;}if(q.question_type==='multiple_choice'&&q.options.length<2){toast('Multiple-choice questions need at least two options.',true);return false;}if(!q.accepted_answers.length){toast('Every interactive question needs a correct/accepted answer.',true);return false;}}const {error:delErr}=await supabase.from('interactive_questions').delete().eq('video_id',videoId);if(delErr){toast('Could not save interactive questions: '+delErr.message,true);return false;}if(!rows.length)return true;const payload=rows.map(q=>({video_id:videoId,timestamp_seconds:q.timestamp_seconds,question:q.question,question_type:q.question_type,options:q.options,accepted_answers:q.accepted_answers,explanation:q.explanation,points:q.points,replay_before_seconds:q.replay_before_seconds,require_correct:q.require_correct,sort_order:q.sort_order,enabled:q.enabled}));const {error}=await supabase.from('interactive_questions').insert(payload);if(error){toast('Could not save interactive questions: '+error.message,true);return false;}return true;}
 
 window.saveItem = async function(){
   const isAnnounce = _type === 'announce';
