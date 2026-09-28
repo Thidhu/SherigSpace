@@ -133,13 +133,15 @@ export function parseQuestions(row) {
   return raw
     .filter(q => q && q.id && q.text)
     .map(q => {
-      const type = ['short', 'long', 'choice', 'truefalse'].includes(q.type) ? q.type : 'short';
+      const type = ['short', 'long', 'choice', 'truefalse', 'fillblank', 'image', 'audio'].includes(q.type) ? q.type : 'short';
       return {
         id: String(q.id),
         type,
         text: String(q.text),
-        // True/False always has exactly these two options, regardless of what was stored.
-        options: type === 'truefalse' ? ['True', 'False'] : (Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : [])
+        options: type === 'truefalse' ? ['True', 'False'] : (Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : []),
+        accepted_answers: Array.isArray(q.accepted_answers) ? q.accepted_answers.map(String).filter(Boolean) : [],
+        media_url: q.media_url ? String(q.media_url) : '',
+        points: Math.max(0, Number(q.points ?? 1) || 0)
       };
     });
 }
