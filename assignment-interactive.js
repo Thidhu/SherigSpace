@@ -101,10 +101,10 @@
       formEl.style.display='block';
       formEl.innerHTML=`<div class="sav-fields">
         <div class="sav-field full"><label>Question</label><input data-f-question value="${esc(q.question||'')}" placeholder="e.g. What is a LAN?"/></div>
-        <div class="sav-field"><label>Question type</label><select data-f-type><option value="multiple_choice">Multiple choice</option><option value="true_false">True / False</option><option value="text">Short answer</option></select></div>
+        <div class="sav-field"><label>Question type</label><select data-f-type><option value="multiple_choice">Multiple choice</option><option value="true_false">True / False</option><option value="text">Short answer</option><option value="fill_blank">Fill in the blank</option></select></div>
         <div class="sav-field"><label>Timestamp</label><input data-f-time type="number" min="0" step="0.1" value="${Number(q.timestamp_seconds??q.timestamp??0)}"/></div>
         <div class="sav-field full"><label>Options (one per line, for multiple choice)</label><textarea data-f-options placeholder="Option A\nOption B\nOption C">${esc(opts)}</textarea></div>
-        <div class="sav-field full"><label>Accepted answer(s), one per line</label><textarea data-f-accepted placeholder="For MC: write the exact correct option. For text: allow multiple accepted forms.">${esc(accepted)}</textarea></div>
+        <div class="sav-field full"><label>Accepted answer(s), one per line</label><textarea data-f-accepted placeholder="For MC: exact correct option. For text/fill blank: one accepted answer per line.">${esc(accepted)}</textarea></div>
         <div class="sav-field"><label>Points</label><input data-f-points type="number" min="0" step="1" value="${Number(q.points??1)}"/></div>
         <div class="sav-field"><label>Replay previous seconds on wrong answer</label><input data-f-replay type="number" min="0" step="1" value="${Number(q.replay_before_seconds??30)}"/></div>
         <div class="sav-field full"><label>Explanation shown after answering</label><textarea data-f-explanation>${esc(q.explanation||'')}</textarea></div>
