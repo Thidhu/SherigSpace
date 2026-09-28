@@ -100,6 +100,8 @@ a.btn{text-decoration:none;display:inline-block}
 .answer-sub{font-size:.8rem;color:var(--text2);margin:.2rem 0 .4rem}
 </style>
 <script src="theme.js"></script>
+<script src="interactive-video.js"></script>
+<script src="assignment-interactive.js"></script>
 </head>
 <body>
 
@@ -219,6 +221,55 @@ async function renderAssignments(){
     });
   });
   wireAnswerBoxes(wrap);
+  mountAssignmentInteractiveVideos(wrap);
+}
+
+async function mountAssignmentInteractiveVideos(root){
+  const nodes = root.querySelectorAll('.assignment-interactive-video[data-assignment-id][data-resource-key]');
+  for(const host of nodes){
+    if(host.dataset.mounted === '1') continue;
+    host.dataset.mounted = '1';
+    const assignmentId = host.dataset.assignmentId;
+    const resourceKey = host.dataset.resourceKey;
+    const url = host.dataset.videoUrl;
+    try{
+      const { data: questions, error } = await supabase.rpc('get_assignment_video_questions', {
+        p_assignment_id: String(assignmentId), p_resource_key: String(resourceKey)
+      });
+      if(error) throw error;
+      if(!questions?.length){ host.innerHTML = `<div class="locked-note">${T('No interactive questions were found for this video.','བརྙན་ཐུང་འདིའི་དོན་ལུ་ལཱ་འབད་མི་དྲི་བ་མིན་འདུག')}</div>`; continue; }
+      await window.mountAssignmentInteractiveVideo(host, {
+        url, questions,
+        answerChecker: async ({questionId, answer})=>{
+          const { data, error: checkError } = await supabase.rpc('check_assignment_video_answer', {
+            p_question_id: questionId, p_answer: answer
+          });
+          if(checkError) throw checkError;
+          const row = Array.isArray(data) ? data[0] : data;
+          return { isCorrect: !!row?.is_correct, points: Number(row?.points || 0), maxPoints: Number(row?.max_points || 0), explanation: row?.explanation || '' };
+        },
+        onAnswer: async (result,q)=>{
+          const { error: saveError } = await supabase.from('assignment_video_interactions').insert({
+            assignment_id: String(assignmentId), resource_key: String(resourceKey), question_id: result.questionId,
+            student_id: me.id, answer: String(result.answer || ''), is_correct: !!result.isCorrect,
+            points_earned: Number(result.points || 0), max_points: Number(result.maxPoints || 0), answered_at: result.answeredAt
+          });
+          if(saveError) console.error('Interactive video answer save:', saveError);
+        },
+        onProgress: async data=>{
+          const { error: progressError } = await supabase.from('assignment_video_progress').upsert({
+            assignment_id: String(assignmentId), resource_key: String(resourceKey), student_id: me.id,
+            watch_seconds: Number(data.watchSeconds || 0), completion_percentage: Number(data.completionPercentage || 0),
+            completed: !!data.completed, questions_answered: Number(data.questionsAnswered || 0),
+            questions_total: Number(data.questionsTotal || 0), updated_at: new Date().toISOString()
+          }, { onConflict: 'assignment_id,resource_key,student_id' });
+          if(progressError) console.error('Interactive video progress save:', progressError);
+        }
+      });
+    }catch(err){
+      host.innerHTML = `<div class="locked-note">${T('Interactive video could not load: ','བརྙན་ཐུང་ལཱ་འབད་མ་ཚུགས: ')}${esc(err.message || err)}</div>`;
+    }
+  }
 }
 
 // ── Answers, links and photos/files submitted by the student ──
@@ -373,9 +424,11 @@ function resourceHtml(att){
   const open = `<a href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">↗ ${T('Open in a new tab','ཤོག་ལེབ་གསརཔ་ནང་ཁ་ཕྱེ')}</a>`;
 
   if(kind === 'video' && c.embed){
+    if(att.interactive){
+      return `<div class="res-video"><div class="assignment-interactive-video" data-assignment-id="${esc(att.assignment_id || '')}" data-resource-key="${esc(att.resource_key || '')}" data-video-url="${esc(att.url)}" style="max-width:640px;min-height:180px"><div class="locked-note">✨ ${T('Interactive video is loading…','✨ བརྙན་ཐུང་ལཱ་འབད་བཞིནམ...')}</div></div><div class="res-cap">✨ ${esc(label)} · ${open}</div></div>`;
+    }
     return `<div class="res-video"><div class="task-embed"><iframe src="${esc(c.embed)}" title="${esc(label)}" loading="lazy" allowfullscreen
-      allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"
-      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"></iframe></div><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
+      allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe></div><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
   }
   if(c.media === 'video') return `<div class="res-video"><video class="res-media" controls preload="metadata" src="${esc(att.url)}"></video><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
   if(c.media === 'audio') return `<div class="res-audio"><div class="res-cap" style="margin:0 0 .3rem">🎧 ${esc(label)}</div><audio controls preload="none" src="${esc(att.url)}" style="width:100%"></audio></div>`;
@@ -390,9 +443,10 @@ function resourceHtml(att){
       ${c.download ? `<a class="btn btn-ghost btn-sm" href="${esc(c.download)}" target="_blank" rel="noopener noreferrer">${T('Download','ཕབ་ལེན')}</a>` : ''}
     </div></div><div class="res-preview"></div></div>`;
 }
-function resourcesHtml(list){
+function resourcesHtml(list, assignmentId){
   if(!list.length) return '';
-  return `<div class="res-block"><div class="res-head">📎 ${T('Resources for this task','ལཱ་ཁག་འདིའི་དོན་ལུ་ཡིག་ཆ')}</div>${list.map(resourceHtml).join('')}</div>`;
+  const enriched = list.map(a => ({...a, assignment_id: String(assignmentId || '')}));
+  return `<div class="res-block"><div class="res-head">📎 ${T('Resources for this task','ལཱ་ཁག་འདིའི་དོན་ལུ་ཡིག་ཆ')}</div>${enriched.map(resourceHtml).join('')}</div>`;
 }
 
 function dueHtml(a, done){
@@ -435,7 +489,7 @@ async function renderAssignmentCard(a, done){
     <div class="assign-title">${esc(title)}</div>
     ${dueHtml(a, done)}
     ${desc ? `<div class="assign-desc">${esc(desc)}</div>` : ''}
-    ${resourcesHtml(resources)}
+    ${resourcesHtml(resources, a.id)}
     ${lockedNote}
     ${answersEnabled && !lockedNote ? answerBoxHtml(a) : ''}
     <div class="assign-actions">
