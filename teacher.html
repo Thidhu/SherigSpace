@@ -135,6 +135,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="theme.js"></script>
+<script src="assignment-interactive.js"></script>
 </head>
 <body>
 
@@ -571,7 +572,9 @@ const Q_TYPE_LABEL_DZ = { short:'ལན་ཐུང་ཀུ', long:'དོན�
 const Q_TYPE_LABEL = new Proxy({ short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False' }, {
   get(target, key){ return T(target[key], Q_TYPE_LABEL_DZ[key]); }
 });
-let taskAttachments = []; // [{ url, label, type }]
+let taskAttachments = []; // [{ url, label, type, resource_key, interactiveQuestions }]
+function newAttachmentKey(){ return 'att_' + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); }
+function normalizeTaskAttachment(a, i){ return { ...a, label: a.label || defaultLabel(a.url), type: a.type || classifyUrl(a.url).kind, resource_key: a.resource_key || ('att_' + i), interactive: !!a.interactive, interactiveQuestions: Array.isArray(a.interactiveQuestions) ? a.interactiveQuestions : [] }; }
 let taskQuestions = [];   // [{ id, type, text, options[], correct (option index or null) }]
 function newQid(){ return 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
 
@@ -641,7 +644,14 @@ window.openAssignmentForm = async function(editId){
   }
   const editing = !!existing;
 
-  taskAttachments = editing ? parseAttachments(existing).map(a => ({ ...a, label: a.label || defaultLabel(a.url), type: a.type || classifyUrl(a.url).kind })) : [];
+  taskAttachments = editing ? parseAttachments(existing).map((a,i) => normalizeTaskAttachment(a,i)) : [];
+  if(editing && taskAttachments.length){
+    const { data: ivqs } = await supabase.from('assignment_video_questions').select('*').eq('assignment_id', String(editId)).order('timestamp_seconds',{ascending:true});
+    (ivqs || []).forEach(q => {
+      const a = taskAttachments.find(x => x.resource_key === q.resource_key);
+      if(a){ a.interactive = true; (a.interactiveQuestions ||= []).push(q); }
+    });
+  }
   taskQuestions = editing ? parseQuestions(existing).map(q => ({ ...q, correct: (q.type === 'choice' || q.type === 'truefalse') && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null })) : [];
 
   document.getElementById('m-title').textContent = editing ? T('Edit Task','ལཱ་ཞུན་དག') : T('Assign a Task','ལཱ་སྤྲོད་');
@@ -743,7 +753,11 @@ window.openAssignmentForm = async function(editId){
 
     const keyOut = {};
     if(cfg.extras){
-      payload.attachments = taskAttachments.map(a => ({ url: a.url, label: (a.label || '').trim() || defaultLabel(a.url), type: a.type || classifyUrl(a.url).kind }));
+      payload.attachments = taskAttachments.map((a,i) => ({
+        url: a.url, label: (a.label || '').trim() || defaultLabel(a.url),
+        type: a.type || classifyUrl(a.url).kind, resource_key: a.resource_key || ('att_' + i),
+        interactive: !!a.interactive
+      }));
       const qs = [];
       for(const q of taskQuestions){
         const text = q.text.trim();
@@ -775,6 +789,11 @@ window.openAssignmentForm = async function(editId){
     }
     if(error){ btn.disabled = false; toast('Error: '+error.message, true); return; }
 
+    if(cfg.extras && savedId){
+      const sync = await syncAssignmentInteractiveQuestions(savedId);
+      if(sync.error){ btn.disabled = false; toast('Task saved, but interactive video questions could not be saved: ' + sync.error.message, true); return; }
+    }
+
     if(cfg.extras && cfg.keys && savedId){
       const kr = Object.keys(keyOut).length
         ? await supabase.from('assignment_keys').upsert({ assignment_id: savedId, answers: keyOut, updated_at: new Date().toISOString() }, { onConflict: 'assignment_id' })
@@ -786,16 +805,48 @@ window.openAssignmentForm = async function(editId){
   document.getElementById('overlay').classList.add('open');
 };
 
-window.toggleAssignmentKind = function(){
+async function syncAssignmentInteractiveQuestions(assignmentId){
+  const { error: delError } = await supabase.from('assignment_video_questions').delete().eq('assignment_id', String(assignmentId));
+  if(delError) return { error: delError };
+  const rows = [];
+  taskAttachments.forEach(a => {
+    if(!a.interactive || !Array.isArray(a.interactiveQuestions)) return;
+    a.interactiveQuestions.forEach((q,i) => rows.push({
+      id: q.id || (crypto.randomUUID ? crypto.randomUUID() : undefined),
+      assignment_id: String(assignmentId), resource_key: a.resource_key,
+      timestamp_seconds: Number(q.timestamp_seconds ?? q.timestamp ?? 0) || 0,
+      question: String(q.question || '').trim(), question_type: q.question_type || 'multiple_choice',
+      options: Array.isArray(q.options) ? q.options : [], accepted_answers: Array.isArray(q.accepted_answers) ? q.accepted_answers : [],
+      explanation: q.explanation || null, points: Math.max(0, Number(q.points ?? 1) || 0),
+      replay_before_seconds: Math.max(0, Number(q.replay_before_seconds ?? 30) || 0),
+      require_correct: q.require_correct !== false, enabled: true, sort_order: i
+    }));
+  });
+  if(!rows.length) return { error: null };
+  const { error } = await supabase.from('assignment_video_questions').insert(rows);
+  return { error };
+}
+
+window.toggleAssignmentKind = async function(){
   const kind = fv('f-kind');
-  document.getElementById('kind-tlm-fields').style.display = kind==='tlm' ? 'block':'none';
+  const box = document.getElementById('kind-tlm-fields');
+  if(box) box.style.display = kind==='tlm' ? 'block':'none';
+  if(kind === 'tlm') await loadTlmOptions();
 };
 
 window.loadTlmOptions = async function(){
   const type = fv('f-item-type') || 'lessons';
-  const { data } = await supabase.from(type+'_public').select('id,title').order('created_at',{ascending:false});
   const sel = document.getElementById('f-item-id');
-  if(sel) sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  let data = null;
+  let error = null;
+  ({ data, error } = await supabase.from(type).select('id,title').order('created_at',{ascending:false}));
+  if(error){
+    ({ data, error } = await supabase.from(type+'_public').select('id,title').order('created_at',{ascending:false}));
+  }
+  if(error){ sel.innerHTML = '<option value="">(could not load items)</option>'; toast('Could not load TLM items: ' + error.message, true); return; }
+  sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
 };
 
 // ── Question builder ──
@@ -1089,7 +1140,12 @@ function renderTaskAttachments(){
   const el = document.getElementById('task-attach-list');
   if(!el) return;
   el.innerHTML = taskAttachments.length
-    ? taskAttachments.map((a,i)=>`<div class="task-att"><span>${(KIND_META[a.type] || KIND_META.link).icon}</span><input class="att-label" data-att-label="${i}" value="${esc(a.label)}" aria-label="Resource title"/><button type="button" class="btn btn-del btn-sm" data-rm-att="${i}">✕</button></div>`).join('')
+    ? taskAttachments.map((a,i)=>{
+        const c = classifyUrl(a.url);
+        const canInteractive = c.kind === 'video' && !!c.embed && !!window.SherigAssignmentVideoEditor;
+        const hasInteractive = !!a.interactive && Array.isArray(a.interactiveQuestions) && a.interactiveQuestions.length;
+        return `<div class="task-att" style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap"><span>${(KIND_META[a.type] || KIND_META.link).icon}</span><input class="att-label" data-att-label="${i}" value="${esc(a.label)}" aria-label="Resource title" style="flex:1;min-width:150px"/>${canInteractive ? `<button type="button" class="btn btn-ghost btn-sm" data-interactive-att="${i}">${hasInteractive ? '✨ Edit interactive' : '✨ Make interactive'}</button>` : ''}<button type="button" class="btn btn-del btn-sm" data-rm-att="${i}">✕</button>${hasInteractive ? `<span style="font-size:.72rem;color:var(--green)">${a.interactiveQuestions.length} question${a.interactiveQuestions.length===1?'':'s'}</span>` : ''}</div>`;
+      }).join('')
     : `<div class="hint">${T('Nothing added yet.','ད་ལྟོ་ག་ནི་ཡང་ཁ་སྐོང་མ་འབད་བར')}</div>`;
   el.querySelectorAll('[data-rm-att]').forEach(b => b.addEventListener('click', () => {
     taskAttachments.splice(Number(b.getAttribute('data-rm-att')), 1);
@@ -1098,7 +1154,18 @@ function renderTaskAttachments(){
   el.querySelectorAll('[data-att-label]').forEach(inp => inp.addEventListener('input', () => {
     taskAttachments[Number(inp.getAttribute('data-att-label'))].label = inp.value;
   }));
+  el.querySelectorAll('[data-interactive-att]').forEach(b => b.addEventListener('click', () => openInteractiveAttachment(Number(b.dataset.interactiveAtt))));
 }
+
+window.openInteractiveAttachment = function(i){
+  const a = taskAttachments[i];
+  if(!a || !window.SherigAssignmentVideoEditor) return;
+  window.SherigAssignmentVideoEditor.open(a, { onSave: questions => {
+    a.interactiveQuestions = questions || [];
+    a.interactive = a.interactiveQuestions.length > 0;
+    renderTaskAttachments();
+  }}).catch(err => toast('Interactive video: ' + err.message, true));
+};
 
 window.addTaskLink = function(){
   const inp = document.getElementById('f-link-input');
@@ -1108,7 +1175,7 @@ window.addTaskLink = function(){
   let u;
   try{ u = new URL(v); }catch(e){ toast(T('That does not look like a valid link.','འདི་འབྲེལ་མཐུད་ཁག་ཏོ་ཅིག་སྦེ་མི་མཐོང་།'), true); return; }
   if(u.protocol !== 'http:' && u.protocol !== 'https:'){ toast(T('Only web links (http/https) can be added.','ཝེབ་འབྲེལ་མཐུད (http/https) རྐྱངམ་ཅིག་ཁ་སྐོང་འབད་ཆོག'), true); return; }
-  taskAttachments.push({ url: u.href, label: defaultLabel(u.href), type: classifyUrl(u.href).kind });
+  taskAttachments.push({ url: u.href, label: defaultLabel(u.href), type: classifyUrl(u.href).kind, resource_key: newAttachmentKey(), interactive: false, interactiveQuestions: [] });
   inp.value = '';
   renderTaskAttachments();
 };
@@ -1148,7 +1215,7 @@ window.handleTaskUpload = async function(e, kind){
       else throw err;
     }
     const isVideo = kind === 'video' || /^video\//.test(file.type);
-    taskAttachments.push({ url: result.viewUrl, label: result.name, type: isVideo ? 'video' : 'file' });
+    taskAttachments.push({ url: result.viewUrl, label: result.name, type: isVideo ? 'video' : 'file', resource_key: newAttachmentKey(), interactive: false, interactiveQuestions: [] });
     renderTaskAttachments();
     st.style.color = 'var(--green)';
     st.textContent = T('Uploaded "','བཙུགས་ཚར་ཡོད "') + result.name + '" ✓';
