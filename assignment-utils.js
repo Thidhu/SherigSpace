@@ -44,7 +44,7 @@ export function classifyUrl(url) {
   }
   if (yt && /^[\w-]{6,}$/.test(yt)) {
     out.kind = 'video'; out.name = 'YouTube video';
-    out.embed = 'https://www.youtube-nocookie.com/embed/' + yt;
+    out.embed = 'https://www.youtube.com/embed/' + yt + '?autoplay=0&rel=0&modestbranding=1';
     return out;
   }
   if (host === 'vimeo.com') {
@@ -113,17 +113,15 @@ export function parseAttachments(row) {
   if (!row) return [];
   if (Array.isArray(row.attachments) && row.attachments.length) {
     return row.attachments
-      .map((x, i) => ({
-        url: safeUrl(x && x.url),
-        label: String((x && x.label) || ''),
-        type: String((x && x.type) || ''),
-        resource_key: String((x && x.resource_key) || ('att_' + i)),
-        interactive: !!(x && x.interactive)
+      .map(x => ({
+        url: safeUrl(x && (x.url || x.href || x.link)),
+        label: String((x && (x.label || x.title || x.name)) || ''),
+        type: String((x && x.type) || '')
       }))
       .filter(x => x.url);
   }
   return String(row.attachment_url || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean)
-    .map((url, i) => ({ url, label: '', type: '', resource_key: 'att_' + i, interactive: false }));
+    .map(url => ({ url, label: '', type: '' }));
 }
 
 /** Reads an assignment's questions: [{ id, type: short|long|choice|truefalse, text, options[] }] */
@@ -133,15 +131,13 @@ export function parseQuestions(row) {
   return raw
     .filter(q => q && q.id && q.text)
     .map(q => {
-      const type = ['short', 'long', 'choice', 'truefalse', 'fillblank', 'image', 'audio'].includes(q.type) ? q.type : 'short';
+      const type = ['short', 'long', 'choice', 'truefalse'].includes(q.type) ? q.type : 'short';
       return {
         id: String(q.id),
         type,
         text: String(q.text),
-        options: type === 'truefalse' ? ['True', 'False'] : (Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : []),
-        accepted_answers: Array.isArray(q.accepted_answers) ? q.accepted_answers.map(String).filter(Boolean) : [],
-        media_url: q.media_url ? String(q.media_url) : '',
-        points: Math.max(0, Number(q.points ?? 1) || 0)
+        // True/False always has exactly these two options, regardless of what was stored.
+        options: type === 'truefalse' ? ['True', 'False'] : (Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : [])
       };
     });
 }
