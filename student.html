@@ -658,6 +658,22 @@ async function submitAnswer(id, btn){
 }
 
 // ── Resources the teacher attached: videos play here, documents preview here, everything else opens ──
+// Keep the interactive-video metadata from the assignment attachment.
+// assignment-utils.js intentionally normalizes attachments for ordinary resources,
+// but interactive assignment videos also need resource_key and interactive.
+function parseStudentAttachments(row){
+  if(row && Array.isArray(row.attachments) && row.attachments.length){
+    return row.attachments.map((x,i)=>({
+      url: safeUrl(x && x.url),
+      label: String((x && x.label) || ''),
+      type: String((x && x.type) || ''),
+      resource_key: String((x && x.resource_key) || ('att_' + i)),
+      interactive: !!(x && x.interactive)
+    })).filter(x=>x.url);
+  }
+  return parseAttachments(row);
+}
+
 function resourceHtml(att){
   const c = classifyUrl(safeUrl(att.url));
   const kind = att.type && KIND_META[att.type] ? att.type : c.kind;
@@ -709,7 +725,7 @@ function dueHtml(a, done){
 }
 
 async function renderAssignmentCard(a, done){
-  let title, desc, lockedNote = '', resources = parseAttachments(a);
+  let title, desc, lockedNote = '', resources = parseStudentAttachments(a);
 
   if(a.kind === 'custom'){
     title = a.title || T('Task','ལཱ་ཁག');
