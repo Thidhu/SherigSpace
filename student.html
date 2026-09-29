@@ -344,8 +344,14 @@ async function renderAssignments(){
   }
 
   const classIds = enrollments.map(e=>e.class_id);
-  const { data: assignments } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
-  const { data: statuses } = await supabase.from('assignment_status').select('*').eq('student_id', me.id);
+  const { data: assignments, error: assignmentsError } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
+  if(assignmentsError){
+    console.error('Student assignments query failed:', assignmentsError);
+    wrap.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>${T('Your assignments could not be loaded. Please contact your teacher or administrator.','ཁྱོད་ཀྱི་ལཱ་ཁག་ཚུ་འདྲེན་མ་ཚུགས། སློབ་དཔོན་ཡང་ན་འཛིན་སྐྱོང་པ་ལུ་འབྲེལ་བ་འཐབ།')}</p><small style="display:block;margin-top:.5rem;opacity:.7">${esc(assignmentsError.message || assignmentsError.code || 'Database permission error')}</small></div>`;
+    return;
+  }
+  const { data: statuses, error: statusError } = await supabase.from('assignment_status').select('*').eq('student_id', me.id);
+  if(statusError) console.warn('Student assignment status query:', statusError);
   const statusMap = {};
   (statuses||[]).forEach(s=>{
     statusMap[s.assignment_id] = s.status;
@@ -382,6 +388,12 @@ async function renderAssignments(){
   });
   wrap.querySelectorAll('[data-open-item]').forEach(btn=>{
     btn.addEventListener('click', ()=>window.open(btn.getAttribute('data-open-item'), '_blank', 'noopener'));
+  });
+  wrap.querySelectorAll('[data-open-resource]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const url = btn.getAttribute('data-open-resource');
+      if(url) window.open(url, '_blank', 'noopener,noreferrer');
+    });
   });
   // "Preview" on documents / files: the frame is only created when asked for, so the page stays fast.
   wrap.querySelectorAll('[data-preview]').forEach(btn=>{
@@ -647,11 +659,13 @@ async function submitAnswer(id, btn){
 
 // ── Resources the teacher attached: videos play here, documents preview here, everything else opens ──
 function resourceHtml(att){
-  const c = classifyUrl(att.url);
+  const c = classifyUrl(safeUrl(att.url));
   const kind = att.type && KIND_META[att.type] ? att.type : c.kind;
   const meta = KIND_META[kind] || KIND_META.link;
   const label = att.label || defaultLabel(att.url);
-  const open = `<a href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">↗ ${T('Open in a new tab','ཤོག་ལེབ་གསརཔ་ནང་ཁ་ཕྱེ')}</a>`;
+  const safe = safeUrl(att.url);
+  if(!safe) return `<div class="locked-note">⚠️ ${T('This resource link is invalid or unavailable.','ཡིག་ཆའི་འབྲེལ་མཐུད་ཁག་ཏོ་མིན་འདུག།')}</div>`;
+  const open = `<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer" style="position:relative;z-index:5;pointer-events:auto">↗ ${T('Open in a new tab','ཤོག་ལེབ་གསརཔ་ནང་ཁ་ཕྱེ')}</a>`;
 
   if(kind === 'video' && c.embed){
     if(att.interactive){
@@ -662,14 +676,14 @@ function resourceHtml(att){
   }
   if(c.media === 'video') return `<div class="res-video"><video class="res-media" controls preload="metadata" src="${esc(att.url)}"></video><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
   if(c.media === 'audio') return `<div class="res-audio"><div class="res-cap" style="margin:0 0 .3rem">🎧 ${esc(label)}</div><audio controls preload="none" src="${esc(att.url)}" style="width:100%"></audio></div>`;
-  if(c.media === 'image') return `<div class="res-video"><a class="res-img" href="${esc(att.url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(att.url)}" alt="${esc(label)}" loading="lazy"/></a><div class="res-cap">🖼️ ${esc(label)}</div></div>`;
+  if(c.media === 'image') return `<div class="res-video"><a class="res-img" href="${esc(safe)}" target="_blank" rel="noopener noreferrer"><img src="${esc(att.url)}" alt="${esc(label)}" loading="lazy"/></a><div class="res-cap">🖼️ ${esc(label)}</div></div>`;
 
   return `<div class="res-tile"><div class="res-row">
     <span class="res-ico">${meta.icon}</span>
     <div class="res-info"><div class="res-name">${esc(label)}</div><div class="res-sub">${esc(c.name || meta.label)} · ${esc(c.host)}</div></div>
     <div class="res-btns">
       ${c.embed ? `<button type="button" class="btn btn-ghost btn-sm" data-preview="${esc(c.embed)}">${T('Preview','སྔོན་བལྟ།')}</button>` : ''}
-      <a class="btn btn-gold btn-sm" href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">${kind === 'form' ? T('Open form','ཟུར་སྦྲགས་ཁ་ཕྱེ') : T('Open','ཁ་ཕྱེ')}</a>
+      <a class="btn btn-gold btn-sm" href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${kind === 'form' ? T('Open form','ཟུར་སྦྲགས་ཁ་ཕྱེ') : T('Open','ཁ་ཕྱེ')}</a>
       ${c.download ? `<a class="btn btn-ghost btn-sm" href="${esc(c.download)}" target="_blank" rel="noopener noreferrer">${T('Download','ཕབ་ལེན')}</a>` : ''}
     </div></div><div class="res-preview"></div></div>`;
 }
@@ -701,7 +715,19 @@ async function renderAssignmentCard(a, done){
     title = a.title || T('Task','ལཱ་ཁག');
     desc = a.description || '';
   } else {
-    const { data: item } = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
+    let item = null;
+    let itemError = null;
+    // Read assigned library content through the protected RPC instead of the old *_public views.
+    // This works for ordinary and premium items while keeping premium URLs protected.
+    const rpc = await supabase.rpc('sherig_content_item', { p_table: String(a.item_type || ''), p_id: String(a.item_id || '') });
+    if(!rpc.error) item = rpc.data;
+    else itemError = rpc.error;
+    // Backward-compatible fallback for projects that have not run the security migration yet.
+    if(!item){
+      const legacy = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
+      if(!legacy.error) item = legacy.data;
+      else itemError = itemError || legacy.error;
+    }
     title = a.title || (item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : T('(content unavailable)','(ནང་དོན་མིན་འདུག)'));
     desc = [a.description, item?.description].filter(Boolean).join('\n\n');
     if(item){
