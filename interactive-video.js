@@ -125,7 +125,6 @@
       let opts=Array.isArray(q.options)?q.options:[]; if(typeof q.options==='string')try{opts=JSON.parse(q.options)}catch(_){opts=[]}
       if(['multiple_choice','mcq','image_choice'].includes(type)) body=opts.map(x=>`<button class="siv-option" data-a="${esc(x)}">${esc(x)}</button>`).join('');
       else if(['true_false','truefalse'].includes(type)) body='<button class="siv-option" data-a="true">True</button><button class="siv-option" data-a="false">False</button>';
-      else if(type==='fill_blank') body=`<input class="siv-answer" id="${this.uid('answer')}" type="text" autocomplete="off" placeholder="Fill in the blank..."/>`;
       else body=`<textarea class="siv-answer" id="${this.uid('answer')}" placeholder="Type your answer..."></textarea>`;
       box.innerHTML=`<div class="siv-time">Question at ${this.format(q.timestamp)}</div><h3>${esc(q.question||'')}</h3><div>${body}</div><div class="siv-feedback" id="${this.uid('feedback')}"></div><div class="siv-actions"><button class="siv-btn" id="${this.uid('submit')}">Submit Answer</button></div>`;
       box.querySelectorAll('.siv-option').forEach(b=>b.onclick=()=>{box.querySelectorAll('.siv-option').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');this.selected=b.dataset.a;});
