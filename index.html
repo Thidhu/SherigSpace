@@ -133,6 +133,19 @@ section{padding:80px 5%}
 .comment-login-note{font-size:.78rem;color:var(--text2)}
 .comment-login-note a{color:var(--gold-text);text-decoration:none}
 #about{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%)}
+.sherigspace-purpose{grid-template-columns:1.05fr .95fr;gap:4.5rem}
+.purpose-intro .section-title{max-width:720px}
+.purpose-note{margin-top:1.15rem;color:rgba(255,255,255,.58);font-size:.94rem;line-height:1.8;max-width:700px}
+.purpose-panel{background:rgba(255,255,255,.035);border:1px solid rgba(201,168,76,.22);border-radius:18px;padding:1.5rem;box-shadow:0 18px 45px rgba(0,0,0,.18)}
+.purpose-panel>.section-label{margin-bottom:1.1rem}
+.purpose-cards{display:grid;gap:.8rem}
+.purpose-card{display:flex;gap:1rem;align-items:flex-start;padding:1rem;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);border-radius:12px;transition:transform .2s ease,border-color .2s ease,background .2s ease}
+.purpose-card:hover{transform:translateY(-2px);border-color:rgba(201,168,76,.4);background:rgba(255,255,255,.055)}
+.purpose-icon{width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-size:1.25rem;border:1px solid var(--border)}
+.purpose-card h3{font-family:'Playfair Display',serif;color:var(--gold-light);font-size:1.05rem;margin:0 0 .28rem}
+.purpose-card p{font-size:.82rem;line-height:1.65;color:rgba(255,255,255,.6);margin:0}
+@media(max-width:850px){.sherigspace-purpose{grid-template-columns:1fr;gap:2.5rem}.purpose-panel{padding:1.15rem}}
+
 .about-inner{max-width:1100px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
 .about-avatar-wrap{position:relative}
 .about-avatar{width:100%;max-width:360px;aspect-ratio:1;background:rgba(255,255,255,.05);border:2px solid rgba(201,168,76,.75);border-radius:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 18px 45px rgba(0,0,0,.28),0 0 0 8px rgba(201,168,76,.06);position:relative}
@@ -269,9 +282,15 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .search-box button{background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer;padding:4px 8px}
 
 /* ═══════════════════ DASHBOARD LAYOUT (sidebar + topbar + banner + right panel) ═══════════════════ */
-#gate-loader{position:fixed;inset:0;z-index:9999;background:#0f1623;color:#e8e4dc;display:flex;align-items:center;justify-content:center;font-family:var(--font-en);text-align:center}
-#gate-loader .gl-icon{font-size:2.2rem;margin-bottom:.6rem}
-#gate-loader p{color:#9aa3b8;font-size:.9rem}
+#gate-loader{position:fixed;inset:0;z-index:99999;background:#0f1623;color:#e8e4dc;display:flex;align-items:center;justify-content:center;font-family:var(--font-en);text-align:center;opacity:1;visibility:visible;transition:opacity .35s ease,visibility .35s ease}
+#gate-loader.hide{opacity:0;visibility:hidden;pointer-events:none}
+#gate-loader .gl-inner{width:min(260px,72vw);display:flex;flex-direction:column;align-items:center}
+#gate-loader .gl-logo{width:190px;height:190px;object-fit:contain;border-radius:22px;display:block;margin-bottom:1.25rem;box-shadow:0 14px 45px rgba(0,0,0,.35)}
+#gate-loader .gl-percent{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;color:var(--gold-light);line-height:1;margin-bottom:.85rem;min-width:4ch}
+#gate-loader .gl-progress{width:100%;height:4px;background:rgba(255,255,255,.10);border-radius:999px;overflow:hidden}
+#gate-loader .gl-progress-fill{width:0%;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:999px;transform-origin:left center}
+#gate-loader .gl-label{margin-top:.8rem;color:#9aa3b8;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}
+@media(max-width:560px){#gate-loader .gl-inner{width:min(220px,70vw)}#gate-loader .gl-logo{width:155px;height:155px;margin-bottom:1rem}#gate-loader .gl-percent{font-size:1.2rem}}
 .app{display:flex;min-height:100vh}
 .sidebar{width:230px;flex-shrink:0;background:#0d1420;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:150;transition:transform .25s}
 .sidebar-logo{padding:1.3rem 1.3rem 1.1rem;font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--gold);text-decoration:none;display:block;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -377,7 +396,14 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 </head>
 <body>
 
-<div id="gate-loader"><div><div class="gl-icon">📖</div><p>Loading SherigSpace…</p></div></div>
+<div id="gate-loader" role="status" aria-live="polite" aria-label="Loading SherigSpace">
+  <div class="gl-inner">
+    <img class="gl-logo" src="sherigspace-logo.png" alt="SherigSpace logo">
+    <div class="gl-percent" id="gl-percent">0%</div>
+    <div class="gl-progress" aria-hidden="true"><div class="gl-progress-fill" id="gl-progress-fill"></div></div>
+    <div class="gl-label">Loading SherigSpace</div>
+  </div>
+</div>
 
 <div class="app" id="app" style="visibility:hidden">
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -391,7 +417,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <a class="side-link" href="#videos" data-section="videos"><span class="si">🎥</span><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></a>
       <a class="side-link" href="#games" data-section="games"><span class="si">🎮</span><span data-en="EduGames" data-dz="རྩེད་མོ།">EduGames</span></a>
       <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
-      <a class="side-link" href="#about" data-section="about"><span class="si">👤</span><span data-en="About" data-dz="ང་རའི་སྐོར།">About</span></a>
+      <a class="side-link" href="#about" data-section="about"><span class="si">✦</span><span data-en="Why SherigSpace?" data-dz="SherigSpace ག་ཅི་གི་དོན་ལུ?">Why SherigSpace?</span></a>
     </nav>
     <div class="sidebar-profile" onclick="openProfile()">
       <div class="sp-avatar" id="rpAvatar">··</div>
@@ -522,35 +548,41 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   </div>
 </section>
 
-<!-- ABOUT -->
+<!-- WHY SHERIGSPACE -->
 <section id="about">
-  <div class="about-inner">
-    <div class="about-avatar-wrap fade-in">
-      <div class="about-avatar">
-        <img src="profile.jpg" alt="Thinley Wangchuk" class="about-profile-photo">
-      </div>
-      <div class="about-accent"></div>
-      <div class="about-signature">Thinley Wangchuk</div>
-      <div class="about-role">TEACHER&nbsp;&nbsp;•&nbsp;&nbsp;CREATOR&nbsp;&nbsp;•&nbsp;&nbsp;LIFELONG LEARNER</div>
-      <div class="about-quick-contact">
-        <a class="qc-btn qc-wa" href="https://wa.me/97517272018" target="_blank" rel="noopener" data-en="💬 WhatsApp" data-dz="💬 WhatsApp">💬 WhatsApp</a>
-        <a class="qc-btn qc-call" href="tel:+97517272018" data-en="📞 Call" data-dz="📞 འབྲེལ་འཐབ།">📞 Call</a>
-      </div>
-    </div>
-    <div class="fade-in">
-      <p class="section-label"  data-en="✦ About Me" data-dz="✦ ང་རའི་སྐོར།">✦ About Me</p>
-      <h2 class="section-title" data-en="Hello, I'm a Passionate Educator" data-dz="སྐུ་གཟུགས་བཟང་པོ། ང་ཤེས་ཡོན་སྤྲོད་ནི་ལུ་སྤྲོ་བ་དང་དང་འདོད་ཡོད་པའི་ རྫོང་ཁའི་སློབ་དཔོན་ཅིག་ཨིན།">Hello, I'm a Passionate Educator</h2>
+  <div class="about-inner sherigspace-purpose">
+    <div class="fade-in purpose-intro">
+      <p class="section-label" data-en="✦ What is SherigSpace?" data-dz="✦ SherigSpace ག་རེ་ཨིན་ན?">✦ What is SherigSpace?</p>
+      <h2 class="section-title" data-en="Bringing Dzongkha Learning into the Digital Age" data-dz="རྫོང་ཁའི་ལྷབ་སྦྱང་དེ་ ཌི་ཇི་ཊལ་དུས་སྐབས་ནང་འབག་འོང་།">Bringing Dzongkha Learning into the Digital Age</h2>
       <div class="divider"></div>
-      <p class="section-desc" data-en="A dedicated teacher sharing lessons, resources, and videos with learners everywhere." data-dz="ལྷག་བསམ་རྣམ་དག་གི་སྒོ་ལས་ སློབ་སྟོན་འབད་ནི་ལུ་སྤྲོ་བ་ཡོདཔ་ལས་ སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཐབས་ཤེས་ཚུ་བརྗེ་སོར་འབདཝ་ཨིན།">A dedicated teacher sharing lessons, resources, and videos with learners everywhere.</p>
-      <div class="about-skills">
-        <span class="skill-tag" data-en="Curriculum Design" data-dz="Curriculum Design">Curriculum Design</span>
-        <span class="skill-tag" data-en="Project-Based Learning" data-dz="ལས་འགུལ་ཐོག་ལྷབ་སྦྱང་།">Project-Based Learning</span>
-        <span class="skill-tag" data-en="Student Engagement" data-dz="སློབ་ཕྲུག་འབྲེལ་གཏོགས།">Student Engagement</span>
-        <span class="skill-tag" data-en="EdTech" data-dz="སློབ་སྟོན་ཐབས་ལམ་གསརཔ།">EdTech</span>
-      </div>
-      <div class="about-contact">
-        <p data-en="Want to collaborate or get in touch?" data-dz="མཉམ་འབྲེལ་སྦེ་ ལཱ་འབད་ནི་/འབྲེལ་བ་འཐབ་ནི?">Want to collaborate or get in touch?</p>
-        <a href="mailto:thinleywangchuk478@gmail.com" class="btn-primary" data-en="✉ Contact Me" data-dz="ང་དང་་འབྲེལ་བ་འཐབ།">✉ Contact Me</a>
+      <p class="section-desc" data-en="SherigSpace is a digital learning platform created to make learning and teaching more interactive, engaging and accessible, with a special focus on Dzongkha and Bhutanese learners." data-dz="SherigSpace ནི་ རྫོང་ཁ་དང་འབྲུག་གི་སློབ་ཕྲུག་ཚུ་ལུ་ ལྷབ་སྦྱང་དང་སློབ་སྟོན་དེ་ འགུལ་ཤུགས་ཅན་དང་ སྤྲོ་བ་ཅན། འཇམ་ཏོང་ཏོ་བཟོ་ཐབས་ཀྱི་ ཌི་ཇི་ཊལ་ལྷབ་སྦྱང་གི་གཞི་རྟེན་ཅིག་ཨིན།">SherigSpace is a digital learning platform created to make learning and teaching more interactive, engaging and accessible, with a special focus on Dzongkha and Bhutanese learners.</p>
+      <p class="purpose-note" data-en="It brings lessons, resources, videos, games, activities and assessments together in one learning space, helping students learn by seeing, hearing, practising and doing." data-dz="འདི་གིས་ སློབ་སྟོན། མཁོ་ཆས། བརྙན་ཐུང་། རྩེད་མོ། ལས་སྦྱོར་དང་ བརྟག་ཞིབ་ཚུ་གཞི་གཅིག་ནང་བསྡུ་སྟེ་ སློབ་ཕྲུག་ཚུ་ལུ་ ལྟ་སྟེ། ཉན་ཏེ། སྦྱང་སྟེ་དང་ ལག་ལེན་འཐབ་སྟེ་ལྷབ་སྦྱང་འབད་བཅུགཔ་ཨིན།">It brings lessons, resources, videos, games, activities and assessments together in one learning space, helping students learn by seeing, hearing, practising and doing.</p>
+    </div>
+
+    <div class="fade-in purpose-panel">
+      <p class="section-label" data-en="✦ Why SherigSpace?" data-dz="✦ SherigSpace ག་ཅི་གི་དོན་ལུ་ཨིན་ན?">✦ Why SherigSpace?</p>
+      <div class="purpose-cards">
+        <article class="purpose-card">
+          <div class="purpose-icon">📖</div>
+          <div>
+            <h3 data-en="Learn" data-dz="ལྷབ་སྦྱང་།">Learn</h3>
+            <p data-en="Access lessons, videos and digital resources that support classroom learning and independent practice." data-dz="སློབ་ཁང་གི་ལྷབ་སྦྱང་དང་ རང་དབང་ཐོག་སྦྱང་བརྩོན་ལུ་ ཕན་པའི་ སློབ་སྟོན། བརྙན་ཐུང་དང་ ཌི་ཇི་ཊལ་མཁོ་ཆས་ཚུ་ལེན་ཐོབ།">Access lessons, videos and digital resources that support classroom learning and independent practice.</p>
+          </div>
+        </article>
+        <article class="purpose-card">
+          <div class="purpose-icon">🎮</div>
+          <div>
+            <h3 data-en="Practise" data-dz="སྦྱང་བརྩོན།">Practise</h3>
+            <p data-en="Turn practice into an active experience through educational games, quizzes, interactive activities and assignments." data-dz="སློབ་སྟོན་རྩེད་མོ། དྲི་བ་དྲིས་ལན། འགུལ་ཤུགས་ཅན་གྱི་ལས་སྦྱོར་དང་ ལས་འགན་ཚུ་གི་ཐོག་ལས་ སྦྱང་བརྩོན་དེ་ལག་ལེན་ཅན་བཟོ།">Turn practice into an active experience through educational games, quizzes, interactive activities and assignments.</p>
+          </div>
+        </article>
+        <article class="purpose-card">
+          <div class="purpose-icon">📊</div>
+          <div>
+            <h3 data-en="Progress" data-dz="ཡར་རྒྱས།">Progress</h3>
+            <p data-en="Use assignments, feedback and assessments to understand learning progress and identify what needs more practice." data-dz="ལས་འགན། བསམ་འཆར་དང་ བརྟག་ཞིབ་ཚུ་གི་ཐོག་ལས་ ལྷབ་སྦྱང་གི་ཡར་རྒྱས་ཧ་གོ་སྟེ་ སླར་སྦྱང་དགོ་པའི་གནས་ཚད་ངོས་འཛིན་འབད།">Use assignments, feedback and assessments to understand learning progress and identify what needs more practice.</p>
+          </div>
+        </article>
       </div>
     </div>
   </div>
@@ -1484,7 +1516,6 @@ window.addEventListener('scroll',()=>{
 // The site is open to browse for anyone. Signed-out visitors see every
 // section and card; only opening/downloading something checks accessState()
 // and asks them to log in or pay, per-click — there is no page-level gate.
-let gateOpened = false;
 async function syncSessionAndRender(){
   const { data } = await supabase.auth.getSession();
   if(data.session){
@@ -1499,15 +1530,45 @@ async function syncSessionAndRender(){
   } else {
     localStorage.removeItem('edu_session');
   }
-  if(!gateOpened){
-    gateOpened = true;
-    document.getElementById('gate-loader').remove();
-    document.getElementById('app').style.visibility = 'visible';
-  }
   renderAll();
 }
 supabase.auth.onAuthStateChange(()=>{ syncSessionAndRender(); });
 syncSessionAndRender();
+
+// ── 1-SECOND BRAND LOADER ──
+// The loader intentionally runs from 0% to 100% in exactly 1 second,
+// then reveals the existing SherigSpace page. The percentage is visual
+// feedback only; the page's Supabase data continues loading independently.
+(function startBrandLoader(){
+  const loader = document.getElementById('gate-loader');
+  const app = document.getElementById('app');
+  const percent = document.getElementById('gl-percent');
+  const fill = document.getElementById('gl-progress-fill');
+  if(!loader || !app || !percent || !fill) return;
+
+  const start = performance.now();
+  const duration = 1000;
+
+  function tick(now){
+    const progress = Math.min(1, (now - start) / duration);
+    const value = Math.round(progress * 100);
+    percent.textContent = value + '%';
+    fill.style.width = value + '%';
+
+    if(progress < 1){
+      requestAnimationFrame(tick);
+    }else{
+      setTimeout(()=>{
+        app.style.visibility = 'visible';
+        loader.classList.add('hide');
+        setTimeout(()=>loader.remove(), 400);
+      }, 30);
+    }
+  }
+
+  app.style.visibility = 'hidden';
+  requestAnimationFrame(tick);
+})();
 
 // ── VISIT LOGGING ──
 // Logs one visit per browser session (not on every reload/anchor click)
