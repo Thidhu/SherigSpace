@@ -462,7 +462,22 @@ async function generateAITeachingMaterial(){
   if(!data.topic && mode!=='lesson'){toast('Enter a topic first.',true);return;}
   btn.disabled=true; status.textContent='Generating…'; result.textContent=''; qbox.style.display='none'; qbox.innerHTML=''; aiLastQuestions=[];
   try{
-    const {data:resp,error}=await supabase.functions.invoke('ai-teacher-assistant',{body:data});
+    const { data: { session }, error: sessionError } =
+  await supabase.auth.getSession();
+
+if (sessionError) throw sessionError;
+
+if (!session?.access_token) {
+  throw new Error('Your login session is missing. Please log in again.');
+}
+
+const { data: resp, error } =
+  await supabase.functions.invoke('ai-teacher-assistant', {
+    body: data,
+    headers: {
+      Authorization: `Bearer ${session.access_token}`
+    }
+  });
     if(error) throw error;
     if(!resp?.ok) throw new Error(resp?.error||'AI request failed');
     if(Array.isArray(resp.questions)){
