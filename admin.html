@@ -112,6 +112,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .iq-replay-badge{display:inline-block;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid var(--border);border-radius:10px;padding:2px 7px;font-size:.68rem;margin-left:.35rem}
 </style>
 <script src="theme.js"></script>
+<script src="assignment-interactive.js"></script>
 </head>
 <body>
 
@@ -544,6 +545,7 @@ const RTYPES=['PDF','DOCX','Image','Video Link','Spreadsheet','Presentation','Ot
 const GTYPES=['Web Game','Quiz Game','Printable Game','Other'];
 const CLASS_LEVELS=['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
 let _type=null, _id=null;
+let adminInteractiveQuestions=[];
 
 window.openForm = async function(type, id=null){
   _type=type; _id=id;
@@ -558,11 +560,23 @@ window.openForm = async function(type, id=null){
   document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement',banner:'Banner Slide',game:'Game'}[type];
   document.getElementById('m-body').innerHTML = buildForm(type,item);
   initThumbUi();
+  const videoUrlField=document.getElementById('f-url');
+  if(type==='video' && videoUrlField){
+    const originalVideoUrl=String(item.url||'').trim();
+    videoUrlField.addEventListener('input',()=>{
+      if(String(videoUrlField.value||'').trim()!==originalVideoUrl && adminInteractiveQuestions.length){
+        adminInteractiveQuestions=[];
+        updateAdminInteractiveSummary();
+      }
+    });
+  }
   document.getElementById('overlay').classList.add('open');
-  if(type==='video' && id) loadInteractiveQuestionsForAdmin(id);
+  adminInteractiveQuestions=[];
+  updateAdminInteractiveSummary();
+  if(type==='video' && id) await loadInteractiveQuestionsForAdmin(id);
 };
 
-window.closeForm = function(){ document.getElementById('overlay').classList.remove('open'); _type=null; _id=null; };
+window.closeForm = function(){ document.getElementById('overlay').classList.remove('open'); _type=null; _id=null; adminInteractiveQuestions=[]; };
 function sel(opts,val){ return opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join(''); }
 function fv(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
 function isValidUrl(u){
@@ -785,16 +799,13 @@ function buildForm(type,d={}){
     ${premiumField(v)}
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="བརྙན་ཐམས་ཀྱི་མིང་" value="${esc(v('dz'))}"/></div>
     <div class="card" style="margin-top:1rem;border:1px solid var(--border);background:rgba(201,168,76,.04)">
-      <div class="card-head"><h3>🎯 Interactive Questions</h3><span class="cbadge">Optional</span></div>
+      <div class="card-head"><h3>🎯 Interactive Video</h3><span class="cbadge">Optional</span></div>
       <div style="padding:1rem">
         <p class="psub" style="margin-bottom:.8rem">
-  Pause the YouTube video at selected times and ask students a question.
-  If <b>Require Correct Answer</b> is enabled and the student is wrong, the video will jump back by the configured
-  <b>Replay Before</b> seconds. The student must watch that section again and answer correctly before continuing.
+  Use the same visual editor as the Teacher assignment system. Play the video, pause where you want the question, then click <b>Add question at current time</b>. This avoids manually calculating timestamps.
 </p>
-        <div id="interactive-question-list"></div>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addInteractiveQuestion()">＋ Add Question</button>
-        <div id="interactive-question-status" class="upload-status" style="margin-top:.6rem"></div>
+        <div id="admin-interactive-summary" class="upload-status" style="margin-bottom:.7rem">No interactive questions added yet.</div>
+        <button type="button" class="btn btn-gold" onclick="openAdminInteractiveEditor()">✨ Add / Edit Interactive Questions</button>
       </div>
     </div>`;
   if(type==='announce') return`
@@ -940,51 +951,71 @@ function interactiveQuestionRow(q={}){
 }
 window.refreshInteractiveQuestionRow=function(el){const row=el.closest('.iq-row'),type=el.value,wrap=row.querySelector('.iq-options-wrap'),label=row.querySelector('.iq-correct-label');if(wrap)wrap.style.display=type==='multiple_choice'?'block':'none';if(label)label.textContent=type==='multiple_choice'?'Correct Answer':type==='true_false'?'Correct Answer (true or false)':'Accepted Answer(s)';};
 window.addInteractiveQuestion=function(q={}){const list=document.getElementById('interactive-question-list');if(list)list.insertAdjacentHTML('beforeend',interactiveQuestionRow(q));};
-async function loadInteractiveQuestionsForAdmin(videoId){const list=document.getElementById('interactive-question-list');if(!list||!videoId)return;const {data,error}=await supabase.from('interactive_questions').select('*').eq('video_id',videoId).order('timestamp_seconds',{ascending:true}).order('sort_order',{ascending:true});if(error){const st=document.getElementById('interactive-question-status');if(st)st.textContent='Create the interactive_questions table first using INTERACTIVE_VIDEO_SETUP.sql.';return;}list.innerHTML='';(data||[]).forEach(q=>window.addInteractiveQuestion(q));}
-function parseInteractiveTime(v){const t=String(v||'').trim();if(/^\d+(?:\.\d+)?$/.test(t))return Number(t);const p=t.split(':').map(Number);if(p.length===2&&p.every(Number.isFinite))return p[0]*60+p[1];if(p.length===3&&p.every(Number.isFinite))return p[0]*3600+p[1]*60+p[2];return NaN;}
-function collectInteractiveQuestions(){
-  return [...document.querySelectorAll('#interactive-question-list .iq-row')].map((row,i)=>({
-    id:row.getAttribute('data-iq-id')||null,
-    timestamp_seconds:parseInteractiveTime(row.querySelector('.iq-time')?.value),
-    question:String(row.querySelector('.iq-question')?.value||'').trim(),
-    question_type:row.querySelector('.iq-type')?.value||'multiple_choice',
-    options:interactiveOptionsJson(row.querySelector('.iq-options')?.value),
-    accepted_answers:interactiveOptionsJson(row.querySelector('.iq-correct')?.value),
-    explanation:String(row.querySelector('.iq-explanation')?.value||'').trim(),
-    points:Number(row.querySelector('.iq-points')?.value||1)||0,
-    replay_before_seconds:Math.max(0,Number(row.querySelector('.iq-replay-before')?.value||30)||30),
-    require_correct:row.querySelector('.iq-require-correct')?.value!=='false',
-    enabled:row.querySelector('.iq-enabled')?.value!=='false',
-    sort_order:i
+async function loadInteractiveQuestionsForAdmin(videoId){
+  adminInteractiveQuestions=[];
+  if(!videoId) return;
+  const {data,error}=await supabase.from('interactive_questions').select('*').eq('video_id',videoId).order('timestamp_seconds',{ascending:true}).order('sort_order',{ascending:true});
+  if(error){
+    toast('Could not load interactive questions: '+error.message,true);
+    updateAdminInteractiveSummary();
+    return;
+  }
+  adminInteractiveQuestions=(data||[]).map(q=>({...q,
+    options:Array.isArray(q.options)?q.options:[],
+    accepted_answers:Array.isArray(q.accepted_answers)?q.accepted_answers:[],
+    require_correct:q.require_correct!==false,
+    replay_before_seconds:Number(q.replay_before_seconds??30)||30,
+    enabled:q.enabled!==false,
+    points:Number(q.points??1)||0
   }));
+  updateAdminInteractiveSummary();
 }
+
+function updateAdminInteractiveSummary(){
+  const el=document.getElementById('admin-interactive-summary');
+  if(!el) return;
+  const n=adminInteractiveQuestions.length;
+  el.textContent=n ? `${n} interactive question${n===1?'':'s'} ready. Open the editor to review or change them.` : 'No interactive questions added yet.';
+  el.className='upload-status '+(n?'ok':'');
+}
+
+window.openAdminInteractiveEditor=async function(){
+  if(_type!=='video'){toast('Interactive questions are available for videos only.',true);return;}
+  const url=fv('f-url');
+  if(!url){toast('Please enter the YouTube video URL first.',true);return;}
+  if(!window.SherigAssignmentVideoEditor){toast('Interactive editor is not loaded. Please refresh the Admin page.',true);return;}
+  const attachment={url,label:fv('f-title')||'YouTube video',interactiveQuestions:adminInteractiveQuestions.map(q=>({...q}))};
+  try{
+    window.SherigAssignmentVideoEditor.open(attachment,{onSave:questions=>{
+      adminInteractiveQuestions=Array.isArray(questions)?questions.map((q,i)=>({...q,sort_order:i,enabled:true})):[];
+      updateAdminInteractiveSummary();
+    }}).catch(err=>toast('Interactive video: '+(err.message||err),true));
+  }catch(err){toast('Interactive video: '+(err.message||err),true);}
+};
+
 async function saveInteractiveQuestions(videoId){
   if(!videoId) return true;
-  const list=document.getElementById('interactive-question-list');
-  if(!list) return true;
-  const rows=collectInteractiveQuestions();
+  const rows=adminInteractiveQuestions.map((q,i)=>({
+    id:q.id||null,
+    timestamp_seconds:Math.max(0,Number(q.timestamp_seconds??q.timestamp??0)||0),
+    question:String(q.question||'').trim(),
+    question_type:q.question_type||'multiple_choice',
+    options:Array.isArray(q.options)?q.options:[],
+    accepted_answers:Array.isArray(q.accepted_answers)?q.accepted_answers:[],
+    explanation:q.explanation||null,
+    points:Math.max(0,Number(q.points??1)||0),
+    replay_before_seconds:Math.max(0,Number(q.replay_before_seconds??30)||0),
+    require_correct:q.require_correct!==false,
+    enabled:q.enabled!==false,
+    sort_order:i
+  })).filter(q=>q.question);
   for(const q of rows){
-    if(!Number.isFinite(q.timestamp_seconds)||!q.question){
-      toast('Every interactive question needs a valid time and question text.',true);
-      return false;
-    }
-    if(q.question_type==='multiple_choice'&&q.options.length<2){
-      toast('Multiple-choice questions need at least two options.',true);
-      return false;
-    }
-    if(!q.accepted_answers.length){
-      toast('Every interactive question needs a correct/accepted answer.',true);
-      return false;
-    }
+    if(!Number.isFinite(q.timestamp_seconds)){toast('Every interactive question needs a valid video position.',true);return false;}
+    if(q.question_type==='multiple_choice'&&q.options.filter(Boolean).length<2){toast('Multiple-choice questions need at least two options.',true);return false;}
+    if(!q.accepted_answers.length){toast('Every interactive question needs a correct/accepted answer.',true);return false;}
   }
-  const {error}=await supabase.rpc('save_interactive_questions_admin',{
-    p_video_id:String(videoId),
-    p_rows:rows
-  });
-  if(error){
-    toast('Could not save interactive questions: '+error.message,true);
-    return false;
-  }
+  const {error}=await supabase.rpc('save_interactive_questions_admin',{p_video_id:String(videoId),p_rows:rows});
+  if(error){toast('Could not save interactive questions: '+error.message,true);return false;}
   return true;
 }
 
