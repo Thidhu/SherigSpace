@@ -1138,9 +1138,10 @@ window.openAssignmentForm = async function(editId){
     <div class="field"><label>${T('Resources for students (optional)','སློབ་ཕྲུག་གི་དོན་ལུ་ཡིག་ཆ (དགོས་མཁོ་མེད་ཡང་རུང)')}</label>
       <div id="task-attach-list"></div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem">
-        <input id="f-link-input" placeholder="Paste a link — YouTube, Google Docs / Slides / Drive, any website…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
+        <input id="f-link-input" placeholder="Paste a link — YouTube, Google Docs / Slides / Drive, any website…" oninput="previewTaskLink()" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
         <button type="button" class="btn btn-gold btn-sm" style="white-space:nowrap" onclick="addTaskLink()">${T('＋ Add link','＋ འབྲེལ་མཐུད་ཁ་སྐོང་')}</button>
       </div>
+      <div id="task-link-preview" style="margin-top:.65rem"></div>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
         <input type="file" id="f-task-video" accept="video/*" style="display:none" onchange="handleTaskUpload(event,'video')"/>
         <input type="file" id="f-task-file" style="display:none" onchange="handleTaskUpload(event,'file')"/>
@@ -1752,6 +1753,55 @@ window.openInteractiveAttachment = async function(i){
   }}).catch(err => toast('Interactive video: ' + err.message, true));
 };
 
+function getTaskYouTubeId(url){
+  try{
+    const u=new URL(url);
+    const h=u.hostname.replace(/^www\./,'').toLowerCase();
+    if(h==='youtu.be') return u.pathname.split('/').filter(Boolean)[0] || '';
+    if(h==='youtube.com' || h==='m.youtube.com' || h==='youtube-nocookie.com' || h==='www.youtube.com'){
+      if(u.pathname==='/watch') return u.searchParams.get('v') || '';
+      const m=u.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]{6,})/);
+      return m ? m[1] : '';
+    }
+  }catch(e){}
+  return '';
+}
+
+function renderTaskLinkPreview(url, title){
+  const el=document.getElementById('task-link-preview');
+  if(!el) return;
+  const id=getTaskYouTubeId(url);
+  if(!id){ el.innerHTML=''; return; }
+  const safeId=esc(id);
+  const safeTitle=esc(title || 'YouTube video');
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:.7rem;padding:.6rem;border:1px solid var(--border);border-radius:10px;background:var(--surface2);max-width:680px">
+    <img src="https://img.youtube.com/vi/${safeId}/mqdefault.jpg" alt="" style="width:120px;height:68px;object-fit:cover;border-radius:7px;background:#111" onerror="this.style.display='none'">
+    <div style="min-width:0;flex:1"><div style="font-size:.78rem;color:var(--text2);margin-bottom:.15rem">YouTube video preview</div><div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safeTitle}</div></div>
+  </div>`;
+}
+
+let taskLinkPreviewTimer=null;
+window.previewTaskLink=function(){
+  const inp=document.getElementById('f-link-input');
+  const el=document.getElementById('task-link-preview');
+  if(!inp || !el) return;
+  const raw=(inp.value||'').trim();
+  if(taskLinkPreviewTimer) clearTimeout(taskLinkPreviewTimer);
+  if(!raw){ el.innerHTML=''; return; }
+  let v=raw; if(!/^https?:\/\//i.test(v)) v='https://'+v;
+  const id=getTaskYouTubeId(v);
+  if(!id){ el.innerHTML=''; return; }
+  renderTaskLinkPreview(v,'YouTube video');
+  taskLinkPreviewTimer=setTimeout(async()=>{
+    try{
+      const r=await fetch('https://www.youtube.com/oembed?url='+encodeURIComponent(v)+'&format=json');
+      if(!r.ok) return;
+      const data=await r.json();
+      renderTaskLinkPreview(v,data.title || 'YouTube video');
+    }catch(e){}
+  },250);
+};
+
 window.addTaskLink = function(){
   const inp = document.getElementById('f-link-input');
   let v = (inp.value || '').trim();
@@ -1760,8 +1810,10 @@ window.addTaskLink = function(){
   let u;
   try{ u = new URL(v); }catch(e){ toast(T('That does not look like a valid link.','འདི་འབྲེལ་མཐུད་ཁག་ཏོ་ཅིག་སྦེ་མི་མཐོང་།'), true); return; }
   if(u.protocol !== 'http:' && u.protocol !== 'https:'){ toast(T('Only web links (http/https) can be added.','ཝེབ་འབྲེལ་མཐུད (http/https) རྐྱངམ་ཅིག་ཁ་སྐོང་འབད་ཆོག'), true); return; }
-  taskAttachments.push({ url: u.href, label: defaultLabel(u.href), type: classifyUrl(u.href).kind, resource_key: newAttachmentKey(), interactive: false, interactiveQuestions: [] });
+  const ytId = getTaskYouTubeId(u.href);
+  taskAttachments.push({ url: u.href, label: defaultLabel(u.href), type: classifyUrl(u.href).kind, resource_key: newAttachmentKey(), interactive: false, interactiveQuestions: [], youtube_id: ytId || null });
   inp.value = '';
+  const pv=document.getElementById('task-link-preview'); if(pv) pv.innerHTML='';
   renderTaskAttachments();
 };
 
