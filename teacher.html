@@ -802,7 +802,7 @@ async function renderStudents(){
   const el = document.getElementById('students-list');
   el.innerHTML = data?.length ? data.map(s=>`
     <div class="irow">
-      <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">Student ID: <b>${esc(s.student_login_id || 'Not assigned')}</b><br>PIN: ${esc(s.pin)}</div></div>
+      <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">PIN: ${esc(s.pin || 'Not assigned')}</div></div>
       <div class="ibtns">
         <button class="btn btn-edit btn-sm" onclick="openEditStudentForm('${esc(s.id)}','${esc(s.display_name)}')">${T('✏ Edit','✏ ཞུན་དག')}</button>
         <button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">${T('✕ Remove','✕ བཏོན་གཏང་')}</button>
@@ -867,19 +867,14 @@ window.openStudentForm = async function(){
         class_id: currentClassId, student_id: studentId, display_name: name, login_email: loginEmail, pin
       });
       if(enrollErr) throw enrollErr;
-      const { data: createdEnrollment, error: createdEnrollmentErr } = await supabase.from('class_students').select('student_login_id').eq('student_id', studentId).eq('class_id', currentClassId).order('created_at',{ascending:false}).limit(1).maybeSingle();
-      if(createdEnrollmentErr) throw createdEnrollmentErr;
-      window.__lastStudentLoginId = createdEnrollment?.student_login_id || '';
-
       closeModal();
       toast(T('Student added ✓','སློབ་ཕྲུག་ཁ་སྐོང་འབད་ཚར་ཡོད ✓'));
       renderStudents();
       document.getElementById('login-card-body').innerHTML = `
         ${T('Class Name','དཔྱེ་སློབ་མིང་')}: <b>${esc(code)}</b><br>
         ${T('Student Name','སློབ་ཕྲུག་མིང་')}: <b>${esc(name)}</b><br>
-        ${T('Student ID','སློབ་ཕྲུག་ཨང་')}: <b>${esc(window.__lastStudentLoginId || 'Generating…')}</b><br>
         PIN: <b>${esc(pin)}</b><br><br>
-        ${T('Give the student this info and send them to','གནད་སྡུད་འདི་སློབ་ཕྲུག་ལུ་སྤྲོད་ཞིནམ་ལས་')} <b>${esc(window.location.origin)}/login.html</b> → ${T('Student tab.','སློབ་ཕྲུག་ཨིབ་ལུ་གཏང་།')}`;
+        ${T('Give the student this name and PIN, then send them to','གནད་སྡུད་འདི་སློབ་ཕྲུག་ལུ་སྤྲོད་ཞིནམ་ལས་')} <b>${esc(window.location.origin)}/login.html</b> → ${T('Student tab.','སློབ་ཕྲུག་ཨིབ་ལུ་གཏང་།')}`;
       document.getElementById('login-card-overlay').classList.add('open');
     }catch(err){
       toast(T('Error: ','འཛོལ་བ: ')+err.message, true);
@@ -934,18 +929,13 @@ window.openEditStudentForm = function(rowId, currentName){
           student_id: studentId, login_email: loginEmail, pin: newPin, display_name: name
         }).eq('id', rowId);
         if(updErr) throw updErr;
-        const { data: updatedEnrollment, error: updatedEnrollmentErr } = await supabase.from('class_students').select('student_login_id').eq('id', rowId).single();
-        if(updatedEnrollmentErr) throw updatedEnrollmentErr;
-        window.__lastStudentLoginId = updatedEnrollment?.student_login_id || '';
-
         closeModal();
         toast(T('Password reset ✓','གསང་ཨང་སླར་གསོ་འབད་ཚར་ཡོད ✓'));
         renderStudents();
         document.getElementById('login-card-body').innerHTML = `
           ${T('Class Name','དཔྱེ་སློབ་མིང་')}: <b>${esc(code)}</b><br>
           ${T('Student Name','སློབ་ཕྲུག་མིང་')}: <b>${esc(name)}</b><br>
-          ${T('Student ID','སློབ་ཕྲུག་ཨང་')}: <b>${esc(window.__lastStudentLoginId || 'Generating…')}</b><br>
-          PIN: <b>${esc(newPin)}</b><br><br>
+            PIN: <b>${esc(newPin)}</b><br><br>
           ${T('This is a new login — the old PIN no longer works. Give the student these updated details.','འདི་ནང་འཛུལ་གསརཔ་ཨིན — PIN་རྙིངམ་འདི་ལག་ལེན་མི་འཐབ། སློབ་ཕྲུག་ལུ་གནད་སྡུད་གསར་བསྐྱར་འདི་ཚུ་སྤྲོད།')}`;
         document.getElementById('login-card-overlay').classList.add('open');
       }
