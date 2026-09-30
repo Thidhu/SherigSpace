@@ -773,9 +773,13 @@ function renderNav(){
   document.getElementById('rpName').textContent = s.name;
   document.getElementById('rpRole').textContent = s.class_grade || s.role || 'Member';
   if(spBlock) spBlock.onclick = () => openProfile();
-  const adminSide = s.role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
+  const role = String(s.role || '').toLowerCase();
+  const adminSide = role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
+  const teacherSide = (role === 'teacher' || role === 'admin') ? `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher Dashboard</span></a>` : '';
   document.getElementById('sidebarFooter').innerHTML =
-    `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher</span></a>${adminSide}<a class="side-link" onclick="logout()"><span class="si">🔒</span><span>Log Out</span></a>`;
+    `${teacherSide}${adminSide}<a class="side-link" onclick="logout()"><span class="si">🔒</span><span>Log Out</span></a>`;
+  const learning = document.querySelector('.learning-link');
+  if(learning) learning.style.display = role === 'student' ? '' : 'none';
 }
 
 window.logout = async function(){
@@ -797,7 +801,8 @@ window.openProfile = async function(){
       <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
       <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
     </div>
-    <a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🍎 Teacher Dashboard</a>
+    ${['teacher','admin'].includes(String(profile?.role||'').toLowerCase()) ? `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🍎 Teacher Dashboard</a>` : ''}
+    ${profile?.role === 'student' ? `<a href="student.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🎓 My Learning</a>` : ''}
     ${profile?.role === 'admin' ? `<a href="admin.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🛠️ Open Admin Panel</a>` : ''}
     <button onclick="logout()" style="width:100%;padding:10px;background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);border-radius:4px;color:#e05c5c;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer">🔒 Log Out</button>`;
   document.getElementById('profile-modal').classList.add('open');
