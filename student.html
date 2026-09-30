@@ -386,6 +386,9 @@ async function renderAssignments(){
   wrap.querySelectorAll('[data-mark-done]').forEach(btn=>{
     btn.addEventListener('click', ()=>markDone(btn.getAttribute('data-mark-done')));
   });
+  wrap.querySelectorAll('[data-submit-interactive]').forEach(btn=>{
+    btn.addEventListener('click', ()=>submitInteractiveAssignment(btn.getAttribute('data-submit-interactive'), btn));
+  });
   wrap.querySelectorAll('[data-open-item]').forEach(btn=>{
     btn.addEventListener('click', ()=>window.open(btn.getAttribute('data-open-item'), '_blank', 'noopener'));
   });
@@ -768,12 +771,47 @@ async function renderAssignmentCard(a, done){
     ${resourcesHtml(resources, a.id)}
     ${lockedNote}
     ${answersEnabled && !lockedNote && !resources.some(r => r.interactive) ? answerBoxHtml(a) : ''}
+    ${!lockedNote && resources.some(r => r.interactive) ? `<div class="answer-box interactive-submit-box"><div class="answer-title">✨ ${T('Interactive video assignment','བརྙན་ཐུང་གི་ལཱ་ཁག')}</div><div class="answer-sub">${T('Answer the questions in the video. You do not need to write a separate answer here.','བརྙན་ཐུང་ནང་གི་དྲི་བ་ཚུ་ལུ་ལན་བྲིས། འདི་ནང་ལོག་སྟེ་ལན་བྲི་དགོས་མི་འདུག།')}</div><div class="ans-status" data-id="${esc(a.id)}"></div><button type="button" class="btn btn-gold" data-submit-interactive="${esc(a.id)}">${T('Submit assignment','ལཱ་ཁག་སྙན་ཞུ་འབད')}</button></div>` : ''}
     <div class="assign-actions">
       ${done
         ? `<button class="btn btn-green" disabled>✓ ${T('Completed','མཇུག་བསྡུ་ཡོད')}</button>`
         : (hasQ ? '' : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">${T('Mark Complete','མཇུག་བསྡུ་བརྟགས')}</button>`)}
     </div>
   </div>`;
+}
+
+async function submitInteractiveAssignment(assignmentId, btn){
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = T('Submitting…','སྙན་ཞུ་འབད་བཞིནམ...');
+  try{
+    const { data: progress, error: pErr } = await supabase.from('assignment_video_progress')
+      .select('completed,questions_answered,questions_total')
+      .eq('assignment_id', String(assignmentId)).eq('student_id', me.id);
+    if(pErr) throw pErr;
+    const ready = (progress || []).some(x => Number(x.questions_answered || 0) > 0 || x.completed === true);
+    if(!ready){
+      setAnsStatus(assignmentId, T('Please answer the interactive video questions first.','དང་པ་བརྙན་ཐུང་གི་དྲི་བ་ཚུ་ལུ་ལན་བྲིས།'), 'err');
+      btn.disabled = false; btn.textContent = old; return;
+    }
+    const now = new Date().toISOString();
+    const { error: sErr } = await supabase.from('assignment_status').upsert({
+      assignment_id: String(assignmentId), student_id: me.id, status:'done',
+      completed_at: now, submitted_at: now, answer_text:'', answer_links:'', answer_files:''
+    }, { onConflict:'assignment_id,student_id' });
+    if(sErr) throw sErr;
+    const gr = await supabase.rpc('grade_assignment_submission', { p_assignment_id:String(assignmentId), p_student_id:me.id });
+    if(gr.error) throw gr.error;
+    const g = Array.isArray(gr.data) ? gr.data[0] : gr.data;
+    if(g?.score_percent != null){
+      await supabase.from('assignment_status').update({score:g.score_percent})
+        .eq('assignment_id', String(assignmentId)).eq('student_id', me.id);
+    }
+    await renderAssignments();
+  }catch(err){
+    setAnsStatus(assignmentId, T('Could not submit: ','སྙན་ཞུ་འབད་མ་ཚུགས: ') + (err.message || err), 'err');
+    btn.disabled = false; btn.textContent = old;
+  }
 }
 
 window.markDone = async function(assignmentId){
