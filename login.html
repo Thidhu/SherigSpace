@@ -163,20 +163,14 @@ footer span{color:var(--gold-text,var(--gold))}
       <!-- STUDENT LOGIN -->
       <form class="form" id="f-student" onsubmit="doStudentLogin(event)">
         <div id="student-msg" class="msg"></div>
-        <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem" data-en="Ask your teacher for your Class Name, Your Name, and PIN." data-dz="ཁྱོད་ཀྱི་དཔྱེ་སློབ་མིང་། མིང་། དང་ PIN དེ་སློབ་དཔོན་ལས་འདྲི་བཀོད་འབད།">Ask your teacher for your Class Name, Your Name, and PIN.</p>
+        <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem" data-en="Ask your teacher for your Student ID and PIN." data-dz="ཁྱོད་ཀྱི་སློབ་ཕྲུག་ཨང་དང་ PIN དེ་སློབ་དཔོན་ལས་འདྲི་བཀོད་འབད།">Ask your teacher for your Student ID and PIN.</p>
         <div class="field">
-          <label data-en="Class Name" data-dz="དཔྱེ་སློབ་མིང་།">Class Name</label>
-          <select id="st-classselect" style="display:none"><option value="" data-en="— Choose your class —" data-dz="— དཔྱེ་སློབ་སེལ་འཐུ་འབད —">— Choose your class —</option></select>
-          <input id="st-classcode" type="text" placeholder="e.g. Class 9 Dzongkha" autocomplete="off" required/>
-          <a id="st-class-toggle" onclick="toggleClassInput()" style="display:none;font-size:.78rem;margin-top:.35rem;cursor:pointer;color:var(--gold-text,var(--gold))" data-en="Can't find your class? Type it instead" data-dz="དཔྱེ་སློབ་མ་འཐོབ་ག? དེའི་ཚབ་ལུ་ཡིག་རྐྱབས།">Can't find your class? Type it instead</a>
-        </div>
-        <div class="field">
-          <label data-en="Your Name" data-dz="ཁྱོད་ཀྱི་མིང་།">Your Name</label>
-          <input id="st-name" type="text" placeholder="e.g. Student 1" required/>
+          <label data-en="Student ID" data-dz="སློབ་ཕྲུག་ཨང་།">Student ID</label>
+          <input id="st-studentid" type="text" placeholder="e.g. SS-A1B2C3D4" autocomplete="username" autocapitalize="characters" required/>
         </div>
         <div class="field">
           <label>PIN</label>
-          <input id="st-pin" type="text" inputmode="numeric" placeholder="6-digit PIN" data-en-ph="6-digit PIN" data-dz-ph="PIN ཨང་གྲངས་ ༦" required/>
+          <input id="st-pin" type="password" inputmode="numeric" placeholder="6-digit PIN" data-en-ph="6-digit PIN" data-dz-ph="PIN ཨང་གྲངས་ ༦" autocomplete="current-password" required/>
         </div>
         <button class="btn" type="submit" id="student-btn" data-en="Log In" data-dz="ནང་འཛུལ།">Log In</button>
       </form>
@@ -217,41 +211,9 @@ import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── CLASS DROPDOWN (student login) ──
-// Shows every class a teacher has created so students just pick theirs.
-// If the list can't be loaded (e.g. the setup SQL has not been run yet),
-// the plain text box stays in place and everything still works.
-function escHtml(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function showClassDropdown(on){
-  const sel = document.getElementById('st-classselect'), inp = document.getElementById('st-classcode'), tog = document.getElementById('st-class-toggle');
-  sel.style.display = on ? '' : 'none';
-  inp.style.display = on ? 'none' : '';
-  sel.required = on; inp.required = !on;
-  tog.style.display = 'block';
-  tog.textContent = on
-    ? T("Can't find your class? Type it instead", "དཔྱེ་སློབ་མ་འཐོབ་ག? དེའི་ཚབ་ལུ་ཡིག་རྐྱབས།")
-    : T('Pick your class from the list instead', 'ཐོ་ཡིག་ནང་ལས་དཔྱེ་སློབ་སེལ་འཐུ་འབད།');
-}
-window.addEventListener('sherig:langchange', function(){
-  if(document.getElementById('st-class-toggle').style.display !== 'none'){
-    showClassDropdown(document.getElementById('st-classselect').style.display !== 'none');
-  }
-});
-window.toggleClassInput = function(){
-  showClassDropdown(document.getElementById('st-classselect').style.display === 'none');
-};
-async function loadClassDropdown(){
-  try{
-    const { data, error } = await sb.rpc('list_class_names');
-    if(error || !Array.isArray(data) || !data.length) return;
-    const sel = document.getElementById('st-classselect');
-    sel.innerHTML = `<option value="">${T('— Choose your class —','— དཔྱེ་སློབ་སེལ་འཐུ་འབད —')}</option>` +
-      data.map(c => `<option value="${escHtml(c.class_code)}">${escHtml(c.name)}</option>`).join('');
-    showClassDropdown(true);
-  }catch(e){ /* keep the text box */ }
-}
-loadClassDropdown();
-
+// ── STUDENT LOGIN ──
+// Students no longer need to choose or type a class. Their Student ID
+// uniquely identifies their enrollment and the server resolves the class.
 function showMsg(id, msg, type){
   const el = document.getElementById(id);
   el.textContent = msg;
@@ -352,33 +314,23 @@ window.doLogin = async function(e){
 
 window.doStudentLogin = async function(e){
   e.preventDefault();
-  const pickedFromList = document.getElementById('st-classselect').style.display !== 'none';
-  const classCode = (pickedFromList ? document.getElementById('st-classselect').value : document.getElementById('st-classcode').value).trim();
-  const name = document.getElementById('st-name').value.trim();
+  const studentCode = document.getElementById('st-studentid').value.trim().toUpperCase();
   const pin = document.getElementById('st-pin').value.trim();
-  if(!classCode || !name || !pin) return showMsg('student-msg','Please fill in all fields.','err');
+  if(!studentCode || !pin) return showMsg('student-msg','Please enter your Student ID and PIN.','err');
   setBtn('student-btn', true, 'Log In');
   showMsg('student-msg','','');
   try {
-    // The class name is stored in lower case, older classes still use an
-    // UPPER-CASE code — so try the common spellings until one matches.
-    const collapsed = classCode.replace(/\s+/g, ' ');
-    const tries = pickedFromList ? [classCode] : [...new Set([collapsed.toLowerCase(), collapsed.toUpperCase(), collapsed, classCode])];
-    let email = null;
-    for(const tryCode of tries){
-      const { data, error: lookupErr } = await sb.rpc('student_login_lookup', {
-        p_class_code: tryCode, p_display_name: name, p_pin: pin
-      });
-      if(lookupErr) throw lookupErr;
-      if(data){ email = data; break; }
-    }
-    if(!email) throw new Error('Class Name, Your Name, or PIN is incorrect. Check with your teacher.');
+    const { data: email, error: lookupErr } = await sb.rpc('student_login_by_id', {
+      p_student_code: studentCode, p_pin: pin
+    });
+    if(lookupErr) throw lookupErr;
+    if(!email) throw new Error('Student ID or PIN is incorrect. Check with your teacher.');
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pin });
     if(error) throw error;
     const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
     localStorage.setItem('edu_session', JSON.stringify({
-      id: data.user.id, name: profile?.name || name, email,
-      role: profile?.role || 'user', class_grade: profile?.class_grade || ''
+      id: data.user.id, name: profile?.name || studentCode, email,
+      role: profile?.role || 'student', class_grade: profile?.class_grade || ''
     }));
     window.location.href = 'student.html';
   } catch(err){
