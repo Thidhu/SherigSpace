@@ -93,7 +93,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
 .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
 .class-card{position:relative;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
-.class-del{position:absolute;top:.6rem;right:.6rem}
+.class-del{position:absolute;top:.6rem;right:.6rem}.class-edit{position:absolute;top:.6rem;right:3.35rem}
 .class-card:hover{transform:translateY(-3px)}
 .class-card h4{font-family:'Playfair Display',serif;color:var(--text);margin-bottom:.4rem}
 @media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
@@ -179,7 +179,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="phead">
         <div>
           <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem" data-en="← Back to Classes" data-dz="← དཔྱེ་སློབ་ལུ་ལོག">← Back to Classes</button>
-          <button class="btn btn-del btn-sm" onclick="deleteCurrentClass()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="🗑 Delete Class" data-dz="🗑 དཔྱེ་སློབ་བཏོན་གཏང">🗑 Delete Class</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEditClassForm(currentClassId)" style="margin-bottom:.6rem;margin-left:.5rem" data-en="✏️ Edit Class" data-dz="✏️ དཔྱེ་སློབ་རྩོམ་སྒྲིག">✏️ Edit Class</button><button class="btn btn-del btn-sm" onclick="deleteCurrentClass()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="🗑 Delete Class" data-dz="🗑 དཔྱེ་སློབ་བཏོན་གཏང">🗑 Delete Class</button>
           <div class="ptitle" id="detail-class-name">Class</div>
           <div class="psub"><span data-en="Students log in with this class name:" data-dz="སློབ་ཕྲུག་ཚུ་གིས་འ་ནི་དཔྱེ་སློབ་མིང་འདི་གིས་ནང་འཛུལ་འབད:">Students log in with this class name:</span> <span class="class-code-badge" id="detail-class-code">—</span></div>
         </div>
@@ -352,7 +352,12 @@ async function checkAccess(){
       12000, 'Profile check'
     );
     if(profileError && profileError.code !== 'PGRST116') throw profileError;
-    me = { id: session.user.id, name: profile?.name || session.user.email, email: session.user.email };
+    const role = String(profile?.role || '').toLowerCase();
+    if(role !== 'teacher' && role !== 'admin'){
+      gate.innerHTML = `<div class="gate-icon">🎓</div><h2>${T('This area is for teachers only','འདི་སློབ་དཔོན་རྐྱངམ་ཅིག་གི་དོན་ལུ་ཨིན།')}</h2><p>${T('Your account is a student account. Please use My Learning.','ཁྱོད་ཀྱི་ཁ་ཡིག་འདི་སློབ་ཕྲུག་ཁ་ཡིག་ཨིན། My Learning ལག་ལེན་འཐབ།')}</p><a class="gate-btn" href="student.html">${T('Go to My Learning','My Learning ལུ་འགྱོ།')}</a>`;
+      return;
+    }
+    me = { id: session.user.id, name: profile?.name || session.user.email, email: session.user.email, role };
 
     const { data: sub, error: subError } = await withTimeout(
       supabase.from('teacher_subscriptions').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
@@ -711,6 +716,7 @@ async function renderClasses(){
   const el = document.getElementById('classes-list');
   el.innerHTML = classList.length ? classList.map(c=>`
     <div class="class-card" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(loginText(c))}')">
+      <button type="button" class="btn btn-ghost btn-sm class-edit" onclick="event.stopPropagation();openEditClassForm('${esc(c.id)}')" title="${T('Edit class','དཔྱེ་སློབ་རྩོམ་སྒྲིག')}">✎</button>
       <button type="button" class="btn btn-del btn-sm class-del" onclick="event.stopPropagation();deleteClass('${esc(c.id)}','${esc(c.name)}')" title="${T('Delete class','དཔྱེ་སློབ་བཏོན་གཏང')}">✕</button>
       <h4>${esc(c.name)}</h4>
       <div style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem">${esc(c.class_level||'')}</div>
@@ -758,6 +764,47 @@ window.openClassForm = async function(){
   document.getElementById('overlay').classList.add('open');
 };
 
+window.openEditClassForm = async function(id){
+  if(!id || !me) return;
+  const { data: cls, error } = await supabase.from('classes').select('id,name,class_level,class_code').eq('id', id).eq('teacher_id', me.id).maybeSingle();
+  if(error || !cls){
+    toast(T('Could not load the class.','དཔྱེ་སློབ་འདྲེན་མ་ཚུགས།') + (error?.message ? ' ' + error.message : ''), true);
+    return;
+  }
+  document.getElementById('m-title').textContent = T('Edit Class','དཔྱེ་སློབ་རྩོམ་སྒྲིག');
+  document.getElementById('m-body').innerHTML = `
+    <div class="field"><label>${T('Class Name','དཔྱེ་སློབ་མིང་།')}</label><input id="f-class-name" value="${esc(cls.name||'')}" placeholder="e.g. Class 9 Dzongkha"/><div style="font-size:.76rem;color:var(--text2);margin-top:.35rem">${T('Changing the name also changes what students type as the class login name.','མིང་བསྒྱུར་བ་དང་གཅིག་ཁར་སློབ་ཕྲུག་ཚུ་གིས་ནང་འཛུལ་ནིའི་དཔྱེ་སློབ་མིང་ཡང་བསྒྱུར་འགྱོ།')}</div></div>
+    <div class="field"><label>${T('Class Level','དཔྱེ་སློབ་གནས་རིམ།')}</label><select id="f-class-level">${CLASS_LEVELS.map(c=>`<option ${c===cls.class_level?'selected':''}>${c}</option>`).join('')}</select></div>
+  `;
+  const btn = document.getElementById('m-save-btn');
+  btn.textContent = T('Save Changes','བསྒྱུར་བ་སྲུང་བཞག');
+  btn.onclick = async ()=>{
+    const name = fv('f-class-name');
+    if(!name){ toast(T('Please enter a class name.','དཔྱེ་སློབ་མིང་བཙུགས་གནང་།'), true); return; }
+    const classCode = canonName(name);
+    btn.disabled = true;
+    const { error: updateError } = await supabase.from('classes').update({
+      name,
+      class_level: fv('f-class-level'),
+      class_code: classCode
+    }).eq('id', id).eq('teacher_id', me.id);
+    btn.disabled = false;
+    if(updateError){
+      const taken = updateError.code === '23505' || /duplicate|unique/i.test(updateError.message || '');
+      toast(taken ? T('That class name is already taken. Please choose a different name.','དཔྱེ་སློབ་མིང་འདི་ཧེ་མ་ལས་བེད་སྤྱོད་འབད་ཡོདཔ་ལས་མིང་གཞན་ཅིག་སེལ་འཐུ་འབད་གནང་།') : T('Could not update class: ','དཔྱེ་སློབ་བསྒྱུར་མ་ཚུགས: ')+updateError.message, true);
+      return;
+    }
+    if(currentClassId === id){
+      document.getElementById('detail-class-name').textContent = name;
+      document.getElementById('detail-class-code').textContent = name;
+    }
+    closeModal();
+    toast(T('Class updated ✓','དཔྱེ་སློབ་བསྒྱུར་ཚར་ཡོད ✓'));
+    await renderClasses();
+  };
+  document.getElementById('overlay').classList.add('open');
+};
+
 window.deleteClass = async function(id, name){
   const warn = T(
     'Delete "' + name + '"? This also removes its students and assignments — this cannot be undone.',
@@ -797,7 +844,7 @@ async function renderStudents(){
   const el = document.getElementById('students-list');
   el.innerHTML = data?.length ? data.map(s=>`
     <div class="irow">
-      <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">PIN: ${esc(s.pin)}</div></div>
+      <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">ID: SS-${esc(String(s.id).replace(/-/g,'').slice(0,8).toUpperCase())} · PIN: ${esc(s.pin)}</div></div>
       <div class="ibtns">
         <button class="btn btn-edit btn-sm" onclick="openEditStudentForm('${esc(s.id)}','${esc(s.display_name)}')">${T('✏ Edit','✏ ཞུན་དག')}</button>
         <button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">${T('✕ Remove','✕ བཏོན་གཏང་')}</button>
@@ -851,13 +898,15 @@ window.openStudentForm = async function(){
       // Student's own profile row — must be created by the student's own
       // just-issued session (tempClient), since profiles can only be
       // inserted by their own owner.
-      await tempClient.from('profiles').upsert({ id: studentId, name, email: loginEmail, role: 'user' });
+      await tempClient.from('profiles').upsert({ id: studentId, name, email: loginEmail, role: 'student' });
 
       // Enrollment row — created by the teacher's own session.
-      const { error: enrollErr } = await supabase.from('class_students').insert({
+      const { data: enrollment, error: enrollErr } = await supabase.from('class_students').insert({
         class_id: currentClassId, student_id: studentId, display_name: name, login_email: loginEmail, pin
-      });
+      }).select('id').single();
       if(enrollErr) throw enrollErr;
+      if(!enrollment?.id) throw new Error('Could not create the student enrollment.');
+      const studentCode = 'SS-' + String(enrollment.id).replace(/-/g,'').slice(0,8).toUpperCase();
 
       closeModal();
       toast(T('Student added ✓','སློབ་ཕྲུག་ཁ་སྐོང་འབད་ཚར་ཡོད ✓'));
@@ -865,6 +914,7 @@ window.openStudentForm = async function(){
       document.getElementById('login-card-body').innerHTML = `
         ${T('Class Name','དཔྱེ་སློབ་མིང་')}: <b>${esc(code)}</b><br>
         ${T('Student Name','སློབ་ཕྲུག་མིང་')}: <b>${esc(name)}</b><br>
+        Student ID: <b>${esc(studentCode)}</b><br>
         PIN: <b>${esc(pin)}</b><br><br>
         ${T('Give the student this info and send them to','གནད་སྡུད་འདི་སློབ་ཕྲུག་ལུ་སྤྲོད་ཞིནམ་ལས་')} <b>${esc(window.location.origin)}/login.html</b> → ${T('Student tab.','སློབ་ཕྲུག་ཨིབ་ལུ་གཏང་།')}`;
       document.getElementById('login-card-overlay').classList.add('open');
@@ -915,11 +965,12 @@ window.openEditStudentForm = function(rowId, currentName){
         if(signUpErr) throw signUpErr;
         const studentId = signUpData.user?.id;
         if(!studentId) throw new Error('Could not create the new login.');
-        await tempClient.from('profiles').upsert({ id: studentId, name, email: loginEmail, role: 'user' });
+        await tempClient.from('profiles').upsert({ id: studentId, name, email: loginEmail, role: 'student' });
 
         const { error: updErr } = await supabase.from('class_students').update({
           student_id: studentId, login_email: loginEmail, pin: newPin, display_name: name
         }).eq('id', rowId);
+        const studentCode = 'SS-' + String(rowId).replace(/-/g,'').slice(0,8).toUpperCase();
         if(updErr) throw updErr;
 
         closeModal();
@@ -928,6 +979,7 @@ window.openEditStudentForm = function(rowId, currentName){
         document.getElementById('login-card-body').innerHTML = `
           ${T('Class Name','དཔྱེ་སློབ་མིང་')}: <b>${esc(code)}</b><br>
           ${T('Student Name','སློབ་ཕྲུག་མིང་')}: <b>${esc(name)}</b><br>
+          Student ID: <b>${esc(studentCode)}</b><br>
           PIN: <b>${esc(newPin)}</b><br><br>
           ${T('This is a new login — the old PIN no longer works. Give the student these updated details.','འདི་ནང་འཛུལ་གསརཔ་ཨིན — PIN་རྙིངམ་འདི་ལག་ལེན་མི་འཐབ། སློབ་ཕྲུག་ལུ་གནད་སྡུད་གསར་བསྐྱར་འདི་ཚུ་སྤྲོད།')}`;
         document.getElementById('login-card-overlay').classList.add('open');
@@ -1262,25 +1314,30 @@ window.openAssignmentForm = async function(editId){
 };
 
 async function syncAssignmentInteractiveQuestions(assignmentId){
-  const { error: delError } = await supabase.from('assignment_video_questions').delete().eq('assignment_id', String(assignmentId));
-  if(delError) return { error: delError };
   const rows = [];
   taskAttachments.forEach(a => {
     if(!a.interactive || !Array.isArray(a.interactiveQuestions)) return;
     a.interactiveQuestions.forEach((q,i) => rows.push({
-      id: q.id || (crypto.randomUUID ? crypto.randomUUID() : undefined),
-      assignment_id: String(assignmentId), resource_key: a.resource_key,
+      id: q.id || null,
+      resource_key: a.resource_key,
       timestamp_seconds: Number(q.timestamp_seconds ?? q.timestamp ?? 0) || 0,
-      question: String(q.question || '').trim(), question_type: q.question_type || 'multiple_choice',
-      options: Array.isArray(q.options) ? q.options : [], accepted_answers: Array.isArray(q.accepted_answers) ? q.accepted_answers : [],
-      explanation: q.explanation || null, points: Math.max(0, Number(q.points ?? 1) || 0),
+      question: String(q.question || '').trim(),
+      question_type: q.question_type || 'multiple_choice',
+      options: Array.isArray(q.options) ? q.options : [],
+      accepted_answers: Array.isArray(q.accepted_answers) ? q.accepted_answers : [],
+      explanation: q.explanation || null,
+      points: Math.max(0, Number(q.points ?? 1) || 0),
       replay_before_seconds: Math.max(0, Number(q.replay_before_seconds ?? 30) || 0),
-      require_correct: q.require_correct !== false, enabled: true, sort_order: i
+      require_correct: q.require_correct !== false,
+      enabled: true,
+      sort_order: i
     }));
   });
-  if(!rows.length) return { error: null };
-  const { error } = await supabase.from('assignment_video_questions').insert(rows);
-  return { error };
+  const { error } = await supabase.rpc('save_assignment_video_questions', {
+    p_assignment_id: String(assignmentId),
+    p_rows: rows
+  });
+  return { error: error || null };
 }
 
 window.toggleAssignmentKind = async function(){
