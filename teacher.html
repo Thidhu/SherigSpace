@@ -857,16 +857,26 @@ window.openStudentForm = async function(){
       const studentId = signUpData.user?.id;
       if(!studentId) throw new Error('Could not create student account. Check that email confirmation is disabled in Supabase Auth settings.');
 
-      // Student's own profile row — must be created by the student's own
-      // just-issued session (tempClient), since profiles can only be
-      // inserted by their own owner.
-      await tempClient.from('profiles').upsert({ id: studentId, name, email: loginEmail, role: 'student' });
+      // Create the profile first as the default user role. The student
+      // must be enrolled before the role-protection trigger allows
+      // user -> student.
+      const { error: profileErr } = await tempClient.from('profiles').upsert({
+        id: studentId, name, email: loginEmail
+      });
+      if(profileErr) throw profileErr;
 
       // Enrollment row — created by the teacher's own session.
       const { error: enrollErr } = await supabase.from('class_students').insert({
         class_id: currentClassId, student_id: studentId, display_name: name, login_email: loginEmail, pin
       });
       if(enrollErr) throw enrollErr;
+
+      // Now that the student is enrolled, the student's own Auth session
+      // can safely change the profile role to student.
+      const { error: roleErr } = await tempClient.from('profiles')
+        .update({ role: 'student', name, email: loginEmail })
+        .eq('id', studentId);
+      if(roleErr) throw roleErr;
       closeModal();
       toast(T('Student added ✓','སློབ་ཕྲུག་ཁ་སྐོང་འབད་ཚར་ཡོད ✓'));
       renderStudents();
@@ -923,12 +933,26 @@ window.openEditStudentForm = function(rowId, currentName){
         if(signUpErr) throw signUpErr;
         const studentId = signUpData.user?.id;
         if(!studentId) throw new Error('Could not create the new login.');
-        await tempClient.from('profiles').upsert({ id: studentId, name, email: loginEmail, role: 'student' });
+
+        // Create the new profile with the default role first. The new
+        // account is not enrolled yet, so assigning student here would be
+        // rejected by the role-protection trigger.
+        const { error: profileErr } = await tempClient.from('profiles').upsert({
+          id: studentId, name, email: loginEmail
+        });
+        if(profileErr) throw profileErr;
 
         const { error: updErr } = await supabase.from('class_students').update({
           student_id: studentId, login_email: loginEmail, pin: newPin, display_name: name
         }).eq('id', rowId);
         if(updErr) throw updErr;
+
+        // The enrollment now exists, so the student's own session can
+        // safely promote the profile to the student role.
+        const { error: roleErr } = await tempClient.from('profiles')
+          .update({ role: 'student', name, email: loginEmail })
+          .eq('id', studentId);
+        if(roleErr) throw roleErr;
         closeModal();
         toast(T('Password reset ✓','གསང་ཨང་སླར་གསོ་འབད་ཚར་ཡོད ✓'));
         renderStudents();
