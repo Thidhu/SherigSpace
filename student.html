@@ -64,36 +64,6 @@ main{max-width:800px;margin:0 auto;padding:2rem 5%}
 .empty{text-align:center;padding:3rem 1rem;color:var(--text2)}
 .empty .ei{font-size:2.5rem;margin-bottom:.75rem}
 .locked-note{font-size:.8rem;color:var(--gold-text,var(--gold));background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem .9rem;margin-bottom:.7rem}
-.learning-dash{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem;margin-bottom:1.5rem}
-.learning-stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem}
-.learning-stat .num{font-size:1.45rem;font-weight:700;color:var(--gold-text,var(--gold))}
-.learning-stat .lab{font-size:.72rem;color:var(--text2);margin-top:.2rem}
-.learning-progress{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1.2rem}
-.learning-progress h3{font-family:'Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1rem;margin-bottom:.65rem}
-.achievement-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1.2rem}
-.achievement-head{display:flex;justify-content:space-between;align-items:center;gap:.7rem;margin-bottom:.7rem}
-.achievement-head h3{font-family:'Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1rem}
-.xp-pill{padding:.28rem .65rem;border-radius:999px;background:rgba(201,168,76,.12);border:1px solid var(--border);color:var(--gold-light);font-weight:700;font-size:.78rem}
-.badge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.55rem}
-.badge{border:1px solid var(--border);border-radius:9px;padding:.65rem;background:rgba(255,255,255,.02);opacity:.45}
-.badge.earned{opacity:1;border-color:rgba(76,175,132,.4);background:rgba(76,175,132,.07)}
-.badge-icon{font-size:1.35rem;float:left;margin-right:.45rem}.badge-name{font-weight:700;font-size:.78rem}.badge-desc{font-size:.68rem;color:var(--text2);margin-top:.15rem}
-.recent-learning{margin-top:.8rem;border-top:1px solid var(--border);padding-top:.75rem}.recent-row{display:flex;justify-content:space-between;gap:.7rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.76rem}.recent-row:last-child{border-bottom:0}.recent-status{color:var(--text2)}
-
-.progress-track{height:8px;background:#101827;border-radius:999px;overflow:hidden;margin:.35rem 0 .45rem}
-.progress-fill{height:100%;background:var(--gold);border-radius:999px;transition:width .3s ease}
-.learning-actions{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
-
-.assignment-toolbar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.85rem;margin-bottom:1rem;position:sticky;top:0;z-index:20;backdrop-filter:blur(10px)}
-.assignment-toolbar-row{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center}
-.assignment-search{flex:1;min-width:190px;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:9px 11px;font:inherit;outline:none}
-.assignment-search:focus,.assignment-filter:focus{border-color:var(--gold)}
-.assignment-filter{background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:9px 10px;font:inherit;outline:none}
-.assignment-count{font-size:.74rem;color:var(--text2);margin-top:.55rem}
-.no-filter-results{display:none;text-align:center;padding:2rem 1rem;color:var(--text2);border:1px dashed var(--border);border-radius:10px;margin-bottom:1rem}
-@media(max-width:650px){.assignment-toolbar{position:static}.assignment-filter{flex:1;min-width:130px}}
-@media(max-width:650px){.learning-dash{grid-template-columns:repeat(2,minmax(0,1fr))}}
-
 
 a.btn{text-decoration:none;display:inline-block}
 .btn-sm{padding:5px 11px;font-size:.78rem}
@@ -128,14 +98,9 @@ a.btn{text-decoration:none;display:inline-block}
 .q-opt:hover{border-color:var(--gold)}
 .q-opt input{margin-top:.2rem;accent-color:var(--gold)}
 .answer-sub{font-size:.8rem;color:var(--text2);margin:.2rem 0 .4rem}
-
-.certificate-card{border:1px solid rgba(201,168,76,.35);border-radius:10px;padding:1rem;margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(255,255,255,.02))}
-.certificate-head{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;margin-bottom:.45rem}.certificate-head h3{font-family:'Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1rem}
-.certificate-state{font-size:.8rem;color:var(--text2);line-height:1.5}.certificate-actions{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.65rem}
 </style>
 <script src="theme.js"></script>
 <script src="interactive-video.js"></script>
-<script src="assignment-interactive.js"></script>
 </head>
 <body>
 
@@ -157,53 +122,9 @@ a.btn{text-decoration:none;display:inline-block}
       <button onclick="logout()" data-en="Log Out" data-dz="ཕྱིར་འཐོན།">Log Out</button>
     </div>
   </nav>
-  <main>
-  <section id="learning-dashboard" class="learning-dash" aria-label="Learning summary">
-    <div class="learning-stat"><div class="num" id="stat-assigned">—</div><div class="lab">Assigned</div></div>
-    <div class="learning-stat"><div class="num" id="stat-completed">—</div><div class="lab">Completed</div></div>
-    <div class="learning-stat"><div class="num" id="stat-progress">—</div><div class="lab">In progress</div></div>
-    <div class="learning-stat"><div class="num" id="stat-score">—</div><div class="lab">Average score</div></div>
-  </section>
-  <section id="learning-progress-card" class="learning-progress">
-    <h3>📈 My Learning Progress</h3>
-    <div id="learning-progress-text" style="font-size:.82rem;color:var(--text2)">Loading your progress…</div>
-    <div class="progress-track"><div id="learning-progress-fill" class="progress-fill" style="width:0%"></div></div>
-    <div class="learning-actions"><button class="btn btn-ghost btn-sm" id="refresh-learning" type="button">↻ Refresh progress</button></div>
-  </section>
-  <section id="achievement-card" class="achievement-card" aria-label="Achievements">
-    <div class="achievement-head"><h3>🏆 My Achievements</h3><span id="xp-pill" class="xp-pill">0 XP</span></div>
-    <div id="badge-grid" class="badge-grid"></div>
-    <div id="recent-learning" class="recent-learning"></div>
-  </section>
-  <section id="certificate-card" class="certificate-card" aria-label="Certificates">
-    <div class="certificate-head"><h3>🎓 My Learning Certificate</h3><span id="certificate-status" class="xp-pill">Checking…</span></div>
-    <div id="certificate-text" class="certificate-state">Checking your learning achievements…</div>
-    <div class="certificate-actions" id="certificate-actions"></div>
-  </section>
-  <section class="assignment-toolbar" aria-label="Assignment filters">
-    <div class="assignment-toolbar-row">
-      <input id="assignment-search" class="assignment-search" type="search" placeholder="🔎 Search assignments…" aria-label="Search assignments"/>
-      <select id="assignment-filter" class="assignment-filter" aria-label="Filter assignments">
-        <option value="all">All assignments</option>
-        <option value="todo">Not completed</option>
-        <option value="progress">In progress</option>
-        <option value="done">Completed</option>
-        <option value="overdue">Overdue</option>
-      </select>
-      <select id="assignment-sort" class="assignment-filter" aria-label="Sort assignments">
-        <option value="newest">Newest first</option>
-        <option value="oldest">Oldest first</option>
-        <option value="due">Due date</option>
-        <option value="title">Title A–Z</option>
-      </select>
-    </div>
-    <div id="assignment-count" class="assignment-count">Loading assignments…</div>
-  </section>
-  <div id="no-filter-results" class="no-filter-results">🔎 No assignments match your filter.</div>
-  <div id="assignments-wrap">
+  <main id="assignments-wrap">
     <div class="empty"><div class="ei">📋</div><p data-en="Loading your assignments…" data-dz="ཁྱོད་ཀྱི་ལཱ་ཁག་འདྲེན་བཞིནམ...">Loading your assignments…</p></div>
-  </div>
-</main>
+  </main>
 </div>
 
 <script type="module">
@@ -224,115 +145,22 @@ async function init(){
     return;
   }
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-  me = { id: session.user.id, name: profile?.name || 'Student' };
+  const role = String(profile?.role || '').toLowerCase();
+  if(role !== 'student'){
+    gate.innerHTML = `<div class="gate-icon">🔐</div><h2>${T('Student area only','འདི་སློབ་ཕྲུག་གི་ས་ཁོངས་ཨིན།')}</h2><p>${role === 'teacher' || role === 'admin' ? T('This account has access to the teacher area instead.','ཁ་ཡིག་འདི་ལུ་སློབ་དཔོན་གྱི་ས་ཁོངས་ནང་འཛུལ་ཐོབ།') : T('Your account is not a student account.','ཁྱོད་ཀྱི་ཁ་ཡིག་འདི་སློབ་ཕྲུག་ཁ་ཡིག་མེན།')}</p><a class="gate-btn" href="index.html">${T('Return to website','ཝེབ་ས་ཁོངས་ལུ་ལོག')}</a>`;
+    return;
+  }
+  me = { id: session.user.id, name: profile?.name || 'Student', role };
 
   document.getElementById('gate').classList.add('hide');
   document.getElementById('app').style.display = 'block';
   document.getElementById('student-name').textContent = me.name;
   await checkAnswersEnabled();
   await renderAssignments();
-  await renderLearningDashboard();
-  document.getElementById('refresh-learning')?.addEventListener('click', renderLearningDashboard);
-  window.addEventListener('sherig:langchange', async ()=>{ await renderAssignments(); await renderLearningDashboard(); });
+  window.addEventListener('sherig:langchange', renderAssignments);
 }
 
 window.logout = async function(){ await supabase.auth.signOut(); window.location.href = 'login.html'; };
-
-
-function achievementData(stats){
-  const completed=stats.completed||0, videos=stats.videoDone||0, avg=stats.avgScore;
-  return [
-    {icon:'🌱',name:'First Step',desc:'Complete your first assignment.',ok:completed>=1},
-    {icon:'📚',name:'Assignment Ace',desc:'Complete 5 assignments.',ok:completed>=5},
-    {icon:'🎥',name:'Video Explorer',desc:'Complete 3 interactive videos.',ok:videos>=3},
-    {icon:'🔥',name:'Consistent Learner',desc:'Complete 10 assignments.',ok:completed>=10},
-    {icon:'⭐',name:'High Achiever',desc:'Reach an average score of 90% or more.',ok:avg!==null && avg>=90},
-    {icon:'🏆',name:'Learning Master',desc:'Complete 20 assignments.',ok:completed>=20}
-  ];
-}
-function completedXp(stats){ return (stats.completed||0)*10 + (stats.videoDone||0)*5 + (stats.highScores||0)*10; }
-function renderAchievements(stats,recent){
-  const pill=document.getElementById('xp-pill'); if(pill) pill.textContent=completedXp(stats)+' XP';
-  const grid=document.getElementById('badge-grid');
-  if(grid) grid.innerHTML=achievementData(stats).map(b=>`<div class="badge ${b.ok?'earned':''}"><span class="badge-icon">${b.icon}</span><div class="badge-name">${esc(b.name)} ${b.ok?'✓':'🔒'}</div><div class="badge-desc">${esc(b.desc)}</div></div>`).join('');
-  const r=document.getElementById('recent-learning');
-  if(r) r.innerHTML=recent?.length ? '<div style="font-weight:700;font-size:.78rem;margin-bottom:.35rem">Recent learning</div>'+recent.map(x=>`<div class="recent-row"><span>${esc(x.title)}</span><span class="recent-status">${esc(x.status)}</span></div>`).join('') : '';
-}
-
-async function renderCertificate(stats){
-  const statusEl=document.getElementById('certificate-status'), textEl=document.getElementById('certificate-text'), actions=document.getElementById('certificate-actions');
-  if(!statusEl||!textEl||!actions) return;
-  const completed=Number(stats.completed||0), avg=stats.avgScore;
-  const eligible=completed>=20 && avg!==null && avg>=80;
-  statusEl.textContent=eligible ? 'Eligible ✓' : 'In progress';
-  actions.innerHTML='';
-  if(!eligible){
-    const remaining=Math.max(0,20-completed);
-    const scoreNeed=avg===null?80:Math.max(0,80-avg);
-    textEl.textContent = avg===null
-      ? `Complete ${remaining} more assignment${remaining===1?'':'s'} and achieve an average score of at least 80% to unlock your certificate.`
-      : `Complete ${remaining} more assignment${remaining===1?'':'s'} and maintain an average score of at least 80% to unlock your certificate.`;
-    return;
-  }
-  let className='SherigSpace Learning Programme';
-  const firstClass=(stats.assignments||[]).map(a=>a.class_id).find(Boolean);
-  if(firstClass){ const {data:c}=await supabase.from('classes').select('name').eq('id',firstClass).maybeSingle(); if(c?.name) className=c.name; }
-  textEl.textContent=`Congratulations! You have completed ${completed} assignments with an average score of ${avg}%. Your learning certificate is ready to print.`;
-  const b=document.createElement('button'); b.className='btn btn-gold'; b.textContent='🎓 View & Print Certificate';
-  b.onclick=()=>printLearningCertificate({student:me?.name||'Student',className,completed,avg,date:new Date()});
-  actions.appendChild(b);
-}
-function printLearningCertificate({student,className,completed,avg,date}){
-  const w=window.open('','_blank','width=1000,height=760');
-  if(!w){ alert('Please allow pop-ups to view the certificate.'); return; }
-  const safe=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const issued=date.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
-  w.document.write(`<!doctype html><html><head><title>SherigSpace Learning Certificate</title><style>
-  @page{size:A4 landscape;margin:0}*{box-sizing:border-box}body{margin:0;background:#eee;font-family:Georgia,'Times New Roman',serif;color:#243047}.cert{width:297mm;height:210mm;margin:auto;background:#fffdf7;border:14px solid #c9a84c;outline:5px solid #243047;outline-offset:-26px;padding:30mm 28mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.brand{font-family:Arial,sans-serif;letter-spacing:.16em;font-size:14px;font-weight:700;color:#8b6b20}.title{font-size:42px;margin:18px 0 8px;color:#243047}.subtitle{font-size:18px;color:#586274}.name{font-size:38px;font-weight:700;color:#8b6b20;margin:18px 0 10px;border-bottom:1px solid #c9a84c;padding:0 30px 8px}.body{font-size:18px;line-height:1.7;max-width:850px}.meta{margin-top:20px;font-family:Arial,sans-serif;font-size:13px;color:#586274}.seal{margin-top:18px;font-size:28px}.print{position:fixed;right:20px;top:20px;padding:10px 16px;border:0;background:#243047;color:white;border-radius:6px;cursor:pointer}@media print{body{background:white}.print{display:none}.cert{margin:0}}</style></head><body><button class="print" onclick="print()">Print</button><div class="cert"><div class="brand">SHERIGSPACE</div><div class="title">Certificate of Learning Achievement</div><div class="subtitle">This certificate is proudly presented to</div><div class="name">${safe(student)}</div><div class="body">for completing <b>${completed}</b> learning assignments in <b>${safe(className)}</b> with an overall average score of <b>${avg}%</b>.</div><div class="seal">🏆 🎓 🏆</div><div class="meta">Issued ${safe(issued)} · SherigSpace Digital Learning Platform</div></div></body></html>`);
-  w.document.close(); w.focus();
-}
-async function renderLearningDashboard(){
-  if(!me) return;
-  const statAssigned=document.getElementById('stat-assigned'), statCompleted=document.getElementById('stat-completed'), statProgress=document.getElementById('stat-progress'), statScore=document.getElementById('stat-score');
-  try{
-    const { data: enrollments, error:e1 } = await supabase.from('class_students').select('class_id').eq('student_id', me.id);
-    if(e1) throw e1;
-    const classIds=(enrollments||[]).map(x=>x.class_id).filter(Boolean);
-    if(!classIds.length){
-      statAssigned.textContent='0';statCompleted.textContent='0';statProgress.textContent='0';statScore.textContent='—';
-      renderAchievements({completed:0,videoDone:0,avgScore:null,highScores:0},[]); return;
-    }
-    const [{data: assignments,error:e2},{data: statuses,error:e3},{data: videoProgress,error:e4}] = await Promise.all([
-      supabase.from('assignments').select('id,title,due_date,created_at,class_id').in('class_id',classIds).order('created_at',{ascending:false}),
-      supabase.from('assignment_status').select('assignment_id,status,score,submitted_at,completed_at').eq('student_id',me.id),
-      supabase.from('assignment_video_progress').select('assignment_id,completed,completion_percentage,updated_at').eq('student_id',me.id)
-    ]);
-    if(e2) throw e2;
-    if(e3) console.warn('Learning status error',e3);
-    if(e4) console.warn('Learning video progress error',e4);
-    const amap=new Map((assignments||[]).map(a=>[String(a.id),a]));
-    const asgIds=new Set(amap.keys());
-    const rows=(statuses||[]).filter(s=>asgIds.has(String(s.assignment_id)));
-    const completed=rows.filter(s=>s.status==='done').length;
-    const inProgress=rows.filter(s=>s.status && s.status!=='done').length;
-    const scored=rows.map(s=>Number(s.score)).filter(n=>Number.isFinite(n));
-    const avg=scored.length ? Math.round(scored.reduce((a,b)=>a+b,0)/scored.length) : null;
-    const highScores=scored.filter(n=>n>=90).length;
-    const videoDone=(videoProgress||[]).filter(v=>v.completed && asgIds.has(String(v.assignment_id))).length;
-    const total=assignments?.length||0;
-    const pct=total ? Math.round((completed/total)*100) : 0;
-    statAssigned.textContent=total; statCompleted.textContent=completed; statProgress.textContent=inProgress; statScore.textContent=avg===null?'—':avg+'%';
-    const txt=document.getElementById('learning-progress-text');
-    if(txt) txt.textContent = total ? `${completed} of ${total} assignments completed · ${videoDone} interactive video${videoDone===1?'':'s'} completed · Overall completion ${pct}%` : 'No assignments have been assigned to you yet.';
-    const fill=document.getElementById('learning-progress-fill'); if(fill) fill.style.width=pct+'%';
-    const recent=rows.slice().sort((a,b)=>new Date(b.submitted_at||b.completed_at||0)-new Date(a.submitted_at||a.completed_at||0)).slice(0,5).map(s=>({title:amap.get(String(s.assignment_id))?.title||'Assignment',status:s.status==='done'?'Completed':s.status||'Started'}));
-    renderAchievements({completed,videoDone,avgScore:avg,highScores},recent);
-    await renderCertificate({completed, avgScore:avg, assignments, classIds});
-  }catch(err){
-    console.error('Learning dashboard:',err);
-    const txt=document.getElementById('learning-progress-text'); if(txt) txt.textContent='Progress could not be loaded right now.';
-  }
-}
 
 async function renderAssignments(){
   const wrap = document.getElementById('assignments-wrap');
@@ -344,14 +172,27 @@ async function renderAssignments(){
   }
 
   const classIds = enrollments.map(e=>e.class_id);
-  const { data: assignments, error: assignmentsError } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
-  if(assignmentsError){
-    console.error('Student assignments query failed:', assignmentsError);
-    wrap.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>${T('Your assignments could not be loaded. Please contact your teacher or administrator.','ཁྱོད་ཀྱི་ལཱ་ཁག་ཚུ་འདྲེན་མ་ཚུགས། སློབ་དཔོན་ཡང་ན་འཛིན་སྐྱོང་པ་ལུ་འབྲེལ་བ་འཐབ།')}</p><small style="display:block;margin-top:.5rem;opacity:.7">${esc(assignmentsError.message || assignmentsError.code || 'Database permission error')}</small></div>`;
-    return;
+  const { data: assignments } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
+  assignmentVideoQuestions = {};
+  const assignmentIds = (assignments||[]).map(a=>String(a.id));
+  if(assignmentIds.length){
+    const { data: ivqs, error: ivqError } = await supabase.from('assignment_video_questions').select('*').in('assignment_id', assignmentIds).order('timestamp_seconds',{ascending:true}).order('sort_order',{ascending:true});
+    if(ivqError) console.warn('Interactive assignment questions unavailable:', ivqError.message || ivqError);
+    (ivqs||[]).forEach(q=>{
+      const aid=String(q.assignment_id), key=String(q.resource_key||'');
+      (assignmentVideoQuestions[aid] ||= {});
+      (assignmentVideoQuestions[aid][key] ||= []).push(q);
+    });
   }
-  const { data: statuses, error: statusError } = await supabase.from('assignment_status').select('*').eq('student_id', me.id);
-  if(statusError) console.warn('Student assignment status query:', statusError);
+  interactiveTotals = {};
+  interactiveAnswered = {};
+  (assignments||[]).forEach(a=>{
+    const aid=String(a.id), byKey=assignmentVideoQuestions[aid] || {};
+    const dbTotal = Object.values(byKey).reduce((n,qs)=>n + (Array.isArray(qs) ? qs.length : 0),0);
+    const localTotal = parseAttachments(a).reduce((n,att)=>n + (Array.isArray(att.interactiveQuestions) ? att.interactiveQuestions.length : 0),0);
+    interactiveTotals[aid] = Math.max(dbTotal, localTotal);
+  });
+  const { data: statuses } = await supabase.from('assignment_status').select('*').eq('student_id', me.id);
   const statusMap = {};
   (statuses||[]).forEach(s=>{
     statusMap[s.assignment_id] = s.status;
@@ -389,12 +230,6 @@ async function renderAssignments(){
   wrap.querySelectorAll('[data-open-item]').forEach(btn=>{
     btn.addEventListener('click', ()=>window.open(btn.getAttribute('data-open-item'), '_blank', 'noopener'));
   });
-  wrap.querySelectorAll('[data-open-resource]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const url = btn.getAttribute('data-open-resource');
-      if(url) window.open(url, '_blank', 'noopener,noreferrer');
-    });
-  });
   // "Preview" on documents / files: the frame is only created when asked for, so the page stays fast.
   wrap.querySelectorAll('[data-preview]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -409,99 +244,6 @@ async function renderAssignments(){
     });
   });
   wireAnswerBoxes(wrap);
-  mountAssignmentInteractiveVideos(wrap);
-  applyAssignmentFilters();
-}
-
-function applyAssignmentFilters(){
-  const wrap = document.getElementById('assignments-wrap');
-  if(!wrap) return;
-  const q = String(document.getElementById('assignment-search')?.value || '').trim().toLowerCase();
-  const filter = document.getElementById('assignment-filter')?.value || 'all';
-  const sort = document.getElementById('assignment-sort')?.value || 'newest';
-  const cards = [...wrap.querySelectorAll('[data-assignment-card]')];
-  const groups = [...wrap.querySelectorAll('.class-heading')];
-  cards.forEach(card=>{
-    const title = card.dataset.title || '';
-    const status = card.dataset.status || 'todo';
-    const overdue = card.dataset.overdue === 'true';
-    const matchText = !q || title.includes(q);
-    const matchStatus = filter==='all' || (filter==='overdue' ? overdue : status===filter);
-    card.style.display = matchText && matchStatus ? '' : 'none';
-  });
-  const visible = cards.filter(c=>c.style.display!=='none');
-  // Reorder cards within their class groups without changing the stored data.
-  const orderFn = (a,b)=>{
-    if(sort==='title') return (a.dataset.title||'').localeCompare(b.dataset.title||'');
-    if(sort==='oldest') return new Date(a.dataset.created||0)-new Date(b.dataset.created||0);
-    if(sort==='due') {
-      const ad=a.dataset.due?new Date(a.dataset.due+'T00:00:00').getTime():Infinity;
-      const bd=b.dataset.due?new Date(b.dataset.due+'T00:00:00').getTime():Infinity;
-      return ad-bd || (a.dataset.title||'').localeCompare(b.dataset.title||'');
-    }
-    return new Date(b.dataset.created||0)-new Date(a.dataset.created||0);
-  };
-  groups.forEach(group=>{
-    const all=[...group.parentElement.children];
-    const start=all.indexOf(group);
-    const next=all.findIndex((el,i)=>i>start && el.classList.contains('class-heading'));
-    const end=next<0 ? all.length : next;
-    const local=all.slice(start+1,end).filter(x=>x.matches('[data-assignment-card]'));
-    local.sort(orderFn).forEach(c=>group.parentElement.appendChild(c));
-    group.style.display=local.some(c=>c.style.display!=='none')?'':'none';
-  });
-  const count=document.getElementById('assignment-count');
-  if(count) count.textContent=`Showing ${visible.length} of ${cards.length} assignment${cards.length===1?'':'s'}`;
-  const empty=document.getElementById('no-filter-results');
-  if(empty) empty.style.display=cards.length && !visible.length?'block':'none';
-}
-
-async function mountAssignmentInteractiveVideos(root){
-  const nodes = root.querySelectorAll('.assignment-interactive-video[data-assignment-id][data-resource-key]');
-  for(const host of nodes){
-    if(host.dataset.mounted === '1') continue;
-    host.dataset.mounted = '1';
-    const assignmentId = host.dataset.assignmentId;
-    const resourceKey = host.dataset.resourceKey;
-    const url = host.dataset.videoUrl;
-    try{
-      const { data: questions, error } = await supabase.rpc('get_assignment_video_questions', {
-        p_assignment_id: String(assignmentId), p_resource_key: String(resourceKey)
-      });
-      if(error) throw error;
-      if(!questions?.length){ host.innerHTML = `<div class="locked-note">${T('No interactive questions were found for this video.','བརྙན་ཐུང་འདིའི་དོན་ལུ་ལཱ་འབད་མི་དྲི་བ་མིན་འདུག')}</div>`; continue; }
-      await window.mountAssignmentInteractiveVideo(host, {
-        url, questions,
-        answerChecker: async ({questionId, answer})=>{
-          const { data, error: checkError } = await supabase.rpc('check_assignment_video_answer', {
-            p_question_id: questionId, p_answer: answer
-          });
-          if(checkError) throw checkError;
-          const row = Array.isArray(data) ? data[0] : data;
-          return { isCorrect: !!row?.is_correct, points: Number(row?.points || 0), maxPoints: Number(row?.max_points || 0), explanation: row?.explanation || '' };
-        },
-        onAnswer: async (result,q)=>{
-          const { error: saveError } = await supabase.from('assignment_video_interactions').insert({
-            assignment_id: String(assignmentId), resource_key: String(resourceKey), question_id: result.questionId,
-            student_id: me.id, answer: String(result.answer || ''), is_correct: !!result.isCorrect,
-            points_earned: Number(result.points || 0), max_points: Number(result.maxPoints || 0), answered_at: result.answeredAt
-          });
-          if(saveError) console.error('Interactive video answer save:', saveError);
-        },
-        onProgress: async data=>{
-          const { error: progressError } = await supabase.from('assignment_video_progress').upsert({
-            assignment_id: String(assignmentId), resource_key: String(resourceKey), student_id: me.id,
-            watch_seconds: Number(data.watchSeconds || 0), completion_percentage: Number(data.completionPercentage || 0),
-            completed: !!data.completed, questions_answered: Number(data.questionsAnswered || 0),
-            questions_total: Number(data.questionsTotal || 0), updated_at: new Date().toISOString()
-          }, { onConflict: 'assignment_id,resource_key,student_id' });
-          if(progressError) console.error('Interactive video progress save:', progressError);
-        }
-      });
-    }catch(err){
-      host.innerHTML = `<div class="locked-note">${T('Interactive video could not load: ','བརྙན་ཐུང་ལཱ་འབད་མ་ཚུགས: ')}${esc(err.message || err)}</div>`;
-    }
-  }
 }
 
 // ── Answers, links and photos/files submitted by the student ──
@@ -556,9 +298,7 @@ function questionsHtml(a){
     if(q.type === 'long') input = `<textarea ${attrs} placeholder="${T('Write your answer…','ཁྱོད་ཀྱི་ལན་བྲིས…')}">${esc(val)}</textarea>`;
     else if(q.type === 'choice' || q.type === 'truefalse') input = `<div class="q-opts">${q.options.map(o =>
       `<label class="q-opt"><input type="radio" name="qr-${esc(id)}-${esc(q.id)}" ${attrs} data-val="${esc(o)}" ${val === o ? 'checked' : ''}/><span>${esc(q.type==='truefalse' ? (o==='True' ? T('True','བདེན།') : T('False','རྫུན།')) : o)}</span></label>`).join('')}</div>`;
-    else if(q.type === 'image') input = `<div class="q-media">${q.media_url ? `<img src="${esc(q.media_url)}" alt="Question image" loading="lazy" style="max-width:100%;border-radius:8px;margin:.4rem 0"/>` : ''}<input type="text" ${attrs} value="${esc(val)}" placeholder="${T('Type your answer…','ཁྱོད་ཀྱི་ལན…')}"/></div>`;
-    else if(q.type === 'audio') input = `<div class="q-media">${q.media_url ? `<audio controls preload="none" src="${esc(q.media_url)}" style="width:100%;margin:.4rem 0"></audio>` : ''}<input type="text" ${attrs} value="${esc(val)}" placeholder="${T('Type what you heard…','ཁྱོད་ཀྱིས་གོ་མི་འདི་བྲིས…')}"/></div>`;
-    else input = `<input type="text" ${attrs} value="${esc(val)}" placeholder="${q.type==='fillblank' ? T('Fill in the blank…','ས་སྟོང་བཀང་གནང…') : T('Your answer…','ཁྱོད་ཀྱི་ལན…')}"/>`;
+    else input = `<input type="text" ${attrs} value="${esc(val)}" placeholder="${T('Your answer…','ཁྱོད་ཀྱི་ལན…')}"/>`;
     return `<div class="q-item"><div class="q-text"><span class="q-num">${i+1}.</span>${esc(q.text)}</div>${input}</div>`;
   }).join('') + `</div>`;
 }
@@ -568,7 +308,7 @@ function answerBoxHtml(a){
   const submitted = !!row.submitted_at;
   const hasQ = questionsFor(a).length > 0;
   const fb = [];
-  if(row.score != null) fb.push(`<b>⭐ ${T('Score:','གྲངས:')} ${esc(row.score)}%</b>`);
+  if(row.score) fb.push(`<b>⭐ ${T('Marks:','ལེན་ཐང:')} ${esc(row.score)}</b>`);
   if(row.teacher_feedback) fb.push(`<b>💬 ${T('Teacher feedback','སློབ་དཔོན་གྱི་བསམ་བཀོད')}</b>`, esc(row.teacher_feedback));
   return `<div class="answer-box">
     <div class="answer-title">✍️ ${hasQ ? T('Your answers','ཁྱོད་ཀྱི་ལན་ཚུ') : T('Your answer','ཁྱོད་ཀྱི་ལན')}</div>
@@ -645,68 +385,84 @@ async function submitAnswer(id, btn){
   if(questionsEnabled) payload.answers = cleanAnswers;
   const { error } = await supabase.from('assignment_status').upsert(payload, { onConflict: 'assignment_id,student_id' });
   if(error){ setAnsStatus(id, T('Could not submit: ','སྙན་ཞུ་འབད་མ་ཚུགས: ') + error.message, 'err'); btn.disabled = false; btn.textContent = label; return; }
-  if(questionsEnabled && answered){
-    const gr = await supabase.rpc('grade_assignment_submission', { p_assignment_id: String(id), p_student_id: me.id });
-    if(!gr.error && gr.data?.[0]){
-      const g = gr.data[0];
-      await supabase.from('assignment_status').update({ score: g.score_percent }).eq('assignment_id', id).eq('student_id', me.id);
-      setAnsStatus(id, T('Submitted and auto-graded ✓ ','སྙན་ཞུ་དང་རང་བཞིན་གྱིས་གྲངས་བཀོད་ཚར་ཡོད ✓ ') + g.score_percent + '%', 'ok');
-    }
-  }
   clearLocalDraft(id);
   await renderAssignments();
 }
 
 // ── Resources the teacher attached: videos play here, documents preview here, everything else opens ──
-// Keep the interactive-video metadata from the assignment attachment.
-// assignment-utils.js intentionally normalizes attachments for ordinary resources,
-// but interactive assignment videos also need resource_key and interactive.
-function parseStudentAttachments(row){
-  if(row && Array.isArray(row.attachments) && row.attachments.length){
-    return row.attachments.map((x,i)=>({
-      url: safeUrl(x && x.url),
-      label: String((x && x.label) || ''),
-      type: String((x && x.type) || ''),
-      resource_key: String((x && x.resource_key) || ('att_' + i)),
-      interactive: !!(x && x.interactive)
-    })).filter(x=>x.url);
-  }
-  return parseAttachments(row);
+let assignmentVideoQuestions = {};
+let interactiveTotals = {};
+let interactiveAnswered = {};
+let activeAssignmentId = null;
+function questionsForAttachment(assignmentId, att){
+  const local = Array.isArray(att.interactiveQuestions) ? att.interactiveQuestions : [];
+  if(local.length) return local;
+  const byKey = assignmentVideoQuestions[String(assignmentId)] || {};
+  return Array.isArray(byKey[String(att.resource_key || '')]) ? byKey[String(att.resource_key || '')] : [];
+}
+function interactiveVideoHtml(att, assignmentId, label, questions){
+  const hostId = 'iv_' + Math.random().toString(36).slice(2,10);
+  const aid = String(assignmentId);
+  const safeQuestions = questions.map((q,i)=>({
+    ...q,
+    timestamp: q.timestamp_seconds ?? q.timestamp ?? 0,
+    type: q.question_type ?? q.type ?? 'multiple_choice',
+    replayBefore: q.replay_before_seconds ?? q.replayBefore ?? 30,
+    requireCorrect: q.require_correct !== false,
+    id: q.id || `${att.resource_key || 'video'}_${q.timestamp_seconds ?? i}_${i}`
+  }));
+  window.setTimeout(()=>{
+    const host=document.getElementById(hostId);
+    if(!host || !window.SherigInteractiveVideo) return;
+    try{
+      new window.SherigInteractiveVideo({
+        container:host,
+        videoId:att.url,
+        questions:safeQuestions,
+        onAnswer:async result=>{
+          if(!result?.isCorrect) return;
+          const key = `${String(att.resource_key || 'video')}:${String(result.questionId || result.timestamp)}`;
+          (interactiveAnswered[aid] ||= new Set()).add(key);
+          if((interactiveAnswered[aid]?.size || 0) >= (interactiveTotals[aid] || 0)){
+            await window.markDone(assignmentId);
+          }
+        }
+      });
+    }catch(err){ console.error('Assignment interactive video:',err); }
+  },0);
+  return `<div class="res-video"><div id="${hostId}" class="task-embed interactive-assignment-video" style="aspect-ratio:16/9;min-height:280px"></div><div class="res-cap">🎯 ${esc(label)} · ${T('Interactive video','Interactive video')}</div></div>`;
 }
 
-function resourceHtml(att){
-  const c = classifyUrl(safeUrl(att.url));
+function resourceHtml(att, assignmentId){
+  const c = classifyUrl(att.url);
   const kind = att.type && KIND_META[att.type] ? att.type : c.kind;
   const meta = KIND_META[kind] || KIND_META.link;
   const label = att.label || defaultLabel(att.url);
-  const safe = safeUrl(att.url);
-  if(!safe) return `<div class="locked-note">⚠️ ${T('This resource link is invalid or unavailable.','ཡིག་ཆའི་འབྲེལ་མཐུད་ཁག་ཏོ་མིན་འདུག།')}</div>`;
-  const open = `<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer" style="position:relative;z-index:5;pointer-events:auto">↗ ${T('Open in a new tab','ཤོག་ལེབ་གསརཔ་ནང་ཁ་ཕྱེ')}</a>`;
+  const open = `<a href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">↗ ${T('Open in a new tab','ཤོག་ལེབ་གསརཔ་ནང་ཁ་ཕྱེ')}</a>`;
 
   if(kind === 'video' && c.embed){
-    if(att.interactive){
-      return `<div class="res-video"><div class="assignment-interactive-video" data-assignment-id="${esc(att.assignment_id || '')}" data-resource-key="${esc(att.resource_key || '')}" data-video-url="${esc(att.url)}" style="max-width:640px;min-height:180px"><div class="locked-note">✨ ${T('Interactive video is loading…','✨ བརྙན་ཐུང་ལཱ་འབད་བཞིནམ...')}</div></div><div class="res-cap">✨ ${esc(label)} · ${open}</div></div>`;
-    }
+    const iqs = questionsForAttachment(assignmentId, att);
+    if(iqs.length && /^https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)/i.test(att.url || '')) return interactiveVideoHtml(att, assignmentId, label, iqs);
     return `<div class="res-video"><div class="task-embed"><iframe src="${esc(c.embed)}" title="${esc(label)}" loading="lazy" allowfullscreen
-      allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe></div><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
+      allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"
+      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"></iframe></div><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
   }
   if(c.media === 'video') return `<div class="res-video"><video class="res-media" controls preload="metadata" src="${esc(att.url)}"></video><div class="res-cap">🎥 ${esc(label)} · ${open}</div></div>`;
   if(c.media === 'audio') return `<div class="res-audio"><div class="res-cap" style="margin:0 0 .3rem">🎧 ${esc(label)}</div><audio controls preload="none" src="${esc(att.url)}" style="width:100%"></audio></div>`;
-  if(c.media === 'image') return `<div class="res-video"><a class="res-img" href="${esc(safe)}" target="_blank" rel="noopener noreferrer"><img src="${esc(att.url)}" alt="${esc(label)}" loading="lazy"/></a><div class="res-cap">🖼️ ${esc(label)}</div></div>`;
+  if(c.media === 'image') return `<div class="res-video"><a class="res-img" href="${esc(att.url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(att.url)}" alt="${esc(label)}" loading="lazy"/></a><div class="res-cap">🖼️ ${esc(label)}</div></div>`;
 
   return `<div class="res-tile"><div class="res-row">
     <span class="res-ico">${meta.icon}</span>
     <div class="res-info"><div class="res-name">${esc(label)}</div><div class="res-sub">${esc(c.name || meta.label)} · ${esc(c.host)}</div></div>
     <div class="res-btns">
       ${c.embed ? `<button type="button" class="btn btn-ghost btn-sm" data-preview="${esc(c.embed)}">${T('Preview','སྔོན་བལྟ།')}</button>` : ''}
-      <a class="btn btn-gold btn-sm" href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${kind === 'form' ? T('Open form','ཟུར་སྦྲགས་ཁ་ཕྱེ') : T('Open','ཁ་ཕྱེ')}</a>
+      <a class="btn btn-gold btn-sm" href="${esc(att.url)}" target="_blank" rel="noopener noreferrer">${kind === 'form' ? T('Open form','ཟུར་སྦྲགས་ཁ་ཕྱེ') : T('Open','ཁ་ཕྱེ')}</a>
       ${c.download ? `<a class="btn btn-ghost btn-sm" href="${esc(c.download)}" target="_blank" rel="noopener noreferrer">${T('Download','ཕབ་ལེན')}</a>` : ''}
     </div></div><div class="res-preview"></div></div>`;
 }
 function resourcesHtml(list, assignmentId){
   if(!list.length) return '';
-  const enriched = list.map(a => ({...a, assignment_id: String(assignmentId || '')}));
-  return `<div class="res-block"><div class="res-head">📎 ${T('Resources for this task','ལཱ་ཁག་འདིའི་དོན་ལུ་ཡིག་ཆ')}</div>${enriched.map(resourceHtml).join('')}</div>`;
+  return `<div class="res-block"><div class="res-head">📎 ${T('Resources for this task','ལཱ་ཁག་འདིའི་དོན་ལུ་ཡིག་ཆ')}</div>${list.map(x=>resourceHtml(x, assignmentId)).join('')}</div>`;
 }
 
 function dueHtml(a, done){
@@ -725,25 +481,14 @@ function dueHtml(a, done){
 }
 
 async function renderAssignmentCard(a, done){
-  let title, desc, lockedNote = '', resources = parseStudentAttachments(a);
+  activeAssignmentId = String(a.id);
+  let title, desc, lockedNote = '', resources = parseAttachments(a);
 
   if(a.kind === 'custom'){
     title = a.title || T('Task','ལཱ་ཁག');
     desc = a.description || '';
   } else {
-    let item = null;
-    let itemError = null;
-    // Read assigned library content through the protected RPC instead of the old *_public views.
-    // This works for ordinary and premium items while keeping premium URLs protected.
-    const rpc = await supabase.rpc('sherig_content_item', { p_table: String(a.item_type || ''), p_id: String(a.item_id || '') });
-    if(!rpc.error) item = rpc.data;
-    else itemError = rpc.error;
-    // Backward-compatible fallback for projects that have not run the security migration yet.
-    if(!item){
-      const legacy = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
-      if(!legacy.error) item = legacy.data;
-      else itemError = itemError || legacy.error;
-    }
+    const { data: item } = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
     title = a.title || (item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : T('(content unavailable)','(ནང་དོན་མིན་འདུག)'));
     desc = [a.description, item?.description].filter(Boolean).join('\n\n');
     if(item){
@@ -757,11 +502,7 @@ async function renderAssignmentCard(a, done){
   }
 
   const hasQ = questionsFor(a).length > 0;
-  const statusRow = statusRows[String(a.id)] || {};
-  const statusValue = done ? 'done' : (statusRow.status === 'started' ? 'progress' : 'todo');
-  const dueValue = a.due_date ? new Date(a.due_date + 'T00:00:00') : null;
-  const overdue = !done && dueValue && !isNaN(dueValue) && dueValue < new Date(new Date().setHours(0,0,0,0));
-  return `<div class="assign-card ${done?'done':''}" data-assignment-card data-title="${esc(title.toLowerCase())}" data-status="${statusValue}" data-overdue="${overdue?'true':'false'}" data-created="${esc(a.created_at||'')}" data-due="${esc(a.due_date||'')}">
+  return `<div class="assign-card ${done?'done':''}">
     <div class="assign-title">${esc(title)}</div>
     ${dueHtml(a, done)}
     ${desc ? `<div class="assign-desc">${esc(desc)}</div>` : ''}
@@ -786,9 +527,6 @@ window.markDone = async function(assignmentId){
 
 init();
 
-document.getElementById('assignment-search')?.addEventListener('input', applyAssignmentFilters);
-document.getElementById('assignment-filter')?.addEventListener('change', applyAssignmentFilters);
-document.getElementById('assignment-sort')?.addEventListener('change', applyAssignmentFilters);
 </script>
 </body>
 </html>
