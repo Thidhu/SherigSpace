@@ -262,7 +262,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
   <div class="modal" style="max-width:420px">
     <div class="mhead"><h3 data-en="✅ Student Created" data-dz="✅ སློབ་ཕྲུག་གསར་བསྐྲུན་འབད་ཡོད།">✅ Student Created</h3><button class="mclose" onclick="document.getElementById('login-card-overlay').classList.remove('open')">✕</button></div>
     <div class="mbody">
-      <p style="font-size:.85rem;color:var(--text2)" data-en="Give these details to the student. The Student ID is used for login. The PIN is shown here in full so you can give both to the student." data-dz="གནད་སྡུད་འདི་ཚུ་སློབ་ཕྲུག་ལུ་སྤྲོད། Student ID འདི་ནང་འཛུལ་ལུ་ལག་ལེན་འབད། PIN འདི་ཡང་སྟོན་ཡོདཔ་ལས་གཉིས་ཆ་ར་སློབ་ཕྲུག་ལུ་སྤྲོད།">Give these details to the student. The Student ID is used for login. The PIN is shown here in full so you can give both to the student.</p>
+      <p style="font-size:.85rem;color:var(--text2)" data-en="Give these details to the student. The student name is used for login together with the PIN." data-dz="གནད་སྡུད་འདི་ཚུ་སློབ་ཕྲུག་ལུ་སྤྲོད། སློབ་ཕྲུག་གི་མིང་དང་ PIN གཉིས་ཀྱིས་ནང་འཛུལ་འབད།">Give these details to the student. The student name is used for login together with the PIN.</p>
       <div class="login-card" id="login-card-body"></div>
     </div>
     <div class="mfoot"><button class="btn btn-gold" onclick="document.getElementById('login-card-overlay').classList.remove('open')" data-en="Done" data-dz="མཇུག་བསྡུ།">Done</button></div>
@@ -802,7 +802,7 @@ async function renderStudents(){
   const el = document.getElementById('students-list');
   el.innerHTML = data?.length ? data.map(s=>`
     <div class="irow">
-      <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">Student ID: <b>${esc(s.student_login_id || 'Not assigned')}</b><br>PIN: ${esc(s.pin)}</div></div>
+      <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">Login Name: <b>${esc(s.display_name)}</b><br>PIN: ${esc(s.pin)}</div></div>
       <div class="ibtns">
         <button class="btn btn-edit btn-sm" onclick="openEditStudentForm('${esc(s.id)}','${esc(s.display_name)}')">${T('✏ Edit','✏ ཞུན་དག')}</button>
         <button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">${T('✕ Remove','✕ བཏོན་གཏང་')}</button>
@@ -867,17 +867,14 @@ window.openStudentForm = async function(){
         class_id: currentClassId, student_id: studentId, display_name: name, login_email: loginEmail, pin
       });
       if(enrollErr) throw enrollErr;
-      const { data: createdEnrollment, error: createdEnrollmentErr } = await supabase.from('class_students').select('student_login_id').eq('student_id', studentId).eq('class_id', currentClassId).order('created_at',{ascending:false}).limit(1).maybeSingle();
-      if(createdEnrollmentErr) throw createdEnrollmentErr;
-      window.__lastStudentLoginId = createdEnrollment?.student_login_id || '';
-
+      // Student login uses the display name + PIN. No separate student login ID is required.
       closeModal();
       toast(T('Student added ✓','སློབ་ཕྲུག་ཁ་སྐོང་འབད་ཚར་ཡོད ✓'));
       renderStudents();
       document.getElementById('login-card-body').innerHTML = `
         ${T('Class Name','དཔྱེ་སློབ་མིང་')}: <b>${esc(code)}</b><br>
         ${T('Student Name','སློབ་ཕྲུག་མིང་')}: <b>${esc(name)}</b><br>
-        ${T('Student ID','སློབ་ཕྲུག་ཨང་')}: <b>${esc(window.__lastStudentLoginId || 'Generating…')}</b><br>
+        ${T('Login Name','ནང་འཛུལ་མིང་')}: <b>${esc(name)}</b><br>
         PIN: <b>${esc(pin)}</b><br><br>
         ${T('Give the student this info and send them to','གནད་སྡུད་འདི་སློབ་ཕྲུག་ལུ་སྤྲོད་ཞིནམ་ལས་')} <b>${esc(window.location.origin)}/login.html</b> → ${T('Student tab.','སློབ་ཕྲུག་ཨིབ་ལུ་གཏང་།')}`;
       document.getElementById('login-card-overlay').classList.add('open');
@@ -934,17 +931,14 @@ window.openEditStudentForm = function(rowId, currentName){
           student_id: studentId, login_email: loginEmail, pin: newPin, display_name: name
         }).eq('id', rowId);
         if(updErr) throw updErr;
-        const { data: updatedEnrollment, error: updatedEnrollmentErr } = await supabase.from('class_students').select('student_login_id').eq('id', rowId).single();
-        if(updatedEnrollmentErr) throw updatedEnrollmentErr;
-        window.__lastStudentLoginId = updatedEnrollment?.student_login_id || '';
-
+        // Student login uses the display name + PIN. No separate student login ID is required.
         closeModal();
         toast(T('Password reset ✓','གསང་ཨང་སླར་གསོ་འབད་ཚར་ཡོད ✓'));
         renderStudents();
         document.getElementById('login-card-body').innerHTML = `
           ${T('Class Name','དཔྱེ་སློབ་མིང་')}: <b>${esc(code)}</b><br>
           ${T('Student Name','སློབ་ཕྲུག་མིང་')}: <b>${esc(name)}</b><br>
-          ${T('Student ID','སློབ་ཕྲུག་ཨང་')}: <b>${esc(window.__lastStudentLoginId || 'Generating…')}</b><br>
+          ${T('Login Name','ནང་འཛུལ་མིང་')}: <b>${esc(name)}</b><br>
           PIN: <b>${esc(newPin)}</b><br><br>
           ${T('This is a new login — the old PIN no longer works. Give the student these updated details.','འདི་ནང་འཛུལ་གསརཔ་ཨིན — PIN་རྙིངམ་འདི་ལག་ལེན་མི་འཐབ། སློབ་ཕྲུག་ལུ་གནད་སྡུད་གསར་བསྐྱར་འདི་ཚུ་སྤྲོད།')}`;
         document.getElementById('login-card-overlay').classList.add('open');
@@ -1138,10 +1132,9 @@ window.openAssignmentForm = async function(editId){
     <div class="field"><label>${T('Resources for students (optional)','སློབ་ཕྲུག་གི་དོན་ལུ་ཡིག་ཆ (དགོས་མཁོ་མེད་ཡང་རུང)')}</label>
       <div id="task-attach-list"></div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem">
-        <input id="f-link-input" placeholder="Paste a link — YouTube, Google Docs / Slides / Drive, any website…" oninput="previewTaskLink()" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
+        <input id="f-link-input" placeholder="Paste a link — YouTube, Google Docs / Slides / Drive, any website…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
         <button type="button" class="btn btn-gold btn-sm" style="white-space:nowrap" onclick="addTaskLink()">${T('＋ Add link','＋ འབྲེལ་མཐུད་ཁ་སྐོང་')}</button>
       </div>
-      <div id="task-link-preview" style="margin-top:.65rem"></div>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
         <input type="file" id="f-task-video" accept="video/*" style="display:none" onchange="handleTaskUpload(event,'video')"/>
         <input type="file" id="f-task-file" style="display:none" onchange="handleTaskUpload(event,'file')"/>
@@ -1700,106 +1693,14 @@ function renderTaskAttachments(){
   el.querySelectorAll('[data-interactive-att]').forEach(b => b.addEventListener('click', () => openInteractiveAttachment(Number(b.dataset.interactiveAtt))));
 }
 
-window.openInteractiveAttachment = async function(i){
+window.openInteractiveAttachment = function(i){
   const a = taskAttachments[i];
   if(!a || !window.SherigAssignmentVideoEditor) return;
-
-  // Reuse questions already created for the same public SherigSpace video.
-  // Public interactive_questions.video_id points to videos.id, while the
-  // assignment attachment only has the YouTube URL, so resolve the video row first.
-  if(!Array.isArray(a.interactiveQuestions) || !a.interactiveQuestions.length){
-    try{
-      const yt = String(a.url || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
-      const ytId = yt ? yt[1] : '';
-      if(ytId){
-        let videos = null, vErr = null;
-        const exact = await supabase.from('videos').select('id,url').eq('url', a.url).limit(1);
-        if(!exact.error && exact.data?.length) videos = exact.data;
-        else {
-          // Handle equivalent YouTube URLs (watch, youtu.be, shorts, embed, etc.).
-          const all = await supabase.from('videos').select('id,url').limit(1000);
-          vErr = all.error;
-          if(!vErr) videos = (all.data || []).filter(v => {
-            const m = String(v.url || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
-            return m && m[1] === ytId;
-          });
-        }
-        if(!vErr && videos?.[0]?.id){
-          const { data: qs, error: qErr } = await supabase
-            .from('interactive_questions').select('*').eq('video_id', String(videos[0].id))
-            .eq('enabled', true).order('timestamp_seconds',{ascending:true}).order('sort_order',{ascending:true});
-          if(!qErr && qs?.length){
-            a.interactiveQuestions = qs.map(q => ({...q,
-              timestamp_seconds:Number(q.timestamp_seconds||0),
-              question_type:q.question_type || 'multiple_choice',
-              options:Array.isArray(q.options) ? q.options : [],
-              accepted_answers:Array.isArray(q.accepted_answers) ? q.accepted_answers : [],
-              points:Number(q.points||1),
-              replay_before_seconds:Number(q.replay_before_seconds||30),
-              require_correct:q.require_correct !== false,
-              enabled:q.enabled !== false
-            }));
-            toast('Existing interactive questions loaded ✓');
-          }
-        }
-      }
-    }catch(e){ console.warn('Could not load public interactive questions:', e); }
-  }
-
   window.SherigAssignmentVideoEditor.open(a, { onSave: questions => {
     a.interactiveQuestions = questions || [];
     a.interactive = a.interactiveQuestions.length > 0;
     renderTaskAttachments();
   }}).catch(err => toast('Interactive video: ' + err.message, true));
-};
-
-function getTaskYouTubeId(url){
-  try{
-    const u=new URL(url);
-    const h=u.hostname.replace(/^www\./,'').toLowerCase();
-    if(h==='youtu.be') return u.pathname.split('/').filter(Boolean)[0] || '';
-    if(h==='youtube.com' || h==='m.youtube.com' || h==='youtube-nocookie.com' || h==='www.youtube.com'){
-      if(u.pathname==='/watch') return u.searchParams.get('v') || '';
-      const m=u.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]{6,})/);
-      return m ? m[1] : '';
-    }
-  }catch(e){}
-  return '';
-}
-
-function renderTaskLinkPreview(url, title){
-  const el=document.getElementById('task-link-preview');
-  if(!el) return;
-  const id=getTaskYouTubeId(url);
-  if(!id){ el.innerHTML=''; return; }
-  const safeId=esc(id);
-  const safeTitle=esc(title || 'YouTube video');
-  el.innerHTML=`<div style="display:flex;align-items:center;gap:.7rem;padding:.6rem;border:1px solid var(--border);border-radius:10px;background:var(--surface2);max-width:680px">
-    <img src="https://img.youtube.com/vi/${safeId}/mqdefault.jpg" alt="" style="width:120px;height:68px;object-fit:cover;border-radius:7px;background:#111" onerror="this.style.display='none'">
-    <div style="min-width:0;flex:1"><div style="font-size:.78rem;color:var(--text2);margin-bottom:.15rem">YouTube video preview</div><div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safeTitle}</div></div>
-  </div>`;
-}
-
-let taskLinkPreviewTimer=null;
-window.previewTaskLink=function(){
-  const inp=document.getElementById('f-link-input');
-  const el=document.getElementById('task-link-preview');
-  if(!inp || !el) return;
-  const raw=(inp.value||'').trim();
-  if(taskLinkPreviewTimer) clearTimeout(taskLinkPreviewTimer);
-  if(!raw){ el.innerHTML=''; return; }
-  let v=raw; if(!/^https?:\/\//i.test(v)) v='https://'+v;
-  const id=getTaskYouTubeId(v);
-  if(!id){ el.innerHTML=''; return; }
-  renderTaskLinkPreview(v,'YouTube video');
-  taskLinkPreviewTimer=setTimeout(async()=>{
-    try{
-      const r=await fetch('https://www.youtube.com/oembed?url='+encodeURIComponent(v)+'&format=json');
-      if(!r.ok) return;
-      const data=await r.json();
-      renderTaskLinkPreview(v,data.title || 'YouTube video');
-    }catch(e){}
-  },250);
 };
 
 window.addTaskLink = function(){
@@ -1810,10 +1711,8 @@ window.addTaskLink = function(){
   let u;
   try{ u = new URL(v); }catch(e){ toast(T('That does not look like a valid link.','འདི་འབྲེལ་མཐུད་ཁག་ཏོ་ཅིག་སྦེ་མི་མཐོང་།'), true); return; }
   if(u.protocol !== 'http:' && u.protocol !== 'https:'){ toast(T('Only web links (http/https) can be added.','ཝེབ་འབྲེལ་མཐུད (http/https) རྐྱངམ་ཅིག་ཁ་སྐོང་འབད་ཆོག'), true); return; }
-  const ytId = getTaskYouTubeId(u.href);
-  taskAttachments.push({ url: u.href, label: defaultLabel(u.href), type: classifyUrl(u.href).kind, resource_key: newAttachmentKey(), interactive: false, interactiveQuestions: [], youtube_id: ytId || null });
+  taskAttachments.push({ url: u.href, label: defaultLabel(u.href), type: classifyUrl(u.href).kind, resource_key: newAttachmentKey(), interactive: false, interactiveQuestions: [] });
   inp.value = '';
-  const pv=document.getElementById('task-link-preview'); if(pv) pv.innerHTML='';
   renderTaskAttachments();
 };
 
