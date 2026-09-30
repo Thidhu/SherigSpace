@@ -323,12 +323,18 @@ window.doStudentLogin = async function(e){
     if(!email) throw new Error('Name or PIN is incorrect. Please check with your teacher.');
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pin });
-    if(error) throw error;
+    if(error) {
+      if(/email.*not.*confirm/i.test(error.message || '')) {
+        throw new Error('This student account is not confirmed. In Supabase, turn OFF Email confirmation for student PIN accounts, then try again.');
+      }
+      throw error;
+    }
 
-    const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
-    if(String(profile?.role || '').toLowerCase() !== 'student') {
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+    const { data: enrollment } = await sb.from('class_students').select('id').eq('student_id', data.user.id).limit(1).maybeSingle();
+    if(!enrollment) {
       await sb.auth.signOut();
-      throw new Error('This account is not registered as a student account.');
+      throw new Error('This login is not linked to a student enrollment. Please ask your teacher to add the student again.');
     }
 
     localStorage.setItem('edu_session', JSON.stringify({
