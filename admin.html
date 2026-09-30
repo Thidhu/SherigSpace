@@ -958,7 +958,23 @@ function collectInteractiveQuestions(){
     sort_order:i
   }));
 }
-async function saveInteractiveQuestions(videoId){if(!videoId)return true;const list=document.getElementById('interactive-question-list');if(!list)return true;const rows=collectInteractiveQuestions();for(const q of rows){if(!Number.isFinite(q.timestamp_seconds)||!q.question){toast('Every interactive question needs a valid time and question text.',true);return false;}if(q.question_type==='multiple_choice'&&q.options.length<2){toast('Multiple-choice questions need at least two options.',true);return false;}if(!q.accepted_answers.length){toast('Every interactive question needs a correct/accepted answer.',true);return false;}}const {error:delErr}=await supabase.from('interactive_questions').delete().eq('video_id',videoId);if(delErr){toast('Could not save interactive questions: '+delErr.message,true);return false;}if(!rows.length)return true;const payload=rows.map(q=>({video_id:videoId,timestamp_seconds:q.timestamp_seconds,question:q.question,question_type:q.question_type,options:q.options,accepted_answers:q.accepted_answers,explanation:q.explanation,points:q.points,replay_before_seconds:q.replay_before_seconds,require_correct:q.require_correct,sort_order:q.sort_order,enabled:q.enabled}));const {error}=await supabase.from('interactive_questions').insert(payload);if(error){toast('Could not save interactive questions: '+error.message,true);return false;}return true;}
+async function saveInteractiveQuestions(videoId){
+  if(!videoId) return true;
+  const list=document.getElementById('interactive-question-list');
+  if(!list) return true;
+  const rows=collectInteractiveQuestions();
+  for(const q of rows){
+    if(!Number.isFinite(q.timestamp_seconds)||!q.question){toast('Every interactive question needs a valid time and question text.',true);return false;}
+    if(q.question_type==='multiple_choice'&&q.options.length<2){toast('Multiple-choice questions need at least two options.',true);return false;}
+    if(!q.accepted_answers.length){toast('Every interactive question needs a correct/accepted answer.',true);return false;}
+  }
+  const {error}=await supabase.rpc('save_interactive_questions_admin',{
+    p_video_id:String(videoId),
+    p_rows:rows
+  });
+  if(error){toast('Could not save interactive questions: '+error.message,true);return false;}
+  return true;
+}
 
 window.saveItem = async function(){
   const isAnnounce = _type === 'announce';
