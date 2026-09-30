@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SherigSpace</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+@font-face{font-family:'ThinWangTJoyig';src:url('ThinWangTJoyig-Regular.ttf') format('truetype');font-weight:normal;font-style:normal;font-display:swap}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#c9a84c;--gold-light:#e8c97a;--gold-text:#c9a84c;--gold-soft:rgba(201,168,76,.08);--on-accent:#1a2340;--media-bg:linear-gradient(135deg,#1a2340,#253056);--shadow:0 6px 22px rgba(0,0,0,.28);--shadow-hover:0 16px 38px rgba(0,0,0,.4);--font-en:'DM Sans',sans-serif;--font-dz:'ThinWangTJoyig','Noto Serif Tibetan',sans-serif}
+[data-theme="dark"]{--bg:#0f1623;--surface:#1a2340;--card-bg:#192035;--card-border:#2a3556;--border:rgba(201,168,76,0.18);--text:#e8e4dc;--text2:#9aa3b8;--nav-bg:rgba(13,18,30,0.97);--section-alt:#131c2e;--footer-bg:#080d14;--hero1:#0f1623;--hero2:#1a2340;--hero3:#1a2f50;--navy:#1a2340;--navy-light:#253056;--input-bg:#202b4a}
+[data-theme="light"]{--bg:#fffaf1;--surface:#ffffff;--card-bg:#ffffff;--card-border:#f0e2c6;--border:rgba(214,140,20,0.30);--text:#1a2340;--text2:#5d584b;--nav-bg:rgba(26,35,64,0.97);--section-alt:#fff3dc;--footer-bg:#131c2e;--hero1:#fff4da;--hero2:#fffaf1;--hero3:#ffe6b3;--navy:#1a2340;--navy-light:#253056;--input-bg:#fbf0d9;--gold:#e0951c;--gold-light:#f5c25a;--gold-text:#a35a00;--gold-soft:rgba(224,149,28,.12);--on-accent:#1a2340;--media-bg:linear-gradient(135deg,#ffe4ae,#fff4da);--shadow:0 4px 20px rgba(150,90,10,.10);--shadow-hover:0 16px 38px rgba(150,90,10,.20)}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-en);background:var(--bg);color:var(--text);overflow-x:hidden;transition:background .35s,color .35s}
+[data-lang="dz"] h1,[data-lang="dz"] h2,[data-lang="dz"] h3,[data-lang="dz"] h4,[data-lang="dz"] p,[data-lang="dz"] span:not(.t-icon),[data-lang="dz"] a,[data-lang="dz"] li,[data-lang="dz"] button{font-family:var(--font-dz)!important;line-height:2;letter-spacing:0}
+[data-lang="dz"] .hero-title,[data-lang="dz"] .section-title{font-family:'ThinWangTJoyig',sans-serif!important;line-height:1.8}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:68px;border-bottom:1px solid var(--border);gap:1rem}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold);text-decoration:none;flex-shrink:0}
+.nav-links{display:flex;gap:1.8rem;list-style:none}
+.nav-links a{color:rgba(255,255,255,.8);text-decoration:none;font-size:.85rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;transition:color .2s;position:relative;padding-bottom:4px}
+.nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1.5px;background:var(--gold);transition:width .25s}
+.nav-links a:hover{color:var(--gold)}.nav-links a:hover::after{width:100%}
+.nav-right{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
+.lang-toggle{display:flex;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+.lang-btn{padding:4px 9px;font-size:.73rem;font-weight:600;color:rgba(255,255,255,.5);background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s;line-height:1.4}
+.lang-btn[data-lang-btn="dz"]{font-family:'ThinWangTJoyig',sans-serif;font-size:.78rem}
+.lang-btn.on{background:var(--gold);color:#1a2340;border-radius:18px}
+.theme-toggle{width:42px;height:22px;background:rgba(255,255,255,.1);border:1px solid var(--border);border-radius:11px;position:relative;cursor:pointer;flex-shrink:0}
+.theme-toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:var(--gold);border-radius:50%;transition:transform .3s}
+[data-theme="light"] .theme-toggle::after{transform:translateX(20px)}
+.admin-lock{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,.1);border:1px solid var(--border);color:var(--gold);text-decoration:none;font-size:.9rem;flex-shrink:0;transition:background .2s}
+.admin-lock:hover{background:rgba(201,168,76,.2)}
+.t-icon{position:absolute;top:50%;transform:translateY(-50%);font-size:.62rem;pointer-events:none;transition:opacity .3s}
+.t-icon.moon{left:4px}.t-icon.sun{right:4px;opacity:0}
+[data-theme="light"] .t-icon.moon{opacity:0}[data-theme="light"] .t-icon.sun{opacity:1}
+.user-btn{display:flex;align-items:center;gap:.45rem;padding:5px 11px;background:rgba(201,168,76,.12);border:1px solid var(--border);border-radius:20px;cursor:pointer;color:var(--gold);font-size:.8rem;font-weight:600;transition:background .2s;position:relative}
+.user-btn:hover{background:rgba(201,168,76,.22)}
+.user-avatar{width:22px;height:22px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#1a2340;font-weight:700}
+.user-dropdown{position:absolute;top:calc(100% + 12px);right:0;background:#131c2e;border:1px solid var(--border);border-radius:6px;min-width:160px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:300;display:none}
+.user-btn:focus-within .user-dropdown,.user-dropdown:hover{display:block}
+.udrop-item{display:block;padding:.65rem 1rem;font-size:.83rem;color:var(--text2);cursor:pointer;transition:background .15s;text-decoration:none;border:none;background:none;width:100%;text-align:left;font-family:var(--font-en)}
+.udrop-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.udrop-item.danger{color:#e05c5c}.udrop-item.danger:hover{background:rgba(224,92,92,.08)}
+.udrop-sep{height:1px;background:var(--border);margin:.2rem 0}
+.login-btn{padding:6px 14px;background:var(--gold);border:none;border-radius:3px;color:#1a2340;font-size:.8rem;font-weight:700;cursor:pointer;font-family:var(--font-en);transition:background .2s;text-decoration:none;display:inline-block}
+.login-btn:hover{background:var(--gold-light)}
+.hamburger{display:none;width:30px;height:24px;flex-direction:column;justify-content:space-between;cursor:pointer;background:none;border:none;padding:0;flex-shrink:0}
+.hamburger span{display:block;height:2px;width:100%;background:var(--gold);border-radius:2px;transition:transform .25s,opacity .25s}
+.hamburger.open span:nth-child(1){transform:translateY(11px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-11px) rotate(-45deg)}
+.mobile-nav{display:none;position:fixed;top:68px;left:0;right:0;z-index:199;background:var(--nav-bg);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);flex-direction:column;padding:.5rem 5% 1rem}
+.mobile-nav.open{display:flex}
+.mobile-nav a{color:rgba(255,255,255,.85);text-decoration:none;font-size:.92rem;font-weight:500;padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.mobile-nav a:last-child{border-bottom:none}
+.hero-inner{max-width:1100px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+.hero-tag{display:inline-block;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold-light);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;padding:6px 14px;border-radius:2px;margin-bottom:1.5rem;animation:fadeUp .7s ease both}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.1rem,4.5vw,3.6rem);font-weight:700;color:#fff;line-height:1.15;margin-bottom:1.2rem;animation:fadeUp .8s .1s ease both}
+.hero-title span{color:var(--gold)}
+.hero-desc{color:rgba(255,255,255,.65);font-size:1rem;line-height:1.8;margin-bottom:2.2rem;animation:fadeUp .8s .2s ease both}
+.hero-cta{display:flex;gap:1rem;flex-wrap:wrap;animation:fadeUp .8s .3s ease both}
+.btn-primary{background:var(--gold);color:var(--navy);padding:12px 26px;border-radius:3px;font-weight:600;font-size:.9rem;text-decoration:none;transition:background .2s,transform .15s;display:inline-block;border:none;cursor:pointer;font-family:var(--font-en)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+
+.btn-primary:hover{background:var(--gold-light);transform:translateY(-2px)}
+.btn-outline{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:rgba(255,255,255,.85);padding:12px 26px;border-radius:3px;font-weight:500;font-size:.9rem;text-decoration:none;transition:border-color .2s,color .2s,transform .15s;display:inline-block}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px)}
+.hero-stats{display:flex;flex-direction:column;gap:1.5rem;animation:fadeUp .9s .35s ease both}
+.stat-card{background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.2);border-left:3px solid var(--gold);border-radius:4px;padding:1.2rem 1.5rem}
+.stat-card h3{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold);font-weight:700}
+.stat-card p{font-size:.82rem;color:rgba(255,255,255,.55);margin-top:2px;text-transform:uppercase;letter-spacing:.07em}
+section{padding:80px 5%}
+.inner{max-width:1100px;margin:auto}
+.section-label{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-text);font-weight:600;margin-bottom:.6rem}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,3.5vw,2.7rem);font-weight:700;color:var(--text);line-height:1.2;margin-bottom:.8rem;transition:color .35s}
+.section-desc{color:var(--text2);font-size:1rem;line-height:1.75;max-width:560px;margin-bottom:3rem;transition:color .35s}
+.divider{width:48px;height:3px;background:var(--gold);border-radius:2px;margin:1rem 0 1.5rem}
+.class-tabs{display:flex;flex-wrap:wrap;gap:.5rem}
+.class-tab{padding:7px 16px;border-radius:20px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text2);font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.class-tab:hover{border-color:var(--gold);color:var(--gold-text)}
+.class-tab.active{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+#lessons{background:var(--surface);transition:background .35s}
+.lesson-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-top:3px solid var(--gold);border-radius:5px;padding:1.8rem;transition:transform .2s,box-shadow .2s,background .35s;cursor:pointer;overflow:hidden}
+.lesson-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
+.lesson-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--navy),var(--navy-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:1rem}
+.lesson-card h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:.5rem;transition:color .35s}
+.lesson-card p{font-size:.88rem;color:var(--text2);line-height:1.6;margin-bottom:1rem;transition:color .35s}
+.lesson-meta{display:flex;gap:.8rem;flex-wrap:wrap;font-size:.76rem;color:var(--text2)}
+.badge{display:inline-block;background:rgba(201,168,76,.15);font-size:.7rem;font-weight:600;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;margin-bottom:.8rem;color:#8a6820}
+[data-theme="dark"] .badge{color:var(--gold-light)}
+#resources{background:var(--section-alt);transition:background .35s}
+.resource-card{background:var(--surface);border:1px solid var(--card-border);border-radius:5px;padding:1.5rem;display:flex;align-items:flex-start;gap:1rem;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;position:relative;overflow:hidden}
+.resource-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.resource-icon{width:40px;height:40px;flex-shrink:0;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.resource-info h4{font-weight:600;font-size:.93rem;color:var(--text);margin-bottom:.3rem;transition:color .35s}
+.resource-info p{font-size:.8rem;color:var(--text2);line-height:1.5;transition:color .35s}
+.resource-type{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-text);margin-top:.4rem;font-family:var(--font-en)!important}
+/* Locked / premium items: details stay fully visible; the price sits in a bar along the bottom */
+.resource-card.is-locked{padding-bottom:3.6rem!important}
+.lock-bar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.65rem 1rem;white-space:nowrap;background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a2340;font-family:var(--font-en)!important;font-size:.8rem;font-weight:700;line-height:1.3!important;z-index:2}
+.lock-bar *{font-family:var(--font-en)!important;line-height:1.3!important;letter-spacing:0!important}
+.lock-bar .lb-cta{font-weight:600;font-size:.76rem;color:#1a2340;text-decoration:none;white-space:nowrap}
+.lock-bar a.lb-cta{border-bottom:1px solid rgba(26,35,64,.4)}
+.lock-bar.pending{background:var(--surface);color:var(--text2);border-top:1px solid var(--card-border)}
+#videos{background:var(--surface);transition:background .35s}
+.video-card{position:relative;background:var(--card-bg);border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;display:block}
+.video-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
+.video-thumb{height:160px;background:linear-gradient(135deg,#1a2340,#253056);display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative}
+.play-btn{position:absolute;width:48px;height:48px;background:rgba(201,168,76,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;padding-left:3px}
+.video-body{padding:1.2rem}
+.video-body h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--text);margin-bottom:.4rem;font-weight:600;transition:color .35s}
+.video-body p{font-size:.83rem;color:var(--text2);line-height:1.5}
+.video-meta{display:flex;gap:.8rem;font-size:.75rem;color:var(--text2);margin-top:.6rem}
+#blog{background:var(--section-alt);transition:background .35s}
+.blog-card{border:1px solid var(--card-border);border-radius:5px;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.blog-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.16)}
+.blog-thumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:3rem}
+.blog-body{padding:1.4rem;background:var(--card-bg);transition:background .35s}
+.blog-body h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--text);margin-bottom:.5rem;font-weight:600}
+.blog-body p{font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:.8rem}
+.blog-date{font-size:.76rem;color:var(--gold-text);font-weight:500;margin-bottom:.4rem}
+.comments-wrap{margin-top:1rem}
+.comments-wrap h4{font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:.75rem}
+.comment-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.75rem;max-height:180px;overflow-y:auto}
+.comment-item{background:var(--section-alt);border-radius:4px;padding:.7rem .9rem;font-size:.82rem}
+.comment-author{font-weight:600;color:var(--gold-text);font-size:.75rem;margin-bottom:.2rem}
+.comment-text{color:var(--text2);line-height:1.5;word-break:break-word}
+.comment-form{display:flex;gap:.5rem;margin-top:.5rem}
+.comment-form input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font-en);font-size:.83rem;padding:7px 10px;outline:none;transition:border-color .2s;min-width:0}
+.comment-form input:focus{border-color:var(--gold)}
+.comment-form button{padding:7px 14px;background:var(--gold);border:none;border-radius:4px;color:#1a2340;font-weight:600;font-size:.8rem;cursor:pointer;font-family:var(--font-en);white-space:nowrap}
+.comment-login-note{font-size:.78rem;color:var(--text2)}
+.comment-login-note a{color:var(--gold-text);text-decoration:none}
+#about{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%)}
+.sherigspace-purpose{grid-template-columns:1.05fr .95fr;gap:4.5rem}
+.purpose-intro .section-title{max-width:720px}
+.purpose-note{margin-top:1.15rem;color:rgba(255,255,255,.58);font-size:.94rem;line-height:1.8;max-width:700px}
+.purpose-panel{background:rgba(255,255,255,.035);border:1px solid rgba(201,168,76,.22);border-radius:18px;padding:1.5rem;box-shadow:0 18px 45px rgba(0,0,0,.18)}
+.purpose-panel>.section-label{margin-bottom:1.1rem}
+.purpose-cards{display:grid;gap:.8rem}
+.purpose-card{display:flex;gap:1rem;align-items:flex-start;padding:1rem;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);border-radius:12px;transition:transform .2s ease,border-color .2s ease,background .2s ease}
+.purpose-card:hover{transform:translateY(-2px);border-color:rgba(201,168,76,.4);background:rgba(255,255,255,.055)}
+.purpose-icon{width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-size:1.25rem;border:1px solid var(--border)}
+.purpose-card h3{font-family:'Playfair Display',serif;color:var(--gold-light);font-size:1.05rem;margin:0 0 .28rem}
+.purpose-card p{font-size:.82rem;line-height:1.65;color:rgba(255,255,255,.6);margin:0}
+@media(max-width:850px){.sherigspace-purpose{grid-template-columns:1fr;gap:2.5rem}.purpose-panel{padding:1.15rem}}
+
+.about-inner{max-width:1100px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+.about-avatar-wrap{position:relative}
+.about-avatar{width:100%;max-width:360px;aspect-ratio:1;background:rgba(255,255,255,.05);border:2px solid rgba(201,168,76,.75);border-radius:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 18px 45px rgba(0,0,0,.28),0 0 0 8px rgba(201,168,76,.06);position:relative}
+.about-profile-photo{width:100%;height:100%;display:block;object-fit:cover;object-position:center top}
+.about-avatar-label{font-size:.85rem;color:rgba(255,255,255,.4);letter-spacing:.08em}
+.about-signature{font-family:'Playfair Display',serif;font-size:1.65rem;font-style:italic;color:var(--gold-light);text-align:center;margin-top:1rem}
+.about-role{font-size:.72rem;letter-spacing:.18em;color:rgba(255,255,255,.72);text-align:center;margin-top:.35rem}
+.about-quick-contact{display:flex;gap:.6rem;justify-content:center;margin-top:1rem}
+.qc-btn{display:inline-flex;align-items:center;gap:.35rem;padding:7px 15px;border-radius:999px;font-size:.76rem;font-weight:700;text-decoration:none;font-family:var(--font-en);letter-spacing:.01em;transition:transform .15s,opacity .2s;border:1px solid transparent}
+.qc-btn:hover{transform:translateY(-2px)}
+.qc-wa{background:#25D366;color:#0b3d20}
+.qc-call{background:rgba(255,255,255,.08);color:var(--gold-light);border-color:rgba(201,168,76,.55)}
+.about-accent{position:absolute;bottom:-16px;right:-16px;width:80px;height:80px;border:2px solid var(--gold);border-radius:4px;opacity:.4}
+#about .section-label{color:var(--gold-light)}
+#about .section-title{color:#fff}
+#about .section-desc{color:rgba(255,255,255,.65);max-width:100%}
+.about-skills{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.5rem}
+.skill-tag{background:var(--gold-soft);border:1px solid var(--border);color:var(--gold-light);font-size:.8rem;padding:5px 12px;border-radius:20px}
+.about-contact{margin-top:2rem}
+.about-contact p{color:rgba(255,255,255,.55);font-size:.9rem;margin-bottom:1rem}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal-box{background:#131c2e;border:1px solid var(--border);border-radius:8px;width:100%;max-width:460px;overflow:hidden}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)}
+.modal-head h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gold-text)}
+.modal-close{background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;padding:2px 6px}
+.modal-body{padding:1.4rem}
+.profile-avatar{width:64px;height:64px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#1a2340;font-weight:700;margin:0 auto 1rem}
+.profile-name{text-align:center;font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--text);margin-bottom:.2rem}
+.profile-email{text-align:center;font-size:.82rem;color:var(--text2);margin-bottom:.5rem}
+.profile-class{text-align:center;font-size:.82rem;color:var(--gold-text);margin-bottom:1.5rem;font-weight:600}
+.profile-stat{display:flex;gap:1rem;justify-content:center;margin-bottom:1.5rem}
+.pstat{text-align:center;background:rgba(201,168,76,.08);border:1px solid var(--border);border-radius:5px;padding:.6rem 1.1rem}
+.pstat .pn{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-text);font-weight:700}
+.pstat .pl{font-size:.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text2);width:100%}
+.empty-state .ei{font-size:2.5rem;margin-bottom:.75rem}
+.empty-state p{font-size:.88rem;margin-bottom:.75rem}
+.empty-state a{color:var(--gold-text);font-size:.82rem;text-decoration:none}
+footer{background:var(--footer-bg);color:rgba(255,255,255,.4);text-align:center;padding:1.8rem 5%;font-size:.83rem;transition:background .35s}
+footer .gold{color:var(--gold)}
+/* ═══════════ Modern rounded card design (both themes) ═══════════ */
+.lesson-card,.video-card,.blog-card,.resource-card{border:1px solid var(--card-border);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.lesson-card:hover,.video-card:hover,.blog-card:hover,.resource-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.lesson-card{padding:0;border-top:1px solid var(--card-border);background:var(--card-bg)}
+.card-media{position:relative;aspect-ratio:16/9;background:var(--media-bg);overflow:hidden}
+.card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.media-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.8rem}
+.pill-row{position:absolute;top:.85rem;left:.85rem;right:.85rem;display:flex;gap:.4rem;flex-wrap:wrap;z-index:1}
+.pill{background:rgba(15,27,61,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font-family:var(--font-en);font-size:.68rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:999px;line-height:1.2}
+.card-body{padding:1.1rem 1.2rem 1.2rem}
+.lesson-card h3,.video-body h3,.blog-body h3{font-family:var(--font-en);font-weight:700;font-size:1.05rem;line-height:1.4;color:var(--text);margin-bottom:.45rem}
+.lesson-card p,.video-body p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.9rem}
+.lesson-meta,.video-meta{display:flex;flex-wrap:wrap;gap:.5rem 1rem;font-size:.78rem;color:var(--text2);margin-top:0}
+.video-thumb{height:auto;aspect-ratio:16/9;background:var(--media-bg);overflow:hidden}
+.video-body{padding:1.25rem 1.4rem 1.4rem}
+.lesson-card.is-locked .card-body,.video-card.is-locked .video-body{padding-bottom:4.2rem}
+.lock-bar{color:var(--on-accent)}
+.lock-bar .lb-cta{color:var(--on-accent)}
+.lock-bar a.lb-cta{border-bottom-color:currentColor}
+.resource-icon{border-radius:14px}
+.resource-card{padding:1.3rem 1.4rem}
+.blog-thumb{height:auto;aspect-ratio:16/9;background:var(--media-bg)}
+.blog-body{padding:1.25rem 1.4rem 1.4rem}
+.class-tab{padding:8px 18px;font-weight:600}
+.btn-primary,.btn-outline,.login-btn{border-radius:12px}
+.btn-primary,.login-btn,.class-tab.active,.lang-btn.on,.user-avatar,.profile-avatar,.comment-form button{color:var(--on-accent)}
+.modal-box{border-radius:20px}
+.stat-card{border-radius:16px}
+.hero-tag{border-radius:999px}
+.comment-form input{border-radius:10px}
+html[data-lang="dz"] span.pill,html[data-lang="dz"] :is(.lock-bar) :is(span,a){font-family:var(--font-en)!important;line-height:1.3!important;letter-spacing:0!important}
+
+/* ═══════════ Light mode: warm ivory + golden orange (matches the navy/gold night mode) ═══════════ */
+/* nav, About section and footer stay navy in both modes; only the content areas turn light */
+[data-theme="light"] .hero-tag{background:rgba(224,149,28,.14);border:1px solid rgba(224,149,28,.40);color:var(--gold-text);border-radius:999px}
+[data-theme="light"] .hero-title{color:var(--text)}
+[data-theme="light"] .hero-title span{color:#c77a00}
+[data-theme="light"] .hero-desc{color:var(--text2)}
+[data-theme="light"] .btn-outline{border-color:#e5cf9f;color:var(--text);background:#fff}
+[data-theme="light"] .btn-outline:hover{border-color:var(--gold);color:var(--gold-text)}
+[data-theme="light"] .stat-card{background:#fff;border:1px solid var(--card-border);border-left:4px solid var(--gold);border-radius:16px;box-shadow:var(--shadow)}
+[data-theme="light"] .stat-card h3{color:#c77a00}
+[data-theme="light"] .stat-card p{color:var(--text2)}
+[data-theme="light"] .lesson-card,[data-theme="light"] .video-card,[data-theme="light"] .blog-card,[data-theme="light"] .resource-card,[data-theme="light"] .blog-body{background:#fff}
+[data-theme="light"] .resource-icon{background:#ffefc9}
+[data-theme="light"] .class-tab{background:#fff;border-color:#ecd9ae;color:#4a4636}
+[data-theme="light"] .class-tab.active{background:var(--gold);border-color:var(--gold);color:var(--on-accent);box-shadow:0 6px 16px rgba(224,149,28,.38)}
+[data-theme="light"] .play-btn{background:rgba(255,255,255,.95);color:#c77a00;box-shadow:0 6px 20px rgba(60,35,0,.28)}
+[data-theme="light"] .modal-overlay{background:rgba(26,35,64,.55)}
+[data-theme="light"] .modal-box,[data-theme="light"] .user-dropdown{background:#fffdf8;border-color:#f0e2c6;box-shadow:0 20px 50px rgba(60,35,0,.28)}
+[data-theme="light"] .udrop-item:hover{background:#fff3dc}
+[data-theme="light"] .modal-box strong{color:var(--text)}
+[data-theme="light"] .pstat{background:var(--gold-soft)}
+[data-lang="dz"][data-theme="light"] :is(#lessons,#resources,#videos,#blog) :is(h2,h3,h4,p,.section-desc){-webkit-text-stroke:.35px currentColor}
+[data-lang="dz"][data-theme="light"] :is(.lock-bar,.pill) *{-webkit-text-stroke:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+@media(max-width:768px){.hero-inner,.about-inner{grid-template-columns:1fr;gap:2.5rem}.hero-stats{flex-direction:row;flex-wrap:wrap}.stat-card{flex:1;min-width:110px}}
+@media(max-width:560px){.nav-links{display:none}.hamburger{display:flex}.admin-lock{display:none}.nav-right{gap:.4rem}.nav-logo{font-size:1.1rem}.login-btn{padding:6px 9px;font-size:.7rem}nav{padding:0 4%}.hamburger{width:26px}.lang-btn{padding:4px 7px}nav{gap:.5rem}.about-avatar{max-width:320px;margin:auto}.about-signature{font-size:1.4rem}.about-role{font-size:.62rem;letter-spacing:.12em}}
+@media(max-width:400px){.search-btn{width:28px;height:28px}.nav-logo{font-size:.95rem}.login-btn{padding:6px 7px;font-size:.64rem}.theme-toggle{width:34px}.lang-btn{padding:3px 5px;font-size:.66rem}.nav-right{gap:.3rem}nav{gap:.3rem}}
+@media(max-width:340px){.theme-toggle{display:none}}
+img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.blog-thumb{position:relative;overflow:hidden}
+.cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2))}
+.cover-emoji{font-size:2.6rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.cover-label{font-family:var(--font-en);font-weight:800;font-size:.78rem;letter-spacing:.16em;opacity:.95}
+.cover-video .cover-emoji,.cover-video .cover-label{display:none}
+.cover-mini{width:64px;height:64px;flex-shrink:0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2))}
+.cover-mini span{font-size:1.5rem;line-height:1}
+.cover-mini b{font-family:var(--font-en);font-size:.56rem;letter-spacing:.1em}
+.cover-pdf{--c1:#c0392b;--c2:#e5643a}.cover-doc{--c1:#2b5fc0;--c2:#4f8ff0}.cover-slides{--c1:#d9822b;--c2:#f2b04d}
+.cover-sheet{--c1:#1f8a5b;--c2:#3fbf86}.cover-image{--c1:#7b4bc0;--c2:#a877ee}.cover-video{--c1:#1a2340;--c2:#3a4a86}
+.cover-audio{--c1:#b8437a;--c2:#e56aa0}.cover-form{--c1:#5b3fa8;--c2:#8a6fdc}.cover-file{--c1:#4a5568;--c2:#718096}
+.cover-lesson{--c1:#1a2340;--c2:#34457f}.cover-article{--c1:#9a6a1f;--c2:#d19a3d}.cover-game{--c1:#1f8a5b;--c2:#3fbf86}
+
+/* ═══ Resource cards: big 16:9 cover on top, same as lessons/videos ═══ */
+.resource-card{flex-direction:column;align-items:stretch;gap:0;padding:0}
+.resource-card.is-locked{padding-bottom:0!important}
+.resource-card .card-body{padding:1.1rem 1.2rem 1.2rem}
+.resource-card.is-locked .card-body{padding-bottom:4.2rem}
+.resource-card .card-body h4{font-family:var(--font-en);font-weight:700;font-size:1.05rem;line-height:1.4;color:var(--text);margin-bottom:.45rem}
+.resource-card .card-body p{font-size:.85rem;color:var(--text2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.6rem}
+/* ═══ Search ═══ */
+.search-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,.1);border:1px solid var(--border);color:var(--gold);cursor:pointer;font-size:.85rem;flex-shrink:0;transition:background .2s}
+.search-btn:hover{background:rgba(201,168,76,.2)}
+.search-panel{display:none;position:fixed;top:68px;left:0;right:0;z-index:198;background:var(--nav-bg);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:.8rem 5%}
+.search-panel.open{display:block}
+.search-box{max-width:700px;margin:auto;display:flex;align-items:center;gap:.6rem;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:6px 8px 6px 14px}
+.search-box:focus-within{border-color:var(--gold)}
+.search-box input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font-en);font-size:.95rem;padding:6px 0}
+.search-box input::placeholder{color:var(--text2)}
+.search-box button{background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer;padding:4px 8px}
+
+/* ═══════════════════ DASHBOARD LAYOUT (sidebar + topbar + banner + right panel) ═══════════════════ */
+#gate-loader{position:fixed;inset:0;z-index:99999;background:#0f1623;color:#e8e4dc;display:flex;align-items:center;justify-content:center;font-family:var(--font-en);text-align:center;opacity:1;visibility:visible;transition:opacity .35s ease,visibility .35s ease}
+#gate-loader.hide{opacity:0;visibility:hidden;pointer-events:none}
+#gate-loader .gl-inner{width:min(260px,72vw);display:flex;flex-direction:column;align-items:center}
+#gate-loader .gl-logo{width:190px;height:190px;object-fit:contain;border-radius:22px;display:block;margin-bottom:1.25rem;box-shadow:0 14px 45px rgba(0,0,0,.35)}
+#gate-loader .gl-percent{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;color:var(--gold-light);line-height:1;margin-bottom:.85rem;min-width:4ch}
+#gate-loader .gl-progress{width:100%;height:4px;background:rgba(255,255,255,.10);border-radius:999px;overflow:hidden}
+#gate-loader .gl-progress-fill{width:0%;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:999px;transform-origin:left center}
+#gate-loader .gl-label{margin-top:.8rem;color:#9aa3b8;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}
+@media(max-width:560px){#gate-loader .gl-inner{width:min(220px,70vw)}#gate-loader .gl-logo{width:155px;height:155px;margin-bottom:1rem}#gate-loader .gl-percent{font-size:1.2rem}}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:#0d1420;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:150;transition:transform .25s}
+.sidebar-logo{padding:1.3rem 1.3rem 1.1rem;font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--gold);text-decoration:none;display:block;border-bottom:1px solid var(--border);flex-shrink:0}
+.side-nav{flex:1;overflow-y:auto;padding:.7rem 0}
+.side-link{display:flex;align-items:center;gap:.8rem;padding:.7rem 1.3rem;color:rgba(255,255,255,.72);text-decoration:none;font-size:.87rem;font-weight:500;cursor:pointer;border-left:3px solid transparent;transition:background .15s,color .15s}
+.side-link .si{width:18px;text-align:center;font-size:.95rem;flex-shrink:0}
+.side-link:hover{background:rgba(201,168,76,.07);color:var(--gold-light)}
+.side-link.active{background:rgba(201,168,76,.12);color:var(--gold);border-left-color:var(--gold)}
+.sidebar-footer{border-top:1px solid var(--border);padding:.6rem 0;flex-shrink:0}
+.sidebar-classes{border-top:1px solid var(--border);padding:.9rem 1.3rem 1.1rem;flex-shrink:0}
+.sidebar-classes h6{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-text);margin-bottom:.7rem;font-weight:700}
+.sidebar-classes .class-tabs{display:flex;flex-direction:column;gap:.3rem;flex-wrap:nowrap}
+.sidebar-classes .class-tab{width:100%;text-align:left;border-radius:8px;padding:.5rem .7rem;font-size:.8rem;font-weight:500;background:transparent;border:1px solid transparent;color:rgba(255,255,255,.65);white-space:normal}
+.sidebar-classes .class-tab:hover{background:rgba(201,168,76,.08);color:var(--gold-light);border-color:transparent}
+.sidebar-classes .class-tab.active{background:rgba(201,168,76,.15);color:var(--gold);border-color:transparent}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:149}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:fixed;top:0;left:230px;right:0;z-index:120;background:var(--nav-bg);backdrop-filter:blur(10px);display:flex;align-items:center;gap:1rem;padding:0 1.4rem;height:66px;border-bottom:1px solid var(--border)}
+.main{padding-top:66px}
+.sidebar-hamburger{display:none;width:26px;height:20px;flex-direction:column;justify-content:space-between;cursor:pointer;background:none;border:none;padding:0;flex-shrink:0}
+.sidebar-hamburger span{display:block;height:2px;width:100%;background:var(--gold);border-radius:2px}
+.topbar-search{flex:1;max-width:440px;display:flex;align-items:center;gap:.55rem;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:8px 14px;transition:border-color .2s}
+.topbar-search:focus-within{border-color:var(--gold)}
+.topbar-search input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font-en);font-size:.88rem}
+.topbar-search input::placeholder{color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:.6rem;margin-left:auto;flex-shrink:0}
+.topbar-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold);color:#1a2340;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;cursor:pointer;flex-shrink:0}
+.dash-wrap{padding:1.6rem 5% 3rem;flex:1;width:100%}
+.dash-wrap .inner{max-width:100%;margin:0}
+.dash-wrap section{padding:0 0 1.8rem}
+.dash-wrap #about{background:none;padding:1.5rem 0 2.6rem}
+.dash-wrap #about .about-inner{gap:2.5rem;grid-template-columns:220px 1fr}
+.dash-wrap #about .section-title,.dash-wrap #about .section-label,.dash-wrap #about .section-desc{color:var(--text)}
+.dash-wrap #about .section-label{color:var(--gold-text)}
+.dash-wrap #about .section-desc{color:var(--text2)}
+.dash-wrap footer{margin:0 -5% -3rem;border-radius:0}
+.banner{position:relative;overflow:hidden;min-height:360px;display:flex;align-items:center;justify-content:flex-start;padding:3rem 5%;margin:0 -5% 1.8rem;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 60%,var(--hero3) 100%);background-size:cover;background-position:center;background-repeat:no-repeat;transition:background-image .3s}
+.banner::before{content:'';position:absolute;top:-90px;right:-90px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.14) 0%,transparent 70%);pointer-events:none}
+.banner-slide{display:none;position:relative;z-index:1;max-width:680px}
+.banner-slide.active{display:block;animation:fadeUp .6s ease both}
+.banner-tag{display:inline-block;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold-light);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:1rem}
+.banner-title{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;color:#fff;line-height:1.2;margin-bottom:.8rem}
+.banner-title span{color:var(--gold)}
+.banner-desc{color:rgba(255,255,255,.65);font-size:.92rem;line-height:1.6}
+.banner-dots{position:absolute;bottom:1.3rem;left:5%;display:flex;gap:.4rem;z-index:1}
+.banner-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:background .2s}
+.banner-dot.active{background:var(--gold)}
+.dash-content{min-width:0}
+.sidebar-profile{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.3rem;cursor:pointer;border-top:1px solid var(--border);transition:background .15s;flex-shrink:0}
+.sidebar-profile:hover{background:rgba(201,168,76,.07)}
+.sp-avatar{width:38px;height:38px;border-radius:50%;background:var(--gold);color:#1a2340;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+.sp-info{min-width:0}
+.sp-name{font-size:.85rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-role{font-size:.7rem;color:var(--gold-text);text-transform:uppercase;letter-spacing:.04em}
+.sidebar-stats{display:flex;justify-content:space-between;gap:.4rem;padding:.7rem 1.3rem;border-top:1px solid var(--border);flex-shrink:0}
+.sidebar-stats div{display:flex;flex-direction:column;align-items:center;font-size:.66rem;color:rgba(255,255,255,.55);text-align:center}
+.sidebar-stats b{font-family:'Playfair Display',serif;font-size:1rem;color:var(--gold);font-weight:700}
+@media(max-width:900px){
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-backdrop.open{display:block}
+  .sidebar-hamburger{display:flex}
+  .topbar{left:0}
+}
+@media(max-width:560px){
+  .topbar{padding:0 4%;gap:.6rem}
+  .topbar-search{max-width:none}
+  .dash-wrap{padding:1.2rem 4% 2rem}
+  .banner{padding:2rem 4%;margin:0 -4% 1.4rem;min-height:280px}
+}
+
+/* ═══ Horizontal scrolling rows (lessons/resources/videos/articles) instead of stacking down the page ═══ */
+.scroll-row{position:relative}
+.scroll-track{display:flex;gap:1rem;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;padding-bottom:.6rem;scrollbar-width:thin;scrollbar-color:var(--card-border) transparent}
+.scroll-track::-webkit-scrollbar{height:8px}
+.scroll-track::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:8px}
+.scroll-track::-webkit-scrollbar-track{background:transparent}
+.scroll-track>*{flex:0 0 270px;scroll-snap-align:start}
+.scroll-track .empty-state{flex:1 0 100%}
+.scroll-arrow{display:flex;align-items:center;justify-content:center;position:absolute;top:calc(50% - 1.1rem);width:38px;height:38px;border-radius:50%;background:var(--card-bg);border:1px solid var(--card-border);box-shadow:var(--shadow);color:var(--gold-text);font-size:1rem;cursor:pointer;z-index:2;transition:background .15s,opacity .15s}
+.scroll-arrow:hover{background:var(--gold-soft)}
+.scroll-arrow.left{left:-14px}
+.scroll-arrow.right{right:-14px}
+@media(max-width:700px){.scroll-arrow{display:none}.scroll-track>*{flex-basis:82%}}
+.membership-cta{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:14px;padding:1.1rem 1.5rem;margin-bottom:1.8rem;box-shadow:0 8px 24px rgba(201,168,76,.25)}
+.membership-cta.pending{background:var(--card-bg);border:1px solid var(--card-border);box-shadow:none}
+.mc-icon{font-size:1.8rem;flex-shrink:0}
+.mc-text{flex:1;min-width:220px;color:#1a2340}
+.mc-text b{display:block;font-size:1.15rem;font-weight:800;letter-spacing:-.01em}
+.mc-text span{display:block;font-size:.85rem;font-weight:500;opacity:.85;margin-top:.15rem}
+.membership-cta.pending .mc-text{color:var(--text)}
+.membership-cta.pending .mc-text span{color:var(--text2);opacity:1}
+.mc-btn{flex-shrink:0;background:#1a2340;color:#fff;border:none;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:var(--font-en);white-space:nowrap;transition:transform .15s}
+.mc-btn:hover{transform:translateY(-2px)}
+.pay-choice{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem}
+.pay-opt{display:flex;align-items:center;gap:.6rem;border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;cursor:pointer;font-size:.85rem;color:var(--text);transition:border-color .15s,background .15s}
+.pay-opt input{accent-color:var(--gold);flex-shrink:0}
+.pay-opt:has(input:checked){border-color:var(--gold);background:var(--gold-soft)}
+
+.learning-link{position:relative}
+.learning-badge{margin-left:auto;font-size:.55rem;letter-spacing:.08em;padding:2px 5px;border:1px solid var(--border);border-radius:999px;color:var(--gold-text,var(--gold));opacity:.9}
+</style>
+</head>
+<body>
+
+<div id="gate-loader" role="status" aria-live="polite" aria-label="Loading SherigSpace">
+  <div class="gl-inner">
+    <img class="gl-logo" src="sherigspace-logo.png" alt="SherigSpace logo">
+    <div class="gl-percent" id="gl-percent">0%</div>
+    <div class="gl-progress" aria-hidden="true"><div class="gl-progress-fill" id="gl-progress-fill"></div></div>
+    <div class="gl-label">Loading SherigSpace</div>
+  </div>
+</div>
+
+<div class="app" id="app" style="visibility:hidden">
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <a href="#home" class="sidebar-logo">SherigSpace</a>
+    <nav class="side-nav">
+      <a class="side-link" href="#home" data-section="home"><span class="si">🏠</span><span data-en="Home" data-dz="གདོང་ཤོག">Home</span></a>
+      <a class="side-link learning-link" href="student.html"><span class="si">🎓</span><span data-en="My Learning" data-dz="ངའི་ལྷབ་སྦྱང་།">My Learning</span><span class="learning-badge">TASKS</span></a>
+      <a class="side-link" href="#lessons" data-section="lessons"><span class="si">📖</span><span data-en="Lessons" data-dz="སློབ་སྟོན།">Lessons</span></a>
+      <a class="side-link" href="#resources" data-section="resources"><span class="si">📁</span><span data-en="Resources" data-dz="ཡིག་ཆ།">Resources</span></a>
+      <a class="side-link" href="#videos" data-section="videos"><span class="si">🎥</span><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></a>
+      <a class="side-link" href="#games" data-section="games"><span class="si">🎮</span><span data-en="EduGames" data-dz="རྩེད་མོ།">EduGames</span></a>
+      <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
+      <a class="side-link" href="#about" data-section="about"><span class="si">✦</span><span data-en="Why SherigSpace?" data-dz="SherigSpace ག་ཅི་གི་དོན་ལུ?">Why SherigSpace?</span></a>
+    </nav>
+    <div class="sidebar-profile" onclick="openProfile()">
+      <div class="sp-avatar" id="rpAvatar">··</div>
+      <div class="sp-info">
+        <div class="sp-name" id="rpName">…</div>
+        <div class="sp-role" id="rpRole">Member</div>
+      </div>
+    </div>
+    <div class="sidebar-stats">
+      <div><b id="st-lessons">…</b><span data-en="Lessons" data-dz="སློབ་ཚན།">Lessons</span></div>
+      <div><b id="st-videos">…</b><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></div>
+      <div><b id="st-users">…</b><span data-en="Members" data-dz="འཐུས་མི།">Members</span></div>
+    </div>
+    <div class="sidebar-footer" id="sidebarFooter"></div>
+    <div class="sidebar-classes">
+      <h6>✦ Browse by Class</h6>
+      <div id="class-tabs" class="class-tabs"></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="sidebar-hamburger" id="sidebarHamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input id="searchInput" type="search" placeholder="Search lessons, resources, videos, articles…" autocomplete="off"/>
+      </div>
+      <div class="topbar-right">
+        <div class="lang-toggle">
+          <button class="lang-btn on" data-lang-btn="en">EN</button>
+          <button class="lang-btn"    data-lang-btn="dz">རྫོང་ཁ།</button>
+        </div>
+        <div class="theme-toggle" id="themeToggle"><span class="t-icon moon">🌙</span><span class="t-icon sun">☀️</span></div>
+        <div class="topbar-avatar" id="topbarAvatar" onclick="openProfile()">··</div>
+      </div>
+    </header>
+
+    <div class="dash-wrap">
+      <div class="banner" id="home">
+        <div class="banner-dots" id="bannerDots"></div>
+      </div>
+      <div id="membership-notice" style="display:none"></div>
+
+      <div class="dash-content">
+
+<!-- LESSONS -->
+<section id="lessons">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Curriculum" data-dz="✦ རྩ་གཞུང་།">✦ Curriculum</p>
+      <h2 class="section-title" data-en="Teaching Lessons" data-dz="སློབ་སྟོན།">Teaching Lessons</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="Structured lessons designed for clarity and deep understanding." data-dz="གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།">Structured lessons designed for clarity and deep understanding.</p>
+    </div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="lessons-grid" aria-label="Scroll left">‹</button>
+      <div class="lessons-grid scroll-track" id="lessons-grid"></div>
+      <button class="scroll-arrow right" data-scroll="lessons-grid" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- RESOURCES -->
+<section id="resources">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Materials" data-dz="✦ མཁོ་ཆས།">✦ Materials</p>
+      <h2 class="section-title" data-en="Resources & Downloads" data-dz="ཡིག་ཆ་དང་ཕབ་ལེན།">Resources & Downloads</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="Sign in to download worksheets, guides, and materials." data-dz="མཁོ་ཆས་དང་ཡིག་ཆ་ཕབ་ལེན་གྱི་དོན་ལུ་ (Sign IN) མཛད་གནང་།">Sign in to download worksheets, guides, and materials.</p>
+    </div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="resources-grid" aria-label="Scroll left">‹</button>
+      <div class="resources-grid scroll-track" id="resources-grid"></div>
+      <button class="scroll-arrow right" data-scroll="resources-grid" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<section id="videos">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Video Lessons" data-dz="✦ བརྙན་ཐུང་།">✦ Video Lessons</p>
+      <h2 class="section-title" data-en="Watch & Learn" data-dz="བལྟ་སྟེ་ལྷབ་སྦྱང་མཛད་གནང་།་">Watch & Learn</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="Video tutorials to help you learn at your own pace." data-dz="ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་བརྙན་ཐུང་།">Video tutorials to help you learn at your own pace.</p>
+    </div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="videos-grid" aria-label="Scroll left">‹</button>
+      <div class="videos-grid scroll-track" id="videos-grid"></div>
+      <button class="scroll-arrow right" data-scroll="videos-grid" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- GAMES -->
+<section id="games">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Play & Learn" data-dz="✦ རྩེད་མོ་དང་ལྷབ་སྦྱང་།">✦ Play & Learn</p>
+      <h2 class="section-title" data-en="EduGames" data-dz="རྩེད་མོ།">EduGames</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="Interactive games that make practicing Dzongkha fun." data-dz="རྫོང་ཁ་སློབ་སྦྱང་དགའ་སྤྲོ་ཅན་སྦེ་བཟོ་མི་རྩེད་མོ།">Interactive games that make practicing Dzongkha fun.</p>
+    </div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="games-grid" aria-label="Scroll left">‹</button>
+      <div class="games-grid scroll-track" id="games-grid"></div>
+      <button class="scroll-arrow right" data-scroll="games-grid" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- BLOG -->
+<section id="blog">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Insights" data-dz="✦ བསམ་ཞིབ།">✦ Insights</p>
+      <h2 class="section-title" data-en="Latest Articles" data-dz="རྩོམ་ཡིག་གསརཔ།">Latest Articles</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="Reflections and strategies from the classroom." data-dz="སློབ་ཁང་གི་ཐབས་ལམ་དང་བསམ་ཞིབ།">Reflections and strategies from the classroom.</p>
+    </div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="blog-grid" aria-label="Scroll left">‹</button>
+      <div class="blog-grid scroll-track" id="blog-grid"></div>
+      <button class="scroll-arrow right" data-scroll="blog-grid" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- WHY SHERIGSPACE -->
+<section id="about">
+  <div class="about-inner sherigspace-purpose">
+    <div class="fade-in purpose-intro">
+      <p class="section-label" data-en="✦ What is SherigSpace?" data-dz="✦ SherigSpace ག་རེ་ཨིན་ན?">✦ What is SherigSpace?</p>
+      <h2 class="section-title" data-en="Bringing Dzongkha Learning into the Digital Age" data-dz="རྫོང་ཁའི་ལྷབ་སྦྱང་དེ་ ཌི་ཇི་ཊལ་དུས་སྐབས་ནང་འབག་འོང་།">Bringing Dzongkha Learning into the Digital Age</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="SherigSpace is a digital learning platform created to make learning and teaching more interactive, engaging and accessible, with a special focus on Dzongkha and Bhutanese learners." data-dz="SherigSpace ནི་ རྫོང་ཁ་དང་འབྲུག་གི་སློབ་ཕྲུག་ཚུ་ལུ་ ལྷབ་སྦྱང་དང་སློབ་སྟོན་དེ་ འགུལ་ཤུགས་ཅན་དང་ སྤྲོ་བ་ཅན། འཇམ་ཏོང་ཏོ་བཟོ་ཐབས་ཀྱི་ ཌི་ཇི་ཊལ་ལྷབ་སྦྱང་གི་གཞི་རྟེན་ཅིག་ཨིན།">SherigSpace is a digital learning platform created to make learning and teaching more interactive, engaging and accessible, with a special focus on Dzongkha and Bhutanese learners.</p>
+      <p class="purpose-note" data-en="It brings lessons, resources, videos, games, activities and assessments together in one learning space, helping students learn by seeing, hearing, practising and doing." data-dz="འདི་གིས་ སློབ་སྟོན། མཁོ་ཆས། བརྙན་ཐུང་། རྩེད་མོ། ལས་སྦྱོར་དང་ བརྟག་ཞིབ་ཚུ་གཞི་གཅིག་ནང་བསྡུ་སྟེ་ སློབ་ཕྲུག་ཚུ་ལུ་ ལྟ་སྟེ། ཉན་ཏེ། སྦྱང་སྟེ་དང་ ལག་ལེན་འཐབ་སྟེ་ལྷབ་སྦྱང་འབད་བཅུགཔ་ཨིན།">It brings lessons, resources, videos, games, activities and assessments together in one learning space, helping students learn by seeing, hearing, practising and doing.</p>
+    </div>
+
+    <div class="fade-in purpose-panel">
+      <p class="section-label" data-en="✦ Why SherigSpace?" data-dz="✦ SherigSpace ག་ཅི་གི་དོན་ལུ་ཨིན་ན?">✦ Why SherigSpace?</p>
+      <div class="purpose-cards">
+        <article class="purpose-card">
+          <div class="purpose-icon">📖</div>
+          <div>
+            <h3 data-en="Learn" data-dz="ལྷབ་སྦྱང་།">Learn</h3>
+            <p data-en="Access lessons, videos and digital resources that support classroom learning and independent practice." data-dz="སློབ་ཁང་གི་ལྷབ་སྦྱང་དང་ རང་དབང་ཐོག་སྦྱང་བརྩོན་ལུ་ ཕན་པའི་ སློབ་སྟོན། བརྙན་ཐུང་དང་ ཌི་ཇི་ཊལ་མཁོ་ཆས་ཚུ་ལེན་ཐོབ།">Access lessons, videos and digital resources that support classroom learning and independent practice.</p>
+          </div>
+        </article>
+        <article class="purpose-card">
+          <div class="purpose-icon">🎮</div>
+          <div>
+            <h3 data-en="Practise" data-dz="སྦྱང་བརྩོན།">Practise</h3>
+            <p data-en="Turn practice into an active experience through educational games, quizzes, interactive activities and assignments." data-dz="སློབ་སྟོན་རྩེད་མོ། དྲི་བ་དྲིས་ལན། འགུལ་ཤུགས་ཅན་གྱི་ལས་སྦྱོར་དང་ ལས་འགན་ཚུ་གི་ཐོག་ལས་ སྦྱང་བརྩོན་དེ་ལག་ལེན་ཅན་བཟོ།">Turn practice into an active experience through educational games, quizzes, interactive activities and assignments.</p>
+          </div>
+        </article>
+        <article class="purpose-card">
+          <div class="purpose-icon">📊</div>
+          <div>
+            <h3 data-en="Progress" data-dz="ཡར་རྒྱས།">Progress</h3>
+            <p data-en="Use assignments, feedback and assessments to understand learning progress and identify what needs more practice." data-dz="ལས་འགན། བསམ་འཆར་དང་ བརྟག་ཞིབ་ཚུ་གི་ཐོག་ལས་ ལྷབ་སྦྱང་གི་ཡར་རྒྱས་ཧ་གོ་སྟེ་ སླར་སྦྱང་དགོ་པའི་གནས་ཚད་ངོས་འཛིན་འབད།">Use assignments, feedback and assessments to understand learning progress and identify what needs more practice.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+      </div><!-- /dash-content -->
+
+      <footer><p>© 2026 <span class="gold">ཤེས་རིགSpace</span> · <span data-en="Built with care for better education, particularly Dzongkha" data-dz="རྫོང་ཁའི་ཤེས་ཡོན་ཡར་རྒྱས་གཏང་ཐབས་ལུ་དམིགས་ཏེ་བཟོ་ཡོདཔ་ཨིན།">Built with care for better education</span></p></footer>
+    </div><!-- /dash-wrap -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>My Profile</h3><button class="modal-close" onclick="closeProfile()">✕</button></div>
+    <div class="modal-body" id="profile-body"></div>
+  </div>
+</div>
+
+<!-- VIDEO PLAYER MODAL -->
+<div class="modal-overlay" id="video-modal">
+  <div class="modal-box" style="max-width:1200px;width:95%">
+    <div class="modal-head"><h3 id="video-modal-title">▶ Video</h3><button class="modal-close" onclick="closeVideoModal()">✕</button></div>
+    <div class="modal-body" style="padding:0">
+      <div id="video-embed-wrap" style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#000"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal-box" style="max-width:440px">
+    <div class="modal-head"><h3 id="payment-modal-title">🔒 Unlock Premium Content</h3><button class="modal-close" onclick="closePaymentModal()">✕</button></div>
+    <div class="modal-body" id="payment-modal-body"></div>
+  </div>
+</div>
+
+<script src="./interactive-video.js"></script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const html = document.documentElement;
+const ICONS={Mathematics:'📐',Science:'🌍','Language Arts':'✍️',History:'🏛️',Technology:'💻','Social Studies':'🗺️',Arts:'🎨','Physical Education':'⚽',Other:'📖'};
+const RICONS={PDF:'📄',DOCX:'📝',Image:'🗺️','Video Link':'🎥',Spreadsheet:'📊',Presentation:'🖥️',Other:'📁'};
+const GRADS=['linear-gradient(135deg,#1a2340,#253056)','linear-gradient(135deg,#1e3a5f,#1a2340)','linear-gradient(135deg,#253056,#1e3a5f)'];
+const EMOJIS=['📖','🌱','🛠️','💡','🎯','🔬'];
+
+// ── THUMBNAILS ──
+// Uses the thumbnail saved by the admin; when there isn't one, makes an automatic one
+// from the item's link (YouTube / Google Drive / image). Loaded defensively so a missing
+// helper file can never stop the site from working.
+const _thumbUtils = await import('./assignment-utils.js').catch(() => null);
+const autoThumbFor = _thumbUtils ? _thumbUtils.autoThumbFor : () => '';
+const fileKindFor = _thumbUtils ? _thumbUtils.fileKindFor : () => null;
+function thumbFor(row){ return safeUrl(row.thumbnail_url) || safeUrl(autoThumbFor(safeUrl(row.url))); }
+// Google can be picky about which of its two preview addresses answers, so try the second if the first fails.
+function thumbAlt(u){ const m = String(u).match(/drive\.google\.com\/thumbnail\?id=([\w-]+)/); return m ? 'https://lh3.googleusercontent.com/d/' + m[1] + '=w640' : ''; }
+function thumbImg(u, extra){
+  const alt = thumbAlt(u);
+  return `<img class="thumb-img" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-thumb${alt ? ` data-alt="${esc(alt)}"` : ''}${extra||''}/>`;
+}
+// Every item gets a clear cover — a real preview picture when one exists, otherwise a coloured
+// PDF / DOC / SLIDES… card — so no file is ever left as a blank box.
+const COVER = {
+  pdf:{icon:'📄',label:'PDF'}, doc:{icon:'📝',label:'DOC'}, slides:{icon:'📽️',label:'SLIDES'}, sheet:{icon:'📊',label:'SHEET'},
+  image:{icon:'🖼️',label:'IMAGE'}, video:{icon:'🎬',label:'VIDEO'}, audio:{icon:'🎧',label:'AUDIO'}, form:{icon:'📋',label:'FORM'},
+  file:{icon:'📎',label:'FILE'}, lesson:{icon:'📖',label:'LESSON'}, article:{icon:'✍️',label:'ARTICLE'}, game:{icon:'🎮',label:'GAME'}
+};
+function coverHtml(kind, emoji){
+  const m = COVER[kind] || COVER.file;
+  return `<div class="cover cover-${kind in COVER ? kind : 'file'}"><span class="cover-emoji">${emoji || m.icon}</span><span class="cover-label">${m.label}</span></div>`;
+}
+function miniCover(kind){
+  const k = kind in COVER ? kind : 'file', m = COVER[k];
+  return `<div class="cover-mini cover-${k}"><span>${m.icon}</span><b>${m.label}</b></div>`;
+}
+// Image errors don't bubble, so listen while the event travels down (capture).
+document.addEventListener('error', function(e){
+  const img = e.target;
+  if(!img || img.tagName !== 'IMG' || !img.hasAttribute('data-thumb')) return;
+  const alt = img.getAttribute('data-alt');
+  if(alt){ img.removeAttribute('data-alt'); img.src = alt; return; }
+  if(img.hasAttribute('data-kind')){
+    const w = document.createElement('div'); w.innerHTML = miniCover(img.getAttribute('data-kind'));
+    img.replaceWith(w.firstChild); return;
+  }
+  img.remove();   // the icon underneath shows instead
+}, true);
+
+// Class levels are grouped into bands for browsing; each item is still tagged
+// with one specific class (or "All Classes" for general content) in the admin panel.
+const CLASS_GROUPS = [
+  { label:'All',            levels:null },   // null = show every class, no filtering
+  { label:'Class PP & 1',   levels:['PP','Class 1'] },
+  { label:'Class 2 & 3',    levels:['Class 2','Class 3'] },
+  { label:'Class 4 to 6',   levels:['Class 4','Class 5','Class 6'] },
+  { label:'Class 7 & 8',    levels:['Class 7','Class 8'] },
+  { label:'Class 9 & 10',   levels:['Class 9','Class 10'] },
+  { label:'Class 11 & 12',  levels:['Class 11','Class 12'] },
+  { label:'General',        levels:['All Classes'] }
+];
+const storedClass = localStorage.getItem('edu_selected_class');
+let selectedClass = CLASS_GROUPS.some(g=>g.label===storedClass) ? storedClass : CLASS_GROUPS[0].label;
+
+function renderClassTabs(){
+  const wrap = document.getElementById('class-tabs');
+  wrap.innerHTML = CLASS_GROUPS.map(g =>
+    `<button class="class-tab${g.label===selectedClass?' active':''}" data-class="${esc(g.label)}">${esc(g.label)}</button>`
+  ).join('');
+  wrap.querySelectorAll('.class-tab').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      selectedClass = btn.getAttribute('data-class');
+      localStorage.setItem('edu_selected_class', selectedClass);
+      renderClassTabs();
+      await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles()]);
+      // The freshly drawn cards start invisible (fade-in). Without this line
+      // they stayed invisible until the page was refreshed.
+      observeFadeIns();
+    });
+  });
+}
+
+// An item matches the current class filter if it's tagged "All Classes"
+// (general material) or matches the picked class exactly.
+let searchQuery = '';
+function matchesSearch(item){
+  const hay = [item.title,item.dz,item.description,item.subject,item.class_level,item.rtype,item.gtype].join(' ').toLowerCase();
+  return searchQuery.split(/\s+/).every(w=>hay.includes(w));
+}
+function emptyMsg(name){ return searchQuery ? `No ${name} match “${esc(searchQuery)}”` : `No ${name} for ${esc(selectedClass)} yet`; }
+function matchesClass(item){
+  if(searchQuery) return matchesSearch(item);   // searching looks through every class
+  const group = CLASS_GROUPS.find(g=>g.label===selectedClass);
+  if(!group || !group.levels) return true;      // "All" — no filtering
+  const c = item.class_level || 'All Classes';
+  if(c === 'All Classes') return true;          // general content shows under every group
+  return group.levels.includes(c);
+}
+
+function lang(){ return html.getAttribute('data-lang'); }
+function session(){ try{ return JSON.parse(localStorage.getItem('edu_session')||'null') }catch{ return null } }
+
+// ── SCROLL ARROWS (horizontal card rows) ──
+document.querySelectorAll('.scroll-arrow').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const track = document.getElementById(btn.getAttribute('data-scroll'));
+    if(!track) return;
+    const step = track.clientWidth * 0.9;
+    track.scrollBy({ left: btn.classList.contains('left') ? -step : step, behavior:'smooth' });
+  });
+});
+
+// ── SIDEBAR (mobile drawer) ──
+const sidebar = document.getElementById('sidebar');
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+function closeSidebar(){ sidebar.classList.remove('open'); sidebarBackdrop.classList.remove('open'); }
+document.getElementById('sidebarHamburger').addEventListener('click', ()=>{
+  sidebar.classList.toggle('open'); sidebarBackdrop.classList.toggle('open');
+});
+sidebarBackdrop.addEventListener('click', closeSidebar);
+sidebar.querySelectorAll('.side-link').forEach(a=>a.addEventListener('click', closeSidebar));
+
+// ── SIDEBAR / RIGHT-PANEL USER INFO ── (page is login-only, s is always set here)
+function renderNav(){
+  const s = session();
+  const topbarAvatar = document.getElementById('topbarAvatar');
+  const spBlock = document.querySelector('.sidebar-profile');
+  if(!s){
+    // Guest — browsing is open, but there's no profile to show yet.
+    topbarAvatar.textContent = '👤';
+    topbarAvatar.onclick = () => window.location.href = 'login.html';
+    document.getElementById('rpAvatar').textContent = '👤';
+    document.getElementById('rpName').textContent = 'Guest';
+    document.getElementById('rpRole').textContent = 'Not logged in';
+    if(spBlock) spBlock.onclick = () => window.location.href = 'login.html';
+    document.getElementById('sidebarFooter').innerHTML =
+      `<a class="side-link" href="login.html"><span class="si">🔑</span><span>Log In / Sign Up</span></a>`;
+    return;
+  }
+  const initials = esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  topbarAvatar.textContent = initials;
+  topbarAvatar.onclick = () => openProfile();
+  document.getElementById('rpAvatar').textContent = initials;
+  document.getElementById('rpName').textContent = s.name;
+  document.getElementById('rpRole').textContent = s.class_grade || s.role || 'Member';
+  if(spBlock) spBlock.onclick = () => openProfile();
+  const role = String(s.role || 'user').toLowerCase();
+  const teacherSide = (role === 'teacher' || role === 'admin') ? `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher</span></a>` : '';
+  const adminSide = role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
+  const learningLink = document.querySelector('.learning-link');
+  if(learningLink) learningLink.style.display = role === 'student' ? '' : 'none';
+  document.getElementById('sidebarFooter').innerHTML =
+    `${teacherSide}${adminSide}<a class="side-link" onclick="logout()"><span class="si">🔒</span><span>Log Out</span></a>`;
+}
+
+window.logout = async function(){
+  await supabase.auth.signOut();
+  localStorage.removeItem('edu_session');
+  location.reload();
+};
+
+// ── PROFILE MODAL ──
+window.openProfile = async function(){
+  const s = session(); if(!s) return;
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', s.id).single();
+  document.getElementById('profile-body').innerHTML=`
+    <div class="profile-avatar">${esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+    <div class="profile-name">${esc(s.name)}</div>
+    <div class="profile-email">${esc(s.email)}</div>
+    <div class="profile-class">📚 ${esc(profile?.class_grade || 'Member')}</div>
+    <div class="profile-stat">
+      <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
+      <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
+    </div>
+    ${(profile?.role === 'teacher' || profile?.role === 'admin') ? `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🍎 Teacher Dashboard</a>` : ''}
+    ${profile?.role === 'student' ? `<a href="student.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🎓 My Learning</a>` : ''}
+    ${profile?.role === 'admin' ? `<a href="admin.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🛠️ Open Admin Panel</a>` : ''}
+    <button onclick="logout()" style="width:100%;padding:10px;background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);border-radius:4px;color:#e05c5c;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer">🔒 Log Out</button>`;
+  document.getElementById('profile-modal').classList.add('open');
+};
+window.closeProfile = () => document.getElementById('profile-modal').classList.remove('open');
+document.getElementById('profile-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('profile-modal')) closeProfile(); });
+
+// ── VIDEO PLAYER MODAL ──
+// YouTube videos with interactive questions use SherigInteractiveVideo.
+// Videos without questions, and Google Drive videos, keep the existing normal player.
+let activeInteractiveVideo = null;
+
+function getYouTubeId(url){
+  if(!url) return '';
+  const raw = String(url).trim();
+  if(/^[A-Za-z0-9_-]{6,}$/.test(raw) && !raw.includes('/')) return raw;
+  try{
+    const u = new URL(raw);
+    const host = u.hostname.replace(/^www\./,'').toLowerCase();
+    if(host === 'youtu.be') return u.pathname.replace(/^\/+/, '').split('/')[0] || '';
+    if(['youtube.com','m.youtube.com','youtube-nocookie.com'].includes(host)){
+      const v = u.searchParams.get('v');
+      if(v) return v;
+      const m = u.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/);
+      return m ? m[1] : '';
+    }
+  }catch(e){}
+  return '';
+}
+
+function getEmbedUrl(url){
+  if(!url) return null;
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+  if(yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0&modestbranding=1`;
+  const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(gd) return `https://drive.google.com/file/d/${gd[1]}/preview`;
+  return null;
+}
+
+async function loadInteractiveQuestions(videoId){
+  if(!videoId) return [];
+  try{
+    const { data, error } = await supabase
+      .from('interactive_questions')
+      .select('*')
+      .eq('video_id', videoId)
+      .order('timestamp_seconds', { ascending:true });
+
+    if(error){
+      // The interactive table may not have been created yet. Normal video playback must still work.
+      console.warn('Interactive questions unavailable:', error.message || error);
+      return [];
+    }
+
+    return (data || [])
+      .filter(q => q.enabled !== false)
+      .map(q => ({
+        ...q,
+        timestamp: q.timestamp_seconds ?? q.timestamp ?? q.time ?? 0,
+        type: q.question_type ?? q.type ?? 'multiple_choice',
+        correctAnswer: q.correct_answer ?? q.correctAnswer,
+        accepted_answers: q.accepted_answers ?? q.acceptedAnswers,
+        points: q.points ?? 1
+      }));
+  }catch(error){
+    console.warn('Could not load interactive questions:', error);
+    return [];
+  }
+}
+
+function renderNormalVideo(embed){
+  document.getElementById('video-embed-wrap').innerHTML =
+    `<iframe src="${esc(embed)}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+}
+
+window.openVideoModal = async function(url, id, title){
+  trackOpen('videos', id);
+
+  const embed = getEmbedUrl(url);
+  if(!embed){
+    window.open(url,'_blank','noopener');
+    return;
+  }
+
+  document.getElementById('video-modal-title').textContent = title || '▶ Video';
+  const wrap = document.getElementById('video-embed-wrap');
+  wrap.innerHTML = '';
+  document.getElementById('video-modal').classList.add('open');
+
+  if(activeInteractiveVideo){
+    try{ activeInteractiveVideo.destroy(); }catch(e){}
+    activeInteractiveVideo = null;
+  }
+
+  const youtubeId = getYouTubeId(url);
+  const questions = youtubeId ? await loadInteractiveQuestions(id) : [];
+
+  // Interactive mode only applies to YouTube videos that have questions attached.
+  if(youtubeId && questions.length && window.SherigInteractiveVideo){
+    activeInteractiveVideo = new window.SherigInteractiveVideo({
+      container: wrap,
+      videoId: youtubeId,
+      questions,
+      onAnswer: async function(result){
+        // Save the student's answer if the table/RLS is available.
+        try{
+          const s = session();
+          if(!s) return;
+          const { error } = await supabase.from('video_interactions').insert({
+            video_id: id,
+            question_id: result.questionId,
+            user_id: s.id,
+            answer: result.answer,
+            is_correct: result.isCorrect,
+            points_earned: result.points
+          });
+          if(error) console.warn('Could not save interactive answer:', error.message || error);
+        }catch(e){
+          console.warn('Interactive answer save failed:', e);
+        }
+      },
+      onProgress: async function(progress){
+        try{
+          const s = session();
+          if(!s) return;
+          const payload = {
+            video_id: id,
+            user_id: s.id,
+            watch_seconds: progress.watchSeconds,
+            completion_percentage: progress.completionPercentage,
+            completed: progress.completed,
+            updated_at: new Date().toISOString()
+          };
+          const { error } = await supabase.from('video_progress').upsert(payload, { onConflict:'video_id,user_id' });
+          if(error) console.warn('Could not save video progress:', error.message || error);
+        }catch(e){
+          console.warn('Video progress save failed:', e);
+        }
+      }
+    });
+  }else{
+    renderNormalVideo(embed);
+  }
+};
+
+window.closeVideoModal = function(){
+  if(activeInteractiveVideo){
+    try{ activeInteractiveVideo.destroy(); }catch(e){}
+    activeInteractiveVideo = null;
+  }
+  document.getElementById('video-modal').classList.remove('open');
+  document.getElementById('video-embed-wrap').innerHTML = '';
+};
+
+document.getElementById('video-modal').addEventListener('click', e=>{
+  if(e.target === document.getElementById('video-modal')) closeVideoModal();
+});
+
+// ── PREMIUM / PAYMENT SYSTEM ──
+// Phone number for instant "I've paid" notifications (WhatsApp + direct call).
+const CONTACT_PHONE = '97517272018'; // Bhutan country code + number, no "+" (required by wa.me)
+const MEMBERSHIP_PRICE = 50; // Nu. — one-time site access fee every signed-up member must pay to unlock standard (non-premium) content
+let siteSettings = {};
+let myPurchases = {}; // "type:id" -> 'pending' | 'approved'
+
+async function loadSiteSettings(){
+  const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+  siteSettings = data || {};
+}
+
+async function loadMyPurchases(){
+  myPurchases = {};
+  const s = session();
+  if(!s) return;
+  const { data } = await supabase.from('purchases').select('item_type,item_id,status').eq('user_id', s.id);
+  (data||[]).forEach(p=>{ myPurchases[`${p.item_type}:${p.item_id}`] = p.status; });
+}
+
+// Returns 'free' | 'approved' | 'pending' | 'locked-anon' | 'locked-pay'
+function accessState(type, item){
+  const s = session();
+  if(!s) return 'locked-anon';
+  if(item.is_premium){
+    // A Premium Membership subscription unlocks every premium item at once,
+    // as an alternative to buying this one item on its own.
+    const pm = myPurchases['premium_membership:general'];
+    if(pm === 'approved') return 'approved';
+    const st = myPurchases[`${type}:${item.id}`];
+    if(st === 'approved') return 'approved';
+    if(pm === 'pending' || st === 'pending') return 'pending';
+    return 'locked-pay';
+  }
+  // Standard (non-premium) content: everyone who has signed up still needs to
+  // pay the one-time site membership fee once before any of it opens.
+  const st = myPurchases['membership:general'];
+  if(st === 'approved') return 'free';
+  if(st === 'pending') return 'pending';
+  return 'locked-pay';
+}
+
+function lockOverlayHtml(state, item){
+  if(state === 'free' || state === 'approved') return '';
+  // Premium items show their own price; standard members-only content just says
+  // "Members Only" on the card itself — the actual price only appears once they
+  // click through, in the payment popup, so cards don't look priced item-by-item.
+  const left = item.is_premium ? `🔒 ${esc(item.price != null ? 'Nu. ' + item.price : 'Paid')}` : '🔒 Members Only';
+  if(state === 'pending'){
+    const waText = encodeURIComponent(`Hi Thinley, I already submitted payment for "${item.title || 'an item'}" — could you please review it?`);
+    return `<div class="lock-bar pending"><span>⏳ Payment under review</span><a class="lb-cta" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 Notify me</a></div>`;
+  }
+  if(state === 'locked-anon') return `<div class="lock-bar"><span>${left}</span><a class="lb-cta" href="login.html">Log in to unlock →</a></div>`;
+  if(state === 'locked-pay') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">Tap to unlock →</span></div>`;
+  return '';
+}
+// Adds the "leave room for the price bar" class to locked/pending cards.
+function lockCls(state){ return (state === 'free' || state === 'approved') ? '' : ' is-locked'; }
+
+// The price for the all-premium-content subscription. Falls back to 200 until
+// you set a real value in Admin → Settings → "Premium Membership Price".
+function premiumPrice(){ return siteSettings.premium_plan_price || 200; }
+
+// Which purchase the payment modal will actually submit — set whenever the
+// modal opens, and updated live if the person switches between "just this
+// item" and "Premium Membership" using the radio choice below.
+let paymentChoice = null;
+
+window.openPaymentModal = function(type, id, title, price){
+  const body = document.getElementById('payment-modal-body');
+  const qr = safeUrl(siteSettings.qr_image_url);
+  const isMembership = type === 'membership';
+  const isPremiumMembership = type === 'premium_membership';
+  const isItem = !isMembership && !isPremiumMembership;   // a specific lesson/resource/video/game/article
+
+  paymentChoice = { type, id, price: Number(price)||0, title };
+
+  document.getElementById('payment-modal-title').textContent =
+    isMembership ? '🔓 Become a Member' : isPremiumMembership ? '⭐ Premium Membership' : '🔒 Unlock Premium Content';
+
+  const introText = isMembership
+    ? `Pay <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong> to become a SherigSpace member and unlock every lesson, resource, video, game and article. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.`
+    : isPremiumMembership
+    ? `Pay <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong> to become a Premium Member and unlock <strong>every</strong> premium lesson, resource, video, game and article — no more paying per item.`
+    : `Choose how you'd like to unlock <strong style="color:var(--text)">${esc(title)}</strong>.`;
+
+  const optionsHtml = isItem ? `
+    <div class="pay-choice">
+      <label class="pay-opt"><input type="radio" name="pay-opt" checked onchange="selectPayOption('${esc(type)}','${esc(id)}',${Number(price)||0},'${esc(title)}')"/>
+        <span>Just this item — <b>Nu. ${esc(price)}</b></span></label>
+      <label class="pay-opt"><input type="radio" name="pay-opt" onchange="selectPayOption('premium_membership','general',${premiumPrice()},'Premium Membership')"/>
+        <span>⭐ Premium Membership — <b>Nu. ${esc(premiumPrice())}</b> · unlocks every premium item</span></label>
+    </div>` : '';
+
+  body.innerHTML = `
+    <p style="font-size:.9rem;color:var(--text2);margin-bottom:1rem">${introText}</p>
+    ${optionsHtml}
+    ${qr ? `<img src="${esc(qr)}" style="width:100%;max-width:220px;display:block;margin:0 auto 1rem;border-radius:6px;border:1px solid var(--border)"/>` : ''}
+    <div style="background:var(--gold-soft);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;margin-bottom:1rem;font-size:.85rem;line-height:1.8">
+      ${siteSettings.bank_name?`<div><strong>Bank/App:</strong> ${esc(siteSettings.bank_name)}</div>`:''}
+      ${siteSettings.account_name?`<div><strong>Account Name:</strong> ${esc(siteSettings.account_name)}</div>`:''}
+      ${siteSettings.account_number?`<div><strong>Account Number:</strong> ${esc(siteSettings.account_number)}</div>`:''}
+    </div>
+    <div class="field">
+      <label style="font-size:.76rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">Upload Payment Screenshot</label>
+      <input type="file" id="proof-file" accept="image/*" style="margin-top:.4rem"/>
+    </div>
+    <p id="proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
+    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof()">${isMembership ? 'Become a Member' : isPremiumMembership ? 'Become a Premium Member' : 'Submit for Review'}</button>
+  `;
+  document.getElementById('payment-modal').classList.add('open');
+};
+
+// Fired when someone switches the radio choice between "just this item" and "Premium Membership".
+window.selectPayOption = function(type, id, price, title){
+  paymentChoice = { type, id, price: Number(price)||0, title };
+  const btn = document.getElementById('proof-submit-btn');
+  if(btn) btn.textContent = type === 'premium_membership' ? 'Become a Premium Member' : 'Submit for Review';
+};
+
+window.closePaymentModal = function(){ document.getElementById('payment-modal').classList.remove('open'); };
+document.getElementById('payment-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('payment-modal')) closePaymentModal(); });
+
+window.submitPaymentProof = async function(){
+  if(!paymentChoice) return;
+  const { type, id, price, title } = paymentChoice;
+  const s = session();
+  if(!s){ window.location='login.html'; return; }
+  const fileInput = document.getElementById('proof-file');
+  const file = fileInput.files[0];
+  const statusEl = document.getElementById('proof-status');
+  const submitBtn = document.getElementById('proof-submit-btn');
+  if(!file){ statusEl.textContent = 'Please choose a screenshot first.'; statusEl.style.color = 'var(--red,#e05c5c)'; return; }
+  const submitLabel = submitBtn ? submitBtn.textContent : 'Submit for Review';
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+  statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--text2)';
+  try{
+    // Supabase Storage keys only allow safe characters — spaces, colons
+    // etc. in the original filename cause an "Invalid key" error, so
+    // sanitize before building the path.
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${s.id}/${Date.now()}-${safeName}`;
+    const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file);
+    if(upErr) throw upErr;
+    const { error: insErr } = await supabase.from('purchases').insert({
+      user_id: s.id, item_type: type, item_id: id, price, proof_path: path, status: 'pending'
+    });
+    if(insErr) throw insErr;
+    myPurchases[`${type}:${id}`] = 'pending';
+    renderAll();
+    // Swap the modal to a "submitted" state with a one-tap way to notify me directly —
+    // reviewing screenshots can take a while, so this lets them skip the wait.
+    const waText = encodeURIComponent(`Hi Thinley, I just submitted payment for "${title || 'an item'}" on SherigSpace — could you please review it?`);
+    document.getElementById('payment-modal-body').innerHTML = `
+      <div style="text-align:center;padding:.5rem 0 .2rem">
+        <div style="font-size:2.2rem;margin-bottom:.5rem">✅</div>
+        <h4 style="color:var(--text);margin-bottom:.4rem">Submitted for review!</h4>
+        <p style="font-size:.85rem;color:var(--text2);margin-bottom:1.2rem">We'll unlock it once it's checked. Want it faster? Let me know directly:</p>
+        <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.2rem">
+          <a class="qc-btn qc-wa" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 WhatsApp Me</a>
+          <a class="qc-btn qc-call" href="tel:+${CONTACT_PHONE}">📞 Call Me</a>
+        </div>
+        <button class="btn-primary" style="border:none;cursor:pointer" onclick="closePaymentModal()">Done</button>
+      </div>
+    `;
+  }catch(err){
+    console.error('Payment proof submit failed:', err);
+    statusEl.textContent = 'Failed: ' + (err && err.message ? err.message : 'please try again.'); statusEl.style.color = 'var(--red,#e05c5c)';
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = submitLabel; }
+  }
+};
+
+// ── LOAD STATS (live from Supabase) ──
+async function loadStats(){
+  const [{ count: lCount }, { count: vCount }, { count: uCount }] = await Promise.all([
+    supabase.from('lessons').select('*',{count:'exact',head:true}),
+    supabase.from('videos').select('*',{count:'exact',head:true}),
+    supabase.from('profiles').select('*',{count:'exact',head:true})
+  ]);
+  document.getElementById('st-lessons').textContent = lCount ?? 0;
+  document.getElementById('st-videos').textContent  = vCount ?? 0;
+  document.getElementById('st-users').textContent   = uCount ?? 0;
+}
+
+// ── RENDER LESSONS ──
+async function renderLessons(){
+  const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load lessons:', loadErr);
+  const items = (raw||[]).filter(matchesClass);
+  const g = document.getElementById('lessons-grid');
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📚</div><p>${emptyMsg('lessons')}</p></div>`; return; }
+  g.innerHTML = items.map(l => {
+    const icon = ICONS[l.subject]||'📖';
+    const title = lang()==='dz' && l.dz ? l.dz : l.title;
+    const url = safeUrl(l.url);
+    const thumb = thumbFor(l);
+    const lk = fileKindFor(url) || 'lesson';
+    const state = accessState('lessons', l);
+    return `<div class="lesson-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}" data-premium="${l.is_premium?'1':''}">
+      <div class="card-media">${coverHtml(lk, lk==='lesson' ? icon : null)}${thumb ? thumbImg(thumb) : ''}
+        <div class="pill-row"><span class="pill">${esc(l.subject||'General')}</span>${l.class_level && l.class_level!=='All Classes' ? `<span class="pill">${esc(l.class_level)}</span>` : ''}</div>
+      </div>
+      <div class="card-body">
+        <h3>${esc(title)}</h3>
+        <p>${esc(l.description||'')}</p>
+        <div class="lesson-meta">${l.duration?`<span>⏱ ${esc(l.duration)}</span>`:''}${l.slides?`<span>📄 ${esc(l.slides)}</span>`:''}${l.level?`<span>🎯 ${esc(l.level)}</span>`:''}</div>
+      </div>
+      ${lockOverlayHtml(state, l)}
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.lesson-card').forEach(card=>{
+    const url = card.getAttribute('data-url');
+    const id = card.getAttribute('data-id');
+    const state = card.getAttribute('data-state');
+    card.addEventListener('click', ()=>{
+      if(state === 'locked-pay'){
+        if(card.getAttribute('data-premium')) openPaymentModal('lessons', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+      }
+      else if(state === 'locked-anon'){ window.location='login.html'; return; }
+      else if(state === 'pending') return;
+      else if(url){ trackOpen('lessons', id); window.open(url,'_blank','noopener'); }
+    });
+  });
+}
+
+// ── RENDER RESOURCES ──
+async function renderResources(){
+  const { data: raw, error: loadErr } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load resources:', loadErr);
+  const items = (raw||[]).filter(matchesClass);
+  const g = document.getElementById('resources-grid');
+  const s = session();
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">📁</div><p>${emptyMsg('resources')}</p></div>`; return; }
+  g.innerHTML = items.map(r => {
+    const icon = RICONS[r.rtype]||'📁';
+    const title = lang()==='dz' && r.dz ? r.dz : r.title;
+    const loginLocked = !s;
+    const url = safeUrl(r.url);
+    const thumb = thumbFor(r);
+    const rk = fileKindFor(url, r.rtype) || 'file';
+    const state = loginLocked ? 'locked-anon' : accessState('resources', r);
+    const overlay = lockOverlayHtml(state, r);
+    return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(r.id)}" data-title="${esc(title)}" data-price="${esc(r.price||0)}">
+      <div class="card-media">${coverHtml(rk)}${thumb ? thumbImg(thumb) : ''}
+        <div class="pill-row">${r.rtype?`<span class="pill">${esc(r.rtype)}</span>`:''}${r.class_level && r.class_level!=='All Classes'?`<span class="pill">${esc(r.class_level)}</span>`:''}</div>
+      </div>
+      <div class="card-body"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.filesize||'')}</div></div>
+      ${overlay}
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.resource-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const state = card.getAttribute('data-state');
+      const url = card.getAttribute('data-url');
+      const id = card.getAttribute('data-id');
+      if(state === 'locked-anon') window.location='login.html';
+      else if(state === 'locked-pay'){
+        if(card.getAttribute('data-premium')) openPaymentModal('resources', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+      }
+      else if(state === 'pending') return;
+      else if(url){ trackOpen('resources', id); window.open(url,'_blank','noopener'); }
+    });
+  });
+}
+
+// ── RENDER GAMES ──
+async function renderGames(){
+  const { data: raw, error: loadErr } = await supabase.from('games').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load games:', loadErr);
+  const items = (raw||[]).filter(matchesClass);
+  const g = document.getElementById('games-grid');
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎮</div><p>${emptyMsg('games')}</p></div>`; return; }
+  g.innerHTML = items.map(gm => {
+    const title = lang()==='dz' && gm.dz ? gm.dz : gm.title;
+    const url = safeUrl(gm.url);
+    const thumb = thumbFor(gm);
+    const state = accessState('games', gm);
+    return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(gm.id)}" data-title="${esc(title)}" data-price="${esc(gm.price||0)}" data-premium="${gm.is_premium?'1':''}">
+      <div class="card-media">${coverHtml('game')}${thumb ? thumbImg(thumb) : ''}
+        <div class="pill-row">${gm.gtype?`<span class="pill">${esc(gm.gtype)}</span>`:''}${gm.class_level && gm.class_level!=='All Classes'?`<span class="pill">${esc(gm.class_level)}</span>`:''}</div>
+      </div>
+      <div class="card-body"><h4>${esc(title)}</h4><p>${esc(gm.description||'')}</p></div>
+      ${lockOverlayHtml(state, gm)}
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.resource-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const state = card.getAttribute('data-state');
+      const url = card.getAttribute('data-url');
+      const id = card.getAttribute('data-id');
+      if(state === 'locked-anon') window.location='login.html';
+      else if(state === 'locked-pay'){
+        if(card.getAttribute('data-premium')) openPaymentModal('games', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+      }
+      else if(state === 'pending') return;
+      else if(url){ trackOpen('games', id); window.open(url,'_blank','noopener'); }
+    });
+  });
+}
+
+// ── RENDER VIDEOS ──
+async function renderVideos(){
+  const { data: raw, error: loadErr } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load videos:', loadErr);
+  const items = (raw||[]).filter(matchesClass);
+  const g = document.getElementById('videos-grid');
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>${emptyMsg('videos')}</p></div>`; return; }
+  g.innerHTML = items.map(v => {
+    const title = lang()==='dz' && v.dz ? v.dz : v.title;
+    const icon = ICONS[v.subject]||'🎬';
+    const url = safeUrl(v.url);
+    const thumb = thumbFor(v);
+    const state = accessState('videos', v);
+    return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}" data-premium="${v.is_premium?'1':''}">
+      <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div><div class="play-btn">▶</div></div>
+      <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}</div></div>
+      ${lockOverlayHtml(state, v)}
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.video-card').forEach(card=>{
+    const state = card.getAttribute('data-state');
+    card.addEventListener('click', ()=>{
+      if(state === 'locked-anon') { window.location='login.html'; return; }
+      if(state === 'locked-pay') {
+        if(card.getAttribute('data-premium')) openPaymentModal('videos', card.getAttribute('data-id'), card.getAttribute('data-title'), card.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        return;
+      }
+      if(state === 'pending') return;
+      openVideoModal(card.getAttribute('data-url'), card.getAttribute('data-id'), card.getAttribute('data-title'));
+    });
+  });
+}
+
+// ── RENDER ARTICLES + COMMENTS ──
+async function renderArticles(){
+  const { data: raw, error: loadErr } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  if(loadErr) console.error('Could not load articles:', loadErr);
+  const items = (raw||[]).filter(matchesClass);
+  const g = document.getElementById('blog-grid');
+  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">✍️</div><p>${emptyMsg('articles')}</p></div>`; return; }
+  const s = session();
+  g.innerHTML = items.map((a,i) => {
+    const title = lang()==='dz' && a.dz ? a.dz : a.title;
+    const date = a.article_date ? new Date(a.article_date).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : '';
+    const url = safeUrl(a.url);
+    const thumb = thumbFor(a);
+    const state = accessState('articles', a);
+    const lockLabel = a.is_premium ? `Nu.${esc(a.price||0)}` : 'Members Only';
+    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 ${lockLabel} — log in</span>`
+                    : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 ${lockLabel} — tap to unlock</span>`
+                    : state==='pending' ? ` <span style="color:var(--text2);font-size:.78rem">⏳ Under review</span>` : '';
+    return `<div class="blog-card fade-in">
+      <div class="blog-thumb">${coverHtml('article', EMOJIS[i%6])}${thumb ? thumbImg(thumb) : ''}</div>
+      <div class="blog-body">
+        <div class="blog-date">${esc(date)}</div>
+        <h3 data-state="${state}" data-url="${esc(url)}" data-id="${esc(a.id)}" data-title="${esc(title)}" data-price="${esc(a.price||0)}" data-premium="${a.is_premium?'1':''}" style="${state==='free'||state==='approved'?'cursor:pointer':''}">${esc(title)}${priceTag}</h3>
+        <p>${esc(a.description||'')}</p>
+        <div class="comments-wrap" data-article="${esc(a.id)}">
+          <h4>💬 Comments</h4>
+          <div class="comment-list">Loading…</div>
+          ${s
+            ? `<form class="comment-form" onsubmit="return false"><input class="comment-input" maxlength="500" placeholder="Add a comment…"/><button type="submit">Post</button></form>`
+            : `<p class="comment-login-note">Sign in to leave a comment. <a href="login.html">Log in →</a></p>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.blog-body h3[data-state]').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      const state = h.getAttribute('data-state');
+      const id = h.getAttribute('data-id');
+      if(state === 'locked-anon'){ window.location='login.html'; return; }
+      if(state === 'locked-pay'){
+        if(h.getAttribute('data-premium')) openPaymentModal('articles', id, h.getAttribute('data-title'), h.getAttribute('data-price'));
+        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        return;
+      }
+      if(state === 'pending') return;
+      const url = h.getAttribute('data-url');
+      if(url){ trackOpen('articles', id); window.open(url,'_blank','noopener'); }
+    });
+  });
+  g.querySelectorAll('.comments-wrap').forEach(wrap=>loadComments(wrap, s));
+}
+
+async function loadComments(wrap, s){
+  const articleId = wrap.getAttribute('data-article');
+  const listEl = wrap.querySelector('.comment-list');
+  const { data: comments, error } = await supabase.from('comments').select('*').eq('article_id', articleId).order('created_at',{ascending:true});
+  if(error){ listEl.innerHTML = `<p class="comment-login-note">Comments unavailable right now.</p>`; return; }
+  listEl.innerHTML = comments?.length
+    ? comments.map(c=>`<div class="comment-item"><div class="comment-author">${esc(c.author_name)}</div><div class="comment-text">${esc(c.body)}</div></div>`).join('')
+    : `<p class="comment-login-note" style="opacity:.7">No comments yet — be the first!</p>`;
+  const form = wrap.querySelector('.comment-form');
+  if(form){
+    form.addEventListener('submit', async ()=>{
+      const input = form.querySelector('.comment-input');
+      const text = input.value.trim();
+      if(!text || !s) return;
+      const btn = form.querySelector('button');
+      btn.disabled = true;
+      const { error: insErr } = await supabase.from('comments').insert({
+        article_id: articleId, author_id: s.id, author_name: s.name, body: text
+      });
+      btn.disabled = false;
+      if(!insErr){ input.value=''; loadComments(wrap, s); }
+    });
+  }
+}
+
+function renderMembershipNotice(){
+  const el = document.getElementById('membership-notice');
+  if(!el) return;
+  if(!session()){
+    el.style.display = 'block';
+    el.innerHTML = `<div class="membership-cta"><div class="mc-icon">🔒</div><div class="mc-text"><b>Log in or sign up to unlock SherigSpace</b><span>Create a free account, then pay a one-time Nu. ${MEMBERSHIP_PRICE} membership fee to access every lesson, resource, video, game and article.</span></div><a href="login.html" class="mc-btn" style="text-decoration:none;display:inline-flex;align-items:center">Log In / Sign Up →</a></div>`;
+    return;
+  }
+  const st = myPurchases['membership:general'];
+  if(st === 'approved'){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  if(st === 'pending'){
+    el.innerHTML = `<div class="membership-cta pending"><div class="mc-icon">⏳</div><div class="mc-text"><b>Membership payment under review</b><span>Your Nu. ${MEMBERSHIP_PRICE} payment is being checked — content unlocks once it's approved.</span></div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="membership-cta"><div class="mc-icon">🔒</div><div class="mc-text"><b>Pay Nu. ${MEMBERSHIP_PRICE} to become a member</b><span>Unlock every lesson, resource, video, game and article on SherigSpace.</span></div><button class="mc-btn" onclick="openPaymentModal('membership','general','Site Membership',${MEMBERSHIP_PRICE})">Become a Member →</button></div>`;
+}
+
+async function renderAll(){
+  renderNav();
+  renderClassTabs();
+  await Promise.all([loadSiteSettings(), loadMyPurchases()]);
+  renderMembershipNotice();
+  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), loadStats(), renderBanner()]);
+  observeFadeIns();
+}
+
+// ── SEARCH ──
+const searchInput = document.getElementById('searchInput');
+let searchTimer = null;
+async function runSearch(){
+  searchQuery = searchInput.value.trim().toLowerCase();
+  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames()]);
+  observeFadeIns();
+}
+searchInput.addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 250); });
+searchInput.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){ searchInput.value=''; if(searchQuery) runSearch(); searchInput.blur(); }
+  if(e.key === 'Enter'){
+    clearTimeout(searchTimer);
+    runSearch().then(()=>{
+      const hit = [['lessons','.lesson-card'],['resources','.resource-card'],['videos','.video-card'],['games','.resource-card'],['blog','.blog-card']].find(([id,c])=>document.querySelector('#'+id+' '+c));
+      if(hit) document.getElementById(hit[0]).scrollIntoView({behavior:'smooth'});
+    });
+  }
+});
+
+// ── BANNER CAROUSEL ──
+// Slides come from the admin's "Banners" section; when none have been added
+// yet, these three built-in slides are shown instead (same as before).
+const DEFAULT_BANNERS = [
+  { title:'Enhancing Dzongkha Learning through <span>Modern Digital Tools</span>', dz:'དེང་སང་གློག་རིག་ཐོག་ <span>རྫོང་ཁ་ལྷབ་སྦྱང་ཡར་རྒྱས།</span>',
+    tag:'✦ Welcome to My Teaching & Learning Space', tag_dz:'✦ ངེའི་སློབ་སྟོན་གྱི་ཞིང་ཁམས་ནང་བྱོན་པ་ལེགས་སོ།',
+    description:'Browse lessons, download resources, watch videos, and join the learning community.',
+    description_dz:'རྫོང་ཁའི་སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཕན་ཚུན་འབྲེལ་བའི་བརྙན་ཐུང་གི་བང་མཛོད།', image_url:null, _default:true },
+  { title:'Structured Lessons for <span>Every Class</span>', dz:'<span>འཛིན་གྲྭ་རེ་རེ</span>བཞིན་གྱི་སློབ་སྟོན།',
+    tag:'✦ Teaching Lessons', tag_dz:'✦ སློབ་སྟོན།',
+    description:'Clear, well-organized lessons designed for real classroom understanding.',
+    description_dz:'གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།', image_url:null, _default:true },
+  { title:'Worksheets, Guides & <span>Video Lessons</span>', dz:'ཡིག་ཆ་དང་<span>བརྙན་ཐུང་།</span>',
+    tag:'✦ Resources & Videos', tag_dz:'✦ ཡིག་ཆ་དང་བརྙན་ཐུང་།',
+    description:'Everything you need to practice and learn at your own pace.',
+    description_dz:'ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་མཁོ་ཆས།', image_url:null, _default:true }
+];
+let bannerData = null;         // fetched once, then just re-read on language change
+let bannerRestart = null;      // set once the carousel is wired up
+async function renderBanner(){
+  if(!bannerData){
+    const { data, error } = await supabase.from('banners').select('*').order('sort_order',{ascending:true});
+    if(error) console.error('Could not load banners:', error);
+    bannerData = (data && data.length) ? data : DEFAULT_BANNERS;
+  }
+  const wrap = document.getElementById('home');
+  const dotsWrap = document.getElementById('bannerDots');
+  wrap.querySelectorAll('.banner-slide').forEach(el=>el.remove());
+  bannerData.forEach((b,i)=>{
+    const title = lang()==='dz' && b.dz ? b.dz : (b.title||'');
+    const tag = lang()==='dz' && b.tag_dz ? b.tag_dz : (b.tag||'');
+    const desc = lang()==='dz' && b.description_dz ? b.description_dz : (b.description||'');
+    const el = document.createElement('div');
+    el.className = 'banner-slide' + (i===0?' active':'');
+    el.innerHTML = `${tag?`<div class="banner-tag">${esc(tag)}</div>`:''}<h1 class="banner-title">${b._default ? title : esc(title)}</h1>${desc?`<p class="banner-desc">${esc(desc)}</p>`:''}`;
+    wrap.insertBefore(el, dotsWrap);
+  });
+  const slides = Array.from(wrap.querySelectorAll('.banner-slide'));
+  if(!slides.length) return;
+  dotsWrap.innerHTML = slides.map((_,i)=>`<span class="banner-dot${i===0?' active':''}" data-i="${i}"></span>`).join('');
+  const dots = Array.from(dotsWrap.children);
+  let cur = 0, timer = null;
+  function applyBg(i){
+    const img = safeUrl(bannerData[i] && bannerData[i].image_url);
+    wrap.style.backgroundImage = img ? `linear-gradient(135deg,rgba(15,22,35,.72),rgba(26,47,80,.5)), url('${img.replace(/'/g,"%27")}')` : '';
+  }
+  function show(i){
+    cur = (i+slides.length)%slides.length;
+    slides.forEach((s,j)=>s.classList.toggle('active', j===cur));
+    dots.forEach((d,j)=>d.classList.toggle('active', j===cur));
+    applyBg(cur);
+  }
+  function restart(){ clearInterval(timer); timer = setInterval(()=>show(cur+1), 6000); }
+  dots.forEach(d=>d.addEventListener('click', ()=>{ show(Number(d.getAttribute('data-i'))); restart(); }));
+  applyBg(0);
+  restart();
+}
+
+// ── THEME ──
+html.setAttribute('data-theme', localStorage.getItem('eduTheme')||'dark');
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  const n = html.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme',n); localStorage.setItem('eduTheme',n);
+});
+
+// ── LANGUAGE ──
+const langBtns = document.querySelectorAll('[data-lang-btn]');
+function applyLang(l){
+  html.setAttribute('data-lang',l); localStorage.setItem('eduLang',l);
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    const val=el.getAttribute('data-'+l); if(!val) return;
+    if(val.includes('<')) el.innerHTML=val; else el.textContent=val;
+  });
+  langBtns.forEach(b=>b.classList.toggle('on',b.getAttribute('data-lang-btn')===l));
+}
+langBtns.forEach(b=>b.addEventListener('click',()=>{ applyLang(b.getAttribute('data-lang-btn')); renderAll(); }));
+applyLang(localStorage.getItem('eduLang')||'en');
+
+// ── FADE IN ──
+function observeFadeIns(){
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach((e,i)=>{ if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('visible'),i*80); io.unobserve(e.target); }});
+  },{threshold:.08});
+  document.querySelectorAll('.fade-in:not(.visible)').forEach(el=>io.observe(el));
+}
+
+// ── ACTIVE SIDEBAR LINK ──
+const secs = document.querySelectorAll('.dash-wrap section[id], #home');
+const sideLinks = document.querySelectorAll('.side-link[href^="#"]');
+window.addEventListener('scroll',()=>{
+  let cur='home';
+  secs.forEach(s=>{ if(window.scrollY>=s.offsetTop-140) cur=s.id; });
+  sideLinks.forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+cur));
+});
+
+// ── SYNC SUPABASE SESSION → localStorage on load AND on change ──
+// The site is open to browse for anyone. Signed-out visitors see every
+// section and card; only opening/downloading something checks accessState()
+// and asks them to log in or pay, per-click — there is no page-level gate.
+async function syncSessionAndRender(){
+  const { data } = await supabase.auth.getSession();
+  if(data.session){
+    const uid = data.session.user.id;
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id',uid).single();
+    if(profile){
+      localStorage.setItem('edu_session', JSON.stringify({
+        id: uid, name: profile.name, email: profile.email,
+        role: profile.role, class_grade: profile.class_grade
+      }));
+    }
+  } else {
+    localStorage.removeItem('edu_session');
+  }
+  renderAll();
+}
+supabase.auth.onAuthStateChange(()=>{ syncSessionAndRender(); });
+syncSessionAndRender();
+
+// ── 1-SECOND BRAND LOADER ──
+// The loader intentionally runs from 0% to 100% in exactly 1 second,
+// then reveals the existing SherigSpace page. The percentage is visual
+// feedback only; the page's Supabase data continues loading independently.
+(function startBrandLoader(){
+  const loader = document.getElementById('gate-loader');
+  const app = document.getElementById('app');
+  const percent = document.getElementById('gl-percent');
+  const fill = document.getElementById('gl-progress-fill');
+  if(!loader || !app || !percent || !fill) return;
+
+  const start = performance.now();
+  const duration = 1000;
+
+  function tick(now){
+    const progress = Math.min(1, (now - start) / duration);
+    const value = Math.round(progress * 100);
+    percent.textContent = value + '%';
+    fill.style.width = value + '%';
+
+    if(progress < 1){
+      requestAnimationFrame(tick);
+    }else{
+      setTimeout(()=>{
+        app.style.visibility = 'visible';
+        loader.classList.add('hide');
+        setTimeout(()=>loader.remove(), 400);
+      }, 30);
+    }
+  }
+
+  app.style.visibility = 'hidden';
+  requestAnimationFrame(tick);
+})();
+
+// ── VISIT LOGGING ──
+// Logs one visit per browser session (not on every reload/anchor click)
+// so the admin panel's "Site Visits" count reflects sessions, not raw
+// page loads. Silently does nothing if it fails — never blocks the site.
+(function logVisitOnce(){
+  if(sessionStorage.getItem('edu_visit_logged')) return;
+  sessionStorage.setItem('edu_visit_logged','1');
+  supabase.from('page_views').insert({}).then(()=>{}, ()=>{});
+})();
+
+// ── DOWNLOAD / OPEN TRACKING ──
+// Fire-and-forget: never blocks or delays actually opening the file.
+window.trackOpen = function(table, id){
+  if(!id) return;
+  supabase.rpc('increment_downloads', { p_table: table, p_id: id }).then(()=>{}, ()=>{});
+};
+</script>
+</body>
+</html>

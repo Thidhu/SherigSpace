@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"/>
+<link rel="manifest" href="site.webmanifest"/>
+<title>SherigSpace — Login / Sign Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--surface:#192035;--red:#e05c5c;--green:#4caf84}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.bg{position:fixed;inset:0;z-index:0;background:linear-gradient(135deg,#0f1623 0%,#1a2340 60%,#1a2f50 100%)}
+.bg::before{content:'';position:absolute;top:-100px;right:-100px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.08) 0%,transparent 70%)}
+.bg::after{content:'';position:absolute;bottom:-80px;left:-80px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.05) 0%,transparent 70%)}
+.wrap{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem}
+.brand{text-align:center;margin-bottom:2rem}
+.brand h1{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold-text,var(--gold));letter-spacing:.02em}
+.brand p{font-size:.85rem;color:var(--text2);margin-top:.3rem}
+.card{background:rgba(25,32,53,.95);border:1px solid var(--border);border-radius:10px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.tabs{display:grid;grid-template-columns:1fr 1fr}
+.tab{padding:1rem;text-align:center;font-weight:600;font-size:.9rem;cursor:pointer;color:var(--text2);background:rgba(255,255,255,.03);border-bottom:2px solid transparent;transition:all .2s}
+.tab.on{color:var(--gold-text,var(--gold));background:transparent;border-bottom-color:var(--gold)}
+.forms{padding:1.8rem}
+.form{display:none;flex-direction:column;gap:1rem}
+.form.on{display:flex}
+.field{display:flex;flex-direction:column;gap:.35rem}
+.field label{font-size:.76rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
+.field input,.field select{background:#202b4a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.92rem;padding:11px 13px;outline:none;transition:border-color .2s;width:100%}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+.field input::placeholder{color:rgba(255,255,255,.25)}
+.field select option{background:#1a2340}
+.btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s,transform .15s;margin-top:.3rem}
+.btn:hover{background:var(--gold-light);transform:translateY(-1px)}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* Google button */
+.btn-google{width:100%;padding:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:5px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem;transition:background .2s,border-color .2s}
+.btn-google:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25)}
+.btn-google svg{flex-shrink:0}
+.divider{display:flex;align-items:center;gap:.75rem;color:var(--text2);font-size:.75rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1)}
+
+.msg{font-size:.82rem;padding:10px 13px;border-radius:5px;display:none}
+.msg.err{background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.3);color:var(--err-text,#f09090);display:block}
+.msg.ok{background:rgba(76,175,132,.12);border:1px solid rgba(76,175,132,.3);color:var(--ok-text,#7ed9b0);display:block}
+.hint{font-size:.78rem;color:var(--text2);text-align:center}
+.hint a{color:var(--gold-text,var(--gold));cursor:pointer;text-decoration:none}
+.hint a:hover{text-decoration:underline}
+.strength{height:3px;border-radius:2px;margin-top:4px;background:var(--border);overflow:hidden}
+.strength-bar{height:100%;width:0;border-radius:2px;transition:width .3s,background .3s}
+
+/* Admin access link at bottom — now just a normal link, the real check happens on admin.html */
+.admin-link{display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.75rem;border-top:1px solid rgba(201,168,76,.1);font-size:.78rem;color:var(--text2);text-decoration:none;transition:color .2s}
+.admin-link:hover{color:var(--gold-text,var(--gold))}
+.admin-link .lock-icon{font-size:.9rem}
+
+/* Modals */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+.modal.show{display:flex}
+.modal-box{width:100%;max-width:400px;background:rgba(19,28,46,.98);border:1px solid var(--border);border-radius:10px;padding:1.6rem;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-box h2{font-family:'Playfair Display',serif;color:var(--gold-text,var(--gold));margin-bottom:.4rem;font-size:1.3rem}
+.modal-text{color:var(--text2);font-size:.83rem;margin-bottom:1.1rem;line-height:1.5}
+.modal-field{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1rem}
+.modal-field label{font-size:.73rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
+.modal-field input{background:#202b4a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;padding:10px 12px;outline:none;transition:border-color .2s;width:100%}
+.modal-field input:focus{border-color:var(--gold)}
+.modal-actions{display:flex;gap:.6rem;margin-top:.5rem}
+.modal-actions .btn{margin-top:0}
+.btn-cancel{background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.1)}
+.btn-cancel:hover{background:rgba(255,255,255,.13);transform:none}
+
+footer{position:relative;z-index:1;text-align:center;padding:1.2rem;font-size:.78rem;color:rgba(255,255,255,.25)}
+footer span{color:var(--gold-text,var(--gold))}
+</style>
+<script src="theme.js"></script>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+  <div class="brand">
+    <div data-lang-slot style="display:flex;justify-content:center;margin-bottom:.8rem"></div>
+    <h1>SherigSpace</h1>
+    <p data-en="Your Teaching &amp; Learning Portal" data-dz="ཁྱོད་ཀྱི་སློབ་སྟོན་དང་ལྷབ་སྦྱང་ས་ཁོངས།">Your Teaching &amp; Learning Portal</p>
+  </div>
+  <div class="card">
+    <div class="tabs" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="tab on" onclick="switchTab('login')" data-en="Log In" data-dz="ནང་འཛུལ།">Log In</div>
+      <div class="tab" onclick="switchTab('signup')" data-en="Sign Up" data-dz="ཐོ་བཀོད།">Sign Up</div>
+      <div class="tab" onclick="switchTab('student')" data-en="🎓 Student" data-dz="🎓 སློབ་ཕྲུག">🎓 Student</div>
+    </div>
+    <div class="forms">
+
+      <!-- LOGIN -->
+      <form class="form on" id="f-login" onsubmit="doLogin(event)">
+        <div id="login-msg" class="msg"></div>
+        <!-- Google Sign In -->
+        <button type="button" class="btn-google" onclick="doGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.1C33.4 33.1 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.3 35.6 26.8 36 24 36c-5.1 0-9.4-2.9-11.1-7L6.2 33.9C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.1c-.8 2.2-2.3 4.1-4.2 5.4l6.2 5.2C40.5 34.9 44 29.9 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+          Continue with Google
+        </button>
+        <div class="divider" data-en="or sign in with email" data-dz="ཡང་ན་ཡིག་འཕྲིན་ཐོག་ནང་འཛུལ">or sign in with email</div>
+        <div class="field">
+          <label data-en="Email" data-dz="ཡིག་འཕྲིན།">Email</label>
+          <input id="l-email" type="email" placeholder="you@example.com" required/>
+        </div>
+        <div class="field">
+          <label data-en="Password" data-dz="གསང་ཨང་།">Password</label>
+          <input id="l-pass" type="password" placeholder="Your password" data-en-ph="Your password" data-dz-ph="ཁྱོད་ཀྱི་གསང་ཨང་" required/>
+        </div>
+        <p class="hint" style="text-align:right;margin-top:-8px;">
+          <a onclick="openForgotPassword()" data-en="Forgot Password?" data-dz="གསང་ཨང་བརྗེད་སོང་ག?">Forgot Password?</a>
+        </p>
+        <button class="btn" type="submit" id="login-btn" data-en="Log In" data-dz="ནང་འཛུལ།">Log In</button>
+        <p class="hint" data-en="Don't have an account? <a onclick=&quot;switchTab('signup')&quot;>Sign up here</a>" data-dz="ཁྱོད་ལུ་ཐོ་བཀོད་མིན་འདུག་ག? <a onclick=&quot;switchTab('signup')&quot;>དེབ་འདི་ནང་ཐོ་བཀོད་འབད།</a>">Don't have an account? <a onclick="switchTab('signup')">Sign up here</a></p>
+      </form>
+
+      <!-- SIGNUP -->
+      <form class="form" id="f-signup" onsubmit="doSignup(event)">
+        <div id="signup-msg" class="msg"></div>
+        <!-- Google Sign Up -->
+        <button type="button" class="btn-google" onclick="doGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.1C33.4 33.1 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.3 35.6 26.8 36 24 36c-5.1 0-9.4-2.9-11.1-7L6.2 33.9C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.1c-.8 2.2-2.3 4.1-4.2 5.4l6.2 5.2C40.5 34.9 44 29.9 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+          Sign up with Google
+        </button>
+        <div class="divider" data-en="or create account with email" data-dz="ཡང་ན་ཡིག་འཕྲིན་ཐོག་ཐོ་བཀོད་འབད">or create account with email</div>
+        <div class="field">
+          <label data-en="Full Name" data-dz="མིང་ཆ་ཚང་།">Full Name</label>
+          <input id="s-name" type="text" placeholder="e.g. Tenzin Dorji" required/>
+        </div>
+        <div class="field">
+          <label data-en="Email" data-dz="ཡིག་འཕྲིན།">Email</label>
+          <input id="s-email" type="email" placeholder="you@example.com" required/>
+        </div>
+        <div class="field">
+          <label data-en="I am signing up as" data-dz="ང་ག་ཅི་སྦེ་ཐོ་བཀོད་འབད་དོ་ག">I am signing up as</label>
+          <select id="s-role" required>
+            <option value="teacher" data-en="👨‍🏫 Teacher / Educator" data-dz="👨‍🏫 སློབ་དཔོན།">👨‍🏫 Teacher / Educator</option>
+            <option value="user" data-en="👤 General User" data-dz="👤 སྤྱིར་བཏང་ལག་ལེན་པ">👤 General User</option>
+          </select>
+          <div style="font-size:.76rem;color:var(--text2);margin-top:.35rem" data-en="Teacher accounts start free. You can upgrade only when you reach the free usage limit." data-dz="སློབ་དཔོན་གྱི་ཐོ་བཀོད་རིན་མེད་སྦེ་འགོ་བཙུགས། རིན་མེད་ཚད་ལས་ལྷགཔ་ད་གིས་འོས་སྦྱོར་འབད་དགོ།">Teacher accounts start free. You can upgrade only when you reach the free usage limit.</div>
+        </div>
+        <div class="field">
+          <label data-en="Password" data-dz="གསང་ཨང་།">Password</label>
+          <input id="s-pass" type="password" placeholder="Min. 6 characters" data-en-ph="Min. 6 characters" data-dz-ph="ཉུང་མཐའ་ཡིག་འབྲུ་ ༦" required oninput="checkStrength(this.value)"/>
+          <div class="strength"><div class="strength-bar" id="sbar"></div></div>
+        </div>
+        <div class="field">
+          <label data-en="Confirm Password" data-dz="གསང་ཨང་བདེན་སྦྱོར།">Confirm Password</label>
+          <input id="s-pass2" type="password" placeholder="Repeat password" data-en-ph="Repeat password" data-dz-ph="གསང་ཨང་ལོག་བྲིས" required/>
+        </div>
+        <button class="btn" type="submit" id="signup-btn" data-en="Create Account" data-dz="ཐོ་བཀོད་གསར་བསྐྲུན།">Create Account</button>
+        <p class="hint" data-en="Already have an account? <a onclick=&quot;switchTab('login')&quot;>Log in here</a>" data-dz="ཐོ་བཀོད་ཡོད་བཞིནམ་ན? <a onclick=&quot;switchTab('login')&quot;>དེབ་འདི་ནང་ནང་འཛུལ།</a>">Already have an account? <a onclick="switchTab('login')">Log in here</a></p>
+      </form>
+
+      <!-- STUDENT LOGIN -->
+      <form class="form" id="f-student" onsubmit="doStudentLogin(event)">
+        <div id="student-msg" class="msg"></div>
+        <p style="font-size:.82rem;color:var(--text2);margin-bottom:.2rem" data-en="Enter your name and PIN. Ask your teacher if you need your PIN." data-dz="ཁྱོད་རའི་མིང་དང་ PIN བཙུགས། PIN དགོས་པ་ཅིན་སློབ་དཔོན་ལུ་འདྲི།">Enter your name and PIN. Ask your teacher if you need your PIN.</p>
+        <div class="field">
+          <label data-en="Student Name" data-dz="སློབ་ཕྲུག་གི་མིང་">Student Name</label>
+          <input id="st-name" type="text" placeholder="e.g. Karma Wangchuk" autocomplete="username" autocapitalize="words" required/>
+        </div>
+        <div class="field">
+          <label>PIN</label>
+          <input id="st-pin" type="password" inputmode="numeric" placeholder="6-digit PIN" data-en-ph="6-digit PIN" data-dz-ph="PIN ཨང་གྲངས་ ༦" autocomplete="current-password" required/>
+        </div>
+        <button class="btn" type="submit" id="student-btn" data-en="Log In" data-dz="ནང་འཛུལ།">Log In</button>
+      </form>
+
+    </div>
+    <!-- Admin access: just a normal link now. admin.html itself checks
+         Supabase Auth + profiles.role and redirects anyone who isn't an
+         admin — there is no separate password to guess here anymore. -->
+    <a class="admin-link" href="admin.html">
+      <span class="lock-icon">🔐</span>
+      <span data-en="Admin Access" data-dz="འགོ་འདྲེན་འཛུལ་སྒོ།">Admin Access</span>
+    </a>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div id="forgotModal" class="modal">
+  <div class="modal-box">
+    <h2 data-en="Reset Password" data-dz="གསང་ཨང་སླར་གསོ།">Reset Password</h2>
+    <p class="modal-text" data-en="Enter your email and we'll send a password reset link." data-dz="ཁྱོད་ཀྱི་ཡིག་འཕྲིན་བཙུགས་བཞིནམ་ལས་ང་བཅས་ཀྱིས་གསང་ཨང་སླར་གསོའི་འབྲེལ་མཐུད་གཏང་ནི།">Enter your email and we'll send a password reset link.</p>
+    <div id="forgot-msg" class="msg"></div>
+    <div class="modal-field">
+      <label data-en="Email" data-dz="ཡིག་འཕྲིན།">Email</label>
+      <input id="fp-email" type="email" placeholder="you@example.com"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="sendReset()" data-en="Send Reset Link" data-dz="སླར་གསོའི་འབྲེལ་མཐུད་གཏང་།">Send Reset Link</button>
+      <button class="btn btn-cancel" onclick="closeForgotPassword()" data-en="Cancel" data-dz="ཕྱིར་འཐེན།">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<footer>© 2026 <span>SherigSpace</span></footer>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
+
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function showMsg(id, msg, type){
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'msg ' + type;
+}
+function setBtn(id, loading, label){
+  const b = document.getElementById(id);
+  b.disabled = loading;
+  b.textContent = loading ? T('Please wait…','བཞུགས་སྒོ་གནང་...') : label;
+}
+window.switchTab = function(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>
+    el.classList.toggle('on',(t==='login'&&i===0)||(t==='signup'&&i===1)||(t==='student'&&i===2))
+  );
+  document.getElementById('f-login').classList.toggle('on', t==='login');
+  document.getElementById('f-signup').classList.toggle('on', t==='signup');
+  document.getElementById('f-student').classList.toggle('on', t==='student');
+};
+window.checkStrength = function(v){
+  const bar = document.getElementById('sbar');
+  let score = 0;
+  if(v.length>=6) score++;
+  if(v.length>=10) score++;
+  if(/[A-Z]/.test(v)) score++;
+  if(/[0-9]/.test(v)) score++;
+  if(/[^A-Za-z0-9]/.test(v)) score++;
+  bar.style.width = [0,20,40,65,85,100][score]+'%';
+  bar.style.background = ['#e05c5c','#e05c5c','#e8a84c','#c9a84c','#4caf84','#4caf84'][score];
+};
+
+// ── GOOGLE LOGIN ──
+window.doGoogleLogin = async function(){
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/index.html' }
+    });
+    if(error) throw error;
+  } catch(err){
+    showMsg('login-msg', '❌ ' + err.message, 'err');
+    switchTab('login');
+  }
+};
+
+window.doSignup = async function(e){
+  e.preventDefault();
+  const name  = document.getElementById('s-name').value.trim();
+  const email = document.getElementById('s-email').value.trim().toLowerCase();
+  const role  = document.getElementById('s-role').value;
+  const pass  = document.getElementById('s-pass').value;
+  const pass2 = document.getElementById('s-pass2').value;
+  if(!name)         return showMsg('signup-msg','Please enter your full name.','err');
+  if(!['teacher','user'].includes(role)) return showMsg('signup-msg','Please select your account type.','err');
+  if(pass.length<6) return showMsg('signup-msg','Password must be at least 6 characters.','err');
+  if(pass!==pass2)  return showMsg('signup-msg','Passwords do not match.','err');
+  setBtn('signup-btn', true, 'Create Account');
+  showMsg('signup-msg','','');
+  try {
+    const { data, error } = await sb.auth.signUp({ email, password: pass });
+    if(error) throw error;
+    const uid = data.user?.id || data.session?.user?.id;
+    if(!uid){ showMsg('signup-msg','✅ Check your email to confirm, then log in.','ok'); return; }
+    // Teacher is a legitimate self-selected signup role. The database trigger
+    // allows teacher/user only on initial profile creation and prevents later
+    // role escalation or role changes by ordinary users.
+    const { error: pe } = await sb.from('profiles').upsert({ id: uid, name, email, class_grade: '', role });
+    if(pe) throw pe;
+    showMsg('signup-msg','✅ Account created! Redirecting…','ok');
+    setTimeout(()=> window.location.href='index.html', 1200);
+  } catch(err){
+    showMsg('signup-msg','❌ ' + err.message,'err');
+  } finally {
+    setBtn('signup-btn', false, 'Create Account');
+  }
+};
+
+window.doLogin = async function(e){
+  e.preventDefault();
+  const email = document.getElementById('l-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('l-pass').value;
+  if(!email||!pass) return showMsg('login-msg','Please enter your email and password.','err');
+  setBtn('login-btn', true, 'Log In');
+  showMsg('login-msg','','');
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if(error) throw error;
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+    localStorage.setItem('edu_session', JSON.stringify({
+      id: data.user.id, name: profile?.name || email, email,
+      role: profile?.role || 'user', class_grade: profile?.class_grade || ''
+    }));
+    window.location.href = 'index.html';
+  } catch(err){
+    showMsg('login-msg','❌ ' + err.message,'err');
+  } finally {
+    setBtn('login-btn', false, 'Log In');
+  }
+};
+
+window.doStudentLogin = async function(e){
+  e.preventDefault();
+  const studentName = document.getElementById('st-name').value.trim();
+  const pin = document.getElementById('st-pin').value.trim();
+  if(!studentName || !pin) return showMsg('student-msg','Please enter your name and PIN.','err');
+  setBtn('student-btn', true, 'Log In');
+  showMsg('student-msg','','');
+  try {
+    const { data: email, error: lookupErr } = await sb.rpc('student_login_lookup_by_name', {
+      p_name: studentName,
+      p_pin: pin
+    });
+    if(lookupErr) throw lookupErr;
+    if(!email) throw new Error('Name or PIN is incorrect. Please check with your teacher.');
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pin });
+    if(error) throw error;
+
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+    if(String(profile?.role || '').toLowerCase() !== 'student') {
+      await sb.auth.signOut();
+      throw new Error('This account is not registered as a student account.');
+    }
+
+    localStorage.setItem('edu_session', JSON.stringify({
+      id: data.user.id, name: profile?.name || studentName, email,
+      role: 'student', class_grade: profile?.class_grade || ''
+    }));
+    window.location.href = 'student.html';
+  } catch(err){
+    showMsg('student-msg','❌ ' + err.message,'err');
+  } finally {
+    setBtn('student-btn', false, 'Log In');
+  }
+};
+
+// ── FORGOT PASSWORD ──
+window.openForgotPassword = function(){ document.getElementById('forgotModal').classList.add('show'); };
+window.closeForgotPassword = function(){ document.getElementById('forgotModal').classList.remove('show'); };
+window.sendReset = async function(){
+  const email = document.getElementById('fp-email').value.trim().toLowerCase();
+  if(!email) return showMsg('forgot-msg','Please enter your email.','err');
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email);
+    if(error) throw error;
+    showMsg('forgot-msg','✅ Reset link sent! Check your email.','ok');
+    setTimeout(closeForgotPassword, 2500);
+  } catch(err){
+    showMsg('forgot-msg','❌ ' + err.message,'err');
+  }
+};
+
+// Close modal on backdrop click
+document.getElementById('forgotModal').addEventListener('click', e => {
+  if(e.target.id === 'forgotModal') document.getElementById('forgotModal').classList.remove('show');
+});
+
+// Auto redirect if already logged in — a student account goes to their
+// own assignments dashboard, everyone else to the main site.
+sb.auth.getSession().then(async ({ data }) => {
+  if(!data.session) return;
+  const { data: enrollment } = await sb.from('class_students').select('id').eq('student_id', data.session.user.id).limit(1).maybeSingle();
+  window.location.href = enrollment ? 'student.html' : 'index.html';
+});
+
+// Handle Google OAuth redirect with profile creation
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_IN' && session) {
+    const user = session.user;
+    const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).single();
+    if(!existing){
+      const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+      await sb.from('profiles').upsert({ id: user.id, name, email: user.email, role: 'user' });
+    }
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    localStorage.setItem('edu_session', JSON.stringify({
+      id: user.id, name: profile?.name || user.email, email: user.email,
+      role: profile?.role || 'user', class_grade: profile?.class_grade || ''
+    }));
+  }
+});
+</script>
+</body>
+</html>
