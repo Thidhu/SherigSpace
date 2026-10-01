@@ -131,11 +131,15 @@ export function parseQuestions(row) {
   return raw
     .filter(q => q && q.id && q.text)
     .map(q => {
-      const type = ['short', 'long', 'choice', 'truefalse'].includes(q.type) ? q.type : 'short';
+      // fillblank / image / audio used to be turned into plain short-answer questions
+      // (losing the picture or sound), so they are now kept as saved.
+      const type = ['short', 'long', 'choice', 'truefalse', 'fillblank', 'image', 'audio'].includes(q.type) ? q.type : 'short';
       return {
         id: String(q.id),
         type,
         text: String(q.text),
+        media_url: safeUrl(q.media_url) || '',
+        points: Math.max(0, Number(q.points ?? 1) || 0),
         // True/False always has exactly these two options, regardless of what was stored.
         options: type === 'truefalse' ? ['True', 'False'] : (Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : [])
       };

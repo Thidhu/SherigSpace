@@ -282,11 +282,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { AUTH_OPTIONS } from './auth-storage.js';
 import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc, safeUrl } from './config.js';
+
+const jsq=v=>esc(JSON.stringify(String(v==null?'':v)));
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions } from './assignment-utils.js';
+import { importQuestionsFromFile, downloadQuestionTemplate } from './question-import.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 let me = null; // { id, name, email }
 let currentClassId = null;
 let siteSettings = {};
@@ -715,8 +719,8 @@ async function renderClasses(){
   }));
   const el = document.getElementById('classes-list');
   el.innerHTML = classList.length ? classList.map(c=>`
-    <div class="class-card" onclick="openClass('${esc(c.id)}','${esc(c.name)}','${esc(loginText(c))}')">
-      <button type="button" class="btn btn-del btn-sm class-del" onclick="event.stopPropagation();deleteClass('${esc(c.id)}','${esc(c.name)}')" title="${T('Delete class','དཔྱེ་སློབ་བཏོན་གཏང')}">✕</button>
+    <div class="class-card" onclick="openClass(${jsq(c.id)},${jsq(c.name)},${jsq(loginText(c))})">
+      <button type="button" class="btn btn-del btn-sm class-del" onclick="event.stopPropagation();deleteClass(${jsq(c.id)},${jsq(c.name)})" title="${T('Delete class','དཔྱེ་སློབ་བཏོན་གཏང')}">✕</button>
       <h4>${esc(c.name)}</h4>
       <div style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem">${esc(c.class_level||'')}</div>
       <span class="class-code-badge">${esc(loginText(c))}</span>
@@ -804,8 +808,8 @@ async function renderStudents(){
     <div class="irow">
       <div><div class="iname">${esc(s.display_name)}</div><div class="imeta">PIN: ${esc(s.pin || 'Not assigned')}</div></div>
       <div class="ibtns">
-        <button class="btn btn-edit btn-sm" onclick="openEditStudentForm('${esc(s.id)}','${esc(s.display_name)}')">${T('✏ Edit','✏ ཞུན་དག')}</button>
-        <button class="btn btn-del btn-sm" onclick="deleteStudent('${esc(s.id)}')">${T('✕ Remove','✕ བཏོན་གཏང་')}</button>
+        <button class="btn btn-edit btn-sm" onclick="openEditStudentForm(${jsq(s.id)},${jsq(s.display_name)})">${T('✏ Edit','✏ ཞུན་དག')}</button>
+        <button class="btn btn-del btn-sm" onclick="deleteStudent(${jsq(s.id)})">${T('✕ Remove','✕ བཏོན་གཏང་')}</button>
       </div>
     </div>`).join('') : `<div class="empty"><div class="ei">🧒</div><p>${T('No students yet. Click + Add Student!','ད་ལྟོ་སློབ་ཕྲུག་མིན་འདུག। + སློབ་ཕྲུག་ཁ་སྐོང་ལུ་ཨེབ་གནང་!')}</p></div>`;
 }
@@ -984,12 +988,13 @@ window.deleteStudent = async function(id){
 let v2 = null; // { extras: attachments/questions/answers/score columns exist, keys: assignment_keys table exists }
 async function ensureV2(){
   if(v2) return v2;
-  const [a, s, k] = await Promise.all([
+  const [a, s, k, sh] = await Promise.all([
     supabase.from('assignments').select('attachments,questions').limit(1),
     supabase.from('assignment_status').select('answers,score').limit(1),
-    supabase.from('assignment_keys').select('assignment_id').limit(1)
+    supabase.from('assignment_keys').select('assignment_id').limit(1),
+    supabase.from('assignments').select('shuffle_questions,shuffle_options').limit(1)
   ]);
-  v2 = { extras: !a.error && !s.error, keys: !k.error };
+  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error };
   return v2;
 }
 
@@ -1038,11 +1043,11 @@ async function renderAssignments(){
     return `<div class="irow">
       <div><div class="iname">${esc(label)}</div><div class="imeta">${meta}</div></div>
       <div class="ibtns">
-        <button class="btn btn-ghost btn-sm" onclick="viewAnswers('${esc(a.id)}')">${T('✍ Answers','✍ ལན།')}</button>
-        <button class="btn btn-ghost btn-sm" onclick="viewProgress('${esc(a.id)}')">${T('📊 Progress','📊 ཡར་རྒྱས།')}</button>
-        <button class="btn btn-ghost btn-sm" onclick="presentStudent('${esc(a.id)}')">${T('🖥 Present','🖥 སྟོན།')}</button>
-        <button class="btn btn-edit btn-sm" onclick="openAssignmentForm('${esc(a.id)}')">${T('✏ Edit','✏ ཞུན་དག')}</button>
-        <button class="btn btn-del btn-sm" onclick="deleteAssignment('${esc(a.id)}')">✕</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewAnswers(${jsq(a.id)})">${T('✍ Answers','✍ ལན།')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="viewProgress(${jsq(a.id)})">${T('📊 Progress','📊 ཡར་རྒྱས།')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="presentStudent(${jsq(a.id)})">${T('🖥 Present','🖥 སྟོན།')}</button>
+        <button class="btn btn-edit btn-sm" onclick="openAssignmentForm(${jsq(a.id)})">${T('✏ Edit','✏ ཞུན་དག')}</button>
+        <button class="btn btn-del btn-sm" onclick="deleteAssignment(${jsq(a.id)})">✕</button>
       </div>
     </div>`;
   }).join('');
@@ -1176,9 +1181,18 @@ window.openAssignmentForm = async function(editId){
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('fillblank')">${T('＋ Fill in the blank','＋ ས་སྟོང་བཀང་བ')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('image')">${T('＋ Image question','＋ པར་གྱི་དྲི་བ')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('audio')">${T('＋ Audio question','＋ སྒྲའི་དྲི་བ')}</button>
+        <input type="file" id="f-q-import" accept=".docx,.xlsx,.xls,.csv" style="display:none" onchange="importQuestionsChosen(event)"/>
+        <button type="button" class="btn btn-gold btn-sm" onclick="document.getElementById('f-q-import').click()" title="Add questions from a Word (.docx) or Excel (.xlsx, .csv) file on your computer">📥 ${T('Import Word / Excel','Import Word / Excel')}</button>
         <button type="button" class="btn btn-gold btn-sm" onclick="openQuestionBank()">📚 ${T('Question Bank','དྲི་བའི་མཛོད')}</button>
       </div>
       <div class="hint">${T('Students answer these on their own page.','སློབ་ཕྲུག་ཚུ་གིས་རང་སོའི་ཤོག་ལེབ་ནང་ལན་བྲིས')}${cfg.keys ? T(' For multiple choice, tick the correct option and it will be checked for you — students never see which option is correct.',' གདམ་ཁ་མང་པོ་ཡོད་མི་ནང་ལེགས་ཤོམ་གྱི་གདམ་ཁ་ལུ་རྟགས་བཞག་པ་ཅིན་རང་བཞིན་གྱིས་ཞིབ་དཔྱད་འབད་འོང་') : ''}</div>
+      <div id="q-import-status" class="hint" style="display:none"></div>
+      <div class="hint">Import: <b>Excel/CSV</b> with headings <i>Type, Question, Option A–D, Correct Answer, Points</i> (<a href="#" onclick="event.preventDefault();downloadQuestionTemplate()" style="color:var(--gold-text,var(--gold))">download template</a>), or <b>Word (.docx)</b> with numbered questions, options <i>a) b) c) d)</i> and a line <i>Answer: B</i> under each. Questions are added to the list below so you can edit them before saving.</div>
+      ${cfg.shuffle ? `<div class="qb-shuffle" style="display:flex;flex-direction:column;gap:.35rem;margin-top:.6rem;padding:.6rem .75rem;border:1px dashed var(--border);border-radius:8px">
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)"><input type="checkbox" id="f-shuffle-q" style="width:auto;flex:none;margin:0;accent-color:var(--gold)"/> 🔀 ${T('Shuffle question order for each student','Shuffle question order for each student')}</label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)"><input type="checkbox" id="f-shuffle-o" style="width:auto;flex:none;margin:0;accent-color:var(--gold)"/> 🔀 ${T('Shuffle answer options (multiple choice)','Shuffle answer options (multiple choice)')}</label>
+        <div class="hint" style="margin:0">Each student gets their own fixed order (it stays the same if they refresh). Marking is unaffected.</div>
+      </div>` : `<div class="hint" style="color:var(--gold-text,var(--gold))">To enable shuffling, run <b>sherigspace_fixes.sql</b> (section 3) once in Supabase, then reload this page.</div>`}
       ${cfg.keys ? '' : '<div class="hint" style="color:var(--gold-text,var(--gold))">Automatic checking of multiple choice is off. Run <b>sherigspace_assignments_v2.sql</b> again in Supabase to turn it on.</div>'}
     </div>` : `
     <div class="field"><label>${T('Questions','དྲི་བ')}</label>
@@ -1204,7 +1218,11 @@ window.openAssignmentForm = async function(editId){
     await loadTlmOptions();
   }
   renderTaskAttachments();
-  if(cfg.extras){ wireQuestionBuilder(); renderQuestionBuilder(); }
+  if(cfg.extras){
+    wireQuestionBuilder(); renderQuestionBuilder();
+    const sq = document.getElementById('f-shuffle-q'), so = document.getElementById('f-shuffle-o');
+    if(sq && so && editing){ sq.checked = !!existing.shuffle_questions; so.checked = !!existing.shuffle_options; }
+  }
 
   const btn = document.getElementById('m-save-btn');
   btn.textContent = editing ? 'Save changes' : 'Create';
@@ -1252,17 +1270,19 @@ window.openAssignmentForm = async function(editId){
         } else if(q.type === 'fillblank' || q.type === 'short'){
           const accepted = String(q.accepted || '').split(/\n|,/).map(x=>x.trim()).filter(Boolean);
           if(accepted.length) keyOut[q.id] = accepted;
-          item.accepted_answers = accepted;
         } else if(q.type === 'image' || q.type === 'audio'){
           item.media_url = String(q.media_url || '').trim();
           const accepted = String(q.accepted || '').split(/\n|,/).map(x=>x.trim()).filter(Boolean);
-          item.accepted_answers = accepted;
           if(accepted.length) keyOut[q.id] = accepted;
         }
         item.points = Math.max(0, Number(q.points ?? 1) || 0);
         qs.push(item);
       }
       payload.questions = qs;
+      if(cfg.shuffle){
+        payload.shuffle_questions = !!(document.getElementById('f-shuffle-q') || {}).checked;
+        payload.shuffle_options = !!(document.getElementById('f-shuffle-o') || {}).checked;
+      }
     }
 
     btn.disabled = true;
@@ -1425,6 +1445,26 @@ function wireQuestionBuilder(){
     renderQuestionBuilder();
   });
 }
+
+// -- Import questions from a Word / Excel file --
+window.downloadQuestionTemplate = async function(){
+  try{ await downloadQuestionTemplate(); }catch(e){ toast(e.message || 'Could not make the template.', true); }
+};
+window.importQuestionsChosen = async function(ev){
+  const input = ev.target, file = input.files && input.files[0];
+  input.value = '';
+  if(!file) return;
+  const box = document.getElementById('q-import-status');
+  const say = (html, isErr) => { if(!box) return; box.style.display = 'block'; box.style.color = isErr ? 'var(--err-text,#f09090)' : 'var(--text2)'; box.innerHTML = html; };
+  say('Reading ' + esc(file.name) + '…');
+  try{
+    const { questions, warnings } = await importQuestionsFromFile(file);
+    questions.forEach(q => taskQuestions.push({ id: newQid(), media_url: '', ...q }));
+    renderQuestionBuilder();
+    say('✅ Imported <b>' + questions.length + '</b> question' + (questions.length === 1 ? '' : 's') + ' from ' + esc(file.name) + '. Please check them below.'
+      + (warnings.length ? '<ul style="margin:.4rem 0 0 1.1rem;color:var(--gold-text,var(--gold))">' + warnings.slice(0,15).map(w => '<li>' + esc(w) + '</li>').join('') + (warnings.length > 15 ? '<li>…and ' + (warnings.length - 15) + ' more</li>' : '') + '</ul>' : ''));
+  }catch(e){ say('⚠️ ' + esc(e.message || e), true); }
+};
 
 // ── Question Bank ──
 let questionBankItems = [];
