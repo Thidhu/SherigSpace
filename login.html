@@ -138,10 +138,7 @@ footer span{color:var(--gold-text,var(--gold))}
         </div>
         <div class="field">
           <label data-en="I am signing up as" data-dz="ང་ག་ཅི་སྦེ་ཐོ་བཀོད་འབད་དོ་ག">I am signing up as</label>
-          <select id="s-role" required>
-            <option value="teacher" data-en="👨‍🏫 Teacher / Educator" data-dz="👨‍🏫 སློབ་དཔོན།">👨‍🏫 Teacher / Educator</option>
-            <option value="user" data-en="👤 General User" data-dz="👤 སྤྱིར་བཏང་ལག་ལེན་པ">👤 General User</option>
-          </select>
+          <div class="info-box" style="margin-top:.2rem" data-en="All new accounts start as normal users. You can become a teacher later from the SherigSpace Teacher page by choosing a teacher membership plan." data-dz="ཐོ་བཀོད་གསརཔ་ཆ་མཉམ་སྤྱིར་བཏང་ལག་ལེན་པ་སྦེ་འགོ་བཙུགས་ནི་ཨིན། ཤུལ་ལས་ SherigSpace གི་སློབ་དཔོན་ཤོག་ངོས་ལས་སློབ་དཔོན་གྱི་འོས་སྦྱོར་འཆར་གཞི་གདམ་ཁ་རྐྱབ་སྟེ་སློབ་དཔོན་འགྱུར་ཚུགས།">👤 All new accounts start as normal users. You can become a teacher later.</div>
           <div style="font-size:.76rem;color:var(--text2);margin-top:.35rem" data-en="Teacher accounts start free. You can upgrade only when you reach the free usage limit." data-dz="སློབ་དཔོན་གྱི་ཐོ་བཀོད་རིན་མེད་སྦེ་འགོ་བཙུགས། རིན་མེད་ཚད་ལས་ལྷགཔ་ད་གིས་འོས་སྦྱོར་འབད་དགོ།">Teacher accounts start free. You can upgrade only when you reach the free usage limit.</div>
         </div>
         <div class="field">
@@ -210,112 +207,59 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showMsg(id, msg, type){
   const el = document.getElementById(id);
-  if(!el) return;
   el.textContent = msg;
   el.className = 'msg ' + type;
 }
-
 function setBtn(id, loading, label){
   const b = document.getElementById(id);
-  if(!b) return;
   b.disabled = loading;
-  b.textContent = loading
-    ? (typeof T === 'function' ? T('Please wait…','བཞུགས་སྒོ་གནང་...') : 'Please wait…')
-    : label;
+  b.textContent = loading ? T('Please wait…','བཞུགས་སྒོ་གནང་...') : label;
 }
-
 window.switchTab = function(t){
   document.querySelectorAll('.tab').forEach((el,i)=>
-    el.classList.toggle(
-      'on',
-      (t==='login'&&i===0) ||
-      (t==='signup'&&i===1) ||
-      (t==='student'&&i===2)
-    )
+    el.classList.toggle('on',(t==='login'&&i===0)||(t==='signup'&&i===1)||(t==='student'&&i===2))
   );
   document.getElementById('f-login').classList.toggle('on', t==='login');
   document.getElementById('f-signup').classList.toggle('on', t==='signup');
   document.getElementById('f-student').classList.toggle('on', t==='student');
 };
-
 window.checkStrength = function(v){
   const bar = document.getElementById('sbar');
-  if(!bar) return;
-
   let score = 0;
   if(v.length>=6) score++;
   if(v.length>=10) score++;
   if(/[A-Z]/.test(v)) score++;
   if(/[0-9]/.test(v)) score++;
   if(/[^A-Za-z0-9]/.test(v)) score++;
-
-  bar.style.width = [0,20,40,65,85,100][score] + '%';
-  bar.style.background = [
-    '#e05c5c','#e05c5c','#e8a84c',
-    '#c9a84c','#4caf84','#4caf84'
-  ][score];
+  bar.style.width = [0,20,40,65,85,100][score]+'%';
+  bar.style.background = ['#e05c5c','#e05c5c','#e8a84c','#c9a84c','#4caf84','#4caf84'][score];
 };
 
-
-/* ============================================================
-   GOOGLE LOGIN / SIGN UP
-   ============================================================ */
-
+// ── GOOGLE LOGIN ──
 window.doGoogleLogin = async function(){
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/index.html'
-      }
+      options: { redirectTo: window.location.origin + '/index.html' }
     });
-
     if(error) throw error;
-
   } catch(err){
     showMsg('login-msg', '❌ ' + err.message, 'err');
     switchTab('login');
   }
 };
 
-
-/* ============================================================
-   EMAIL SIGN UP
-   ============================================================
-
-   The selected role is sent during the INITIAL Auth signup.
-   The database trigger should create the profile with that role.
-
-   We intentionally DO NOT upsert profiles here. This prevents
-   the role-protection trigger from rejecting:
-       user -> teacher
-   after the profile has already been created.
-   ============================================================ */
-
 window.doSignup = async function(e){
   e.preventDefault();
-
   const name  = document.getElementById('s-name').value.trim();
   const email = document.getElementById('s-email').value.trim().toLowerCase();
-  const role  = document.getElementById('s-role').value;
   const pass  = document.getElementById('s-pass').value;
   const pass2 = document.getElementById('s-pass2').value;
-
-  if(!name)
-    return showMsg('signup-msg','Please enter your full name.','err');
-
-  if(!['teacher','user'].includes(role))
-    return showMsg('signup-msg','Please select a valid account type.','err');
-
-  if(pass.length<6)
-    return showMsg('signup-msg','Password must be at least 6 characters.','err');
-
-  if(pass!==pass2)
-    return showMsg('signup-msg','Passwords do not match.','err');
-
+  if(!name)         return showMsg('signup-msg','Please enter your full name.','err');
+  if(pass.length<6) return showMsg('signup-msg','Password must be at least 6 characters.','err');
+  if(pass!==pass2)  return showMsg('signup-msg','Passwords do not match.','err');
   setBtn('signup-btn', true, 'Create Account');
   showMsg('signup-msg','','');
-
   try {
     const { data, error } = await sb.auth.signUp({
       email,
@@ -324,331 +268,133 @@ window.doSignup = async function(e){
         data: {
           name,
           full_name: name,
-          signup_role: role,
           class_grade: ''
         }
       }
     });
-
     if(error) throw error;
-
-    if(!data.user)
-      throw new Error('Account could not be created.');
-
-    /*
-      If email confirmation is enabled, Supabase may create the
-      account without an active session.
-    */
-    if(!data.session){
-      showMsg(
-        'signup-msg',
-        '✅ Account created! Please check your email to confirm your account, then log in.',
-        'ok'
-      );
-      return;
-    }
-
-    showMsg(
-      'signup-msg',
-      '✅ Account created! Redirecting…',
-      'ok'
-    );
-
-    setTimeout(() => {
-      window.location.href = 'index.html';
-    }, 1200);
-
-  } catch(err) {
-    showMsg(
-      'signup-msg',
-      '❌ ' + (err.message || 'Unable to create account.'),
-      'err'
-    );
+    const uid = data.user?.id || data.session?.user?.id;
+    if(!uid){ showMsg('signup-msg','✅ Check your email to confirm, then log in.','ok'); return; }
+    // New accounts are always created as normal users by the database trigger.
+    // Teacher membership is handled separately through teacher_subscriptions.
+    showMsg('signup-msg','✅ Account created! Redirecting…','ok');
+    setTimeout(()=> window.location.href='index.html', 1200);
+  } catch(err){
+    showMsg('signup-msg','❌ ' + err.message,'err');
   } finally {
     setBtn('signup-btn', false, 'Create Account');
   }
 };
 
-
-/* ============================================================
-   NORMAL EMAIL LOGIN
-   ============================================================ */
-
 window.doLogin = async function(e){
   e.preventDefault();
-
   const email = document.getElementById('l-email').value.trim().toLowerCase();
   const pass  = document.getElementById('l-pass').value;
-
-  if(!email || !pass)
-    return showMsg('login-msg','Please enter your email and password.','err');
-
+  if(!email||!pass) return showMsg('login-msg','Please enter your email and password.','err');
   setBtn('login-btn', true, 'Log In');
   showMsg('login-msg','','');
-
   try {
-    const { data, error } = await sb.auth.signInWithPassword({
-      email,
-      password: pass
-    });
-
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if(error) throw error;
-
-    const { data: profile } = await sb
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .maybeSingle();
-
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
     localStorage.setItem('edu_session', JSON.stringify({
-      id: data.user.id,
-      name: profile?.name || email,
-      email,
-      role: profile?.role || 'user',
-      class_grade: profile?.class_grade || ''
+      id: data.user.id, name: profile?.name || email, email,
+      role: profile?.role || 'user', class_grade: profile?.class_grade || ''
     }));
-
     window.location.href = 'index.html';
-
-  } catch(err) {
+  } catch(err){
     showMsg('login-msg','❌ ' + err.message,'err');
   } finally {
     setBtn('login-btn', false, 'Log In');
   }
 };
 
-
-/* ============================================================
-   STUDENT LOGIN
-   ============================================================ */
-
 window.doStudentLogin = async function(e){
   e.preventDefault();
-
   const studentName = document.getElementById('st-name').value.trim();
   const pin = document.getElementById('st-pin').value.trim();
-
-  if(!studentName || !pin)
-    return showMsg('student-msg','Please enter your name and PIN.','err');
-
+  if(!studentName || !pin) return showMsg('student-msg','Please enter your name and PIN.','err');
   setBtn('student-btn', true, 'Log In');
   showMsg('student-msg','','');
-
   try {
-    const { data: email, error: lookupErr } = await sb.rpc(
-      'student_login_lookup_by_name',
-      {
-        p_name: studentName,
-        p_pin: pin
-      }
-    );
-
-    if(lookupErr) throw lookupErr;
-
-    if(!email)
-      throw new Error('Name or PIN is incorrect. Please check with your teacher.');
-
-    const { data, error } = await sb.auth.signInWithPassword({
-      email,
-      password: pin
+    const { data: email, error: lookupErr } = await sb.rpc('student_login_lookup_by_name', {
+      p_name: studentName,
+      p_pin: pin
     });
+    if(lookupErr) throw lookupErr;
+    if(!email) throw new Error('Name or PIN is incorrect. Please check with your teacher.');
 
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pin });
     if(error) {
       if(/email.*not.*confirm/i.test(error.message || '')) {
-        throw new Error(
-          'This student account is not confirmed. In Supabase, turn OFF Email confirmation for student PIN accounts, then try again.'
-        );
+        throw new Error('This student account is not confirmed. In Supabase, turn OFF Email confirmation for student PIN accounts, then try again.');
       }
       throw error;
     }
 
-    const { data: profile } = await sb
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .maybeSingle();
-
-    const { data: enrollment } = await sb
-      .from('class_students')
-      .select('id')
-      .eq('student_id', data.user.id)
-      .limit(1)
-      .maybeSingle();
-
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+    const { data: enrollment } = await sb.from('class_students').select('id').eq('student_id', data.user.id).limit(1).maybeSingle();
     if(!enrollment) {
       await sb.auth.signOut();
-      throw new Error(
-        'This login is not linked to a student enrollment. Please ask your teacher to add the student again.'
-      );
+      throw new Error('This login is not linked to a student enrollment. Please ask your teacher to add the student again.');
     }
 
     localStorage.setItem('edu_session', JSON.stringify({
-      id: data.user.id,
-      name: profile?.name || studentName,
-      email,
-      role: 'student',
-      class_grade: profile?.class_grade || ''
+      id: data.user.id, name: profile?.name || studentName, email,
+      role: 'student', class_grade: profile?.class_grade || ''
     }));
-
     window.location.href = 'student.html';
-
-  } catch(err) {
+  } catch(err){
     showMsg('student-msg','❌ ' + err.message,'err');
   } finally {
     setBtn('student-btn', false, 'Log In');
   }
 };
 
-
-/* ============================================================
-   FORGOT PASSWORD
-   ============================================================ */
-
-window.openForgotPassword = function(){
-  const modal = document.getElementById('forgotModal');
-  if(modal) modal.classList.add('show');
-};
-
-window.closeForgotPassword = function(){
-  const modal = document.getElementById('forgotModal');
-  if(modal) modal.classList.remove('show');
-};
-
+// ── FORGOT PASSWORD ──
+window.openForgotPassword = function(){ document.getElementById('forgotModal').classList.add('show'); };
+window.closeForgotPassword = function(){ document.getElementById('forgotModal').classList.remove('show'); };
 window.sendReset = async function(){
   const email = document.getElementById('fp-email').value.trim().toLowerCase();
-
-  if(!email)
-    return showMsg('forgot-msg','Please enter your email.','err');
-
+  if(!email) return showMsg('forgot-msg','Please enter your email.','err');
   try {
     const { error } = await sb.auth.resetPasswordForEmail(email);
     if(error) throw error;
-
-    showMsg(
-      'forgot-msg',
-      '✅ Reset link sent! Check your email.',
-      'ok'
-    );
-
+    showMsg('forgot-msg','✅ Reset link sent! Check your email.','ok');
     setTimeout(closeForgotPassword, 2500);
-
-  } catch(err) {
+  } catch(err){
     showMsg('forgot-msg','❌ ' + err.message,'err');
   }
 };
 
-
-/* ============================================================
-   CLOSE FORGOT PASSWORD MODAL
-   ============================================================ */
-
-const forgotModal = document.getElementById('forgotModal');
-
-if(forgotModal){
-  forgotModal.addEventListener('click', e => {
-    if(e.target.id === 'forgotModal')
-      forgotModal.classList.remove('show');
-  });
-}
-
-
-/* ============================================================
-   AUTO REDIRECT IF ALREADY LOGGED IN
-   ============================================================ */
-
-sb.auth.getSession().then(async ({ data }) => {
-
-  if(!data.session) return;
-
-  const { data: enrollment } = await sb
-    .from('class_students')
-    .select('id')
-    .eq('student_id', data.session.user.id)
-    .limit(1)
-    .maybeSingle();
-
-  window.location.href =
-    enrollment ? 'student.html' : 'index.html';
+// Close modal on backdrop click
+document.getElementById('forgotModal').addEventListener('click', e => {
+  if(e.target.id === 'forgotModal') document.getElementById('forgotModal').classList.remove('show');
 });
 
+// Auto redirect if already logged in — a student account goes to their
+// own assignments dashboard, everyone else to the main site.
+sb.auth.getSession().then(async ({ data }) => {
+  if(!data.session) return;
+  const { data: enrollment } = await sb.from('class_students').select('id').eq('student_id', data.session.user.id).limit(1).maybeSingle();
+  window.location.href = enrollment ? 'student.html' : 'index.html';
+});
 
-/* ============================================================
-   GOOGLE OAUTH SESSION HANDLER
-   ============================================================ */
-
+// Handle Google OAuth redirect with profile creation
 sb.auth.onAuthStateChange(async (event, session) => {
-
-  if(event !== 'SIGNED_IN' || !session) return;
-
-  const user = session.user;
-
-  /*
-    Normally the database trigger already created the profile.
-    We only read it here. We do NOT change its role.
-  */
-
-  let { data: profile } = await sb
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  /*
-    Give the database trigger a moment if the profile has not
-    appeared yet.
-  */
-
-  if(!profile){
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    ({ data: profile } = await sb
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle());
-  }
-
-  /*
-    Safety fallback for older accounts where the profile trigger
-    was not installed. Google users are created as normal users.
-  */
-
-  if(!profile){
-
-    const name =
-      user.user_metadata?.full_name ||
-      user.user_metadata?.name ||
-      user.email?.split('@')[0] ||
-      'User';
-
-    const { error: profileError } = await sb
-      .from('profiles')
-      .insert({
-        id: user.id,
-        name,
-        email: user.email,
-        class_grade: '',
-        role: 'user'
-      });
-
-    if(!profileError){
-
-      ({ data: profile } = await sb
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle());
+  if(event === 'SIGNED_IN' && session) {
+    const user = session.user;
+    const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).single();
+    if(!existing){
+      const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+      await sb.from('profiles').upsert({ id: user.id, name, email: user.email, role: 'user' });
     }
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    localStorage.setItem('edu_session', JSON.stringify({
+      id: user.id, name: profile?.name || user.email, email: user.email,
+      role: profile?.role || 'user', class_grade: profile?.class_grade || ''
+    }));
   }
-
-  localStorage.setItem('edu_session', JSON.stringify({
-    id: user.id,
-    name: profile?.name || user.email,
-    email: user.email,
-    role: profile?.role || 'user',
-    class_grade: profile?.class_grade || ''
-  }));
 });
 </script>
 </body>

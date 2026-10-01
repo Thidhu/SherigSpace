@@ -1145,7 +1145,8 @@ function renderNav(){
     document.getElementById('rpRole').textContent = 'Not logged in';
     if(spBlock) spBlock.onclick = () => window.location.href = 'login.html';
     document.getElementById('sidebarFooter').innerHTML =
-      `<a class="side-link" href="login.html"><span class="si">🔑</span><span>Log In / Sign Up</span></a>`;
+      `<a class="side-link" href="login.html"><span class="si">🔑</span><span>Log In / Sign Up</span></a>
+       <a class="side-link" href="login.html"><span class="si">👨‍🏫</span><span>Become a Teacher</span></a>`;
     return;
   }
   const initials = esc(s.name).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1156,7 +1157,11 @@ function renderNav(){
   document.getElementById('rpRole').textContent = s.class_grade || s.role || 'Member';
   if(spBlock) spBlock.onclick = () => openProfile();
   const role = String(s.role || 'user').toLowerCase();
-  const teacherSide = (role === 'teacher' || role === 'admin') ? `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher</span></a>` : '';
+  // Teacher access is membership-based. Normal users see the membership CTA;
+  // existing teacher/admin accounts keep direct dashboard access.
+  const teacherSide = (role === 'teacher' || role === 'admin')
+    ? `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher Dashboard</span></a>`
+    : `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Become a Teacher</span></a>`;
   const adminSide = role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
   const learningLink = document.querySelector('.learning-link');
   if(learningLink) learningLink.style.display = role === 'student' ? '' : 'none';
@@ -1183,7 +1188,9 @@ window.openProfile = async function(){
       <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
       <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
     </div>
-    ${(profile?.role === 'teacher' || profile?.role === 'admin') ? `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🍎 Teacher Dashboard</a>` : ''}
+    ${profile?.role === 'admin' || profile?.role === 'teacher'
+      ? `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">👨‍🏫 Teacher Dashboard</a>`
+      : `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">👨‍🏫 Become a Teacher</a>`}
     ${profile?.role === 'student' ? `<a href="student.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🎓 My Learning</a>` : ''}
     ${profile?.role === 'admin' ? `<a href="admin.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🛠️ Open Admin Panel</a>` : ''}
     <button onclick="logout()" style="width:100%;padding:10px;background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);border-radius:4px;color:#e05c5c;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer">🔒 Log Out</button>`;
@@ -1901,8 +1908,8 @@ window.addEventListener('scroll',()=>{
 
 // ── SYNC SUPABASE SESSION → localStorage on load AND on change ──
 // The site is open to browse for anyone. Signed-out visitors see every
-// section and card; only opening/downloading something checks accessState()
-// and asks them to log in or pay, per-click — there is no page-level gate.
+// section and card; opening/downloading content checks accessState().
+// Teacher membership is handled separately by teacher.html.
 async function syncSessionAndRender(){
   const { data } = await supabase.auth.getSession();
   if(data.session){

@@ -140,208 +140,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="theme.js"></script>
 <script src="assignment-interactive.js"></script>
-
-<style id="sherig-day-blue-gradient-final">
-/* SherigSpace DAY MODE FINAL PALETTE
-   Night mode is intentionally untouched.
-   Pure white surfaces + Deep Sky Blue gradient (#00BFFF). */
-[data-theme="light"] {
-  color-scheme: light;
-  --bg:#ffffff !important;
-  --surface:#ffffff !important;
-  --surface2:#ffffff !important;
-  --card-bg:#ffffff !important;
-  --card-border:#e7edf3 !important;
-  --border:rgba(26,35,64,.10) !important;
-  --text:#1a2340 !important;
-  --text2:#5b6b7d !important;
-  --navy:#1a2340 !important;
-  --navy-light:#42566f !important;
-  --input-bg:#ffffff !important;
-  --gold:#00BFFF !important;
-  --gold-light:#54cfff !important;
-  --gold-text:#0089c9 !important;
-  --gold-soft:rgba(0,191,255,.10) !important;
-  --on-accent:#ffffff !important;
-  --blue:#007BFF !important;
-  --media-bg:#ffffff !important;
-  --shadow:0 5px 20px rgba(26,35,64,.07) !important;
-  --shadow-hover:0 12px 30px rgba(0,123,255,.16) !important;
-}
-
-[data-theme="light"] body,
-[data-theme="light"] main,
-[data-theme="light"] section,
-[data-theme="light"] .main,
-[data-theme="light"] .content,
-[data-theme="light"] .page,
-[data-theme="light"] #about,
-[data-theme="light"] footer {
-  background:#fff !important;
-  color:#1a2340 !important;
-}
-
-/* Navigation and sidebars: white, clean, readable */
-[data-theme="light"] nav,
-[data-theme="light"] .navbar,
-[data-theme="light"] .topbar,
-[data-theme="light"] .sidebar,
-[data-theme="light"] .side-panel {
-  background:#fff !important;
-  color:#1a2340 !important;
-  border-color:#e5ebf1 !important;
-  box-shadow:0 2px 12px rgba(26,35,64,.05) !important;
-}
-[data-theme="light"] .nav-links a,
-[data-theme="light"] .side-link,
-[data-theme="light"] .sitem,
-[data-theme="light"] .topbar a {
-  color:#53677d !important;
-}
-[data-theme="light"] .nav-links a:hover,
-[data-theme="light"] .side-link:hover,
-[data-theme="light"] .sitem:hover,
-[data-theme="light"] .topbar a:hover {
-  color:#007BFF !important;
-  background:rgba(0,191,255,.06) !important;
-}
-[data-theme="light"] .side-link.active,
-[data-theme="light"] .sitem.on {
-  color:#1a2340 !important;
-  background:linear-gradient(90deg,rgba(0,191,255,.14),rgba(0,123,255,.05)) !important;
-  border-left-color:#00BFFF !important;
-}
-
-/* Main branded blue gradient */
-[data-theme="light"] .btn,
-[data-theme="light"] .btn-primary,
-[data-theme="light"] .login-btn,
-[data-theme="light"] .gate-btn,
-[data-theme="light"] .comment-form button,
-[data-theme="light"] .class-tab.active,
-[data-theme="light"] .lang-btn.on,
-[data-theme="light"] .user-avatar,
-[data-theme="light"] .profile-avatar {
-  background:linear-gradient(135deg,#00BFFF 0%,#007BFF 100%) !important;
-  color:#fff !important;
-  border-color:transparent !important;
-  box-shadow:0 7px 18px rgba(0,123,255,.20) !important;
-}
-[data-theme="light"] .btn:hover,
-[data-theme="light"] .btn-primary:hover,
-[data-theme="light"] .login-btn:hover,
-[data-theme="light"] .class-tab.active:hover {
-  filter:brightness(.96) !important;
-}
-
-/* Class buttons: no visible border */
-[data-theme="light"] .class-tab,
-[data-theme="light"] .sidebar-classes .class-tab {
-  background:#fff !important;
-  color:#53677d !important;
-  border:0 !important;
-  box-shadow:none !important;
-}
-[data-theme="light"] .class-tab:hover,
-[data-theme="light"] .sidebar-classes .class-tab:hover {
-  background:rgba(0,191,255,.07) !important;
-  color:#007BFF !important;
-  border:0 !important;
-}
-[data-theme="light"] .class-tab.active,
-[data-theme="light"] .sidebar-classes .class-tab.active {
-  background:linear-gradient(135deg,#00BFFF,#007BFF) !important;
-  color:#fff !important;
-  border:0 !important;
-}
-
-/* Labels, links and small accents */
-[data-theme="light"] .section-label,
-[data-theme="light"] .section-label *,
-[data-theme="light"] .learning-badge,
-[data-theme="light"] .sidebar-logo,
-[data-theme="light"] .sidebar-classes h6,
-[data-theme="light"] .stat-card h3,
-[data-theme="light"] .blog-date,
-[data-theme="light"] .comment-author,
-[data-theme="light"] .gold-text {
-  color:#007BFF !important;
-}
-[data-theme="light"] a { color:#007BFF; }
-
-/* Cards and forms */
-[data-theme="light"] .card,
-[data-theme="light"] .lesson-card,
-[data-theme="light"] .video-card,
-[data-theme="light"] .resource-card,
-[data-theme="light"] .blog-card,
-[data-theme="light"] .stat-card,
-[data-theme="light"] .modal-box,
-[data-theme="light"] .user-dropdown,
-[data-theme="light"] .gate-card {
-  background:#fff !important;
-  border-color:#e7edf3 !important;
-  color:#1a2340 !important;
-  box-shadow:0 6px 22px rgba(26,35,64,.07) !important;
-}
-[data-theme="light"] input,
-[data-theme="light"] select,
-[data-theme="light"] textarea,
-[data-theme="light"] .field input,
-[data-theme="light"] .field select,
-[data-theme="light"] .field textarea {
-  background:#fff !important;
-  color:#1a2340 !important;
-  border-color:#dfe7ef !important;
-}
-[data-theme="light"] input:focus,
-[data-theme="light"] select:focus,
-[data-theme="light"] textarea:focus {
-  border-color:#00BFFF !important;
-  box-shadow:0 0 0 3px rgba(0,191,255,.10) !important;
-}
-[data-theme="light"] input::placeholder,
-[data-theme="light"] textarea::placeholder { color:#8190a0 !important; }
-
-/* Theme/language/search controls */
-[data-theme="light"] .theme-toggle,
-[data-theme="light"] .lang-toggle,
-[data-theme="light"] .search-btn,
-[data-theme="light"] .sherig-theme-btn {
-  color:#1a2340 !important;
-  background:#fff !important;
-  border-color:#dfe7ef !important;
-}
-[data-theme="light"] .theme-toggle::after { background:#00BFFF !important; }
-[data-theme="light"] .search-btn:hover,
-[data-theme="light"] .sherig-theme-btn:hover {
-  background:rgba(0,191,255,.07) !important;
-}
-
-/* Hero / highlighted areas */
-[data-theme="light"] .hero-tag {
-  background:linear-gradient(135deg,rgba(0,191,255,.12),rgba(0,123,255,.08)) !important;
-  color:#007BFF !important;
-  border-color:rgba(0,191,255,.22) !important;
-}
-[data-theme="light"] .hero-title span { color:#007BFF !important; }
-[data-theme="light"] .divider { background:linear-gradient(90deg,#00BFFF,#007BFF) !important; }
-[data-theme="light"] .stat-card { border-left-color:#00BFFF !important; }
-[data-theme="light"] .resource-icon { background:linear-gradient(135deg,rgba(0,191,255,.12),rgba(0,123,255,.08)) !important; }
-
-/* Remove gold/orange hover accents left by page-specific CSS */
-[data-theme="light"] .nav-links a::after { background:#00BFFF !important; }
-[data-theme="light"] .info-box code,
-[data-theme="light"] .comment-item,
-[data-theme="light"] .tab { background:rgba(0,191,255,.06) !important; }
-
-/* Footer */
-[data-theme="light"] footer { border-top-color:#e7edf3 !important; color:#6f7f90 !important; }
-
-/* Dark overlays remain neutral */
-[data-theme="light"] .modal-overlay,
-[data-theme="light"] .overlay { background:rgba(26,35,64,.48) !important; }
-</style>
 </head>
 <body>
 
@@ -560,11 +358,6 @@ async function checkAccess(){
     if(profileError && profileError.code !== 'PGRST116') throw profileError;
     me = { id: session.user.id, name: profile?.name || session.user.email, email: session.user.email, role: String(profile?.role || 'user').toLowerCase() };
 
-    if(me.role !== 'teacher' && me.role !== 'admin') {
-      gate.innerHTML = `<div class="gate-icon">👨‍🏫</div><h2>${T('Teacher account required','སློབ་དཔོན་གྱི་ཐོ་བཀོད་དགོ')}</h2><p>${T('This page is for teacher accounts. Sign out and use a teacher account, or create a free teacher account from Sign Up.','ཤོག་ངོས་འདི་སློབ་དཔོན་གྱི་ཐོ་བཀོད་ལུ་རྐྱངམ་ཅིག་ཨིན། ཕྱིར་ཐོན་འབད་དེ་སློབ་དཔོན་གྱི་ཐོ་བཀོད་ཅིག་ལག་ལེན་འཐབ།')}</p><a class="gate-btn" href="login.html">${T('Go to Login','ནང་འཛུལ་ལུ་འགྱོ')}</a>`;
-      return;
-    }
-
     const { data: sub, error: subError } = await withTimeout(
       supabase.from('teacher_subscriptions').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
       12000, 'Subscription check'
@@ -580,14 +373,56 @@ async function checkAccess(){
     if(settingsError) console.warn('Site settings check:', settingsError);
     siteSettings = settings || {};
 
-    // Only teacher/admin accounts get in. The Free plan is enforced when creating classes/students.
-    document.getElementById('gate').classList.add('hide');
-    document.getElementById('app-layout').style.display = 'flex';
-    await renderClasses();
-    renderBilling(subRow);
+    // Admins can always enter. Normal users enter only after their teacher
+    // membership has been approved. Everyone else sees the teacher paywall.
+    if(me.role === 'admin' || subActive){
+      document.getElementById('gate').classList.add('hide');
+      document.getElementById('app-layout').style.display = 'flex';
+      await renderClasses();
+      renderBilling(subRow);
+    } else {
+      renderTeacherMembershipGate(subRow);
+    }
   } catch(err) {
     showAccessError(err);
   }
+}
+
+function renderTeacherMembershipGate(sub){
+  const gate = document.getElementById('gate-inner');
+  const price = Number(siteSettings.teacher_plan_price || 0);
+  const qr = siteSettings.qr_image_url;
+  let status = '';
+  if(sub?.status === 'pending'){
+    status = `<div style="margin:1rem 0;padding:.85rem 1rem;border:1px solid var(--border);border-radius:10px;background:rgba(201,168,76,.08);color:var(--gold-text,var(--gold));font-size:.9rem">⏳ ${T('Your payment is under review. The Teacher Dashboard will unlock after admin approval.','ཁྱོད་ཀྱི་སྤྲོད་ལེན་དེ་ད་ལྟོ་ཞིབ་དཔྱད་འབད་བཞིནམ་ཨིན། ཨེཌ་མིན་གྱིས་གནང་བ་མ་བྱིན་ཚུན་སློབ་དཔོན་ཌེཤ་བོརཌི་ཁ་ཕྱེ་མི་ཚུགས།')}</div>`;
+  } else if(sub?.status === 'rejected'){
+    status = `<div style="margin:1rem 0;padding:.85rem 1rem;border:1px solid var(--border);border-radius:10px;background:rgba(200,70,70,.07);color:var(--red);font-size:.9rem">❌ ${T('Your previous payment was not approved. You may submit a new payment below.','ཁྱོད་ཀྱི་ཧེ་མའི་སྤྲོད་ལེན་དེ་གནང་བ་མ་བྱིན། འོག་ལུ་ལོག་སྟེ་སྤྲོད་ལེན་གསརཔ་གཅིག་སྙན་ཞུ་འབད་ཆོག།')}</div>`;
+  }
+  const priceText = price ? `Nu. ${esc(price)}` : T('Price set by administrator','གོང་ཚད་ཨེཌ་མིན་གྱིས་གཏན་འཁེལ་འབད་ཡོད།');
+  gate.innerHTML = `
+    <div class="gate-icon">👨‍🏫</div>
+    <h2>${T('Become a Teacher','སློབ་དཔོན་འགྱུར་བ')}</h2>
+    <p>${T('Unlock the SherigSpace Teacher Dashboard with a teacher membership. The membership price is set by the administrator.','འོས་སྦྱོར་འཆར་གཞི་གི་ཐོག་ལས་ SherigSpace སློབ་དཔོན་ཌེཤ་བོརཌི་ཁ་ཕྱེ། འོས་སྦྱོར་གྱི་གོང་ཚད་ཨེཌ་མིན་གྱིས་གཏན་འཁེལ་འབདཝ་ཨིན།')}</p>
+    <div style="margin:1.1rem 0;padding:1rem;border:1px solid var(--border);border-radius:12px;background:rgba(201,168,76,.06)">
+      <div style="font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">${T('Teacher Membership','སློབ་དཔོན་གྱི་འོས་སྦྱོར')}</div>
+      <div style="font-size:1.9rem;font-weight:800;color:var(--gold-text,var(--gold));margin:.2rem 0">${priceText}<span style="font-size:.85rem;font-weight:500;color:var(--text2)">${price?T('/month.','/ཟླཝ་རེ།'):''}</span></div>
+      <div style="font-size:.84rem;color:var(--text2)">${T('Unlimited teacher dashboard access after approval.','གནང་བ་ཐོབ་ཚར་ཞིནམ་ལས་སློབ་དཔོན་ཌེཤ་བོརཌི་ལུ་ཚད་མེད་འཛུལ་སྒོ།')}</div>
+    </div>
+    ${qr?`<img src="${esc(qr)}" alt="Payment QR" style="width:170px;max-width:70%;margin:.2rem auto 1rem;display:block;border-radius:8px"/>`:''}
+    <div style="text-align:left;background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.82rem;line-height:1.8">
+      ${siteSettings.bank_name?`<div><b>${T('Bank/App:','བང་ཁི/ཨཔ:')}</b> ${esc(siteSettings.bank_name)}</div>`:''}
+      ${siteSettings.account_name?`<div><b>${T('Account Name:','ཁ་ཡིག་མིང་:')}</b> ${esc(siteSettings.account_name)}</div>`:''}
+      ${siteSettings.account_number?`<div><b>${T('Account Number:','ཁ་ཡིག་ཨང་:')}</b> ${esc(siteSettings.account_number)}</div>`:''}
+    </div>
+    ${status}
+    <div style="text-align:left;margin-top:1rem">
+      <label style="display:block;font-size:.84rem;margin-bottom:.35rem">${T('Upload Payment Screenshot','སྤྲོད་ལེན་གྱི་པར་བཙུགས།')}</label>
+      <input type="file" id="teacher-proof-file" accept="image/*" style="width:100%"/>
+      <p id="teacher-proof-status" style="font-size:.82rem;margin:.6rem 0;min-height:1.2rem"></p>
+      <button class="gate-btn" type="button" onclick="submitTeacherProof()">${T('Submit Payment for Review','སྤྲོད་ལེན་ཞིབ་དཔྱད་དོན་ལུ་སྙན་ཞུ།')}</button>
+    </div>
+    <a class="gate-btn" href="index.html" style="margin-top:.7rem;background:transparent;color:var(--gold);border:1px solid var(--border)">${T('Back to SherigSpace','SherigSpace ལུ་ལོག་འགྱོ།')}</a>
+  `;
 }
 
 window.submitTeacherProof = async function(){
