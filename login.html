@@ -76,6 +76,73 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 
 footer{position:relative;z-index:1;text-align:center;padding:1.2rem;font-size:.78rem;color:rgba(255,255,255,.25)}
 footer span{color:var(--gold-text,var(--gold))}
+
+/* ── Embossed (neumorphic) buttons with hover lift ── CSS only; nothing else touched.
+   Tweak --lift to change how far buttons rise on hover. */
+:root{--lift:-4px}
+.btn,.btn-google,.btn-cancel{
+  border:none;
+  transition:transform .25s ease,box-shadow .25s ease,background .25s ease;
+}
+/* Gold main button (Log In / Sign Up / Send) */
+.btn{
+  background:linear-gradient(145deg,#d6b559,#bd9a3f);
+  box-shadow:-6px -6px 14px rgba(232,201,122,.16),7px 7px 16px rgba(0,0,0,.55);
+}
+.btn:hover{
+  background:linear-gradient(145deg,#e0c068,#c8a548);
+  transform:translateY(var(--lift));
+  box-shadow:-10px -10px 20px rgba(232,201,122,.22),11px 11px 22px rgba(0,0,0,.6);
+}
+.btn:active{
+  transform:translateY(0);
+  box-shadow:inset -4px -4px 10px rgba(232,201,122,.2),inset 5px 5px 12px rgba(0,0,0,.35);
+}
+/* Dark-surface buttons (Google, Cancel) */
+.btn-google,.btn-cancel{
+  background:#1d2744;
+  color:var(--text);
+  box-shadow:-6px -6px 14px rgba(255,255,255,.05),7px 7px 16px rgba(0,0,0,.5);
+}
+.btn-google:hover,.btn-cancel:hover{
+  background:#1d2744;
+  transform:translateY(var(--lift));
+  box-shadow:-10px -10px 20px rgba(255,255,255,.07),11px 11px 22px rgba(0,0,0,.55);
+}
+.btn-google:active,.btn-cancel:active{
+  transform:translateY(0);
+  box-shadow:inset -4px -4px 10px rgba(255,255,255,.05),inset 5px 5px 12px rgba(0,0,0,.45);
+}
+.btn:disabled,.btn:disabled:hover,.btn-google:disabled,.btn-google:disabled:hover{
+  transform:none;box-shadow:inset 2px 2px 6px rgba(0,0,0,.3);
+}
+/* Day mode: card stays white; buttons are white with a soft warm shadow */
+html[data-theme="light"] .btn{
+  background:linear-gradient(145deg,#eaa530,#d98a0f);
+  box-shadow:-7px -7px 15px rgba(255,255,255,.95),8px 8px 18px rgba(163,90,0,.32);
+}
+html[data-theme="light"] .btn:hover{
+  background:linear-gradient(145deg,#f0b040,#e0940f);
+  box-shadow:-11px -11px 21px rgba(255,255,255,1),12px 12px 24px rgba(163,90,0,.38);
+}
+html[data-theme="light"] .btn:active{
+  box-shadow:inset -4px -4px 10px rgba(255,255,255,.5),inset 5px 5px 12px rgba(120,60,0,.35);
+}
+html[data-theme="light"] .btn-google,html[data-theme="light"] .btn-cancel{
+  background:#ffffff;border:none;
+  box-shadow:-7px -7px 15px rgba(255,255,255,1),7px 8px 18px rgba(150,110,40,.26);
+}
+html[data-theme="light"] .btn-google:hover,html[data-theme="light"] .btn-cancel:hover{
+  background:#ffffff;border:none;
+  box-shadow:-11px -11px 21px rgba(255,255,255,1),11px 12px 24px rgba(150,110,40,.32);
+}
+html[data-theme="light"] .btn-google:active,html[data-theme="light"] .btn-cancel:active{
+  box-shadow:inset -4px -4px 10px rgba(255,255,255,1),inset 5px 5px 12px rgba(150,110,40,.25);
+}
+html[data-theme="light"] .btn:disabled,html[data-theme="light"] .btn:disabled:hover{
+  transform:none;box-shadow:inset 2px 2px 6px rgba(120,60,0,.25);
+}
+@media (prefers-reduced-motion:reduce){.btn,.btn-google,.btn-cancel{transition:none}.btn:hover,.btn-google:hover,.btn-cancel:hover{transform:none}}
 </style>
 <script src="theme.js"></script>
 </head>
@@ -204,9 +271,10 @@ footer span{color:var(--gold-text,var(--gold))}
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { AUTH_OPTIONS } from './auth-storage.js';
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 
 function showMsg(id, msg, type){
   const el = document.getElementById(id);
@@ -379,20 +447,21 @@ sb.auth.getSession().then(async ({ data }) => {
 });
 
 // Handle Google OAuth redirect with profile creation
-sb.auth.onAuthStateChange(async (event, session) => {
-  if(event === 'SIGNED_IN' && session) {
+sb.auth.onAuthStateChange((event, session) => {
+  // Don't await other Supabase calls directly inside this callback (can deadlock the client) -- defer them.
+  if(event === 'SIGNED_IN' && session) setTimeout(async () => {
     const user = session.user;
-    const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).single();
+    const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).maybeSingle();
     if(!existing){
       const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
       await sb.from('profiles').upsert({ id: user.id, name, email: user.email, role: 'user' });
     }
-    const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
     localStorage.setItem('edu_session', JSON.stringify({
       id: user.id, name: profile?.name || user.email, email: user.email,
       role: profile?.role || 'user', class_grade: profile?.class_grade || ''
     }));
-  }
+  }, 0);
 });
 </script>
 </body>
