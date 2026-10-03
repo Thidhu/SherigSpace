@@ -449,6 +449,11 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 }
 @media(min-width:901px) and (max-width:1399px){ .side-nav .side-link .si{display:none} }
 @media(min-width:901px) and (max-width:1150px){ .side-nav .side-link{padding:.7rem .5rem;font-size:.8rem} .side-nav .learning-badge{display:none} }
+
+.footer-legal-links{display:flex;justify-content:center;align-items:center;gap:.8rem;flex-wrap:wrap;margin-top:.75rem}
+.footer-legal-links a{color:var(--gold-light);text-decoration:none;font-size:.78rem;font-weight:600;transition:color .2s,opacity .2s}
+.footer-legal-links a:hover{color:var(--gold);text-decoration:underline}
+.footer-legal-sep{color:rgba(255,255,255,.25);font-size:.72rem}
 </style>
 
 <style id="sherig-bright-day-mode">
@@ -958,7 +963,6 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <p class="section-label" data-en="✦ What is SherigSpace?" data-dz="✦ SherigSpace ག་རེ་ཨིན་ན?">✦ What is SherigSpace?</p>
       <h2 class="section-title" data-en="Bringing Dzongkha Learning into the Digital Age" data-dz="རྫོང་ཁའི་ལྷབ་སྦྱང་དེ་ ཌི་ཇི་ཊལ་དུས་སྐབས་ནང་འབག་འོང་།">Bringing Dzongkha Learning into the Digital Age</h2>
       <div class="divider"></div>
-      <p class="section-desc" data-en="SherigSpace is a digital learning platform created to make learning and teaching more interactive, engaging and accessible, with a special focus on Dzongkha and Bhutanese learners." data-dz="SherigSpace ནི་ རྫོང་ཁ་དང་འབྲུག་གི་སློབ་ཕྲུག་ཚུ་ལུ་ ལྷབ་སྦྱང་དང་སློབ་སྟོན་དེ་ འགུལ་ཤུགས་ཅན་དང་ སྤྲོ་བ་ཅན། འཇམ་ཏོང་ཏོ་བཟོ་ཐབས་ཀྱི་ ཌི་ཇི་ཊལ་ལྷབ་སྦྱང་གི་གཞི་རྟེན་ཅིག་ཨིན།">SherigSpace is a digital learning platform created to make learning and teaching more interactive, engaging and accessible, with a special focus on Dzongkha and Bhutanese learners.</p>
       <p class="purpose-note" data-en="It brings lessons, resources, videos, games, activities and assessments together in one learning space, helping students learn by seeing, hearing, practising and doing." data-dz="འདི་གིས་ སློབ་སྟོན། མཁོ་ཆས། བརྙན་ཐུང་། རྩེད་མོ། ལས་སྦྱོར་དང་ བརྟག་ཞིབ་ཚུ་གཞི་གཅིག་ནང་བསྡུ་སྟེ་ སློབ་ཕྲུག་ཚུ་ལུ་ ལྟ་སྟེ། ཉན་ཏེ། སྦྱང་སྟེ་དང་ ལག་ལེན་འཐབ་སྟེ་ལྷབ་སྦྱང་འབད་བཅུགཔ་ཨིན།">It brings lessons, resources, videos, games, activities and assessments together in one learning space, helping students learn by seeing, hearing, practising and doing.</p>
       <p class="section-label why-inline" data-en="✦ Why SherigSpace?" data-dz="✦ SherigSpace ག་ཅི་གི་དོན་ལུ་ཨིན་ན?">✦ Why SherigSpace?</p>
       <p class="purpose-note why-inline-note" data-en="It brings lessons, resources, videos, games, activities and assessments together in one learning space." data-dz="འདི་གིས་ སློབ་སྟོན། མཁོ་ཆས། བརྙན་ཐུང་། རྩེད་མོ། ལས་སྦྱོར་དང་ བརྟག་ཞིབ་ཚུ་གཞི་གཅིག་ནང་བསྡུ་སྟེ།">It brings lessons, resources, videos, games, activities and assessments together in one learning space.</p>
@@ -968,7 +972,14 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 
       </div><!-- /dash-content -->
 
-      <footer><p>© 2026 <span class="gold">ཤེས་རིགSpace</span> · <span data-en="Built with care for better education, particularly Dzongkha" data-dz="རྫོང་ཁའི་ཤེས་ཡོན་ཡར་རྒྱས་གཏང་ཐབས་ལུ་དམིགས་ཏེ་བཟོ་ཡོདཔ་ཨིན།">Built with care for better education</span></p></footer>
+      <footer>
+        <p>© 2026 <span class="gold">ཤེས་རིགSpace</span> · <span data-en="Built with care for better Dzongkha Learning by a group of Dzongkha educators" data-dz="རྫོང་ཁའི་ཤེས་ཡོན་ཡར་རྒྱས་གཏང་ཐབས་ལུ་དམིགས་ཏེ་བཟོ་ཡོདཔ་ཨིན།">Built with care for better Dzongkha Learning</span></p>
+        <div class="footer-legal-links" aria-label="Legal links">
+          <a href="privacy-policy.html" data-en="Privacy Policy" data-dz="སྒེར་གསང་སྲིད་བྱུས">Privacy Policy</a>
+          <span class="footer-legal-sep">·</span>
+          <a href="terms-of-service.html" data-en="Terms of Service" data-dz="ཞབས་ཏོག་གི་གན་ཡིག">Terms of Service</a>
+        </div>
+      </footer>
     </div><!-- /dash-wrap -->
   </div><!-- /main -->
 </div><!-- /app -->
