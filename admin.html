@@ -337,6 +337,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
     <nav class="sidenav">
       <div class="sitem on"  onclick="go('dash')">🏠 &nbsp;Dashboard</div>
       <div class="sitem"     onclick="go('banners')">🖼️ &nbsp;Banners</div>
+      <div class="sitem"     onclick="go('loginbg')">🌄 &nbsp;Login Backgrounds</div>
       <div class="sitem"     onclick="go('lessons')">📚 &nbsp;Lessons</div>
       <div class="sitem"     onclick="go('resources')">📁 &nbsp;Resources</div>
       <div class="sitem"     onclick="go('videos')">🎥 &nbsp;Videos</div>
@@ -366,6 +367,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
     <div class="page" id="p-banners">
       <div class="phead"><div><div class="ptitle">Banners</div><div class="psub">Manage the rotating banner slides shown at the top of the member homepage</div></div><button class="btn btn-gold" onclick="openForm('banner')">+ Add Banner</button></div>
       <div class="card"><div class="card-head"><h3>All Banner Slides</h3><span class="cbadge" id="c-banners">0</span></div><div id="l-banners"></div></div>
+    </div>
+
+    <div class="page" id="p-loginbg">
+      <div class="phead"><div><div class="ptitle">Login Backgrounds</div><div class="psub">Pictures that fade in and out behind the login page. Use wide landscape images (about 1920×1080).</div></div><button class="btn btn-gold" onclick="openForm('loginbg')">+ Add Background</button></div>
+      <div class="card"><div class="card-head"><h3>All Login Backgrounds</h3><span class="cbadge" id="c-loginbg">0</span></div><div id="l-loginbg"></div></div>
     </div>
 
     <div class="page" id="p-lessons">
@@ -520,11 +526,12 @@ window.logoutAdmin = async function(){
 checkAccess();
 
 // ── NAVIGATION ──
+function tableFor(type){ return type === 'announce' ? 'announcements' : type === 'loginbg' ? 'login_backgrounds' : type + 's'; }
 window.go = function(p){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
   document.getElementById('p-'+p).classList.add('on');
-  const map={dash:'dashboard',banners:'banners',lessons:'lessons',resources:'resources',videos:'videos',games:'edugames',articles:'articles',payments:'payments',users:'users',settings:'settings'};
+  const map={dash:'dashboard',banners:'banners',loginbg:'login backgrounds',lessons:'lessons',resources:'resources',videos:'videos',games:'edugames',articles:'articles',payments:'payments',users:'users',settings:'settings'};
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
 };
@@ -540,6 +547,7 @@ async function renderAll(){
     { data: AN, count: anc, error: anErr },
     { data: BN, count: bnc, error: bnErr },
     { data: GM, count: gmc, error: gmErr },
+    { data: LB, error: lbErr },
     { count: visitCount }
   ] = await Promise.all([
     supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
@@ -550,6 +558,7 @@ async function renderAll(){
     supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('banners').select('*',{count:'exact'}).order('sort_order',{ascending:true}),
     supabase.from('games').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('login_backgrounds').select('*').order('sort_order',{ascending:true}),
     supabase.from('page_views').select('*',{count:'exact',head:true})
   ]);
 
@@ -585,6 +594,13 @@ async function renderAll(){
   document.getElementById('l-banners').innerHTML = BN?.length
     ? BN.map(b=>`<div class="irow"><div class="irow-left">${b.image_url?`<img class="irow-thumb" src="${esc(b.image_url)}" referrerpolicy="no-referrer"/>`:''}<div><div class="iname">${esc(b.title||'Untitled')}</div><div class="imeta">Order ${esc(b.sort_order??0)}${b.dz?' · has Dzongkha text':''}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('banner','${esc(b.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('banner','${esc(b.id)}')">✕</button></div></div>`).join('')
     : empty('🖼️','No banner slides yet — the homepage shows its built-in default slides. Click + Add Banner to replace them!');
+  if(lbErr) console.warn('Could not load login_backgrounds:', lbErr);
+  document.getElementById('c-loginbg').textContent = LB?.length||0;
+  document.getElementById('l-loginbg').innerHTML = lbErr
+    ? empty('⚠️','The login_backgrounds table is not set up yet. Run login-backgrounds.sql once in the Supabase SQL Editor, then refresh.')
+    : (LB?.length
+      ? LB.map(b=>`<div class="irow"><div class="irow-left">${b.image_url?`<img class="irow-thumb" src="${esc(b.image_url)}" referrerpolicy="no-referrer"/>`:''}<div><div class="iname">${esc(b.title||'Untitled background')}</div><div class="imeta">Order ${esc(b.sort_order??0)} · ${b.active===false?'❌ Hidden':'✅ Showing'}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('loginbg','${esc(b.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('loginbg','${esc(b.id)}')">✕</button></div></div>`).join('')
+      : empty('🌄','No backgrounds yet — the login page keeps its plain navy look. Click + Add Background!'));
   document.getElementById('c-games').textContent = gmc||0;
   document.getElementById('l-games').innerHTML = GM?.length ? GM.map(i=>row(i,'game')).join('') : empty('🎮','No games yet. Click + Add Game!');
 
@@ -755,13 +771,14 @@ window.openForm = async function(type, id=null){
   if(id){
     // Announcements have no url-masking concern; everything else reads
     // through the _public view so admin sees the real (unmasked) url.
-    const readTable = type === 'announce' ? 'announcements' : type + 's';
+    const readTable = tableFor(type);
     const { data } = await supabase.from(readTable).select('*').eq('id',id).single();
     item = data || {};
   }
-  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement',banner:'Banner Slide',game:'Game'}[type];
+  document.getElementById('m-title').textContent = (id?'Edit ':'Add ')+{lesson:'Lesson',resource:'Resource',video:'Video',article:'Article',announce:'Announcement',banner:'Banner Slide',loginbg:'Login Background',game:'Game'}[type];
   document.getElementById('m-body').innerHTML = buildForm(type,item);
   initThumbUi();
+  if(type==='banner'||type==='loginbg') refreshBannerImgPreview();
   const videoUrlField=document.getElementById('f-url');
   if(type==='video' && videoUrlField){
     const originalVideoUrl=String(item.url||'').trim();
@@ -893,11 +910,11 @@ function imageUploadField(v){
     </div>`;
 }
 
-function bannerImageField(v){
+function bannerImageField(v, label){
   const img = v('image_url');
   return `
     <div class="field">
-      <label>Banner Image (optional — a plain gradient is used if left empty)</label>
+      <label>${label || 'Banner Image (optional — a plain gradient is used if left empty)'}</label>
       <div class="upload-row">
         <input type="file" id="f-bannerimgfile" accept="image/*" style="display:none" onchange="handleBannerImgPick(event)"/>
         <button type="button" class="btn btn-ghost btn-sm" onclick="pickFile('f-bannerimgfile','banner-img-status')">📤 Upload image</button>
@@ -920,7 +937,10 @@ window.handleBannerImgPick = async function(e){
   st.className = 'upload-status'; st.textContent = 'Uploading…';
   try{
     const result = await uploadFileToDrive(file, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID);
-    document.getElementById('f-image_url').value = result.thumbnailUrl;
+    // Login backgrounds are shown full-screen, so ask Drive for a large version.
+    document.getElementById('f-image_url').value = (_type === 'loginbg' && result.fileId)
+      ? 'https://drive.google.com/thumbnail?id=' + result.fileId + '&sz=w1920'
+      : result.thumbnailUrl;
     st.textContent = 'Uploaded ✓'; st.className = 'upload-status ok';
     refreshBannerImgPreview();
   }catch(err){
@@ -952,6 +972,15 @@ function premiumField(v){
 
 function buildForm(type,d={}){
   const v=k=>d[k]!==undefined && d[k]!==null ? d[k] : '';
+  if(type==='loginbg') return`
+    ${bannerImageField(v,'Background Image * (wide landscape, about 1920×1080, under 25 MB)')}
+    <div class="field"><label>Name (only you see this, optional)</label><input id="f-title" placeholder="e.g. Dzongkha class photo" value="${esc(v('title'))}"/></div>
+    <div class="row2">
+      <div class="field"><label>Order</label><input id="f-sort_order" type="number" step="1" placeholder="0 = first" value="${esc(v('sort_order') ?? 0)}"/></div>
+      <div class="field"><label>Show on login page</label>
+        <select id="f-active"><option value="true"${v('active')!==false&&v('active')!=='false'?' selected':''}>✅ Showing</option><option value="false"${v('active')===false||v('active')==='false'?' selected':''}>❌ Hidden</option></select>
+      </div>
+    </div>`;
   if(type==='banner') return`
     <div class="field"><label>Title (English) *</label><input id="f-title" placeholder="e.g. Enhancing Dzongkha Learning" value="${esc(v('title'))}"/></div>
     <div class="field"><label>Title (Dzongkha, optional)</label><input id="f-dz" placeholder="རྫོང་ཁའི་མིང་" value="${esc(v('dz'))}"/></div>
@@ -1224,8 +1253,11 @@ async function saveInteractiveQuestions(videoId){
 window.saveItem = async function(){
   const isAnnounce = _type === 'announce';
   const isBanner = _type === 'banner';
+  const isLoginBg = _type === 'loginbg';
 
-  if(isAnnounce){
+  if(isLoginBg){
+    if(!fv('f-image_url')){ toast('Please upload or paste a background image.', true); return; }
+  } else if(isAnnounce){
     if(!fv('f-message')){ toast('Please enter a message.', true); return; }
   } else if(isBanner){
     if(!fv('f-title')){ toast('Please enter a title.', true); return; }
@@ -1235,14 +1267,16 @@ window.saveItem = async function(){
     if(fv('f-is_premium')==='true' && !fv('f-price')){ toast('Please enter a price for premium content.', true); return; }
   }
   // Validate any URL field before saving so a bad link can't reach the public site
-  const urlField = isAnnounce ? fv('f-link_url') : (isBanner ? fv('f-image_url') : fv('f-url'));
+  const urlField = isAnnounce ? fv('f-link_url') : ((isBanner||isLoginBg) ? fv('f-image_url') : fv('f-url'));
   if(urlField && !isValidUrl(urlField)){ toast('Please enter a valid http(s):// URL.', true); return; }
 
   const saveBtn = document.getElementById('save-btn');
   saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
 
-  const table = isAnnounce ? 'announcements' : _type + 's';
-  const base = isAnnounce
+  const table = tableFor(_type);
+  const base = isLoginBg
+    ? { title: fv('f-title'), image_url: fv('f-image_url'), sort_order: fv('f-sort_order') ? Number(fv('f-sort_order')) : 0, active: fv('f-active') !== 'false' }
+    : isAnnounce
     ? { message: fv('f-message') }
     : isBanner
     ? { title: fv('f-title'), dz: fv('f-dz'), tag: fv('f-tag'), tag_dz: fv('f-tag_dz'),
@@ -1261,6 +1295,7 @@ window.saveItem = async function(){
     article:  { article_date: fv('f-article_date') || null, category: fv('f-category') },
     announce: { emoji: fv('f-emoji'), active: fv('f-active') === 'true', link_label: fv('f-link_label'), link_url: fv('f-link_url') },
     banner:   {},
+    loginbg:  {},
     game:     { gtype: fv('f-gtype') }
   }[_type] || {};
 
@@ -1289,7 +1324,7 @@ window.saveItem = async function(){
 
 window.del = async function(type, id){
   if(!confirm('Delete this item?')) return;
-  const tbl = type === 'announce' ? 'announcements' : type+'s';
+  const tbl = tableFor(type);
   const { error } = await supabase.from(tbl).delete().eq('id', id);
   if(error){ toast('Error: ' + error.message, true); return; }
   toast('Deleted.');
