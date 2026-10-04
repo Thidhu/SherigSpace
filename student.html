@@ -25,7 +25,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 5
 .nav-logo{font-family:'Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1.2rem}
 .nav-right{display:flex;align-items:center;gap:1rem;font-size:.85rem;color:var(--text2)}
 .nav-right button{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.25);color:var(--red);padding:7px 14px;border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8rem}
-main{max-width:800px;margin:0 auto;padding:2rem 5%}
+main{max-width:860px;margin:0 auto;padding:2rem 5%}
 .class-heading{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold-text,var(--gold));margin:1.6rem 0 .8rem}
 .class-heading:first-child{margin-top:0}
 .assign-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1rem}
@@ -94,6 +94,59 @@ main{max-width:800px;margin:0 auto;padding:2rem 5%}
 @media(max-width:650px){.assignment-toolbar{position:static}.assignment-filter{flex:1;min-width:130px}}
 @media(max-width:650px){.learning-dash{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+
+
+/* ── Task manager (student) ── */
+main{max-width:860px}
+.tk-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem;margin-bottom:.8rem}
+.tk-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.75rem .5rem;text-align:center;cursor:pointer;color:var(--text);font:inherit;transition:border-color .15s,background .15s,transform .15s}
+.tk-stat:hover{transform:translateY(-1px);border-color:var(--gold)}
+.tk-stat b{display:block;font-size:1.5rem;line-height:1.1;color:var(--gold-text,var(--gold))}
+.tk-stat span{font-size:.72rem;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.tk-stat.on{border-color:var(--gold);background:rgba(201,168,76,.13)}
+.tk-stat.warn b{color:var(--red)}
+.tk-prog{grid-column:1/-1;display:flex;align-items:center;gap:.7rem;font-size:.76rem;color:var(--text2)}
+.tk-prog .bar{flex:1;height:7px;border-radius:99px;background:rgba(201,168,76,.15);overflow:hidden}
+.tk-prog .bar i{display:block;height:100%;background:var(--green);border-radius:99px;transition:width .4s}
+@media(max-width:650px){.tk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tk{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:12px;margin-bottom:.9rem;overflow:hidden}
+.tk.st-submitted{border-left-color:#5b9bd5}
+.tk.st-reviewed{border-left-color:var(--green)}
+.tk.is-overdue{border-left-color:var(--red)}
+.tk-head{display:flex;gap:.8rem;align-items:center;padding:.9rem 1.1rem;cursor:pointer;user-select:none}
+.tk-head:hover{background:rgba(201,168,76,.05)}
+.tk-ico{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:1.2rem;background:rgba(201,168,76,.12);flex:none}
+.tk-headtext{flex:1;min-width:0}
+.tk-title{font-size:1rem;font-weight:700;overflow-wrap:anywhere;margin:0 0 .3rem}
+.tk-meta{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;font-size:.74rem;color:var(--text2)}
+.tk-chev{font-size:1rem;color:var(--text2);transition:transform .2s;flex:none}
+.tk.open .tk-chev{transform:rotate(180deg)}
+.tk-pill{display:inline-flex;align-items:center;gap:.25rem;padding:2px 9px;border-radius:999px;font-weight:700;font-size:.71rem;background:rgba(201,168,76,.16);color:var(--gold-text,var(--gold))}
+.tk-pill.submitted{background:rgba(91,155,213,.18);color:#7db6ea}
+.tk-pill.reviewed{background:rgba(76,175,132,.18);color:var(--ok-text,#7ed9b0)}
+.tk-pill.late{background:rgba(224,92,92,.16);color:var(--err-text,#f09090)}
+.tk-pill.plain{background:transparent;border:1px solid var(--border);color:var(--text2);font-weight:600}
+.tk-body{display:none;padding:0 1.1rem 1.1rem;border-top:1px solid var(--border)}
+.tk.open .tk-body{display:block}
+.tk-sec{margin-top:1rem}
+.tk-sec-h{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text2);margin-bottom:.5rem;font-weight:700}
+.tk .assign-desc{font-size:.88rem;color:var(--text);line-height:1.65;margin:0}
+a.tk-link{color:var(--gold-text,var(--gold));text-decoration:underline;overflow-wrap:anywhere}
+.tk-lock{display:flex;gap:.6rem;align-items:flex-start;padding:.7rem .9rem;border-radius:10px;border:1px solid rgba(76,175,132,.35);background:rgba(76,175,132,.1);color:var(--ok-text,#7ed9b0);font-size:.84rem;line-height:1.5;margin-bottom:.7rem}
+.tk-note{font-size:.8rem;color:var(--ok-text,#7ed9b0);margin-bottom:.6rem}
+.tk-ans-q{padding:.65rem .8rem;border:1px solid var(--border);border-radius:10px;background:rgba(201,168,76,.04);margin-bottom:.5rem}
+.tk-ans-qt{font-size:.84rem;font-weight:600;margin-bottom:.3rem}
+.tk-ans-a{font-size:.86rem;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
+.tk-ans-a i{color:var(--text2)}
+.tk-ro-files{display:flex;flex-direction:column;gap:.35rem;margin-top:.5rem}
+.tk-fb{margin-top:1rem;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tk-fb-h{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .9rem;background:rgba(76,175,132,.12);font-weight:700;font-size:.84rem}
+.tk-score{font-size:1.1rem;color:var(--ok-text,#7ed9b0)}
+.tk-fb-b{padding:.8rem .9rem;font-size:.88rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.tk .answer-box{margin:0}
+.tk .res-block{margin:0}
+.tk .res-head{display:none}
+.tk .assign-actions{margin-top:1rem}
 
 a.btn{text-decoration:none;display:inline-block}
 .btn-sm{padding:5px 11px;font-size:.78rem}
@@ -382,14 +435,15 @@ a.btn{text-decoration:none;display:inline-block}
     <div id="certificate-text" class="certificate-state">Checking your learning achievements…</div>
     <div class="certificate-actions" id="certificate-actions"></div>
   </section>
+  <section id="task-stats" class="tk-stats" aria-label="My task summary"></section>
   <section class="assignment-toolbar" aria-label="Assignment filters">
     <div class="assignment-toolbar-row">
       <input id="assignment-search" class="assignment-search" type="search" placeholder="🔎 Search assignments…" aria-label="Search assignments"/>
       <select id="assignment-filter" class="assignment-filter" aria-label="Filter assignments">
-        <option value="all">All assignments</option>
-        <option value="todo">Not completed</option>
-        <option value="progress">In progress</option>
-        <option value="done">Completed</option>
+        <option value="all">All tasks</option>
+        <option value="todo">To do</option>
+        <option value="submitted">Submitted (waiting for review)</option>
+        <option value="reviewed">Reviewed</option>
         <option value="overdue">Overdue</option>
       </select>
       <select id="assignment-sort" class="assignment-filter" aria-label="Sort assignments">
@@ -614,9 +668,48 @@ async function renderAssignments(){
       box.appendChild(f); btn.textContent = T('Hide preview','སྔོན་བལྟ་སྦ།');
     });
   });
+  // open a file the student uploaded (private bucket → short-lived link)
+  wrap.querySelectorAll('[data-open-file]').forEach(btn => btn.addEventListener('click', async () => {
+    const w = window.open('', '_blank');
+    const { data, error } = await supabase.storage.from('task-answers').createSignedUrl(btn.getAttribute('data-open-file'), 600);
+    if(error || !data?.signedUrl){ if(w) w.close(); alert(T('Could not open the file: ','ཡིག་ཆ་ཁ་ཕྱེ་མ་ཚུགས: ') + (error?.message || '')); return; }
+    if(w) w.location.href = data.signedUrl; else window.open(data.signedUrl, '_blank');
+  }));
   wireAnswerBoxes(wrap);
   mountAssignmentInteractiveVideos(wrap);
+  renderTaskStats(assignments);
   applyAssignmentFilters();
+}
+
+// collapse / expand a task card (one listener for the whole list)
+(function(){
+  const wrap = document.getElementById('assignments-wrap');
+  const toggle = head => {
+    const card = head.closest('.tk'); if(!card) return;
+    const open = !card.classList.contains('open');
+    card.classList.toggle('open', open); head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    cardOpen[card.dataset.cardId] = open;
+  };
+  wrap.addEventListener('click', e => { const h = e.target.closest('.tk-head'); if(h && !e.target.closest('a,button')) toggle(h); });
+  wrap.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('tk-head')){ e.preventDefault(); toggle(e.target); } });
+})();
+
+function renderTaskStats(list){
+  const box = document.getElementById('task-stats'); if(!box) return;
+  let todo = 0, submitted = 0, reviewed = 0, overdue = 0;
+  list.forEach(a => { const st = stateOf(a); if(st === 'todo') todo++; else if(st === 'submitted') submitted++; else reviewed++; if(isOverdueTask(a, st)) overdue++; });
+  const total = list.length, pct = total ? Math.round((submitted + reviewed) / total * 100) : 0;
+  box.innerHTML = `
+    <button type="button" class="tk-stat" data-stat-filter="todo"><b>${todo}</b><span>${T('To do','ལཱ་འབད་ནི།')}</span></button>
+    <button type="button" class="tk-stat" data-stat-filter="submitted"><b>${submitted}</b><span>${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</span></button>
+    <button type="button" class="tk-stat" data-stat-filter="reviewed"><b>${reviewed}</b><span>${T('Reviewed','ཞིབ་དཔྱད་འབད་ཚར་ཡོད')}</span></button>
+    <button type="button" class="tk-stat${overdue ? ' warn' : ''}" data-stat-filter="overdue"><b>${overdue}</b><span>${T('Overdue','དུས་ལས་བརྒལ')}</span></button>
+    <div class="tk-prog"><span>${pct}% ${T('done','མཇུག་བསྡུ་ཡོད')}</span><div class="bar"><i style="width:${pct}%"></i></div><span>${submitted + reviewed}/${total}</span></div>`;
+  box.querySelectorAll('[data-stat-filter]').forEach(b => b.addEventListener('click', () => {
+    const sel = document.getElementById('assignment-filter'); if(!sel) return;
+    sel.value = sel.value === b.dataset.statFilter ? 'all' : b.dataset.statFilter;
+    applyAssignmentFilters();
+  }));
 }
 
 function applyAssignmentFilters(){
@@ -631,7 +724,7 @@ function applyAssignmentFilters(){
     const title = card.dataset.title || '';
     const status = card.dataset.status || 'todo';
     const overdue = card.dataset.overdue === 'true';
-    const matchText = !q || title.includes(q);
+    const matchText = !q || (card.dataset.search || title).includes(q);
     const matchStatus = filter==='all' || (filter==='overdue' ? overdue : status===filter);
     card.style.display = matchText && matchStatus ? '' : 'none';
   });
@@ -656,8 +749,9 @@ function applyAssignmentFilters(){
     local.sort(orderFn).forEach(c=>group.parentElement.appendChild(c));
     group.style.display=local.some(c=>c.style.display!=='none')?'':'none';
   });
+  document.querySelectorAll('[data-stat-filter]').forEach(b=>b.classList.toggle('on', b.dataset.statFilter===filter));
   const count=document.getElementById('assignment-count');
-  if(count) count.textContent=`Showing ${visible.length} of ${cards.length} assignment${cards.length===1?'':'s'}`;
+  if(count) count.textContent=`Showing ${visible.length} of ${cards.length} task${cards.length===1?'':'s'}`;
   const empty=document.getElementById('no-filter-results');
   if(empty) empty.style.display=cards.length && !visible.length?'block':'none';
 }
@@ -716,6 +810,65 @@ let questionsEnabled = false; // becomes true once sherigspace_assignments_v2.sq
 const drafts = {};            // assignment id -> { text, links[], files[], answers{} }
 const statusRows = {};        // assignment id -> saved status row
 const assignmentsById = {};   // assignment id -> assignment row
+
+// ── Links: make every URL a teacher typed clickable, and never lose an attachment ──
+const URL_RE = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+function fixUrl(u){
+  u = String(u == null ? '' : u).trim();
+  if(!u) return '';
+  if(/^[a-z][a-z0-9+.-]*:/i.test(u)) return safeUrl(u);                   // has a scheme (javascript: etc. is rejected by safeUrl)
+  if(/^(www\.|[\w-]+(\.[\w-]+)+(\/|\?|#|$))/i.test(u)) return safeUrl('https://' + u);   // "drive.google.com/…" typed without https://
+  return '';
+}
+function splitUrlToken(t){ let tail = ''; while(/[.,;:!?)\]]$/.test(t)){ tail = t.slice(-1) + tail; t = t.slice(0, -1); } return [t, tail]; }
+function linkify(text){
+  const str = String(text == null ? '' : text); let out = '', last = 0, m; URL_RE.lastIndex = 0;
+  while((m = URL_RE.exec(str))){
+    const [clean, tail] = splitUrlToken(m[0]); const href = fixUrl(clean);
+    out += esc(str.slice(last, m.index));
+    out += href ? `<a class="tk-link" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(clean)}</a>${esc(tail)}` : esc(m[0]);
+    last = m.index + m[0].length;
+  }
+  return out + esc(str.slice(last));
+}
+function urlsIn(text){
+  const out = []; const str = String(text == null ? '' : text); let m; URL_RE.lastIndex = 0;
+  while((m = URL_RE.exec(str))){ const u = fixUrl(splitUrlToken(m[0])[0]); if(u && !out.includes(u)) out.push(u); }
+  return out;
+}
+// Everything the teacher attached: the saved attachment list, the older one-link-per-line field, and links typed in the description.
+function readAttachments(a){
+  let list = a && a.attachments;
+  if(typeof list === 'string'){ try{ list = JSON.parse(list); }catch(e){ list = null; } }
+  const out = [], seen = new Set();
+  if(Array.isArray(list)) list.forEach((x, i) => {
+    const url = fixUrl(typeof x === 'string' ? x : x && (x.url || x.href || x.link)); if(!url) return;
+    seen.add(url);
+    out.push({ url, label: String((x && (x.label || x.title || x.name)) || ''), type: String((x && x.type) || ''),
+               resource_key: String((x && x.resource_key) || ('att_' + i)), interactive: !!(x && x.interactive) });
+  });
+  String((a && a.attachment_url) || '').split(/\s*\n\s*/).forEach(line => {
+    const url = fixUrl(line); if(url && !seen.has(url)){ seen.add(url); out.push({ url, label:'', type:'', resource_key:'att_x' + out.length, interactive:false }); }
+  });
+  return out;
+}
+
+// ── Task state: To do → Submitted → Reviewed (reviewed = locked) ──
+function rowOf(id){ return statusRows[String(id)] || {}; }
+function isLocked(id){ return !!rowOf(id).reviewed_at; }
+function isOverdueTask(a, state){
+  if(state !== 'todo' || !a.due_date) return false;
+  const d = new Date(a.due_date + 'T00:00:00'); const t = new Date(); t.setHours(0,0,0,0);
+  return !isNaN(d) && d < t;
+}
+function stateOf(a){
+  const row = rowOf(a.id);
+  if(row.reviewed_at) return 'reviewed';
+  if(row.status === 'done' || row.submitted_at) return 'submitted';
+  return 'todo';
+}
+const cardOpen = {};   // remembers which cards the student opened/closed across re-renders
+
 function splitLines(v){ return String(v || '').split(/\s*\n\s*/).filter(Boolean); }
 function normDraft(d){ return Object.assign({ text:'', links:[], files:[], answers:{} }, d); }
 function getDraft(id){ return drafts[id] || (drafts[id] = normDraft(loadLocalDraft(id) || {})); }
@@ -785,16 +938,32 @@ function questionsHtml(a){
   }).join('') + `</div>`;
 }
 
+function lockedAnswerHtml(a, row){
+  const qs = questionsForDisplay(a);
+  const ans = (row.answers && typeof row.answers === 'object') ? row.answers : {};
+  const items = qs.map((q, i) => {
+    const v = ans[q.id] == null ? '' : String(ans[q.id]).trim();
+    return `<div class="tk-ans-q"><div class="tk-ans-qt"><span class="q-num">${i+1}.</span>${esc(q.text)}</div><div class="tk-ans-a">${v ? esc(v) : '<i>' + T('No answer','ལན་མིན་འདུག') + '</i>'}</div></div>`;
+  }).join('');
+  const note = String(row.answer_text || '').trim();
+  const links = splitLines(row.answer_links).map(fixUrl).filter(Boolean);
+  const files = splitLines(row.answer_files);
+  return `<div class="tk-lock"><span>🔒</span><div><b>${T('Reviewed by your teacher','སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོད')}</b>${row.reviewed_at ? ' · ' + esc(new Date(row.reviewed_at).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})) : ''}<br>${T('Your answers are locked and can no longer be edited.','ཁྱོད་ཀྱི་ལན་ཚུ་ཟྲིབ་བཀག་ཡོདཔ་ལས་ཤུལ་ལས་ཞུན་དག་འབད་མི་ཚུགས།')}</div></div>
+    ${items}
+    ${note ? `<div class="tk-ans-q"><div class="tk-ans-qt">${T('Your note','ཁྱོད་ཀྱི་བསམ་བཀོད')}</div><div class="tk-ans-a">${linkify(note)}</div></div>` : ''}
+    ${(links.length || files.length) ? `<div class="tk-ro-files">${
+      links.map(u => `<div class="chip"><span>🔗 <a class="tk-link" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a></span></div>`).join('')}${
+      files.map(p => `<div class="chip"><span>📎 ${esc(fileLabel(p))}</span><button type="button" class="btn btn-ghost btn-sm" data-open-file="${esc(p)}">${T('Open','ཁ་ཕྱེ')}</button></div>`).join('')}</div>` : ''}
+    ${(!items && !note && !links.length && !files.length) ? `<div class="tk-ans-a"><i>${T('Marked complete.','མཇུག་བསྡུ་བརྟགས་ཚར་ཡོད།')}</i></div>` : ''}`;
+}
+
 function answerBoxHtml(a){
-  const id = String(a.id), d = getDraft(id), row = statusRows[id] || {};
+  const id = String(a.id), d = getDraft(id), row = rowOf(id);
+  if(row.reviewed_at) return lockedAnswerHtml(a, row);          // teacher has reviewed → read-only
   const submitted = !!row.submitted_at;
   const hasQ = questionsFor(a).length > 0;
-  const fb = [];
-  if(row.score != null) fb.push(`<b>⭐ ${T('Score:','གྲངས:')} ${esc(row.score)}%</b>`);
-  if(row.teacher_feedback) fb.push(`<b>💬 ${T('Teacher feedback','སློབ་དཔོན་གྱི་བསམ་བཀོད')}</b>`, esc(row.teacher_feedback));
   return `<div class="answer-box">
-    <div class="answer-title">✍️ ${hasQ ? T('Your answers','ཁྱོད་ཀྱི་ལན་ཚུ') : T('Your answer','ཁྱོད་ཀྱི་ལན')}</div>
-    ${submitted ? `<div class="submitted-note">✓ ${T('Submitted','སྙན་ཞུ་འབད་ཡོད')} ${esc(new Date(row.submitted_at).toLocaleString())} — ${T('you can edit and submit again.','ཞུན་དག་འབད་དེ་ལོག་སྙན་ཞུ་འབད་ཆོག')}</div>` : ''}
+    ${submitted ? `<div class="tk-note">✓ ${T('Submitted','སྙན་ཞུ་འབད་ཡོད')} ${esc(new Date(row.submitted_at).toLocaleString())} — ${T('you can still edit and submit again until your teacher reviews it.','སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་མ་འབད་ཚུན་ཚོད་ཞུན་དག་འབད་དེ་ལོག་སྙན་ཞུ་འབད་ཆོག')}</div>` : ''}
     ${questionsHtml(a)}
     ${hasQ ? `<div class="answer-sub">${T('Anything else you want to tell your teacher? (optional)','སློབ་དཔོན་ལུ་གཞན་ཡང་ལབ་ནི་ཡོད་ག? (དགོས་མཁོ་མེད་ཡང་རུང)')}</div>` : ''}
     <textarea data-answer-text data-id="${esc(id)}" style="${hasQ ? 'min-height:70px' : ''}" placeholder="${hasQ ? T('Add a note…','བསམ་བཀོད་ཁ་སྐོང…') : T('Write your answer here…','ཁྱོད་ཀྱི་ལན་འ་ནཱ་བྲིས…')}">${esc(d.text)}</textarea>
@@ -808,7 +977,7 @@ function answerBoxHtml(a){
     <div class="chips" data-id="${esc(id)}">${chipsHtml(id)}</div>
     <div class="ans-status" data-id="${esc(id)}"></div>
     <button type="button" class="btn btn-gold" data-submit-answer data-id="${esc(id)}">${submitted ? T('Update my answers','ང་གི་ལན་ཚུ་གསར་བསྐྱར') : T('Submit answers','ལན་སྙན་ཞུ')}</button>
-  </div>${fb.length ? `<div class="feedback-box">${fb.join('<br>')}</div>` : ''}`;
+  </div>`;
 }
 function wireAnswerBoxes(root){
   root.querySelectorAll('[data-answer-text]').forEach(t => t.addEventListener('input', () => { getDraft(t.dataset.id).text = t.value; saveLocalDraft(t.dataset.id); }));
@@ -832,6 +1001,7 @@ function wireAnswerBoxes(root){
   root.querySelectorAll('[data-answer-file]').forEach(inp => inp.addEventListener('change', async () => {
     const id = inp.dataset.id, file = inp.files[0]; inp.value = '';
     if(!file) return;
+    if(isLocked(id)){ setAnsStatus(id, T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།'), 'err'); return; }
     if(file.size > 20 * 1024 * 1024){ setAnsStatus(id, T('Please choose a file under 20 MB.','ཡིག་ཆ་ 20MB ལས་ཉུང་སུ་ཅིག་སེལ་འཐུ་འབད'), 'err'); return; }
     setAnsStatus(id, T('Uploading "','བཙུགས་བཞིནམ "') + file.name + '"…', 'wait');
     try{
@@ -845,6 +1015,7 @@ function wireAnswerBoxes(root){
   root.querySelectorAll('.chips').forEach(c => refreshChips(c.dataset.id));
 }
 async function submitAnswer(id, btn){
+  if(isLocked(id)){ setAnsStatus(id, T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།'), 'err'); await renderAssignments(); return; }
   const d = getDraft(id);
   const qs = questionsFor(assignmentsById[id] || {});
   const cleanAnswers = {};
@@ -876,6 +1047,7 @@ async function submitAnswer(id, btn){
     }
   }
   clearLocalDraft(id);
+  cardOpen[id] = true;
   await renderAssignments();
 }
 
@@ -883,18 +1055,7 @@ async function submitAnswer(id, btn){
 // Keep the interactive-video metadata from the assignment attachment.
 // assignment-utils.js intentionally normalizes attachments for ordinary resources,
 // but interactive assignment videos also need resource_key and interactive.
-function parseStudentAttachments(row){
-  if(row && Array.isArray(row.attachments) && row.attachments.length){
-    return row.attachments.map((x,i)=>({
-      url: safeUrl(x && x.url),
-      label: String((x && x.label) || ''),
-      type: String((x && x.type) || ''),
-      resource_key: String((x && x.resource_key) || ('att_' + i)),
-      interactive: !!(x && x.interactive)
-    })).filter(x=>x.url);
-  }
-  return parseAttachments(row);
-}
+function parseStudentAttachments(row){ return readAttachments(row); }
 
 function resourceHtml(att){
   const c = classifyUrl(safeUrl(att.url));
@@ -928,7 +1089,7 @@ function resourceHtml(att){
 function resourcesHtml(list, assignmentId){
   if(!list.length) return '';
   const enriched = list.map(a => ({...a, assignment_id: String(assignmentId || '')}));
-  return `<div class="res-block"><div class="res-head">📎 ${T('Resources for this task','ལཱ་ཁག་འདིའི་དོན་ལུ་ཡིག་ཆ')}</div>${enriched.map(resourceHtml).join('')}</div>`;
+  return `<div class="res-block">${enriched.map(resourceHtml).join('')}</div>`;
 }
 
 function dueHtml(a, done){
@@ -946,8 +1107,24 @@ function dueHtml(a, done){
   return `<div class="assign-meta">📅 ${T('Due','འབྱུང་ཉིནམ')} ${esc(d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }))}${tag}</div>`;
 }
 
+function dueChip(a, state){
+  if(!a.due_date) return '';
+  const d = new Date(a.due_date + 'T00:00:00');
+  if(isNaN(d)) return `<span class="tk-pill plain">📅 ${esc(a.due_date)}</span>`;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days = Math.round((d - today) / 86400000);
+  const when = esc(d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }));
+  let extra = '';
+  if(state === 'todo'){
+    if(days < 0) extra = ` <span class="tk-pill late">${T('Overdue','དུས་ལས་བརྒལ')}</span>`;
+    else if(days === 0) extra = ` <span class="tk-pill">${T('Due today','དེ་རིང་འབྱུང')}</span>`;
+    else if(days === 1) extra = ` <span class="tk-pill">${T('Due tomorrow','ནངས་པར་འབྱུང')}</span>`;
+  }
+  return `<span class="tk-pill plain">📅 ${T('Due','འབྱུང་ཉིནམ')} ${when}</span>${extra}`;
+}
+
 async function renderAssignmentCard(a, done){
-  let title, desc, lockedNote = '', resources = parseStudentAttachments(a);
+  let title, desc, lockedNote = '', resources = readAttachments(a);
 
   if(a.kind === 'custom'){
     title = a.title || T('Task','ལཱ་ཁག');
@@ -956,11 +1133,9 @@ async function renderAssignmentCard(a, done){
     let item = null;
     let itemError = null;
     // Read assigned library content through the protected RPC instead of the old *_public views.
-    // This works for ordinary and premium items while keeping premium URLs protected.
     const rpc = await supabase.rpc('sherig_content_item', { p_table: String(a.item_type || ''), p_id: String(a.item_id || '') });
     if(!rpc.error) item = rpc.data;
     else itemError = rpc.error;
-    // Backward-compatible fallback for projects that have not run the security migration yet.
     if(!item){
       const legacy = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
       if(!legacy.error) item = legacy.data;
@@ -972,34 +1147,72 @@ async function renderAssignmentCard(a, done){
       if(item.is_premium && !item.url){
         lockedNote = `<div class="locked-note">🔒 ${T('This is premium content — visit the','འདི་གོང་ཅན་གྱི་ནང་དོན་ཨིན —')} <a href="index.html" style="color:var(--gold-text,var(--gold))">TLM Store</a> ${T('to unlock it first.','ལུ་འགྱོ་སྟེ་དང་པ་ཁ་ཕྱེ།')}</div>`;
       } else {
-        // the library item first, then whatever the teacher added on top
         resources = parseAttachments({ attachment_url: item.url }).concat(resources);
       }
     }
   }
+  // Links the teacher typed inside the description also become resource tiles (images/videos show right in the task).
+  const seen = new Set(resources.map(r => r.url));
+  urlsIn(desc).forEach(u => { if(!seen.has(u)){ seen.add(u); resources.push({ url:u, label:'', type:'', resource_key:'desc_' + resources.length, interactive:false }); } });
 
+  const id = String(a.id), row = rowOf(id);
   const hasQ = questionsFor(a).length > 0;
-  const statusRow = statusRows[String(a.id)] || {};
-  const statusValue = done ? 'done' : (statusRow.status === 'started' ? 'progress' : 'todo');
-  const dueValue = a.due_date ? new Date(a.due_date + 'T00:00:00') : null;
-  const overdue = !done && dueValue && !isNaN(dueValue) && dueValue < new Date(new Date().setHours(0,0,0,0));
-  return `<div class="assign-card ${done?'done':''}" data-assignment-card data-title="${esc(title.toLowerCase())}" data-status="${statusValue}" data-overdue="${overdue?'true':'false'}" data-created="${esc(a.created_at||'')}" data-due="${esc(a.due_date||'')}">
-    <div class="assign-title">${esc(title)}</div>
-    ${dueHtml(a, done)}
-    ${desc ? `<div class="assign-desc">${esc(desc)}</div>` : ''}
-    ${resourcesHtml(resources, a.id)}
-    ${lockedNote}
-    ${answersEnabled && !lockedNote && !resources.some(r => r.interactive) ? answerBoxHtml(a) : ''}
-    ${!lockedNote && resources.some(r => r.interactive) ? `<div class="answer-box interactive-submit-box"><div class="answer-title">✨ ${T('Interactive video assignment','བརྙན་ཐུང་གི་ལཱ་ཁག')}</div><div class="answer-sub">${T('Answer the questions in the video. You do not need to write a separate answer here.','བརྙན་ཐུང་ནང་གི་དྲི་བ་ཚུ་ལུ་ལན་བྲིས། འདི་ནང་ལོག་སྟེ་ལན་བྲི་དགོས་མི་འདུག།')}</div><div class="ans-status" data-id="${esc(a.id)}"></div><button type="button" class="btn btn-gold" data-submit-interactive="${esc(a.id)}">${T('Submit assignment','ལཱ་ཁག་སྙན་ཞུ་འབད')}</button></div>` : ''}
-    <div class="assign-actions">
-      ${done
+  const interactive = resources.some(r => r.interactive);
+  const state = stateOf(a);
+  const overdue = isOverdueTask(a, state);
+  const nQ = questionsFor(a).length;
+  const open = cardOpen[id] != null ? cardOpen[id] : (state !== 'reviewed' || interactive);
+
+  const stateLabel = { todo: T('To do','ལཱ་འབད་ནི།'), submitted: T('Submitted','སྙན་ཞུ་འབད་ཡོད'), reviewed: T('Reviewed','ཞིབ་དཔྱད་འབད་ཚར་ཡོད') }[state];
+  const stateIcon = { todo:'📝', submitted:'✓', reviewed:'✔' }[state];
+  const meta = `<span class="tk-pill ${state}">${stateIcon} ${stateLabel}</span>`
+    + dueChip(a, state)
+    + (resources.length ? `<span class="tk-pill plain">📎 ${resources.length}</span>` : '')
+    + (nQ ? `<span class="tk-pill plain">❓ ${nQ}</span>` : '')
+    + (row.score != null && state === 'reviewed' ? `<span class="tk-pill reviewed">⭐ ${esc(row.score)}%</span>` : '');
+
+  const fbParts = [];
+  const showScore = row.score != null && state !== 'todo';
+  if(showScore || row.teacher_feedback){
+    fbParts.push(`<div class="tk-fb"><div class="tk-fb-h"><span>💬 ${T('Teacher feedback','སློབ་དཔོན་གྱི་བསམ་བཀོད')}</span>${showScore ? `<span class="tk-score">⭐ ${esc(row.score)}%</span>` : ''}</div>${row.teacher_feedback ? `<div class="tk-fb-b">${linkify(row.teacher_feedback)}</div>` : ''}</div>`);
+  }
+
+  let work = '';
+  if(!lockedNote){
+    if(interactive){
+      work = `<div class="answer-box interactive-submit-box"><div class="answer-title">✨ ${T('Interactive video assignment','བརྙན་ཐུང་གི་ལཱ་ཁག')}</div><div class="answer-sub">${T('Answer the questions in the video. You do not need to write a separate answer here.','བརྙན་ཐུང་ནང་གི་དྲི་བ་ཚུ་ལུ་ལན་བྲིས། འདི་ནང་ལོག་སྟེ་ལན་བྲི་དགོས་མི་འདུག།')}</div><div class="ans-status" data-id="${esc(a.id)}"></div>${state === 'reviewed' ? `<div class="tk-lock"><span>🔒</span><div>${T('Reviewed by your teacher — this task is now locked.','སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཟྲིབ་བཀག་ཡོད།')}</div></div>` : `<button type="button" class="btn btn-gold" data-submit-interactive="${esc(a.id)}">${T('Submit assignment','ལཱ་ཁག་སྙན་ཞུ་འབད')}</button>`}</div>`;
+    } else if(answersEnabled){
+      work = answerBoxHtml(a);
+    }
+  }
+
+  const actions = state === 'reviewed'
+    ? `<button class="btn btn-green" disabled>✔ ${T('Reviewed','ཞིབ་དཔྱད་འབད་ཚར་ཡོད')}</button>`
+    : (done
         ? `<button class="btn btn-green" disabled>✓ ${T('Completed','མཇུག་བསྡུ་ཡོད')}</button>`
-        : (hasQ ? '' : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">${T('Mark Complete','མཇུག་བསྡུ་བརྟགས')}</button>`)}
+        : (hasQ ? '' : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">${T('Mark Complete','མཇུག་བསྡུ་བརྟགས')}</button>`));
+
+  return `<article class="tk st-${state}${overdue ? ' is-overdue' : ''}${open ? ' open' : ''}" data-assignment-card data-card-id="${esc(id)}"
+      data-title="${esc(title.toLowerCase())}" data-search="${esc((title + ' ' + desc).toLowerCase())}" data-status="${state}" data-overdue="${overdue ? 'true' : 'false'}"
+      data-created="${esc(a.created_at||'')}" data-due="${esc(a.due_date||'')}">
+    <div class="tk-head" role="button" tabindex="0" aria-expanded="${open ? 'true' : 'false'}">
+      <div class="tk-ico">${interactive ? '✨' : (resources.length ? '📎' : '📝')}</div>
+      <div class="tk-headtext"><h3 class="tk-title">${esc(title)}</h3><div class="tk-meta">${meta}</div></div>
+      <span class="tk-chev" aria-hidden="true">▾</span>
     </div>
-  </div>`;
+    <div class="tk-body">
+      ${desc ? `<div class="tk-sec"><div class="tk-sec-h">${T('Instructions','ལམ་སྟོན།')}</div><div class="assign-desc">${linkify(desc)}</div></div>` : ''}
+      ${resources.length ? `<div class="tk-sec"><div class="tk-sec-h">📎 ${T('Resources for this task','ལཱ་ཁག་འདིའི་དོན་ལུ་ཡིག་ཆ')}</div>${resourcesHtml(resources, a.id)}</div>` : ''}
+      ${lockedNote ? `<div class="tk-sec">${lockedNote}</div>` : ''}
+      ${work ? `<div class="tk-sec"><div class="tk-sec-h">✍️ ${hasQ ? T('Your answers','ཁྱོད་ཀྱི་ལན་ཚུ') : T('Your work','ཁྱོད་ཀྱི་ལཱ།')}</div>${work}</div>` : ''}
+      ${fbParts.join('')}
+      <div class="assign-actions">${actions}</div>
+    </div>
+  </article>`;
 }
 
 async function submitInteractiveAssignment(assignmentId, btn){
+  if(isLocked(assignmentId)){ alert(T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།')); await renderAssignments(); return; }
   btn.disabled = true;
   const old = btn.textContent;
   btn.textContent = T('Submitting…','སྙན་ཞུ་འབད་བཞིནམ...');
@@ -1034,6 +1247,7 @@ async function submitInteractiveAssignment(assignmentId, btn){
 }
 
 window.markDone = async function(assignmentId){
+  if(isLocked(assignmentId)){ alert(T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།')); renderAssignments(); return; }
   const { error } = await supabase.from('assignment_status').upsert({
     assignment_id: assignmentId, student_id: me.id, status: 'done', completed_at: new Date().toISOString()
   }, { onConflict: 'assignment_id,student_id' });
