@@ -22,24 +22,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .bg-slide.on{opacity:1;transform:scale(1)}
 .bg-shade{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(135deg,rgba(15,22,35,.38),rgba(15,22,35,.18) 55%,rgba(15,22,35,.42))}
 .bg.has-img::before,.bg.has-img::after{display:none}
-.bg-dots{display:flex;justify-content:center;gap:.45rem;margin-bottom:.6rem}
+.bg-dots{position:fixed;left:0;right:0;bottom:14px;z-index:3;display:flex;justify-content:center;gap:.45rem}
 .bg-dots:empty{display:none}
 .bg-dot{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.45);cursor:pointer;transition:background .2s,transform .2s}
 .bg-dot.on{background:var(--gold);transform:scale(1.25)}
-body.has-bg footer{color:rgba(255,255,255,.8);text-shadow:0 1px 6px rgba(0,0,0,.6)}
 @media (prefers-reduced-motion:reduce){.bg-slide{transition:opacity .4s;transform:none}}
 
 /* ── Layout: one card, brand on the left, forms on the right ── */
 .wrap{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
-.card{background:rgba(25,32,53,.93);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:14px;width:100%;max-width:980px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px)}
-.side{padding:2.8rem 2.6rem;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
-.side h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,3.6vw,2.9rem);line-height:1.15;color:var(--gold-text,var(--gold));letter-spacing:.01em}
-.side p.tagline{font-size:1rem;color:var(--text);opacity:.85;margin-top:.9rem;line-height:1.6}
+.card{background:rgba(25,32,53,.93);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:14px;width:100%;max-width:800px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,370px)}
+.side{padding:2rem 1.8rem;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.side h1{font-family:'Playfair Display',serif;font-size:clamp(1.7rem,3vw,2.3rem);line-height:1.15;color:var(--gold-text,var(--gold));letter-spacing:.01em}
+.side p.tagline{font-size:.92rem;color:var(--text);opacity:.85;margin-top:.9rem;line-height:1.6}
 .side .side-hint{text-align:left;margin-top:1.6rem;font-size:.9rem}
 .main-col{min-width:0;display:flex;flex-direction:column}
-.main-col .forms{flex:1}
-@media(max-width:860px){
-  .card{grid-template-columns:1fr;max-width:460px}
+.main-col .forms{flex:1;padding:1.3rem 1.4rem}
+.main-col .tab{padding:.8rem;font-size:.85rem}
+.main-col .form{gap:.8rem}
+.logo{display:block;width:170px;height:auto;margin:0 0 .6rem -6px;filter:drop-shadow(0 14px 14px rgba(0,0,0,.38)) drop-shadow(0 3px 4px rgba(0,0,0,.28))}
+@media(max-width:780px){
+  .card{grid-template-columns:1fr;max-width:420px}
+  .logo{width:120px;margin:0 0 .4rem}
   .side{padding:1.6rem 1.4rem 1.2rem;text-align:center;align-items:center;border-right:0;border-bottom:1px solid var(--border)}
   .side h1{font-size:1.7rem}
   .side p.tagline{font-size:.88rem;margin-top:.4rem}
@@ -98,8 +101,6 @@ body.has-bg footer{color:rgba(255,255,255,.8);text-shadow:0 1px 6px rgba(0,0,0,.
 .btn-cancel{background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.1)}
 .btn-cancel:hover{background:rgba(255,255,255,.13);transform:none}
 
-footer{position:relative;z-index:1;text-align:center;padding:1.2rem;font-size:.78rem;color:rgba(255,255,255,.25)}
-footer span{color:var(--gold-text,var(--gold))}
 </style>
 <script src="theme.js"></script>
 </head>
@@ -108,10 +109,11 @@ footer span{color:var(--gold-text,var(--gold))}
 <div class="wrap">
   <div class="card">
     <aside class="side">
-      <div data-lang-slot style="display:flex;margin-bottom:1rem"></div>
+      <img class="logo" src="sherigspace-logo.png" alt="SherigSpace logo" onerror="this.style.display='none'"/>
       <h1>SherigSpace</h1>
       <p class="tagline" data-en="Your Teaching &amp; Learning Portal" data-dz="ཁྱོད་ཀྱི་སློབ་སྟོན་དང་ལྷབ་སྦྱང་ས་ཁོངས།">Your Teaching &amp; Learning Portal</p>
       <p class="hint side-hint" data-en="Don't have an account? <a onclick=&quot;switchTab('signup')&quot;>Sign Up</a>" data-dz="ཁྱོད་ལུ་ཐོ་བཀོད་མིན་འདུག་ག? <a onclick=&quot;switchTab('signup')&quot;>ཐོ་བཀོད་འབད།</a>">Don't have an account? <a onclick="switchTab('signup')">Sign Up</a></p>
+      <div data-lang-slot style="display:flex;margin-top:1.4rem"></div>
     </aside>
     <div class="main-col">
     <div class="tabs" style="grid-template-columns:1fr 1fr 1fr">
@@ -224,7 +226,7 @@ footer span{color:var(--gold-text,var(--gold))}
   </div>
 </div>
 
-<footer><div class="bg-dots" id="bgDots"></div>© 2026 <span>SherigSpace</span></footer>
+<div class="bg-dots" id="bgDots"></div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
