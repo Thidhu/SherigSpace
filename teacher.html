@@ -14,13 +14,18 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--surface:#192035;--surface2:#202b4a;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--red:#e05c5c;--green:#4caf84;--blue:#5c8de0}
 body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
-#gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f1623,#1a2340,#1a2f50);display:flex;align-items:center;justify-content:center;padding:1rem}
+#gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f1623,#1a2340,#1a2f50);display:flex;overflow-y:auto;padding:1rem}
+.gate-bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.gate-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.06);transition:opacity 1.4s ease,transform 7s ease-out}
+.gate-slide.on{opacity:1;transform:scale(1)}
+.gate-shade{position:absolute;inset:0;background:linear-gradient(135deg,rgba(15,22,35,.38),rgba(15,22,35,.18) 55%,rgba(15,22,35,.42))}
+@media (prefers-reduced-motion:reduce){.gate-slide{transition:opacity .4s;transform:none}}
 #gate.hide{display:none}
-.gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;width:100%;max-width:420px;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5)}
-.gate-icon{font-size:2.5rem;margin-bottom:.75rem}
-.gate-card h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-text,var(--gold));margin-bottom:.3rem}
-.gate-card p{font-size:.85rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.6}
-.gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+.gate-card{position:relative;z-index:1;margin:auto;background:rgba(25,32,53,.93);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:12px;width:100%;max-width:340px;padding:1.3rem 1.4rem;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.gate-icon{font-size:1.9rem;margin-bottom:.4rem}
+.gate-card h2{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold-text,var(--gold));margin-bottom:.3rem}
+.gate-card p{font-size:.8rem;color:var(--text2);margin-bottom:1rem;line-height:1.55}
+.gate-btn{width:100%;padding:10px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
 .gate-btn:hover{background:var(--gold-light)}
 .layout{display:flex;min-height:100vh}
 .sidebar{width:220px;flex-shrink:0;background:#131c2e;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
@@ -144,6 +149,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 <body>
 
 <div id="gate">
+  <div class="gate-bg" id="gateBg"><div class="gate-shade"></div></div>
   <div class="gate-card" id="gate-inner">
     <div class="gate-icon">🍎</div>
     <h2 data-en="Checking access…" data-dz="འཛུལ་སྒོ་ཞིབ་དཔྱད་འབད་བཞིནམ...">Checking access…</h2>
@@ -291,6 +297,33 @@ import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions 
 import { importQuestionsFromFile, downloadQuestionTemplate } from './question-import.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
+
+// ── Changing background behind the gate (same pictures as the login page; set in Admin → Login Backgrounds) ──
+(async function loadGateBackgrounds(){
+  try{
+    const { data, error } = await supabase.from('login_backgrounds')
+      .select('image_url,sort_order').eq('active', true).order('sort_order', { ascending: true });
+    if(error || !data || !data.length) return;
+    const urls = data.map(r => safeUrl(r.image_url)).filter(Boolean);
+    const bg = document.getElementById('gateBg');
+    if(!urls.length || !bg) return;
+    const slides = []; let cur = -1, timer = null, curEl = null;
+    const show = i => { cur = (i + slides.length) % slides.length; curEl = slides[cur]; slides.forEach((el, j) => el.classList.toggle('on', j === cur)); };
+    const restart = () => { clearInterval(timer); if(slides.length > 1) timer = setInterval(() => show(cur + 1), 6000); };
+    urls.forEach((url, idx) => {
+      const img = document.createElement('img');
+      img.className = 'gate-slide'; img.alt = ''; img.setAttribute('aria-hidden', 'true');
+      img.referrerPolicy = 'no-referrer'; img.dataset.i = idx;
+      img.onload = () => {
+        bg.insertBefore(img, bg.querySelector('.gate-shade'));
+        slides.push(img); slides.sort((a, b) => a.dataset.i - b.dataset.i);
+        show(curEl ? slides.indexOf(curEl) : 0); restart();
+      };
+      img.src = url;
+    });
+  }catch(e){ console.warn('Gate backgrounds not loaded:', e); }
+})();
+
 let me = null; // { id, name, email }
 let currentClassId = null;
 let siteSettings = {};
@@ -403,13 +436,13 @@ function renderTeacherMembershipGate(sub){
     <div class="gate-icon">👨‍🏫</div>
     <h2>${T('Become a Teacher','སློབ་དཔོན་འགྱུར་བ')}</h2>
     <p>${T('Unlock the SherigSpace Teacher Dashboard with a teacher membership. The membership price is set by the administrator.','འོས་སྦྱོར་འཆར་གཞི་གི་ཐོག་ལས་ SherigSpace སློབ་དཔོན་ཌེཤ་བོརཌི་ཁ་ཕྱེ། འོས་སྦྱོར་གྱི་གོང་ཚད་ཨེཌ་མིན་གྱིས་གཏན་འཁེལ་འབདཝ་ཨིན།')}</p>
-    <div style="margin:1.1rem 0;padding:1rem;border:1px solid var(--border);border-radius:12px;background:rgba(201,168,76,.06)">
+    <div style="margin:.8rem 0;padding:.75rem;border:1px solid var(--border);border-radius:10px;background:rgba(201,168,76,.06)">
       <div style="font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">${T('Teacher Membership','སློབ་དཔོན་གྱི་འོས་སྦྱོར')}</div>
-      <div style="font-size:1.9rem;font-weight:800;color:var(--gold-text,var(--gold));margin:.2rem 0">${priceText}<span style="font-size:.85rem;font-weight:500;color:var(--text2)">${price?T('/month.','/ཟླཝ་རེ།'):''}</span></div>
+      <div style="font-size:1.5rem;font-weight:800;color:var(--gold-text,var(--gold));margin:.15rem 0">${priceText}<span style="font-size:.85rem;font-weight:500;color:var(--text2)">${price?T('/month.','/ཟླཝ་རེ།'):''}</span></div>
       <div style="font-size:.84rem;color:var(--text2)">${T('Unlimited teacher dashboard access after approval.','གནང་བ་ཐོབ་ཚར་ཞིནམ་ལས་སློབ་དཔོན་ཌེཤ་བོརཌི་ལུ་ཚད་མེད་འཛུལ་སྒོ།')}</div>
     </div>
-    ${qr?`<img src="${esc(qr)}" alt="Payment QR" style="width:170px;max-width:70%;margin:.2rem auto 1rem;display:block;border-radius:8px"/>`:''}
-    <div style="text-align:left;background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.82rem;line-height:1.8">
+    ${qr?`<img src="${esc(qr)}" alt="Payment QR" style="width:130px;max-width:60%;margin:.2rem auto .8rem;display:block;border-radius:8px"/>`:''}
+    <div style="text-align:left;background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem;margin-bottom:.8rem;font-size:.78rem;line-height:1.7">
       ${siteSettings.bank_name?`<div><b>${T('Bank/App:','བང་ཁི/ཨཔ:')}</b> ${esc(siteSettings.bank_name)}</div>`:''}
       ${siteSettings.account_name?`<div><b>${T('Account Name:','ཁ་ཡིག་མིང་:')}</b> ${esc(siteSettings.account_name)}</div>`:''}
       ${siteSettings.account_number?`<div><b>${T('Account Number:','ཁ་ཡིག་ཨང་:')}</b> ${esc(siteSettings.account_number)}</div>`:''}
