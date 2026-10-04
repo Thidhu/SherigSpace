@@ -99,6 +99,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
 .class-card{position:relative;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
 .class-del{position:absolute;top:.6rem;right:.6rem}
+.class-edit{position:absolute;top:.6rem;right:2.9rem}
 .class-card:hover{transform:translateY(-3px)}
 .class-card h4{font-family:'Playfair Display',serif;color:var(--text);margin-bottom:.4rem}
 @media(max-width:650px){.sidebar{display:none}.main{padding:1rem}.row2{grid-template-columns:1fr}}
@@ -185,6 +186,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="phead">
         <div>
           <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem" data-en="← Back to Classes" data-dz="← དཔྱེ་སློབ་ལུ་ལོག">← Back to Classes</button>
+          <button class="btn btn-edit btn-sm" onclick="openEditClassForm()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="✏ Edit Class" data-dz="✏ ཞུན་དག">✏ Edit Class</button>
           <button class="btn btn-del btn-sm" onclick="deleteCurrentClass()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="🗑 Delete Class" data-dz="🗑 དཔྱེ་སློབ་བཏོན་གཏང">🗑 Delete Class</button>
           <div class="ptitle" id="detail-class-name">Class</div>
           <div class="psub"><span data-en="Students log in with this class name:" data-dz="སློབ་ཕྲུག་ཚུ་གིས་འ་ནི་དཔྱེ་སློབ་མིང་འདི་གིས་ནང་འཛུལ་འབད:">Students log in with this class name:</span> <span class="class-code-badge" id="detail-class-code">—</span></div>
@@ -557,7 +559,12 @@ const { data: resp, error } =
       Authorization: `Bearer ${session.access_token}`
     }
   });
-    if(error) throw error;
+    if(error){
+      // supabase-js only says "Edge Function returned a non-2xx status code" — the real reason is in the response body.
+      let detail = error.message || 'AI request failed';
+      try{ if(error.context && typeof error.context.json==='function'){ const j = await error.context.json(); detail = j.error || j.message || JSON.stringify(j); } }catch(_){}
+      throw new Error(detail);
+    }
     if(!resp?.ok) throw new Error(resp?.error||'AI request failed');
     if(Array.isArray(resp.questions)){
       aiLastQuestions=resp.questions; result.textContent=`Generated ${aiLastQuestions.length} questions. Review each question before saving.`;
@@ -790,6 +797,7 @@ async function renderClasses(){
   const el = document.getElementById('classes-list');
   el.innerHTML = classList.length ? classList.map(c=>`
     <div class="class-card" onclick="openClass(${jsq(c.id)},${jsq(c.name)},${jsq(loginText(c))})">
+      <button type="button" class="btn btn-edit btn-sm class-edit" onclick="event.stopPropagation();openEditClassForm(${jsq(c.id)})" title="${T('Edit class','དཔྱེ་སློབ་ཞུན་དག')}">✏</button>
       <button type="button" class="btn btn-del btn-sm class-del" onclick="event.stopPropagation();deleteClass(${jsq(c.id)},${jsq(c.name)})" title="${T('Delete class','དཔྱེ་སློབ་བཏོན་གཏང')}">✕</button>
       <h4>${esc(c.name)}</h4>
       <div style="font-size:.8rem;color:var(--text2);margin-bottom:.6rem">${esc(c.class_level||'')}</div>
@@ -833,6 +841,46 @@ window.openClassForm = async function(){
       return;
     }
     toast(T('Class created ✓','དཔྱེ་སློབ་གསར་བསྐྲུན་འབད་ཚར་ཡོད ✓')); closeModal(); renderClasses();
+  };
+  document.getElementById('overlay').classList.add('open');
+};
+
+
+window.openEditClassForm = async function(id){
+  id = id || currentClassId;
+  if(!id) return;
+  const { data: cls, error: loadErr } = await supabase.from('classes').select('id,name,class_level,class_code').eq('id', id).maybeSingle();
+  if(loadErr || !cls){ toast(T('Could not load the class: ','དཔྱེ་སློབ་འདྲེན་མ་ཚུགས: ') + (loadErr?.message || ''), true); return; }
+  const levels = CLASS_LEVELS.includes(cls.class_level) || !cls.class_level ? CLASS_LEVELS : CLASS_LEVELS.concat([cls.class_level]);
+  document.getElementById('m-title').textContent = T('Edit Class','དཔྱེ་སློབ་ཞུན་དག');
+  document.getElementById('m-body').innerHTML = `
+    <div class="field"><label>${T('Class Name','དཔྱེ་སློབ་ཀྱི་མིང་')}</label><input id="f-edit-class-name" value="${esc(cls.name)}"/>
+      <div style="font-size:.76rem;color:var(--gold-text,var(--gold));margin-top:.35rem">⚠ ${T('Students log in with this name. If you change it, tell your students the new name. Their PINs stay the same.','སློབ་ཕྲུག་ཚུ་གིས་མིང་འདི་གིས་ནང་འཛུལ་འབདཝ་ཨིན། མིང་བསྒྱུར་བ་ཅིན་ སློབ་ཕྲུག་ལུ་མིང་གསརཔ་ཁྱབ་བསྒྲགས་འབད། PIN ཚུ་འདྲཝ་སྦེ་ཡོད།')}</div></div>
+    <div class="field"><label>${T('Class Level','དཔྱེ་རིམ་')}</label><select id="f-edit-class-level">${levels.map(l=>`<option${l===cls.class_level?' selected':''}>${esc(l)}</option>`).join('')}</select></div>
+  `;
+  const btn = document.getElementById('m-save-btn');
+  btn.disabled = false; btn.textContent = T('Save','སྲུང་བཞག');
+  btn.onclick = async ()=>{
+    const name = fv('f-edit-class-name').replace(/\s+/g,' ').trim();
+    const level = fv('f-edit-class-level');
+    if(!name){ toast(T('Please enter a class name.','དཔྱེ་སློབ་ཀྱི་མིང་བཙུགས་གནང་།'), true); return; }
+    if(name === cls.name && level === cls.class_level){ closeModal(); return; }
+    btn.disabled = true; btn.textContent = T('Saving…','སྲུང་བཞག་འབད་བཞིནམ...');
+    // The class name IS the student login, so keep class_code in step with it.
+    const { error } = await supabase.from('classes').update({ name, class_level: level, class_code: canonName(name) }).eq('id', id).eq('teacher_id', me.id);
+    btn.disabled = false; btn.textContent = T('Save','སྲུང་བཞག');
+    if(error){
+      const taken = error.code === '23505' || /duplicate|unique/i.test(error.message || '');
+      toast(taken ? T('That class name is already taken. Add something to make it different (e.g. "Class 9 Dzongkha - Paro").','མིང་འདི་སྔོན་མ་ལས་ལག་ལེན་འཐབ་ཡོད། ཁྱད་པར་བཟོ་ནི་ལུ་ཅིག་ཁ་སྐོང་འབད། (དཔེར་ན། "Class 9 Dzongkha - Paro")') : T('Error: ','འཛོལ་བ: ') + error.message, true);
+      return;
+    }
+    toast(T('Class updated ✓','དཔྱེ་སློབ་གསར་བསྒྱུར་འབད་ཚར་ཡོད ✓'));
+    closeModal();
+    if(String(currentClassId) === String(id)){
+      document.getElementById('detail-class-name').textContent = name;
+      document.getElementById('detail-class-code').textContent = name;
+    }
+    renderClasses();
   };
   document.getElementById('overlay').classList.add('open');
 };
