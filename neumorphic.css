@@ -1,0 +1,162 @@
+/* ══════════════════════════════════════════════════════════════════
+   SherigSpace — soft "embossed" (neumorphic) look for EVERY page
+   STYLE ONLY: this file never changes layout structure, text, links,
+   button actions or data.  Remove the <link> to it from a page and that
+   page looks exactly as it did before.
+
+   Idea (from the "Hover Animated Embossed Button" sample):
+     • surfaces share the page colour and look pushed out of it by a
+       light shadow (top-left) + a dark shadow (bottom-right)
+     • on hover they lift up (translateY) and the shadows grow
+     • on press, and for text fields, the shadows go inward (inset)
+
+   Pages: login, student, teacher, admin, index, dashboard,
+          privacy-policy, terms-of-service
+   Tweak the look from the variables in section 1.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Colours (change these to tune the whole site) ─────────────── */
+html[data-theme="light"],
+html:not([data-theme]){            /* privacy / terms pages have no theme switch → light */
+  --nm-face:#e4e9f2;               /* the soft surface colour */
+  --nm-hi:#ffffff;                 /* light shadow (top-left) */
+  --nm-lo:#98a8c0;                 /* dark shadow (bottom-right) */
+}
+html[data-theme="dark"]{
+  --nm-face:var(--surface,#192035);
+  --nm-hi:rgba(255,255,255,.045);
+  --nm-lo:rgba(0,0,0,.55);
+}
+/* Day mode: page + surfaces all take the soft colour.
+   (--surface/--surface2 are used by the app pages; --bg/--card-bg/--input-bg/--section-alt by index + dashboard) */
+html[data-theme="light"]{
+  --surface:#e4e9f2; --surface2:#dbe2ee;
+  --bg:#e4e9f2; --card-bg:#e4e9f2; --card-border:transparent;
+  --input-bg:#e4e9f2; --section-alt:#dde4ef;
+}
+html[data-theme="light"] body,
+html:not([data-theme]) body{background:var(--nm-face)}
+html[data-theme="light"] #gate{background:var(--nm-face)}
+
+/* Dark top bars / side menus keep dark-style shadows even in Day mode */
+html[data-theme] :is(nav,.sidebar,.navbar,.topbar,.side-panel,.sidenav,.site-footer){
+  --nm-face:#192035; --nm-hi:rgba(255,255,255,.05); --nm-lo:rgba(0,0,0,.5);
+}
+
+/* shadow recipes — re-declared inside the dark bars so they use that bar's own light/dark values */
+html,
+html :is(nav,.sidebar,.navbar,.topbar,.side-panel,.sidenav,.site-footer){
+  --nm-raise:-6px -6px 14px var(--nm-hi),6px 6px 14px var(--nm-lo);
+  --nm-raise-sm:-3px -3px 8px var(--nm-hi),3px 3px 8px var(--nm-lo);
+  --nm-lift:-12px -12px 24px var(--nm-hi),12px 12px 24px var(--nm-lo);        /* the hover shadow from the sample */
+  --nm-lift-sm:-6px -6px 14px var(--nm-hi),6px 6px 14px var(--nm-lo);
+  --nm-inset:inset 4px 4px 9px var(--nm-lo),inset -4px -4px 9px var(--nm-hi);
+  --nm-inset-sm:inset 2px 2px 5px var(--nm-lo),inset -2px -2px 5px var(--nm-hi);
+  --nm-ease:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease,background-color .2s ease;
+}
+
+/* ── 2. Cards & panels: raised ────────────────────────────────────── */
+html :is(
+  .card,.assign-card,.stat-card,.class-card,.panel,.stat,.tk,.lib-card,.resource-card,.video-card,.lesson-card,
+  .blog-card,.qbank-card,.ai-tool-card,.ai-q-card,.ans-card,.achievement-card,.certificate-card,.learning-stat,
+  .learning-progress,.gate-card,.modal-box,.vm-box,.q-item,.res-tile,.feedback-box,.purpose-card,.comment-item,
+  .toc,.content,.contact,.notice
+){
+  box-shadow:var(--nm-raise) !important;
+  border-color:transparent;
+  transition:var(--nm-ease);
+}
+html[data-theme="light"] :is(
+  .card,.assign-card,.stat-card,.class-card,.panel,.stat,.tk,.lib-card,.resource-card,.video-card,.lesson-card,
+  .blog-card,.qbank-card,.ai-tool-card,.ai-q-card,.ans-card,.achievement-card,.certificate-card,.learning-stat,
+  .learning-progress,.gate-card,.modal-box,.vm-box,.q-item,.res-tile,.feedback-box,.purpose-card,.comment-item
+),
+html:not([data-theme]) :is(.toc,.content,.contact,.notice){background:var(--nm-face)}
+html[data-theme="light"] .overlay .modal{background:var(--nm-face)}
+
+/* the coloured status stripe on task cards stays */
+html .tk{border-top-color:transparent;border-right-color:transparent;border-bottom-color:transparent}
+
+/* clickable cards lift when hovered */
+html :is(.class-card,.lib-card,.resource-card,.video-card,.lesson-card,.blog-card,.ai-tool-card,.stat-card,.purpose-card):hover{
+  transform:translateY(-6px);
+  box-shadow:var(--nm-lift) !important;
+}
+/* containers don't jump around */
+html :is(.card,.gate-card,.modal-box,.vm-box,.tk,.panel,.learning-progress,.achievement-card,.certificate-card,.content,.toc,.contact,.notice):hover{transform:none}
+
+/* ── 3. Buttons: embossed, lift on hover, press in on click ───────── */
+html :is(
+  .btn,.gate-btn,.btn-google,.btn-cancel,.btn-primary,.cta-btn,.login-btn,.search-btn,.task-linkbtn,.filebtn,
+  .lib-chip,.class-tab,.tk-stat,.sherig-theme-btn,.lang-btn,.scroll-arrow,.eyebrow
+){
+  box-shadow:var(--nm-raise-sm) !important;
+  transition:var(--nm-ease);
+}
+/* plain / "ghost" buttons take the soft surface colour (coloured buttons keep their own colour) */
+html :is(.btn-ghost,.btn-google,.btn-cancel,.lib-chip:not(.on),.tk-stat:not(.on),.class-tab:not(.active),.filebtn,.scroll-arrow){
+  background:var(--nm-face);border-color:transparent;
+}
+
+html :is(
+  .btn,.gate-btn,.btn-google,.btn-cancel,.btn-primary,.cta-btn,.login-btn,.search-btn,.task-linkbtn,.filebtn,
+  .lib-chip,.class-tab,.tk-stat,.sherig-theme-btn,.lang-btn,.scroll-arrow
+):not(:disabled):not([disabled]):hover{
+  transform:translateY(-4px);
+  box-shadow:var(--nm-lift-sm) !important;
+}
+/* big call-to-action buttons use the full-size lift from the sample (-6px) */
+html :is(.gate-btn,.btn-google,.cta-btn):not(:disabled):hover{
+  transform:translateY(-6px);
+  box-shadow:var(--nm-lift) !important;
+}
+html :is(
+  .btn,.gate-btn,.btn-google,.btn-cancel,.btn-primary,.cta-btn,.login-btn,.search-btn,.task-linkbtn,.filebtn,
+  .lib-chip,.class-tab,.tk-stat,.sherig-theme-btn,.lang-btn,.scroll-arrow
+):not(:disabled):active{
+  transform:translateY(0);
+  box-shadow:var(--nm-inset-sm) !important;
+}
+html :is(.btn,.gate-btn,.btn-primary):disabled,
+html :is(.btn,.gate-btn,.btn-primary)[disabled]{box-shadow:none !important;transform:none}
+
+/* small action buttons (edit / delete / small) are a touch softer */
+html :is(.btn-sm,.ibtns .btn):not(:disabled):hover{transform:translateY(-3px);box-shadow:var(--nm-raise) !important}
+html :is(.class-edit,.class-del){box-shadow:var(--nm-raise-sm) !important}
+
+/* ── 4. Tabs: the open tab is "pressed in" ───────────────────────── */
+html :is(.s-tab,.tab){transition:var(--nm-ease);border-radius:12px 12px 0 0}
+html :is(.s-tab.on,.s-tab.active,.tab.active,.tab.on,.class-tab.active,.lib-chip.on,.tk-stat.on){
+  box-shadow:var(--nm-inset-sm) !important;
+}
+html :is(.s-tab,.tab):not(.on):not(.active):hover{transform:translateY(-2px)}
+
+/* ── 5. Text fields: sunk into the surface ───────────────────────── */
+html :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,textarea
+):not(nav *):not(.sidebar *):not(.search-box *){
+  box-shadow:var(--nm-inset) !important;
+  border-color:transparent !important;
+  transition:box-shadow .2s ease;
+}
+html[data-theme="light"] :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,textarea
+):not(nav *):not(.sidebar *):not(.search-box *){background:var(--nm-face) !important}
+html :is(input,select,textarea):focus{outline:2px solid color-mix(in srgb,var(--gold,#c9a84c) 55%,transparent);outline-offset:2px}
+/* index / dashboard search bar is a "well" holding an input + button */
+html .search-box{box-shadow:var(--nm-inset) !important;border-color:transparent}
+
+/* ── 6. Progress bars: inset ─────────────────────────────────────── */
+html :is(.progress-track,.tk-prog .bar){box-shadow:var(--nm-inset-sm);border-color:transparent}
+
+/* ── 7. Privacy / Terms pages ────────────────────────────────────── */
+html:not([data-theme]) .toc a:hover{background:transparent;box-shadow:var(--nm-inset-sm)}
+html:not([data-theme]) .site-header{box-shadow:0 6px 16px rgba(152,168,192,.35)}
+
+/* ── 8. People who turn animations off in their device settings ──── */
+@media (prefers-reduced-motion:reduce){
+  html *{transition-duration:.01ms !important}
+  html :is(.class-card,.lib-card,.resource-card,.video-card,.lesson-card,.blog-card,.ai-tool-card,.stat-card,.purpose-card,.btn,.gate-btn,.btn-google):hover{transform:none}
+}
