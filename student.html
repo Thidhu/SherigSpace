@@ -537,7 +537,7 @@ const TYPE_ICON = { lessons:'📚', resources:'📁', videos:'🎥', articles:'�
 // ══════════════ LEARN TAB — videos & resources from the admin, shown by class ══════════════
 // A class sees items tagged with its class level (or "All Classes"), but only when its teacher
 // has the learning library switched on, and minus anything the teacher hid.
-const LIB = { loaded:false, classes:[], items:[], hidden:{}, purchases:{}, type:'all', classId:'all', q:'' };
+const LIB = { loaded:false, enrolled:false, classes:[], items:[], hidden:{}, purchases:{}, type:'all', classId:'all', q:'' };
 const TYPE_META = { videos:{ icon:'🎥', label:'Video' }, resources:{ icon:'📄', label:'Resource' } };
 
 function libPremiumState(item){
@@ -553,12 +553,21 @@ async function loadLibrary(force){
   grid.innerHTML = `<div class="lib-empty" style="grid-column:1/-1"><div class="ei">⏳</div>${T('Loading…','འདྲེན་བཞིནམ...')}</div>`;
   const { data: enr } = await supabase.from('class_students').select('class_id').eq('student_id', me.id);
   const ids = [...new Set((enr||[]).map(e => e.class_id).filter(Boolean))];
+  LIB.enrolled = ids.length > 0;
   if(!ids.length){ LIB.classes = []; LIB.items = []; LIB.loaded = true; renderLibrary(); return; }
 
-  // class rows (works even before the library SQL has been run: then every class counts as "on")
-  let cres = await supabase.from('classes').select('id,name,class_level,library_enabled').in('id', ids);
-  if(cres.error) cres = await supabase.from('classes').select('id,name,class_level').in('id', ids);
-  LIB.classes = (cres.data || []).map(c => ({ ...c, library_enabled: c.library_enabled !== false }));
+  // The student's own classes. Students usually cannot read the `classes` table directly, so ask the
+  // database function from LIBRARY_SETUP.sql first, then fall back to a direct read.
+  let rows = null;
+  const rp = await supabase.rpc('student_library_classes');
+  if(!rp.error && Array.isArray(rp.data)) rows = rp.data;
+  else {
+    if(rp.error) console.warn('student_library_classes not available (run LIBRARY_SETUP.sql):', rp.error.message);
+    let cres = await supabase.from('classes').select('id,name,class_level,library_enabled').in('id', ids);
+    if(cres.error) cres = await supabase.from('classes').select('id,name,class_level').in('id', ids);
+    rows = cres.data || [];
+  }
+  LIB.classes = rows.map(c => ({ ...c, library_enabled: c.library_enabled !== false }));
 
   LIB.hidden = {};
   try{
@@ -610,7 +619,10 @@ function renderLibrary(){
   const badge = document.getElementById('learn-cnt');
   if(badge){ badge.textContent = LIB.classes.some(c => c.library_enabled) ? libCountAll() : ''; badge.style.display = badge.textContent ? '' : 'none'; }
   const empty = (icon, msg) => { grid.innerHTML = `<div class="lib-empty" style="grid-column:1/-1"><div class="ei">${icon}</div><p>${msg}</p></div>`; count.textContent = ''; };
-  if(!LIB.classes.length) return empty('🏫', T("You're not enrolled in any class yet. Ask your teacher to add you to a class.", "ཁྱོད་དཔྱེ་སློབ་ནང་མ་བཙུགས་པས། སློབ་དཔོན་ལུ་ཞུ།"));
+  if(!LIB.classes.length){
+    if(LIB.enrolled) return empty('⚙️', T("We could not load your class details yet. Please tell your teacher or admin — a one-time setup (LIBRARY_SETUP.sql) is needed.", "We could not load your class details yet. Please tell your teacher or admin — a one-time setup (LIBRARY_SETUP.sql) is needed."));
+    return empty('🏫', T("You're not enrolled in any class yet. Ask your teacher to add you to a class.", "ཁྱོད་དཔྱེ་སློབ་ནང་མ་བཙུགས་པས། སློབ་དཔོན་ལུ་ཞུ།"));
+  }
   if(!LIB.classes.some(c => c.library_enabled)) return empty('🔒', T("Your teacher hasn't turned on the learning library for your class yet.", 'Your teacher has not turned on the learning library for your class yet.'));
   const q = LIB.q.trim().toLowerCase();
   const list = all.filter(it => (LIB.type === 'all' || it.__type === LIB.type) &&
