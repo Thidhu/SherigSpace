@@ -1365,7 +1365,12 @@ document.getElementById('video-modal').addEventListener('click', e=>{
 // ── PREMIUM / PAYMENT SYSTEM ──
 // Phone number for instant "I've paid" notifications (WhatsApp + direct call).
 const CONTACT_PHONE = '97517272018'; // Bhutan country code + number, no "+" (required by wa.me)
-const MEMBERSHIP_PRICE = 50; // Nu. — one-time site access fee every signed-up member must pay to unlock standard (non-premium) content
+// Member plan: paid every 3 months (price comes from Admin → Settings → "Member Price", default Nu. 99).
+function membershipPrice(){ return Number(siteSettings && siteSettings.membership_price) || 99; }
+// People who already paid the old one-time fee get one free quarter counted from this date.
+const MEMBERSHIP_QUARTER_START = new Date('2026-10-05T00:00:00');
+let myMembership = { status:'none', until:null };   // 'active' | 'pending' | 'expired' | 'none'
+let myYoutube = false;                               // tapped "I've subscribed" on the YouTube step
 let siteSettings = {};
 let myPurchases = {}; // "type:id" -> 'pending' | 'approved'
 
@@ -1378,8 +1383,37 @@ async function loadMyPurchases(){
   myPurchases = {};
   const s = session();
   if(!s) return;
-  const { data } = await supabase.from('purchases').select('item_type,item_id,status').eq('user_id', s.id);
+  const { data } = await supabase.from('purchases').select('item_type,item_id,status,reviewed_at').eq('user_id', s.id);
   (data||[]).forEach(p=>{ myPurchases[`${p.item_type}:${p.item_id}`] = p.status; });
+  myMembership = computeMembership(data || []);
+}
+
+function addMonths(d, n){ const x = new Date(d); x.setMonth(x.getMonth() + n); return x; }
+// Each approved membership payment adds 3 months. Early renewals stack on top of the time left.
+function computeMembership(rows){
+  const s = session();
+  if(!s) return { status:'none', until:null };
+  const role = String(s.role || '').toLowerCase();
+  if(role === 'teacher' || role === 'admin') return { status:'active', until:null, staff:true };   // teacher plan includes member access
+  const mem = rows.filter(p => p.item_type === 'membership');
+  const paid = mem.filter(p => p.status === 'approved').sort((a, b) => new Date(a.reviewed_at || 0) - new Date(b.reviewed_at || 0));
+  let until = null;
+  paid.forEach(p => {
+    const start = new Date(Math.max(new Date(p.reviewed_at || 0), MEMBERSHIP_QUARTER_START, until ? until.getTime() : 0));
+    until = addMonths(start, 3);
+  });
+  if(until && until > new Date()) return { status:'active', until };
+  if(mem.some(p => p.status === 'pending')) return { status:'pending', until };
+  return { status: until ? 'expired' : 'none', until };
+}
+
+async function loadMyYoutube(){
+  myYoutube = false;
+  const s = session(); if(!s) return;
+  try{
+    const { data } = await supabase.from('youtube_subscribers').select('user_id').eq('user_id', s.id).maybeSingle();
+    myYoutube = !!data;
+  }catch(e){}
 }
 
 // Returns 'free' | 'approved' | 'pending' | 'locked-anon' | 'locked-pay'
@@ -1396,26 +1430,30 @@ function accessState(type, item){
     if(pm === 'pending' || st === 'pending') return 'pending';
     return 'locked-pay';
   }
-  // Standard (non-premium) content: everyone who has signed up still needs to
-  // pay the one-time site membership fee once before any of it opens.
-  const st = myPurchases['membership:general'];
-  if(st === 'approved') return 'free';
-  if(st === 'pending') return 'pending';
+  // Free-tier items carry a level set by the admin:
+  //   login = anyone with an account · subscriber = YouTube subscribers · member = paid members (default)
+  const level = ['login','subscriber','member'].includes(item.access_level) ? item.access_level : 'member';
+  if(level === 'login') return 'free';
+  if(myMembership.status === 'active') return 'free';                 // members open everything
+  if(level === 'subscriber') return myYoutube ? 'free' : 'locked-sub';
+  if(myMembership.status === 'pending') return 'pending';
   return 'locked-pay';
 }
 
+function lockLeft(item){
+  if(item.is_premium) return `🔒 ${esc(item.price != null ? 'Nu. ' + item.price : 'Paid')}`;
+  return item.access_level === 'subscriber' ? '▶ Subscribers' : '⭐ Members Only';
+}
 function lockOverlayHtml(state, item){
   if(state === 'free' || state === 'approved') return '';
-  // Premium items show their own price; standard members-only content just says
-  // "Members Only" on the card itself — the actual price only appears once they
-  // click through, in the payment popup, so cards don't look priced item-by-item.
-  const left = item.is_premium ? `🔒 ${esc(item.price != null ? 'Nu. ' + item.price : 'Paid')}` : '🔒 Members Only';
+  const left = lockLeft(item);
   if(state === 'pending'){
     const waText = encodeURIComponent(`Hi Thinley, I already submitted payment for "${item.title || 'an item'}" — could you please review it?`);
     return `<div class="lock-bar pending"><span>⏳ Payment under review</span><a class="lb-cta" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 Notify me</a></div>`;
   }
   if(state === 'locked-anon') return `<div class="lock-bar"><span>${left}</span><a class="lb-cta" href="login.html">Log in to unlock →</a></div>`;
-  if(state === 'locked-pay') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">Tap to unlock →</span></div>`;
+  if(state === 'locked-sub') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">Subscribe to unlock →</span></div>`;
+  if(state === 'locked-pay') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">${myMembership.status === 'expired' ? 'Renew to unlock' : 'Tap to unlock'} →</span></div>`;
   return '';
 }
 // Adds the "leave room for the price bar" class to locked/pending cards.
@@ -1443,7 +1481,7 @@ window.openPaymentModal = function(type, id, title, price){
     isMembership ? '🔓 Become a Member' : isPremiumMembership ? '⭐ Premium Membership' : '🔒 Unlock Premium Content';
 
   const introText = isMembership
-    ? `Pay <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong> to become a SherigSpace member and unlock every lesson, resource, video, game and article. Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.`
+    ? `Pay <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong> for 3 months of SherigSpace member access — every Member lesson, resource, video, game and article opens (renew every 3 months to keep access). Pay using the details below, then upload a screenshot of your payment — access unlocks once it's reviewed.`
     : isPremiumMembership
     ? `Pay <strong style="color:var(--gold-text)">Nu. ${esc(price)}</strong> to become a Premium Member and unlock <strong>every</strong> premium lesson, resource, video, game and article — no more paying per item.`
     : `Choose how you'd like to unlock <strong style="color:var(--text)">${esc(title)}</strong>.`;
@@ -1470,7 +1508,7 @@ window.openPaymentModal = function(type, id, title, price){
       <input type="file" id="proof-file" accept="image/*" style="margin-top:.4rem"/>
     </div>
     <p id="proof-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
-    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof()">${isMembership ? 'Become a Member' : isPremiumMembership ? 'Become a Premium Member' : 'Submit for Review'}</button>
+    <button id="proof-submit-btn" class="btn-primary" style="width:100%;margin-top:.4rem;border:none;cursor:pointer" onclick="submitPaymentProof()">${isMembership ? (myMembership.status === 'expired' ? 'Renew Membership' : 'Become a Member') : isPremiumMembership ? 'Become a Premium Member' : 'Submit for Review'}</button>
   `;
   document.getElementById('payment-modal').classList.add('open');
 };
@@ -1481,6 +1519,59 @@ window.selectPayOption = function(type, id, price, title){
   const btn = document.getElementById('proof-submit-btn');
   if(btn) btn.textContent = type === 'premium_membership' ? 'Become a Premium Member' : 'Submit for Review';
 };
+
+// ── "Subscribe to unlock" step ──
+let subLinkClicked = false;
+window.openSubscribeModal = function(){
+  const s = session();
+  if(!s){ window.location = 'login.html'; return; }
+  subLinkClicked = false;
+  const yt = safeUrl(siteSettings.youtube_url);
+  const ytLink = yt ? yt + (yt.includes('?') ? '&' : '?') + 'sub_confirmation=1' : '';
+  document.getElementById('payment-modal-title').textContent = '▶ Subscribe to unlock';
+  document.getElementById('payment-modal-body').innerHTML = `
+    <p style="font-size:.9rem;color:var(--text2);margin-bottom:1rem">Subscribe to our YouTube channel to unlock the starter lessons, resources and videos — free.</p>
+    <ol style="font-size:.88rem;color:var(--text);line-height:1.9;margin:0 0 1rem 1.2rem">
+      <li>Tap <b>Subscribe on YouTube</b> — it opens our channel in a new tab.</li>
+      <li>Tap <b>Subscribe</b> there, then come back to this page.</li>
+      <li>Tap <b>I've subscribed</b> to unlock.</li>
+    </ol>
+    ${ytLink
+      ? `<a class="btn-primary" href="${esc(ytLink)}" target="_blank" rel="noopener" onclick="subLinkClicked=true;setTimeout(function(){var b=document.getElementById('sub-confirm-btn');if(b){b.disabled=false;b.style.opacity=1}},4000)" style="display:block;text-align:center;text-decoration:none;margin-bottom:.7rem">▶ Subscribe on YouTube</a>`
+      : `<p style="font-size:.85rem;color:var(--red,#e05c5c);margin-bottom:.7rem">The channel link has not been set yet. Please tell the admin to add it in Admin → Settings.</p>`}
+    <button id="sub-confirm-btn" class="btn-primary" disabled onclick="confirmYoutubeSubscribed()" style="width:100%;border:none;cursor:pointer;opacity:.5">✓ I've subscribed</button>
+    <p id="sub-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
+    <p style="font-size:.78rem;color:var(--text2);margin-top:.6rem;line-height:1.6">Want everything? <a href="#" onclick="event.preventDefault();openPaymentModal('membership','general','Site Membership',membershipPrice())" style="color:var(--gold-text)">Become a member — Nu. ${esc(membershipPrice())} per 3 months</a>.</p>`;
+  document.getElementById('payment-modal').classList.add('open');
+};
+window.confirmYoutubeSubscribed = async function(){
+  const s = session(); if(!s) return;
+  const st = document.getElementById('sub-status'), btn = document.getElementById('sub-confirm-btn');
+  if(btn){ btn.disabled = true; }
+  const { error } = await supabase.from('youtube_subscribers').insert({ user_id: s.id });
+  if(error && error.code !== '23505'){
+    if(btn){ btn.disabled = false; }
+    st.style.color = 'var(--red,#e05c5c)';
+    st.textContent = /relation|does not exist|schema cache|permission/i.test(error.message || '')
+      ? 'Setup needed: the admin must run ACCESS_LEVELS_SETUP.sql in Supabase.'
+      : 'Could not save: ' + error.message;
+    return;
+  }
+  myYoutube = true;
+  document.getElementById('payment-modal-body').innerHTML = `
+    <div style="text-align:center;padding:.5rem 0 .2rem">
+      <div style="font-size:2.2rem;margin-bottom:.5rem">🎉</div>
+      <h4 style="color:var(--text);margin-bottom:.4rem">Starter content unlocked!</h4>
+      <p style="font-size:.85rem;color:var(--text2);margin-bottom:1.1rem">Thank you for subscribing. Want every lesson, resource and video? Become a member for Nu. ${esc(membershipPrice())} per 3 months.</p>
+      <button class="btn-primary" style="border:none;cursor:pointer;margin-right:.4rem" onclick="closePaymentModal()">Start learning</button>
+    </div>`;
+  renderAll();
+};
+// Locked "subscriber" cards open the subscribe step (capture phase, so the card's normal click never runs)
+document.addEventListener('click', e => {
+  const el = e.target.closest && e.target.closest('[data-state="locked-sub"]');
+  if(el){ e.preventDefault(); e.stopPropagation(); openSubscribeModal(); }
+}, true);
 
 window.closePaymentModal = function(){ document.getElementById('payment-modal').classList.remove('open'); };
 document.getElementById('payment-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('payment-modal')) closePaymentModal(); });
@@ -1507,7 +1598,7 @@ window.submitPaymentProof = async function(){
     const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file);
     if(upErr) throw upErr;
     const { error: insErr } = await supabase.from('purchases').insert({
-      user_id: s.id, item_type: type, item_id: id, price, proof_path: path, status: 'pending'
+      user_id: s.id, item_type: type, item_id: (type === 'membership' ? 'q' + Date.now().toString(36) : id), price, proof_path: path, status: 'pending'
     });
     if(insErr) throw insErr;
     myPurchases[`${type}:${id}`] = 'pending';
@@ -1579,7 +1670,7 @@ async function renderLessons(){
     card.addEventListener('click', ()=>{
       if(state === 'locked-pay'){
         if(card.getAttribute('data-premium')) openPaymentModal('lessons', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
-        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        else openPaymentModal('membership', 'general', 'Site Membership', membershipPrice());
       }
       else if(state === 'locked-anon'){ window.location='login.html'; return; }
       else if(state === 'pending') return;
@@ -1621,7 +1712,7 @@ async function renderResources(){
       if(state === 'locked-anon') window.location='login.html';
       else if(state === 'locked-pay'){
         if(card.getAttribute('data-premium')) openPaymentModal('resources', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
-        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        else openPaymentModal('membership', 'general', 'Site Membership', membershipPrice());
       }
       else if(state === 'pending') return;
       else if(url){ trackOpen('resources', id); window.open(url,'_blank','noopener'); }
@@ -1657,7 +1748,7 @@ async function renderGames(){
       if(state === 'locked-anon') window.location='login.html';
       else if(state === 'locked-pay'){
         if(card.getAttribute('data-premium')) openPaymentModal('games', id, card.getAttribute('data-title'), card.getAttribute('data-price'));
-        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        else openPaymentModal('membership', 'general', 'Site Membership', membershipPrice());
       }
       else if(state === 'pending') return;
       else if(url){ trackOpen('games', id); window.open(url,'_blank','noopener'); }
@@ -1690,7 +1781,7 @@ async function renderVideos(){
       if(state === 'locked-anon') { window.location='login.html'; return; }
       if(state === 'locked-pay') {
         if(card.getAttribute('data-premium')) openPaymentModal('videos', card.getAttribute('data-id'), card.getAttribute('data-title'), card.getAttribute('data-price'));
-        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        else openPaymentModal('membership', 'general', 'Site Membership', membershipPrice());
         return;
       }
       if(state === 'pending') return;
@@ -1713,9 +1804,10 @@ async function renderArticles(){
     const url = safeUrl(a.url);
     const thumb = thumbFor(a);
     const state = accessState('articles', a);
-    const lockLabel = a.is_premium ? `Nu.${esc(a.price||0)}` : 'Members Only';
-    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 ${lockLabel} — log in</span>`
-                    : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 ${lockLabel} — tap to unlock</span>`
+    const lockLabel = a.is_premium ? `Nu.${esc(a.price||0)}` : (a.access_level === 'subscriber' ? 'Subscribers' : 'Members Only');
+    const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 ${lockLabel} · log in</span>`
+                    : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 ${lockLabel} · tap to unlock</span>`
+                    : state==='locked-sub' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer">▶ ${lockLabel} · subscribe to unlock</span>`
                     : state==='pending' ? ` <span style="color:var(--text2);font-size:.78rem">⏳ Under review</span>` : '';
     return `<div class="blog-card fade-in">
       <div class="blog-thumb">${coverHtml('article', EMOJIS[i%6])}${thumb ? thumbImg(thumb) : ''}</div>
@@ -1740,7 +1832,7 @@ async function renderArticles(){
       if(state === 'locked-anon'){ window.location='login.html'; return; }
       if(state === 'locked-pay'){
         if(h.getAttribute('data-premium')) openPaymentModal('articles', id, h.getAttribute('data-title'), h.getAttribute('data-price'));
-        else openPaymentModal('membership', 'general', 'Site Membership', MEMBERSHIP_PRICE);
+        else openPaymentModal('membership', 'general', 'Site Membership', membershipPrice());
         return;
       }
       if(state === 'pending') return;
@@ -1779,25 +1871,46 @@ async function loadComments(wrap, s){
 function renderMembershipNotice(){
   const el = document.getElementById('membership-notice');
   if(!el) return;
-  if(!session()){
+  const price = membershipPrice();
+  const fmt = d => d.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  const cta = (icon, title, text, buttons, pending) => {
     el.style.display = 'block';
-    el.innerHTML = `<div class="membership-cta"><div class="mc-icon">🔒</div><div class="mc-text"><b>Log in or sign up to unlock SherigSpace</b><span>Create a free account, then pay a one-time Nu. ${MEMBERSHIP_PRICE} membership fee to access every lesson, resource, video, game and article.</span></div><a href="login.html" class="mc-btn" style="text-decoration:none;display:inline-flex;align-items:center">Log In / Sign Up →</a></div>`;
+    el.innerHTML = `<div class="membership-cta${pending ? ' pending' : ''}"><div class="mc-icon">${icon}</div><div class="mc-text"><b>${title}</b><span>${text}</span></div>${buttons ? `<div style="display:flex;gap:.5rem;flex-wrap:wrap">${buttons}</div>` : ''}</div>`;
+  };
+  const btnMember = label => `<button class="mc-btn" onclick="openPaymentModal('membership','general','Site Membership',${price})">${label}</button>`;
+  const btnSub = `<button class="mc-btn" onclick="openSubscribeModal()">▶ Subscribe for free access</button>`;
+
+  if(!session()){
+    cta('🔓', 'Log in to unlock SherigSpace',
+        `Create a free account, subscribe to our YouTube channel for free starter lessons, or become a member for Nu. ${price} every 3 months to open everything.`,
+        `<a href="login.html" class="mc-btn" style="text-decoration:none;display:inline-flex;align-items:center">Log In / Sign Up →</a>`);
     return;
   }
-  const st = myPurchases['membership:general'];
-  if(st === 'approved'){ el.style.display = 'none'; el.innerHTML = ''; return; }
-  el.style.display = 'block';
-  if(st === 'pending'){
-    el.innerHTML = `<div class="membership-cta pending"><div class="mc-icon">⏳</div><div class="mc-text"><b>Membership payment under review</b><span>Your Nu. ${MEMBERSHIP_PRICE} payment is being checked — content unlocks once it's approved.</span></div></div>`;
+  const m = myMembership;
+  if(m.status === 'active'){
+    const daysLeft = m.until ? Math.ceil((m.until - new Date()) / 86400000) : 999;
+    if(daysLeft <= 14) cta('⏳', `Your membership ends on ${fmt(m.until)}`, `Renew for Nu. ${price} to keep access to every lesson, resource and video.`, btnMember('Renew Membership →'));
+    else { el.style.display = 'none'; el.innerHTML = ''; }
     return;
   }
-  el.innerHTML = `<div class="membership-cta"><div class="mc-icon">🔒</div><div class="mc-text"><b>Pay Nu. ${MEMBERSHIP_PRICE} to become a member</b><span>Unlock every lesson, resource, video, game and article on SherigSpace.</span></div><button class="mc-btn" onclick="openPaymentModal('membership','general','Site Membership',${MEMBERSHIP_PRICE})">Become a Member →</button></div>`;
+  if(m.status === 'pending'){
+    cta('⏳', 'Membership payment under review', `Your Nu. ${price} payment is being checked — content unlocks once it's approved.`, '', true);
+    return;
+  }
+  if(m.status === 'expired'){
+    cta('🔁', `Your membership ended on ${fmt(m.until)}`, `Renew for Nu. ${price} (3 months) to open every lesson, resource and video again.`, btnMember('Renew Membership →') + (myYoutube ? '' : btnSub));
+    return;
+  }
+  if(myYoutube) cta('✅', 'Starter content unlocked', `Become a member for Nu. ${price} per 3 months to open every lesson, resource, video, game and article.`, btnMember('Become a Member →'));
+  else cta('🔓', 'Unlock SherigSpace',
+           `Subscribe to our YouTube channel for free starter content, or become a member for Nu. ${price} per 3 months to open everything.`,
+           btnSub + btnMember('Become a Member →'));
 }
 
 async function renderAll(){
   renderNav();
   renderClassTabs();
-  await Promise.all([loadSiteSettings(), loadMyPurchases()]);
+  await Promise.all([loadSiteSettings(), loadMyPurchases(), loadMyYoutube()]);
   renderMembershipNotice();
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), loadStats(), renderBanner()]);
   observeFadeIns();

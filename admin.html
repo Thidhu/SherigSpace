@@ -439,6 +439,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
           </div>
           <div class="field"><label>Bank / Mobile Banking Name</label><input id="s-bankname" placeholder="e.g. BOB Mobile, mPay, BhutanQR"/></div>
           <div class="field"><label>Teacher Plan Price (Nu./month)</label><input id="s-teacherprice" type="number" min="0" step="0.01" placeholder="e.g. 300"/></div>
+          <div class="field"><label>Member Price (Nu. per 3 months — unlocks all "Member" lessons, resources, videos)</label><input id="s-memberprice" type="number" min="0" step="0.01" placeholder="e.g. 99"/></div>
+          <div class="field"><label>YouTube Channel Link (shown on the "Subscribe to unlock" step)</label><input id="s-youtubeurl" type="url" placeholder="https://www.youtube.com/@yourchannel"/></div>
           <div class="field"><label>Premium Membership Price (Nu., one-time — unlocks all premium content)</label><input id="s-premiumprice" type="number" min="0" step="0.01" placeholder="e.g. 200"/></div>
           <div class="field">
             <label>QR Code Image</label>
@@ -752,7 +754,8 @@ function row(item,type){
   }[type]||'';
   const thumb = item.thumbnail_url ? `<img class="irow-thumb" src="${esc(item.thumbnail_url)}"/>` : '';
   const downloads = `⬇ ${item.download_count||0}`;
-  const premiumTag = item.is_premium ? ` · <span style="color:var(--gold-text,var(--gold))">🔒 Nu.${esc(item.price||0)}</span>` : '';
+  const premiumTag = item.is_premium ? ` · <span style="color:var(--gold-text,var(--gold))">🔒 Nu.${esc(item.price||0)}</span>`
+    : ({ login:' · 👤 Account', subscriber:' · ▶ Subscriber' }[item.access_level] || ' · ⭐ Member');
   const classTag = item.class_level && item.class_level !== 'All Classes' ? ` · <span style="color:var(--blue)">🎓 ${esc(item.class_level)}</span>` : '';
   return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)} · ${downloads}${classTag}${premiumTag}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
 }
@@ -959,10 +962,18 @@ function classField(v){
 
 function premiumField(v){
   const isPremium = v('is_premium') === true || v('is_premium') === 'true';
+  const level = ['login','subscriber','member'].includes(v('access_level')) ? v('access_level') : 'member';
   return `
+    <div class="field" id="level-field" style="display:${isPremium?'none':'flex'}"><label>Who can open this? (free items)</label>
+      <select id="f-access_level">
+        <option value="login"${level==='login'?' selected':''}>👤 Anyone with an account (free)</option>
+        <option value="subscriber"${level==='subscriber'?' selected':''}>▶ YouTube subscribers (starter content)</option>
+        <option value="member"${level==='member'?' selected':''}>⭐ Members only (paid)</option>
+      </select>
+    </div>
     <div class="row2">
       <div class="field"><label>Access</label>
-        <select id="f-is_premium" onchange="document.getElementById('price-field').style.display=this.value==='true'?'flex':'none'">
+        <select id="f-is_premium" onchange="document.getElementById('price-field').style.display=this.value==='true'?'flex':'none';document.getElementById('level-field').style.display=this.value==='true'?'none':'flex'">
           <option value="false"${!isPremium?' selected':''}>🔓 Free</option>
           <option value="true"${isPremium?' selected':''}>🔒 Premium (paid)</option>
         </select>
@@ -1287,6 +1298,7 @@ window.saveItem = async function(){
         title: fv('f-title'), dz: fv('f-dz'), description: fv('f-description'), url: fv('f-url'), thumbnail_url: fv('f-thumbnail_url'),
         class_level: fv('f-class_level') || 'All Classes',
         is_premium: fv('f-is_premium') === 'true',
+        access_level: fv('f-access_level') || 'member',
         price: fv('f-is_premium') === 'true' && fv('f-price') ? Number(fv('f-price')) : null
       };
   const extra = {
@@ -1314,6 +1326,16 @@ window.saveItem = async function(){
     if(!error) toast('Added! ✓');
   }
 
+  if(error && /access_level/i.test(error.message || '') && _id){
+    // Column not created yet: keep saving the rest so nothing is lost.
+    const { access_level, ...rest } = newItem;
+    ({ error } = await supabase.from(table).update(rest).eq('id', _id));
+    if(!error) toast('Saved, but the access level was NOT saved — run ACCESS_LEVELS_SETUP.sql in Supabase first.', true);
+  } else if(error && /access_level/i.test(error.message || '')){
+    const { access_level, ...rest } = newItem;
+    ({ error } = await supabase.from(table).insert(rest));
+    if(!error) toast('Added, but the access level was NOT saved — run ACCESS_LEVELS_SETUP.sql in Supabase first.', true);
+  }
   if(error){ toast('Error: ' + error.message, true); }
   else {
     if(_type==='video'){ const ok=await saveInteractiveQuestions(savedId); if(!ok){ saveBtn.disabled=false; saveBtn.textContent='Save'; return; } }
@@ -1355,6 +1377,8 @@ window.loadSettings = async function(){
   document.getElementById('s-bankname').value = s.bank_name || '';
   document.getElementById('s-teacherprice').value = s.teacher_plan_price || '';
   document.getElementById('s-premiumprice').value = s.premium_plan_price || '';
+  document.getElementById('s-memberprice').value = s.membership_price || 99;
+  document.getElementById('s-youtubeurl').value = s.youtube_url || '';
   document.getElementById('s-qrurl').value    = s.qr_image_url || '';
   document.getElementById('qr-preview').innerHTML = s.qr_image_url ? `<img src="${esc(s.qr_image_url)}" referrerpolicy="no-referrer" onerror="this.outerHTML='<span style=&quot;font-size:.8rem&quot;>The saved QR could not load — upload it again.</span>'"/>` : '';
 };
@@ -1386,7 +1410,10 @@ window.handleQrPick = async function(e){
 };
 
 window.saveSettings = async function(){
-  const { error } = await supabase.from('site_settings').update({
+  const memberPrice = document.getElementById('s-memberprice').value ? Number(document.getElementById('s-memberprice').value) : 99;
+  const ytUrl = document.getElementById('s-youtubeurl').value.trim();
+  if(ytUrl && !isValidUrl(ytUrl)){ toast('Please enter a valid YouTube link (https://…).', true); return; }
+  const basics = {
     sitename: document.getElementById('s-sitename').value,
     tagline: document.getElementById('s-tagline').value,
     contact_email: document.getElementById('s-email').value,
@@ -1397,7 +1424,15 @@ window.saveSettings = async function(){
     premium_plan_price: document.getElementById('s-premiumprice').value ? Number(document.getElementById('s-premiumprice').value) : null,
     qr_image_url: document.getElementById('s-qrurl').value,
     updated_at: new Date().toISOString()
-  }).eq('id', 1);
+  };
+  let { error } = await supabase.from('site_settings').update({ ...basics, membership_price: memberPrice, youtube_url: ytUrl || null }).eq('id', 1);
+  if(error && /membership_price|youtube_url/i.test(error.message || '')){
+    // The new columns are not in the database yet — still save everything else.
+    const retry = await supabase.from('site_settings').update(basics).eq('id', 1);
+    if(retry.error){ toast('Error: ' + retry.error.message, true); return; }
+    toast('Saved, but Member Price and YouTube link were NOT saved — run ACCESS_LEVELS_SETUP.sql in Supabase first.', true);
+    return;
+  }
   if(error){ toast('Error: ' + error.message, true); return; }
   toast('Settings saved! ✓');
 };
