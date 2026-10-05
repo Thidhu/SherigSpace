@@ -148,6 +148,45 @@ a.tk-link{color:var(--gold-text,var(--gold));text-decoration:underline;overflow-
 .tk .res-head{display:none}
 .tk .assign-actions{margin-top:1rem}
 
+
+/* ── Student tabs + Learning Library ── */
+.s-tabs{display:flex;gap:.5rem;margin-bottom:1.2rem;border-bottom:1px solid var(--border)}
+.s-tab{background:none;border:0;border-bottom:3px solid transparent;color:var(--text2);font:inherit;font-weight:700;font-size:.95rem;padding:.7rem 1rem;cursor:pointer;margin-bottom:-1px;display:flex;align-items:center;gap:.4rem}
+.s-tab:hover{color:var(--text)}
+.s-tab.on{color:var(--gold-text,var(--gold));border-bottom-color:var(--gold)}
+.s-tab .cnt{font-size:.7rem;background:rgba(201,168,76,.18);color:var(--gold-text,var(--gold));padding:1px 8px;border-radius:99px}
+.lib-bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.9rem}
+.lib-search{flex:1;min-width:180px;padding:.6rem .9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit}
+.lib-select{padding:.6rem .8rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit}
+.lib-chips{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:1rem}
+.lib-chip{border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:999px;padding:.35rem .9rem;font:inherit;font-size:.82rem;font-weight:600;cursor:pointer}
+.lib-chip.on{background:var(--gold);color:#15203a;border-color:var(--gold)}
+.lib-count{font-size:.78rem;color:var(--text2);margin-bottom:.8rem}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem}
+.lib-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,border-color .15s}
+.lib-card:hover{transform:translateY(-3px);border-color:var(--gold)}
+.lib-thumb{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,#1a2340,#24325a);display:grid;place-items:center;overflow:hidden}
+.lib-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lib-thumb .ico{font-size:2.2rem;opacity:.85}
+.lib-play{position:absolute;right:10px;bottom:10px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;display:grid;place-items:center;font-size:.95rem}
+.lib-pills{position:absolute;left:8px;top:8px;display:flex;gap:.3rem;flex-wrap:wrap}
+.lib-pill{background:rgba(15,22,35,.82);color:#fff;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:99px}
+.lib-body{padding:.75rem .85rem .9rem;display:flex;flex-direction:column;gap:.3rem;flex:1}
+.lib-body h4{font-size:.95rem;line-height:1.35;overflow-wrap:anywhere}
+.lib-body p{font-size:.78rem;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lib-meta{font-size:.72rem;color:var(--text2);margin-top:auto;padding-top:.3rem}
+.lib-lock{position:absolute;inset:0;background:rgba(10,16,28,.78);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;text-align:center;padding:1rem;font-size:.82rem}
+.lib-lock a{color:var(--gold-light,#e8c97a);font-weight:700}
+.lib-empty{text-align:center;padding:2.5rem 1rem;color:var(--text2);border:1px dashed var(--border);border-radius:12px}
+.lib-empty .ei{font-size:2rem;margin-bottom:.4rem}
+.vm-overlay{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:14px}
+.vm-overlay.open{display:flex}
+.vm-box{width:min(960px,100%);background:#0f1623;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.vm-head{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.7rem 1rem;font-weight:700;color:#fff}
+.vm-head button,.vm-head a{background:none;border:0;color:#e8c97a;font:inherit;font-size:.82rem;cursor:pointer;text-decoration:none}
+.vm-frame{aspect-ratio:16/9;background:#000}
+.vm-frame iframe{width:100%;height:100%;border:0;display:block}
+
 a.btn{text-decoration:none;display:inline-block}
 .btn-sm{padding:5px 11px;font-size:.78rem}
 .assign-desc{white-space:pre-wrap}
@@ -413,6 +452,11 @@ a.btn{text-decoration:none;display:inline-block}
     </div>
   </nav>
   <main>
+  <div class="s-tabs" role="tablist">
+    <button type="button" class="s-tab on" data-pane="tasks" role="tab">📝 <span>My Tasks</span></button>
+    <button type="button" class="s-tab" data-pane="learn" role="tab">📚 <span>Learn</span><span class="cnt" id="learn-cnt" style="display:none"></span></button>
+  </div>
+  <div id="pane-tasks">
   <section id="learning-dashboard" class="learning-dash" aria-label="Learning summary">
     <div class="learning-stat"><div class="num" id="stat-assigned">—</div><div class="lab">Assigned</div></div>
     <div class="learning-stat"><div class="num" id="stat-completed">—</div><div class="lab">Completed</div></div>
@@ -459,19 +503,174 @@ a.btn{text-decoration:none;display:inline-block}
   <div id="assignments-wrap">
     <div class="empty"><div class="ei">📋</div><p data-en="Loading your assignments…" data-dz="ཁྱོད་ཀྱི་ལཱ་ཁག་འདྲེན་བཞིནམ...">Loading your assignments…</p></div>
   </div>
+  </div><!-- /pane-tasks -->
+
+  <div id="pane-learn" hidden>
+    <div class="lib-bar">
+      <input id="lib-search" class="lib-search" type="search" placeholder="🔍 Search videos and resources…" aria-label="Search the library"/>
+      <select id="lib-class" class="lib-select" aria-label="Choose class" style="display:none"></select>
+    </div>
+    <div class="lib-chips" id="lib-chips">
+      <button type="button" class="lib-chip on" data-type="all">All</button>
+      <button type="button" class="lib-chip" data-type="videos">🎥 Videos</button>
+      <button type="button" class="lib-chip" data-type="resources">📄 Resources</button>
+    </div>
+    <div class="lib-count" id="lib-count"></div>
+    <div id="lib-grid" class="lib-grid"></div>
+  </div>
 </main>
+<div class="vm-overlay" id="vm-overlay"><div class="vm-box"><div class="vm-head"><span id="vm-title"></span><span><a id="vm-open" href="#" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a> &nbsp; <button type="button" id="vm-close">✕ Close</button></span></div><div class="vm-frame" id="vm-frame"></div></div></div>
 </div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { AUTH_OPTIONS } from './auth-storage.js';
 import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
-import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions } from './assignment-utils.js';
+import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions, autoThumbFor } from './assignment-utils.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 let me = null;
 
 const TYPE_ICON = { lessons:'📚', resources:'📁', videos:'🎥', articles:'✍️' };
+
+
+// ══════════════ LEARN TAB — videos & resources from the admin, shown by class ══════════════
+// A class sees items tagged with its class level (or "All Classes"), but only when its teacher
+// has the learning library switched on, and minus anything the teacher hid.
+const LIB = { loaded:false, classes:[], items:[], hidden:{}, purchases:{}, type:'all', classId:'all', q:'' };
+const TYPE_META = { videos:{ icon:'🎥', label:'Video' }, resources:{ icon:'📄', label:'Resource' } };
+
+function libPremiumState(item){
+  if(!item.is_premium) return 'free';
+  const pm = LIB.purchases['premium_membership:general'], st = LIB.purchases[item.__type + ':' + item.id];
+  if(pm === 'approved' || st === 'approved') return 'free';
+  return 'locked';
+}
+
+async function loadLibrary(force){
+  if(LIB.loaded && !force) return;
+  const grid = document.getElementById('lib-grid');
+  grid.innerHTML = `<div class="lib-empty" style="grid-column:1/-1"><div class="ei">⏳</div>${T('Loading…','འདྲེན་བཞིནམ...')}</div>`;
+  const { data: enr } = await supabase.from('class_students').select('class_id').eq('student_id', me.id);
+  const ids = [...new Set((enr||[]).map(e => e.class_id).filter(Boolean))];
+  if(!ids.length){ LIB.classes = []; LIB.items = []; LIB.loaded = true; renderLibrary(); return; }
+
+  // class rows (works even before the library SQL has been run: then every class counts as "on")
+  let cres = await supabase.from('classes').select('id,name,class_level,library_enabled').in('id', ids);
+  if(cres.error) cres = await supabase.from('classes').select('id,name,class_level').in('id', ids);
+  LIB.classes = (cres.data || []).map(c => ({ ...c, library_enabled: c.library_enabled !== false }));
+
+  LIB.hidden = {};
+  try{
+    const { data: hid, error } = await supabase.from('class_library_hidden').select('class_id,item_type,item_id').in('class_id', ids.map(String));
+    if(!error) (hid||[]).forEach(h => { (LIB.hidden[String(h.class_id)] = LIB.hidden[String(h.class_id)] || new Set()).add(h.item_type + ':' + h.item_id); });
+  }catch(e){}
+
+  const [rs, vs] = await Promise.all([
+    supabase.from('resources').select('*').order('created_at', { ascending:false, nullsFirst:false }),
+    supabase.from('videos').select('*').order('created_at', { ascending:false, nullsFirst:false })
+  ]);
+  if(rs.error) console.error('resources:', rs.error);
+  if(vs.error) console.error('videos:', vs.error);
+  LIB.items = [].concat((vs.data||[]).map(x => ({ ...x, __type:'videos' })), (rs.data||[]).map(x => ({ ...x, __type:'resources' })));
+
+  LIB.purchases = {};
+  try{
+    const { data: pu } = await supabase.from('purchases').select('item_type,item_id,status').eq('user_id', me.id);
+    (pu||[]).forEach(p => { LIB.purchases[p.item_type + ':' + p.item_id] = p.status; });
+  }catch(e){}
+
+  LIB.loaded = true;
+  const sel = document.getElementById('lib-class');
+  const on = LIB.classes.filter(c => c.library_enabled);
+  sel.style.display = on.length > 1 ? '' : 'none';
+  sel.innerHTML = `<option value="all">${T('All my classes','ངེ་གི་དཔྱེ་སློབ་ཆ་མཉམ')}</option>` + on.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  renderLibrary();
+}
+
+// items a student may see = (class level matches or general) and not hidden by the teacher, for classes with the library on
+function libVisibleItems(){
+  const seen = new Set(), out = [];
+  LIB.classes.filter(c => c.library_enabled && (LIB.classId === 'all' || String(c.id) === String(LIB.classId))).forEach(c => {
+    const hid = LIB.hidden[String(c.id)] || new Set();
+    LIB.items.forEach(it => {
+      const lvl = it.class_level || 'All Classes';
+      if(lvl !== 'All Classes' && lvl !== c.class_level) return;
+      const key = it.__type + ':' + it.id;
+      if(hid.has(key) || seen.has(key)) return;
+      seen.add(key); out.push(it);
+    });
+  });
+  return out;
+}
+
+function renderLibrary(){
+  const grid = document.getElementById('lib-grid'), count = document.getElementById('lib-count');
+  const all = libVisibleItems();
+  const badge = document.getElementById('learn-cnt');
+  if(badge){ badge.textContent = LIB.classes.some(c => c.library_enabled) ? libCountAll() : ''; badge.style.display = badge.textContent ? '' : 'none'; }
+  const empty = (icon, msg) => { grid.innerHTML = `<div class="lib-empty" style="grid-column:1/-1"><div class="ei">${icon}</div><p>${msg}</p></div>`; count.textContent = ''; };
+  if(!LIB.classes.length) return empty('🏫', T("You're not enrolled in any class yet. Ask your teacher to add you to a class.", "ཁྱོད་དཔྱེ་སློབ་ནང་མ་བཙུགས་པས། སློབ་དཔོན་ལུ་ཞུ།"));
+  if(!LIB.classes.some(c => c.library_enabled)) return empty('🔒', T("Your teacher hasn't turned on the learning library for your class yet.", 'Your teacher has not turned on the learning library for your class yet.'));
+  const q = LIB.q.trim().toLowerCase();
+  const list = all.filter(it => (LIB.type === 'all' || it.__type === LIB.type) &&
+    (!q || [it.title, it.dz, it.description, it.subject, it.rtype].join(' ').toLowerCase().includes(q)));
+  if(!list.length) return empty('📭', q || LIB.type !== 'all' ? T('Nothing matches your search.', 'Nothing matches your search.') : T('No videos or resources have been added for your class yet. Check back soon!', 'No videos or resources have been added for your class yet. Check back soon!'));
+  count.textContent = T('Showing ', 'Showing ') + list.length + T(' of ', ' of ') + all.length;
+  grid.innerHTML = list.map(it => {
+    const m = TYPE_META[it.__type], title = (document.documentElement.getAttribute('data-lang') === 'dz' && it.dz) ? it.dz : it.title;
+    const url = safeUrl(it.url), thumb = safeUrl(it.thumbnail_url) || safeUrl(autoThumbFor(url));
+    const locked = libPremiumState(it) === 'locked';
+    const pills = [m.label, it.__type === 'resources' ? it.rtype : it.subject].filter(Boolean).map(p => `<span class="lib-pill">${esc(p)}</span>`).join('');
+    const meta = it.__type === 'videos' ? (it.duration ? '⏱ ' + esc(it.duration) : '') : esc(it.filesize || '');
+    return `<div class="lib-card" data-key="${esc(it.__type + ':' + it.id)}">
+      <div class="lib-thumb"><span class="ico">${m.icon}</span>${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"/>` : ''}
+        <div class="lib-pills">${pills}</div>${it.__type === 'videos' ? '<div class="lib-play">▶</div>' : ''}</div>
+      <div class="lib-body"><h4>${esc(title)}</h4>${it.description ? `<p>${esc(it.description)}</p>` : ''}<div class="lib-meta">${meta}</div></div>
+      ${locked ? `<div class="lib-lock"><div>🔒 ${T('Premium','Premium')}${it.price != null ? ' · Nu. ' + esc(it.price) : ''}</div><a href="index.html#${it.__type}" onclick="event.stopPropagation()">${T('Unlock on SherigSpace →','Unlock on SherigSpace →')}</a></div>` : ''}
+    </div>`;
+  }).join('');
+}
+function libCountAll(){ const n = (function(){ const save = LIB.classId; LIB.classId = 'all'; const c = libVisibleItems().length; LIB.classId = save; return c; })(); return n ? String(n) : ''; }
+
+function openLibItem(key){
+  const it = LIB.items.find(x => x.__type + ':' + x.id === key); if(!it) return;
+  if(libPremiumState(it) === 'locked') return;
+  const url = safeUrl(it.url); if(!url){ alert(T('This item has no link yet.', 'This item has no link yet.')); return; }
+  const c = classifyUrl(url);
+  if(it.__type === 'videos' && c.embed){
+    document.getElementById('vm-title').textContent = it.title || '';
+    document.getElementById('vm-open').href = url;
+    document.getElementById('vm-frame').innerHTML = `<iframe src="${esc(c.embed)}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    document.getElementById('vm-overlay').classList.add('open');
+  } else {
+    window.open(url, '_blank', 'noopener');
+  }
+}
+function closeVideoModal(){ document.getElementById('vm-overlay').classList.remove('open'); document.getElementById('vm-frame').innerHTML = ''; }
+
+(function wireLearn(){
+  document.getElementById('lib-grid').addEventListener('click', e => { const card = e.target.closest('.lib-card'); if(card && !e.target.closest('a')) openLibItem(card.dataset.key); });
+  document.getElementById('lib-search').addEventListener('input', e => { LIB.q = e.target.value; renderLibrary(); });
+  document.getElementById('lib-class').addEventListener('change', e => { LIB.classId = e.target.value; renderLibrary(); });
+  document.getElementById('lib-chips').addEventListener('click', e => {
+    const b = e.target.closest('.lib-chip'); if(!b) return;
+    LIB.type = b.dataset.type; document.querySelectorAll('.lib-chip').forEach(x => x.classList.toggle('on', x === b)); renderLibrary();
+  });
+  document.getElementById('vm-close').addEventListener('click', closeVideoModal);
+  document.getElementById('vm-overlay').addEventListener('click', e => { if(e.target.id === 'vm-overlay') closeVideoModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeVideoModal(); });
+  function showPane(name){
+    document.querySelectorAll('.s-tab').forEach(t => t.classList.toggle('on', t.dataset.pane === name));
+    document.getElementById('pane-tasks').hidden = name !== 'tasks';
+    document.getElementById('pane-learn').hidden = name !== 'learn';
+    try{ localStorage.setItem('sherig_student_tab', name); }catch(e){}
+    if(name === 'learn') loadLibrary();
+  }
+  document.querySelector('.s-tabs').addEventListener('click', e => { const t = e.target.closest('.s-tab'); if(t) showPane(t.dataset.pane); });
+  window.__showStudentPane = showPane;
+})();
+
 
 async function init(){
   const { data: { session } } = await supabase.auth.getSession();
@@ -490,7 +689,10 @@ async function init(){
   await renderAssignments();
   await renderLearningDashboard();
   document.getElementById('refresh-learning')?.addEventListener('click', renderLearningDashboard);
-  window.addEventListener('sherig:langchange', async ()=>{ await renderAssignments(); await renderLearningDashboard(); });
+  loadLibrary().catch(e => console.warn('Library not loaded:', e));
+  let tab = 'tasks'; try{ tab = localStorage.getItem('sherig_student_tab') || 'tasks'; }catch(e){}
+  if(tab === 'learn') window.__showStudentPane('learn');
+  window.addEventListener('sherig:langchange', async ()=>{ await renderAssignments(); await renderLearningDashboard(); if(LIB.loaded) renderLibrary(); });
 }
 
 window.logout = async function(){ await supabase.auth.signOut(); window.location.href = 'login.html'; };
