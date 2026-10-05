@@ -98,6 +98,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .class-code-badge{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold));font-weight:700;letter-spacing:.05em;padding:4px 12px;border-radius:20px;font-size:.85rem}
 .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
 .class-card{position:relative;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:6px;padding:1.3rem;cursor:pointer;transition:transform .15s}
+
+/* ── Learning library manager (class page) ── */
+.lib-switch{display:flex;align-items:center;gap:.55rem;font-size:.85rem;cursor:pointer;user-select:none}
+.lib-switch input{width:38px;height:20px;appearance:none;-webkit-appearance:none;background:rgba(154,163,184,.4);border-radius:99px;position:relative;cursor:pointer;transition:background .2s;flex:none}
+.lib-switch input::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
+.lib-switch input:checked{background:var(--green,#4caf84)}
+.lib-switch input:checked::after{left:20px}
+.lib-note{font-size:.8rem;color:var(--text2);padding:0 1rem .7rem;line-height:1.6}
+.lib-warn{margin:0 1rem .8rem;padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(224,92,92,.4);background:rgba(224,92,92,.08);font-size:.8rem;line-height:1.55}
+.lib-manage{margin:0 1rem 1rem;border:1px solid var(--border);border-radius:10px}
+.lib-manage>summary{cursor:pointer;padding:.65rem .9rem;font-weight:700;font-size:.85rem}
+.lib-tools{display:flex;flex-wrap:wrap;gap:.5rem;padding:.2rem .9rem .6rem}
+.lib-tools input{flex:1;min-width:150px;padding:.45rem .7rem;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:.82rem}
+.lib-list{max-height:340px;overflow-y:auto;border-top:1px solid var(--border)}
+.lib-row{display:flex;align-items:center;gap:.7rem;padding:.55rem .9rem;border-bottom:1px solid var(--border);cursor:pointer}
+.lib-row:last-child{border-bottom:0}
+.lib-row:hover{background:rgba(201,168,76,.05)}
+.lib-row input{flex:none;width:16px;height:16px}
+.lib-row .t{flex:1;min-width:0;font-size:.85rem;overflow-wrap:anywhere}
+.lib-row .t small{display:block;color:var(--text2);font-size:.72rem}
+.lib-row.off .t{opacity:.5;text-decoration:line-through}
+
 .class-del{position:absolute;top:.6rem;right:.6rem}
 .class-edit{position:absolute;top:.6rem;right:2.9rem}
 .class-card:hover{transform:translateY(-3px)}
@@ -193,6 +215,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
         </div>
       </div>
       <div class="card"><div class="card-head"><h3 data-en="Students" data-dz="སློབ་ཕྲུག">Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()" data-en="+ Add Student" data-dz="+ སློབ་ཕྲུག་ཁ་སྐོང་།">+ Add Student</button></div><div id="plan-note-students" style="font-size:.82rem;color:var(--text2);padding:0 1rem .4rem"></div><div id="students-list"></div></div>
+      <div class="card" id="library-card"><div class="card-head"><h3>📚 Learning Library</h3><label class="lib-switch" title="Show videos and resources to this class"><input type="checkbox" id="lib-enabled" onchange="toggleLibrary(this.checked)"/><span id="lib-enabled-text">On</span></label></div><div id="library-body"><div class="lib-note">Loading…</div></div></div>
       <div class="card"><div class="card-head"><h3 data-en="Assignments" data-dz="ལཱ་ཁག">Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()" data-en="＋ Assign Task" data-dz="＋ ལཱ་སྤྲོད་">＋ Assign Task</button></div><div id="assignments-list"></div></div>
     </div>
 
@@ -881,6 +904,7 @@ window.openEditClassForm = async function(id){
       document.getElementById('detail-class-code').textContent = name;
     }
     renderClasses();
+    if(String(currentClassId) === String(id)) renderLibraryManager();
   };
   document.getElementById('overlay').classList.add('open');
 };
@@ -902,6 +926,104 @@ window.deleteCurrentClass = function(){
   deleteClass(currentClassId, document.getElementById('detail-class-name').textContent);
 };
 
+
+// ── LEARNING LIBRARY (admin's videos & resources → this class's students) ──
+let libMgr = { cls:null, items:[], hidden:new Set(), ready:false, q:'' };
+window.libMgr = libMgr;
+
+async function renderLibraryManager(){
+  const body = document.getElementById('library-body'), sw = document.getElementById('lib-enabled');
+  if(!body || !currentClassId) return;
+  body.innerHTML = '<div class="lib-note">Loading…</div>';
+  let missing = false;
+  let r = await supabase.from('classes').select('id,class_level,library_enabled').eq('id', currentClassId).maybeSingle();
+  if(r.error){ missing = true; r = await supabase.from('classes').select('id,class_level').eq('id', currentClassId).maybeSingle(); }
+  const cls = r.data;
+  if(!cls){ body.innerHTML = '<div class="lib-note">Could not load this class.</div>'; return; }
+  libMgr.cls = cls;
+  const enabled = cls.library_enabled !== false;
+  sw.checked = enabled;
+  document.getElementById('lib-enabled-text').textContent = enabled ? T('Showing to students','སློབ་ཕྲུག་ལུ་སྟོན་དོ།') : T('Hidden from students','Hidden from students');
+
+  libMgr.hidden = new Set();
+  const hid = await supabase.from('class_library_hidden').select('item_type,item_id').eq('class_id', String(currentClassId));
+  if(hid.error) missing = true; else (hid.data||[]).forEach(h => libMgr.hidden.add(h.item_type + ':' + h.item_id));
+
+  const [rs, vs] = await Promise.all([
+    supabase.from('resources').select('id,title,class_level,rtype,is_premium').order('created_at',{ascending:false,nullsFirst:false}),
+    supabase.from('videos').select('id,title,class_level,subject,duration,is_premium').order('created_at',{ascending:false,nullsFirst:false})
+  ]);
+  const lvl = x => x.class_level || 'All Classes';
+  libMgr.items = [].concat(
+    (vs.data||[]).map(x => ({ ...x, __type:'videos' })),
+    (rs.data||[]).map(x => ({ ...x, __type:'resources' }))
+  ).filter(x => lvl(x) === 'All Classes' || lvl(x) === cls.class_level);
+  libMgr.ready = true;
+  drawLibraryManager(missing);
+}
+
+function drawLibraryManager(missing){
+  const body = document.getElementById('library-body'); if(!body || !libMgr.cls) return;
+  const enabled = libMgr.cls.library_enabled !== false;
+  const total = libMgr.items.length;
+  const shown = libMgr.items.filter(x => !libMgr.hidden.has(x.__type + ':' + x.id)).length;
+  const q = libMgr.q.trim().toLowerCase();
+  const rows = libMgr.items.filter(x => !q || String(x.title||'').toLowerCase().includes(q));
+  body.innerHTML = `
+    ${missing ? `<div class="lib-warn">⚠ ${T('One-time setup needed: run LIBRARY_SETUP.sql in Supabase → SQL Editor, then refresh this page. Until then the on/off switch and hiding items cannot be saved.','One-time setup needed: run LIBRARY_SETUP.sql in Supabase → SQL Editor, then refresh this page.')}</div>` : ''}
+    <div class="lib-note">${enabled
+      ? T(`Students in this class can watch the videos and open the resources that the admin uploaded for <b>${esc(libMgr.cls.class_level||'this class')}</b> (and general content) from the <b>Learn</b> tab. Showing <b>${shown}</b> of ${total}.`, `Students in this class can watch the videos and open the resources that the admin uploaded for <b>${esc(libMgr.cls.class_level||'this class')}</b> (and general content) from the <b>Learn</b> tab. Showing <b>${shown}</b> of ${total}.`)
+      : T('The library is switched off, so your students only see tasks. Turn the switch on to let them watch and learn.', 'The library is switched off, so your students only see tasks. Turn the switch on to let them watch and learn.')}</div>
+    ${enabled ? `<details class="lib-manage"${libMgr.open ? ' open' : ''} ontoggle="libMgr.open=this.open">
+      <summary>${T('Choose what students can see','Choose what students can see')} (${shown}/${total})</summary>
+      ${total ? `<div class="lib-tools"><input type="search" id="lib-mgr-search" placeholder="Search…" value="${esc(libMgr.q)}" oninput="libMgr.q=this.value;drawLibraryManager()"/>
+        <button class="btn btn-ghost btn-sm" onclick="setAllLibraryItems(true)">${T('Show all','Show all')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="setAllLibraryItems(false)">${T('Hide all','Hide all')}</button></div>
+      <div class="lib-list">${rows.map(x => {
+        const key = x.__type + ':' + x.id, on = !libMgr.hidden.has(key);
+        const sub = [x.__type === 'videos' ? '🎥 Video' : '📄 ' + (x.rtype || 'Resource'), (x.class_level && x.class_level !== 'All Classes') ? x.class_level : 'General', x.is_premium ? '🔒 Premium' : ''].filter(Boolean).join(' · ');
+        return `<label class="lib-row${on ? '' : ' off'}"><input type="checkbox" ${on ? 'checked' : ''} onchange="toggleLibraryItem('${x.__type}',${jsq(x.id)},this.checked)"/><span class="t">${esc(x.title)}<small>${esc(sub)}</small></span></label>`;
+      }).join('') || '<div class="lib-note" style="padding:.8rem">No matches.</div>'}</div>`
+      : `<div class="lib-note" style="padding:.8rem .9rem">${T('The admin has not uploaded any videos or resources for this class level yet.','The admin has not uploaded any videos or resources for this class level yet.')}</div>`}
+    </details>` : ''}`;
+  const inp = document.getElementById('lib-mgr-search');
+  if(inp && libMgr.q){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+}
+
+window.drawLibraryManager = drawLibraryManager;
+window.toggleLibrary = async function(on){
+  if(!currentClassId) return;
+  const { error } = await supabase.from('classes').update({ library_enabled: !!on }).eq('id', currentClassId).eq('teacher_id', me.id);
+  if(error){
+    document.getElementById('lib-enabled').checked = !on;
+    toast(T('Could not save: ','Could not save: ') + error.message + ' — run LIBRARY_SETUP.sql first.', true);
+    return;
+  }
+  toast(on ? T('Learning library is now showing to students ✓','Learning library is now showing to students ✓') : T('Learning library hidden from students.','Learning library hidden from students.'));
+  renderLibraryManager();
+};
+
+window.toggleLibraryItem = async function(type, id, visible){
+  const key = type + ':' + id;
+  const q = visible
+    ? supabase.from('class_library_hidden').delete().eq('class_id', String(currentClassId)).eq('item_type', type).eq('item_id', String(id))
+    : supabase.from('class_library_hidden').upsert({ class_id: String(currentClassId), item_type: type, item_id: String(id) });
+  const { error } = await q;
+  if(error){ toast(T('Could not save: ','Could not save: ') + error.message, true); renderLibraryManager(); return; }
+  if(visible) libMgr.hidden.delete(key); else libMgr.hidden.add(key);
+  drawLibraryManager();
+};
+
+window.setAllLibraryItems = async function(visible){
+  const cid = String(currentClassId);
+  const { error } = visible
+    ? await supabase.from('class_library_hidden').delete().eq('class_id', cid)
+    : await supabase.from('class_library_hidden').upsert(libMgr.items.map(x => ({ class_id: cid, item_type: x.__type, item_id: String(x.id) })));
+  if(error){ toast(T('Could not save: ','Could not save: ') + error.message, true); return; }
+  libMgr.hidden = visible ? new Set() : new Set(libMgr.items.map(x => x.__type + ':' + x.id));
+  drawLibraryManager();
+};
+
 window.openClass = function(id, name, code){
   currentClassId = id;
   const aiSel = document.getElementById('ai-class');
@@ -909,7 +1031,9 @@ window.openClass = function(id, name, code){
   document.getElementById('detail-class-name').textContent = name;
   document.getElementById('detail-class-code').textContent = code;
   go('class-detail');
+  libMgr.q = ''; libMgr.open = false;
   renderStudents();
+  renderLibraryManager();
   renderAssignments();
 };
 
