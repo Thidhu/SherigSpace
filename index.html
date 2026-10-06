@@ -874,11 +874,6 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
         <div class="sp-role" id="rpRole">Member</div>
       </div>
     </div>
-    <div class="sidebar-stats">
-      <div><b id="st-lessons">…</b><span data-en="Lessons" data-dz="སློབ་ཚན།">Lessons</span></div>
-      <div><b id="st-videos">…</b><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></div>
-      <div><b id="st-users">…</b><span data-en="Members" data-dz="འཐུས་མི།">Members</span></div>
-    </div>
     <div class="sidebar-footer" id="sidebarFooter"></div>
     <div class="sidebar-classes">
       <h6>✦ Browse by Class</h6>
@@ -1699,18 +1694,6 @@ window.submitPaymentProof = async function(){
   }
 };
 
-// ── LOAD STATS (live from Supabase) ──
-async function loadStats(){
-  const [{ count: lCount }, { count: vCount }, { count: uCount }] = await Promise.all([
-    supabase.from('lessons').select('*',{count:'exact',head:true}),
-    supabase.from('videos').select('*',{count:'exact',head:true}),
-    supabase.from('profiles').select('*',{count:'exact',head:true})
-  ]);
-  document.getElementById('st-lessons').textContent = lCount ?? 0;
-  document.getElementById('st-videos').textContent  = vCount ?? 0;
-  document.getElementById('st-users').textContent   = uCount ?? 0;
-}
-
 // ── RENDER LESSONS ──
 async function renderLessons(){
   const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
@@ -1897,7 +1880,7 @@ async function renderVideos(){
   const g = document.getElementById('videos-grid');
   const items = videosCache.filter(matchesClass);
   g.innerHTML = items.length
-    ? items.map(videoCardHtml).join('')
+    ? items.map(v => videoCardHtml(v, false)).join('')
     : `<div class="empty-state fade-in"><div class="ei">🎥</div><p>${emptyMsg('videos')}</p></div>`;
   bindVideoCards(g, 'plain');
 
@@ -2096,7 +2079,7 @@ async function renderAll(){
   renderClassTabs();
   await Promise.all([loadSiteSettings(), loadMyPurchases(), loadMyYoutube()]);
   renderMembershipNotice();
-  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), loadStats(), renderBanner()]);
+  await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), renderBanner()]);
   observeFadeIns();
 }
 
