@@ -346,6 +346,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="sitem"     onclick="go('articles')">✍️ &nbsp;Articles</div>
       <div class="sitem"     onclick="go('announce')">📢 &nbsp;Announcements</div>
       <div class="sitem"     onclick="go('payments')">💳 &nbsp;Payments <span class="payment-badge" id="payments-nav-badge" aria-label="Pending payments">0</span></div>
+      <div class="sitem"     onclick="go('contributions')">🤝 &nbsp;Contributions <span class="payment-badge" id="contrib-nav-badge" aria-label="Pending contributions">0</span></div>
       <div class="sitem"     onclick="go('users')">👥 &nbsp;Users</div>
       <div class="sitem"     onclick="go('settings')">⚙️ &nbsp;Settings</div>
     </nav>
@@ -409,6 +410,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="phead"><div><div class="ptitle">Payments</div><div class="psub">Review payment proof screenshots and approve access to premium content</div></div></div>
       <div class="card"><div class="card-head"><h3>Pending Review</h3><span class="cbadge" id="c-payments-pending">0</span></div><div id="l-payments-pending"></div></div>
       <div class="card"><div class="card-head"><h3>Reviewed</h3></div><div id="l-payments-reviewed"></div></div>
+    </div>
+
+    <div class="page" id="p-contributions">
+      <div class="phead"><div><div class="ptitle">Contributions</div><div class="psub">Content shared by your community. Approve to publish it and reward the contributor with extra membership days.</div></div></div>
+      <div class="card"><div class="card-head"><h3>Pending Review</h3><span class="cbadge" id="c-contrib-pending">0</span></div><div id="l-contrib-pending"></div></div>
+      <div class="card"><div class="card-head"><h3>Reviewed</h3></div><div id="l-contrib-reviewed"></div></div>
     </div>
 
     <div class="page" id="p-users">
@@ -534,7 +541,7 @@ window.go = function(p){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
   document.getElementById('p-'+p).classList.add('on');
-  const map={dash:'dashboard',banners:'banners',loginbg:'login backgrounds',lessons:'lessons',resources:'resources',videos:'videos',games:'edugames',articles:'articles',payments:'payments',users:'users',settings:'settings'};
+  const map={dash:'dashboard',banners:'banners',loginbg:'login backgrounds',lessons:'lessons',resources:'resources',videos:'videos',games:'edugames',articles:'articles',payments:'payments',contributions:'contributions',users:'users',settings:'settings'};
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
 };
@@ -614,8 +621,108 @@ async function renderAll(){
 
   renderUsers(U||[]);
   renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[], games:GM||[]});
+  renderContributions();
 }
 
+
+
+// ── CONTRIBUTIONS ──
+const CONTRIB_TABLE = { video:'videos', resource:'resources', article:'articles' };
+const CONTRIB_ICON  = { video:'🎥', resource:'📁', article:'✍️' };
+let _contribs = [];
+async function renderContributions(){
+  const { data, error } = await supabase.from('contributions').select('*').order('created_at',{ascending:false});
+  if(error){
+    document.getElementById('l-contrib-pending').innerHTML = empty('⚠️','Could not load contributions — run CONTRIBUTIONS_SETUP.sql in Supabase first. ('+esc(error.message)+')');
+    return;
+  }
+  _contribs = data || [];
+  const pending = _contribs.filter(c=>c.status==='pending');
+  const reviewed = _contribs.filter(c=>c.status!=='pending');
+  document.getElementById('c-contrib-pending').textContent = pending.length;
+  const nb = document.getElementById('contrib-nav-badge');
+  if(nb){ nb.textContent = pending.length; nb.classList.toggle('show', pending.length>0); }
+  document.getElementById('l-contrib-pending').innerHTML = pending.length ? pending.map(contribRow).join('') : empty('🤝','No submissions waiting for review');
+  document.getElementById('l-contrib-reviewed').innerHTML = reviewed.length ? reviewed.map(c=>`<div class="irow"><div><div class="iname">${CONTRIB_ICON[c.content_type]||''} ${esc(c.title)}</div><div class="imeta">${esc(c.contributor_name||'Unknown')} · ${c.status==='approved'?'✅ Published · 🎁 +'+esc(c.reward_days)+' days':'❌ Rejected'}${c.admin_note?' · '+esc(c.admin_note):''}</div></div><div class="ibtns"><button class="btn btn-del btn-sm" onclick="deleteContribution('${esc(c.id)}')">✕</button></div></div>`).join('') : empty('📋','Nothing reviewed yet');
+}
+function contribRow(c){
+  const safe = isValidUrl(c.url) ? c.url : '';
+  return `<div class="irow" style="grid-template-columns:1fr;gap:.6rem">
+    <div><div class="iname">${CONTRIB_ICON[c.content_type]||''} ${esc(c.title)}</div>
+    <div class="imeta">by <b>${esc(c.contributor_name||'Unknown')}</b> · ${esc(c.content_type)} · ${esc(c.class_level||'All Classes')}${c.subject?' · '+esc(c.subject):''}${c.detail?' · '+esc(c.detail):''} · ${new Date(c.created_at).toLocaleDateString()}</div>
+    ${c.description?`<div class="imeta" style="margin-top:.3rem;white-space:pre-line">${esc(c.description)}</div>`:''}
+    ${safe?`<div style="margin-top:.35rem"><a href="${esc(safe)}" target="_blank" rel="noopener" style="color:var(--gold)">🔗 Open the link to check it first</a></div>`:'<div class="imeta" style="color:var(--red)">Link is not a valid http(s) URL</div>'}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center">
+      <label class="imeta">🎁 Reward
+        <select id="cr-days-${esc(c.id)}" style="margin-left:.3rem"><option value="7">7 days</option><option value="15" selected>15 days</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option><option value="0">No reward</option></select></label>
+      <input id="cr-note-${esc(c.id)}" placeholder="Note to contributor (optional)" style="flex:1;min-width:160px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text)"/>
+      <button class="btn btn-gold btn-sm" onclick="approveContribution('${esc(c.id)}')">✓ Approve & publish</button>
+      <button class="btn btn-del btn-sm" onclick="rejectContribution('${esc(c.id)}')">Reject</button>
+    </div></div>`;
+}
+
+window.approveContribution = async function(id){
+  const c = _contribs.find(x=>x.id===id); if(!c) return;
+  const days = Number(document.getElementById('cr-days-'+id).value) || 0;
+  const note = (document.getElementById('cr-note-'+id).value||'').trim();
+  if(!isValidUrl(c.url)){ toast('The link is not a valid http(s) URL — reject it or ask the contributor to resubmit.', true); return; }
+  if(!confirm(`Publish "${c.title}" and give ${c.contributor_name||'the contributor'} ${days} extra days?`)) return;
+
+  // 1) publish into the matching library (Member access; edit the item afterwards to change it)
+  const table = CONTRIB_TABLE[c.content_type];
+  const newId = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+  const base = { id:newId, title:c.title, dz:'', description:c.description||'', url:c.url, thumbnail_url:'',
+                 class_level:c.class_level||'All Classes', is_premium:false, access_level:'member', contributed_by:c.contributor_name||null };
+  const extra = c.content_type==='video' ? { subject:c.subject||'', duration:c.detail||'' }
+              : c.content_type==='resource' ? { rtype:c.detail||'Other', filesize:'' }
+              : { article_date:new Date().toISOString().slice(0,10), category:c.subject||'' };
+  let item = { ...base, ...extra };
+  if(c.content_type==='video'){
+    const orders = (window.__videos||[]).map(v=>Number(v.sort_order)).filter(n=>!isNaN(n));
+    item.sort_order = (orders.length ? Math.min(...orders) : 1) - 1;
+  }
+  let { error } = await supabase.from(table).insert(item);
+  if(error && /access_level|sort_order/i.test(error.message||'')){
+    const { access_level, sort_order, ...rest } = item;
+    ({ error } = await supabase.from(table).insert(rest));
+  }
+  if(error){ toast('Could not publish: '+error.message, true); return; }
+
+  // 2) reward: bonus days for members, and extend the teacher plan if they have one
+  let rewardMsg = '';
+  if(days > 0){
+    const { error: bErr } = await supabase.from('membership_bonus').insert({ user_id:c.user_id, days, reason:'Contribution: '+c.title, contribution_id:c.id });
+    if(bErr){ toast('Published, but the reward failed: '+bErr.message, true); }
+    else {
+      rewardMsg = ` · +${days} days`;
+      const { data: subs } = await supabase.from('teacher_subscriptions').select('id,expires_at').eq('teacher_id', c.user_id).eq('status','approved').order('expires_at',{ascending:false,nullsFirst:false}).limit(1);
+      if(subs && subs.length && subs[0].expires_at){
+        const from = Math.max(new Date(subs[0].expires_at).getTime(), Date.now());
+        await supabase.from('teacher_subscriptions').update({ expires_at:new Date(from + days*86400000).toISOString() }).eq('id', subs[0].id);
+      }
+    }
+  }
+
+  // 3) mark reviewed
+  const { error: uErr } = await supabase.from('contributions').update({ status:'approved', reward_days:days, admin_note:note||null, reviewed_at:new Date().toISOString(), published_item_id:newId }).eq('id', id);
+  if(uErr){ toast('Published, but could not mark it reviewed: '+uErr.message, true); return; }
+  toast('Published ✓'+rewardMsg);
+  renderAll();
+};
+
+window.rejectContribution = async function(id){
+  const note = (document.getElementById('cr-note-'+id).value||'').trim();
+  if(!confirm('Reject this contribution?')) return;
+  const { error } = await supabase.from('contributions').update({ status:'rejected', admin_note:note||null, reviewed_at:new Date().toISOString() }).eq('id', id);
+  if(error){ toast('Error: '+error.message, true); return; }
+  toast('Rejected'); renderContributions();
+};
+window.deleteContribution = async function(id){
+  if(!confirm('Remove this entry from the list? The published item (if any) stays on the site.')) return;
+  const { error } = await supabase.from('contributions').delete().eq('id', id);
+  if(error){ toast('Error: '+error.message, true); return; }
+  renderContributions();
+};
 
 // ── PAYMENTS ──
 async function renderPayments(itemsByType){

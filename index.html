@@ -826,6 +826,23 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .watch-box{width:100%;max-height:100vh;border-radius:0}
 }
 </style>
+<style id="sherig-contribute">
+.credit{font-size:.72rem;font-weight:600;color:var(--gold-text);margin-top:.45rem}
+.contrib-box{max-width:560px;max-height:92vh;overflow-y:auto}
+.cf-field{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.8rem}
+.cf-field label{font-size:.78rem;font-weight:600;color:var(--text2)}
+.cf-field input,.cf-field select,.cf-field textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--card-border);background:var(--input-bg,var(--card-bg));color:var(--text);font:400 .9rem 'DM Sans',sans-serif}
+.cf-field textarea{min-height:76px;resize:vertical}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.cf-check{display:flex;gap:.6rem;align-items:flex-start;font-size:.8rem;color:var(--text2);line-height:1.5;margin:.2rem 0 .9rem}
+.cf-note{font-size:.8rem;color:var(--text2);line-height:1.6;background:var(--gold-soft);border:1px solid var(--border);border-radius:12px;padding:.7rem .9rem;margin-bottom:1rem}
+.cf-mine{margin-top:1.4rem;border-top:1px solid var(--card-border);padding-top:1rem}
+.cf-mine h4{font-size:.95rem;color:var(--text);margin:0 0 .6rem}
+.cf-item{display:flex;justify-content:space-between;gap:.8rem;padding:.55rem 0;border-bottom:1px solid var(--card-border);font-size:.84rem;color:var(--text)}
+.cf-item small{display:block;color:var(--text2);margin-top:.15rem}
+.cf-chip{align-self:flex-start;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.cf-chip.pending{background:#fff3cd;color:#8a6100}.cf-chip.approved{background:#d8f5e3;color:#14703d}.cf-chip.rejected{background:#fde0e0;color:#a32525}
+</style>
 </head>
 <body>
 
@@ -865,6 +882,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <a class="side-link" href="#resources" data-section="resources"><span class="si">📁</span><span data-en="Resources" data-dz="ཡིག་ཆ།">Resources</span></a>
       <a class="side-link" href="#games" data-section="games"><span class="si">🎮</span><span data-en="EduGames" data-dz="རྩེད་མོ།">EduGames</span></a>
       <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
+      <a class="side-link" id="contribLink" onclick="openContribute()" style="cursor:pointer"><span class="si">🤝</span><span data-en="Contribute">Contribute</span></a>
       <a class="side-link" href="#about" data-section="about"><span class="si">✦</span><span data-en="Why SherigSpace?" data-dz="SherigSpace ག་ཅི་གི་དོན་ལུ?">Why SherigSpace?</span></a>
     </nav>
     <div class="sidebar-profile" onclick="openProfile()">
@@ -1059,11 +1077,20 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
           <h2 id="watch-title"></h2>
           <div class="watch-chips" id="watch-chips"></div>
           <p class="watch-desc" id="watch-desc"></p>
+          <div class="credit" id="watch-credit" style="margin:-.4rem 0 1rem"></div>
           <button class="watch-next" id="watch-next" onclick="playNextVideo()" style="display:none">Up next ▶</button>
         </div>
       </div>
       <aside class="watch-side" id="related-list"></aside>
     </div>
+  </div>
+</div>
+
+<!-- CONTRIBUTE MODAL -->
+<div class="modal-overlay" id="contrib-modal">
+  <div class="modal-box contrib-box">
+    <div class="modal-head"><h3>🤝 Contribute to SherigSpace</h3><button class="modal-close" onclick="closeContribute()">✕</button></div>
+    <div class="modal-body" id="contrib-body"></div>
   </div>
 </div>
 
@@ -1452,6 +1479,7 @@ async function loadMyPurchases(){
   myPurchases = {};
   const s = session();
   if(!s) return;
+  await loadMyBonuses();
   const { data } = await supabase.from('purchases').select('item_type,item_id,status,reviewed_at').eq('user_id', s.id);
   (data||[]).forEach(p=>{ myPurchases[`${p.item_type}:${p.item_id}`] = p.status; });
   myMembership = computeMembership(data || []);
@@ -1466,10 +1494,20 @@ function computeMembership(rows){
   if(role === 'teacher' || role === 'admin') return { status:'active', until:null, staff:true };   // teacher plan includes member access
   const mem = rows.filter(p => p.item_type === 'membership');
   const paid = mem.filter(p => p.status === 'approved').sort((a, b) => new Date(a.reviewed_at || 0) - new Date(b.reviewed_at || 0));
+  // Paid quarters and admin-granted bonus days are stacked in the order they happened.
+  const events = [
+    ...paid.map(p => ({ t: new Date(p.reviewed_at || 0), pay: true })),
+    ...myBonuses.map(b => ({ t: new Date(b.created_at || 0), days: Number(b.days) || 0 }))
+  ].sort((a, b) => a.t - b.t);
   let until = null;
-  paid.forEach(p => {
-    const start = new Date(Math.max(new Date(p.reviewed_at || 0), MEMBERSHIP_QUARTER_START, until ? until.getTime() : 0));
-    until = addMonths(start, 3);
+  events.forEach(e => {
+    if(e.pay){
+      const start = new Date(Math.max(e.t, MEMBERSHIP_QUARTER_START, until ? until.getTime() : 0));
+      until = addMonths(start, 3);
+    }else if(e.days > 0){
+      const start = Math.max(e.t.getTime(), until ? until.getTime() : 0);
+      until = new Date(start + e.days * 86400000);
+    }
   });
   if(until && until > new Date()) return { status:'active', until };
   if(mem.some(p => p.status === 'pending')) return { status:'pending', until };
@@ -1694,6 +1732,101 @@ window.submitPaymentProof = async function(){
   }
 };
 
+// ── CONTRIBUTE (users submit content; admin reviews and rewards with extra membership days) ──
+let myBonuses = [];
+async function loadMyBonuses(){
+  myBonuses = [];
+  const s = session(); if(!s) return;
+  try{
+    const { data, error } = await supabase.from('membership_bonus').select('days,created_at').eq('user_id', s.id);
+    if(!error) myBonuses = data || [];
+  }catch(e){}
+}
+const CONTRIB_MAX_PENDING = 3;
+function contribFields(type){
+  if(type === 'video') return `<div class="cf-row"><div class="cf-field"><label>Subject</label><input id="cf-subject" maxlength="60" placeholder="e.g. Dzongkha"/></div><div class="cf-field"><label>Duration (optional)</label><input id="cf-detail" maxlength="20" placeholder="e.g. 12:30"/></div></div>`;
+  if(type === 'resource') return `<div class="cf-row"><div class="cf-field"><label>File type</label><select id="cf-detail"><option>PDF</option><option>DOCX</option><option>Image</option><option>Spreadsheet</option><option>Presentation</option><option>Other</option></select></div><div class="cf-field"><label>Subject (optional)</label><input id="cf-subject" maxlength="60" placeholder="e.g. Mathematics"/></div></div>`;
+  return `<div class="cf-field"><label>Category (optional)</label><input id="cf-subject" maxlength="60" placeholder="e.g. Teaching tips"/></div>`;
+}
+window.openContribute = async function(){
+  const s = session();
+  if(!s){ window.location = 'login.html'; return; }
+  closeSidebar();
+  document.getElementById('contrib-modal').classList.add('open');
+  renderContribForm('video');
+};
+window.closeContribute = () => document.getElementById('contrib-modal').classList.remove('open');
+document.getElementById('contrib-modal').addEventListener('click', e=>{ if(e.target.id === 'contrib-modal') closeContribute(); });
+
+function renderContribForm(type){
+  const levels = ['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
+  document.getElementById('contrib-body').innerHTML = `
+    <div class="cf-note">Share a video, worksheet or article with other learners. Our team reviews every submission before it goes live. If it is published, you are credited by name and your membership is <b>extended as a thank-you</b>.</div>
+    <div class="cf-field"><label>What are you sharing?</label>
+      <select id="cf-type" onchange="renderContribForm(this.value)">
+        <option value="video"${type==='video'?' selected':''}>🎥 Video (YouTube link)</option>
+        <option value="resource"${type==='resource'?' selected':''}>📁 Resource / worksheet (Google Drive link)</option>
+        <option value="article"${type==='article'?' selected':''}>✍️ Article (link)</option>
+      </select></div>
+    <div class="cf-field"><label>Title *</label><input id="cf-title" maxlength="140" placeholder="e.g. Dzongkha alphabet song"/></div>
+    <div class="cf-field"><label>Link *</label><input id="cf-url" placeholder="https://…  (make sure anyone with the link can view it)"/></div>
+    <div class="cf-field"><label>Short description</label><textarea id="cf-desc" maxlength="600" placeholder="What will learners get from this?"></textarea></div>
+    ${contribFields(type)}
+    <div class="cf-field"><label>Class level</label><select id="cf-class">${levels.map(l=>`<option>${l}</option>`).join('')}</select></div>
+    <label class="cf-check"><input type="checkbox" id="cf-own"/><span>This is my own work, or I have permission to share it, and I allow SherigSpace to publish it.</span></label>
+    <p id="cf-status" style="font-size:.82rem;min-height:1.1rem;margin-bottom:.6rem"></p>
+    <button class="btn-primary" id="cf-submit" style="width:100%;border:none;cursor:pointer" onclick="submitContribution()">Submit for review</button>
+    <div class="cf-mine" id="cf-mine"></div>`;
+  loadMyContributions();
+}
+window.renderContribForm = renderContribForm;
+
+async function loadMyContributions(){
+  const wrap = document.getElementById('cf-mine'); const s = session();
+  if(!wrap || !s) return;
+  const { data, error } = await supabase.from('contributions').select('*').eq('user_id', s.id).order('created_at',{ascending:false});
+  if(error || !data || !data.length){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<h4>My contributions</h4>` + data.map(c => {
+    const label = { pending:'⏳ Under review', approved:'✅ Published', rejected:'Not published' }[c.status] || c.status;
+    const extra = c.status==='approved' && c.reward_days ? `<small>🎁 +${esc(c.reward_days)} days added to your membership</small>` : '';
+    const note = c.admin_note ? `<small>Note: ${esc(c.admin_note)}</small>` : '';
+    return `<div class="cf-item"><div><b>${esc(c.title)}</b>${extra}${note}</div><span class="cf-chip ${esc(c.status)}">${label}</span></div>`;
+  }).join('');
+}
+
+window.submitContribution = async function(){
+  const s = session(); if(!s){ window.location='login.html'; return; }
+  const g = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  const st = document.getElementById('cf-status'), btn = document.getElementById('cf-submit');
+  const fail = m => { st.textContent = m; st.style.color = '#e05c5c'; };
+  const type = g('cf-type'), title = g('cf-title'), url = g('cf-url');
+  if(!title) return fail('Please add a title.');
+  if(!safeUrl(url) || !/^https?:\/\//i.test(url)) return fail('Please paste a full link starting with https://');
+  if(!document.getElementById('cf-own').checked) return fail('Please confirm the content is yours or that you have permission to share it.');
+  btn.disabled = true; btn.textContent = 'Submitting…'; st.textContent = '';
+  const { error } = await supabase.from('contributions').insert({
+    user_id: s.id, contributor_name: s.name, content_type: type, title, url,
+    description: g('cf-desc'), subject: g('cf-subject') || null, detail: g('cf-detail') || null,
+    class_level: g('cf-class') || 'All Classes', owner_confirmed: true
+  });
+  btn.disabled = false; btn.textContent = 'Submit for review';
+  if(error){
+    const tooMany = /row-level security|policy/i.test(error.message || '');
+    return fail(tooMany ? `You already have ${CONTRIB_MAX_PENDING} submissions waiting for review. Please wait until they are reviewed.` : 'Could not submit: ' + error.message);
+  }
+  document.getElementById('contrib-body').innerHTML = `
+    <div style="text-align:center;padding:.8rem 0 .2rem">
+      <div style="font-size:2.4rem;margin-bottom:.5rem">🎉</div>
+      <h4 style="color:var(--text);margin-bottom:.4rem">Thank you for contributing!</h4>
+      <p style="font-size:.86rem;color:var(--text2);margin-bottom:1.1rem">We'll review it soon. If it is published, you'll be credited and your membership will be extended.</p>
+      <button class="btn-primary" style="border:none;cursor:pointer" onclick="renderContribForm('video')">Share another</button>
+    </div>
+    <div class="cf-mine" id="cf-mine"></div>`;
+  loadMyContributions();
+};
+// "Contributed by" line shown on cards
+function creditHtml(x){ return x && x.contributed_by ? `<div class="credit">✨ Contributed by ${esc(x.contributed_by)}</div>` : ''; }
+
 // ── RENDER LESSONS ──
 async function renderLessons(){
   const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
@@ -1757,7 +1890,7 @@ async function renderResources(){
       <div class="card-media">${coverHtml(rk)}${thumb ? thumbImg(thumb) : ''}
         <div class="pill-row">${r.rtype?`<span class="pill">${esc(r.rtype)}</span>`:''}${r.class_level && r.class_level!=='All Classes'?`<span class="pill">${esc(r.class_level)}</span>`:''}</div>
       </div>
-      <div class="card-body"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.filesize||'')}</div></div>
+      <div class="card-body"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.filesize||'')}</div>${creditHtml(r)}</div>
       ${overlay}
     </div>`;
   }).join('');
@@ -1843,7 +1976,7 @@ function videoCardHtml(v, interactiveSection=false){
   const isInt = interactiveIds.has(String(v.id));
   return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}" data-premium="${v.is_premium?'1':''}">
     <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div>${interactiveSection?'<span class="int-badge">⚡ Interactive</span>':''}<div class="play-btn">▶</div></div>
-    <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}${v.series?`<span>📚 ${esc(v.series)}</span>`:''}</div></div>
+    <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}${v.series?`<span>📚 ${esc(v.series)}</span>`:''}</div>${creditHtml(v)}</div>
     ${lockOverlayHtml(state, v)}
   </div>`;
 }
@@ -1922,7 +2055,7 @@ function renderWatchPage(v, fallbackTitle){
   const side = document.getElementById('related-list');
   const nextBtn = document.getElementById('watch-next');
   nextVideoId = null; nextBtn.style.display = 'none';
-  if(!v){ titleEl.textContent = fallbackTitle || ''; chips.innerHTML = ''; desc.textContent = ''; side.innerHTML = ''; return; }
+  if(!v){ document.getElementById('watch-credit').textContent = ''; titleEl.textContent = fallbackTitle || ''; chips.innerHTML = ''; desc.textContent = ''; side.innerHTML = ''; return; }
 
   titleEl.textContent = lang()==='dz' && v.dz ? v.dz : v.title;
   chips.innerHTML = [
@@ -1930,6 +2063,7 @@ function renderWatchPage(v, fallbackTitle){
     v.duration ? '⏱ ' + v.duration : '', watchMode === 'interactive' ? '⚡ Interactive' : ''
   ].filter(Boolean).map(c => `<span class="watch-chip">${esc(c)}</span>`).join('');
   desc.textContent = v.description || '';
+  document.getElementById('watch-credit').textContent = v.contributed_by ? '✨ Contributed by ' + v.contributed_by : '';
 
   const { series, rest } = relatedFor(v);
   let htmlOut = '';
@@ -1982,6 +2116,7 @@ async function renderArticles(){
         <div class="blog-date">${esc(date)}</div>
         <h3 data-state="${state}" data-url="${esc(url)}" data-id="${esc(a.id)}" data-title="${esc(title)}" data-price="${esc(a.price||0)}" data-premium="${a.is_premium?'1':''}" style="${state==='free'||state==='approved'?'cursor:pointer':''}">${esc(title)}${priceTag}</h3>
         <p>${esc(a.description||'')}</p>
+        ${creditHtml(a)}
         <div class="comments-wrap" data-article="${esc(a.id)}">
           <h4>💬 Comments</h4>
           <div class="comment-list">Loading…</div>
