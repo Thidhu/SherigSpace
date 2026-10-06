@@ -386,7 +386,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
     </div>
 
     <div class="page" id="p-videos">
-      <div class="phead"><div><div class="ptitle">Videos</div><div class="psub">Manage your video lessons</div></div><button class="btn btn-gold" onclick="openForm('video')">+ Add Video</button></div>
+      <div class="phead"><div><div class="ptitle">Videos</div><div class="psub">Manage your video lessons · use ▲ ▼ to set the order shown on the site</div></div><button class="btn btn-gold" onclick="openForm('video')">+ Add Video</button></div>
       <div class="card"><div class="card-head"><h3>All Videos</h3><span class="cbadge" id="c-videos">0</span></div><div id="l-videos"></div></div>
     </div>
 
@@ -555,7 +555,11 @@ async function renderAll(){
   ] = await Promise.all([
     supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('resources').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
-    supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    (async()=>{
+      let r = await supabase.from('videos').select('*',{count:'exact'}).order('sort_order',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false,nullsFirst:false});
+      if(r.error) r = await supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false});
+      return r;
+    })(),
     supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
     supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
@@ -585,10 +589,11 @@ async function renderAll(){
   document.getElementById('c-users').textContent     = uc||0;
 
   document.getElementById('d-lessons').innerHTML  = L?.length ? L.slice(0,3).map(i=>row(i,'lesson')).join('') : empty('📚','No lessons yet');
-  document.getElementById('d-videos').innerHTML   = V?.length ? V.slice(0,3).map(i=>row(i,'video')).join('')  : empty('🎥','No videos yet');
+  window.__videos = V || [];
+  document.getElementById('d-videos').innerHTML   = V?.length ? [...V].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,3).map(i=>row(i,'video')).join('')  : empty('🎥','No videos yet');
   document.getElementById('l-lessons').innerHTML   = L?.length ? L.map(i=>row(i,'lesson')).join('')   : empty('📚','No lessons yet. Click + Add Lesson!');
   document.getElementById('l-resources').innerHTML = R?.length ? R.map(i=>row(i,'resource')).join('') : empty('📁','No resources yet. Click + Add Resource!');
-  document.getElementById('l-videos').innerHTML    = V?.length ? V.map(i=>row(i,'video')).join('')    : empty('🎥','No videos yet. Click + Add Video!');
+  document.getElementById('l-videos').innerHTML    = V?.length ? V.map((i,n)=>row(i,'video',{order:true,n,total:V.length})).join('')    : empty('🎥','No videos yet. Click + Add Video!');
   document.getElementById('l-articles').innerHTML  = A?.length ? A.map(i=>row(i,'article')).join('')  : empty('✍️','No articles yet. Click + Add Article!');
   document.getElementById('l-announce').innerHTML  = AN?.length
     ? AN.map(a=>`<div class="irow"><div><div class="iname">${esc(a.emoji||'📢')} ${esc(a.message||'')}</div><div class="imeta">${a.active?'✅ Active':'❌ Hidden'}${a.link_label?' · '+esc(a.link_label):''}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('announce','${esc(a.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('announce','${esc(a.id)}')">✕</button></div></div>`).join('')
@@ -744,21 +749,36 @@ function renderUsers(U){
 
 function stat(n,l){ return `<div class="sbox"><div class="n">${n}</div><div class="l">${l}</div></div>`; }
 function empty(icon,msg){ return `<div class="empty"><div class="ei">${icon}</div><p>${msg}</p></div>`; }
-function row(item,type){
+function row(item,type,opts){
   const sub={
     lesson:`${item.subject||'—'} · ${item.level||'—'} · ${item.duration||'—'}`,
     resource:`${item.rtype||'—'} · ${item.filesize||'—'}`,
-    video:`${item.subject||'—'} · ${item.duration||'—'}`,
+    video:`${item.subject||'—'} · ${item.duration||'—'}${item.series?' · 📚 '+item.series:''}`,
     article:`${item.article_date||'—'} · ${item.category||'—'}`,
     game:`${item.gtype||'—'}`
   }[type]||'';
   const thumb = item.thumbnail_url ? `<img class="irow-thumb" src="${esc(item.thumbnail_url)}"/>` : '';
+  const arrows = (opts && opts.order) ? `<button class="btn btn-ghost btn-sm" title="Move up" ${opts.n===0?'disabled':''} onclick="moveVideo('${esc(item.id)}',-1)">▲</button><button class="btn btn-ghost btn-sm" title="Move down" ${opts.n===opts.total-1?'disabled':''} onclick="moveVideo('${esc(item.id)}',1)">▼</button>` : '';
   const downloads = `⬇ ${item.download_count||0}`;
   const premiumTag = item.is_premium ? ` · <span style="color:var(--gold-text,var(--gold))">🔒 Nu.${esc(item.price||0)}</span>`
     : ({ login:' · 👤 Account', subscriber:' · ▶ Subscriber' }[item.access_level] || ' · ⭐ Member');
   const classTag = item.class_level && item.class_level !== 'All Classes' ? ` · <span style="color:var(--blue)">🎓 ${esc(item.class_level)}</span>` : '';
-  return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)} · ${downloads}${classTag}${premiumTag}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
+  return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)} · ${downloads}${classTag}${premiumTag}</div></div></div><div class="ibtns">${arrows}<button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
 }
+
+// ── VIDEO ORDER (▲ ▼) ──
+// Renumbers every video 1..n in the new order so the public site shows exactly this order.
+window.moveVideo = async function(id, dir){
+  const list = [...(window.__videos||[])];
+  const i = list.findIndex(v=>String(v.id)===String(id)), j = i + dir;
+  if(i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  const changed = list.map((v,n)=>({id:v.id, n:n+1, old:v.sort_order})).filter(x=>x.n!==x.old);
+  const results = await Promise.all(changed.map(x=>supabase.from('videos').update({sort_order:x.n}).eq('id',x.id)));
+  const err = results.find(r=>r.error);
+  if(err){ toast('Could not reorder: '+err.error.message+' — run VIDEO_ORDER_SETUP.sql in Supabase first.', true); return; }
+  toast('Order saved ✓'); renderAll();
+};
 
 // ── FORM ──
 const SUBJECTS=['Dzongkha','English','Mathematics','Science','Language Arts','History','Technology','Social Studies','Arts','Physical Education','Other'];
@@ -1037,6 +1057,7 @@ function buildForm(type,d={}){
     <div class="field"><label>YouTube / Video URL *</label><input id="f-url" placeholder="https://youtube.com/watch?v=..." value="${esc(v('url'))}"/></div>
     <div class="row2"><div class="field"><label>Subject</label><select id="f-subject"><option value="">-- Select --</option>${sel(SUBJECTS,v('subject'))}</select></div><div class="field"><label>Duration</label><input id="f-duration" placeholder="e.g. 12:30" value="${esc(v('duration'))}"/></div></div>
     <div class="field"><label>Description</label><textarea id="f-description" placeholder="What will students learn?">${esc(v('description'))}</textarea></div>
+    <div class="field"><label>Series / Playlist (optional)</label><input id="f-series" placeholder="e.g. Grammar and Language: Season 1" value="${esc(v('series'))}"/><div class="upload-status">Videos with the same series name are grouped together in the watch page, in the order set in Admin → Videos (▲ ▼).</div></div>
     ${classField(v)}
     ${imageUploadField(v)}
     ${premiumField(v)}
@@ -1304,7 +1325,7 @@ window.saveItem = async function(){
   const extra = {
     lesson:   { subject: fv('f-subject'), level: fv('f-level'), duration: fv('f-duration'), slides: fv('f-slides') },
     resource: { rtype: fv('f-rtype'), filesize: fv('f-filesize') },
-    video:    { subject: fv('f-subject'), duration: fv('f-duration') },
+    video:    { subject: fv('f-subject'), duration: fv('f-duration'), series: fv('f-series') || null },
     article:  { article_date: fv('f-article_date') || null, category: fv('f-category') },
     announce: { emoji: fv('f-emoji'), active: fv('f-active') === 'true', link_label: fv('f-link_label'), link_url: fv('f-link_url') },
     banner:   {},
@@ -1313,6 +1334,11 @@ window.saveItem = async function(){
   }[_type] || {};
 
   const newItem = { ...base, ...extra };
+  // New videos go to the top of the admin order (existing ones keep theirs).
+  if(_type==='video' && !_id){
+    const orders = (window.__videos||[]).map(v=>Number(v.sort_order)).filter(n=>!isNaN(n));
+    newItem.sort_order = (orders.length ? Math.min(...orders) : 1) - 1;
+  }
 
   let error;
   let savedId=_id;
@@ -1335,6 +1361,12 @@ window.saveItem = async function(){
     const { access_level, ...rest } = newItem;
     ({ error } = await supabase.from(table).insert(rest));
     if(!error) toast('Added, but the access level was NOT saved — run ACCESS_LEVELS_SETUP.sql in Supabase first.', true);
+  }
+  if(error && _type==='video' && /series|sort_order/i.test(error.message || '')){
+    // Columns not created yet: save everything else so nothing is lost.
+    const { series, sort_order, ...rest } = newItem;
+    ({ error } = _id ? await supabase.from(table).update(rest).eq('id', _id) : await supabase.from(table).insert(rest));
+    if(!error) toast('Saved, but series/order were NOT saved — run VIDEO_ORDER_SETUP.sql in Supabase first.', true);
   }
   if(error){ toast('Error: ' + error.message, true); }
   else {

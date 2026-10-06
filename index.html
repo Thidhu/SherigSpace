@@ -89,7 +89,7 @@ section{padding:80px 5%}
 .lesson-meta{display:flex;gap:.8rem;flex-wrap:wrap;font-size:.76rem;color:var(--text2)}
 .badge{display:inline-block;background:rgba(201,168,76,.15);font-size:.7rem;font-weight:600;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;margin-bottom:.8rem;color:#8a6820}
 [data-theme="dark"] .badge{color:var(--gold-light)}
-#resources{background:var(--section-alt);transition:background .35s}
+#resources,#interactive{background:var(--section-alt);transition:background .35s}
 .resource-card{background:var(--surface);border:1px solid var(--card-border);border-radius:5px;padding:1.5rem;display:flex;align-items:flex-start;gap:1rem;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;position:relative;overflow:hidden}
 .resource-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.14)}
 .resource-icon{width:40px;height:40px;flex-shrink:0;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
@@ -244,7 +244,7 @@ html[data-lang="dz"] span.pill,html[data-lang="dz"] :is(.lock-bar) :is(span,a){f
 [data-theme="light"] .udrop-item:hover{background:#fff3dc}
 [data-theme="light"] .modal-box strong{color:var(--text)}
 [data-theme="light"] .pstat{background:var(--gold-soft)}
-[data-lang="dz"][data-theme="light"] :is(#lessons,#resources,#videos,#blog) :is(h2,h3,h4,p,.section-desc){-webkit-text-stroke:.35px currentColor}
+[data-lang="dz"][data-theme="light"] :is(#lessons,#resources,#videos,#interactive,#blog) :is(h2,h3,h4,p,.section-desc){-webkit-text-stroke:.35px currentColor}
 [data-lang="dz"][data-theme="light"] :is(.lock-bar,.pill) *{-webkit-text-stroke:0}
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
@@ -677,6 +677,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 [data-theme="light"] #lessons,
 [data-theme="light"] #resources,
 [data-theme="light"] #videos,
+[data-theme="light"] #interactive,
 [data-theme="light"] #articles,
 [data-theme="light"] #games,
 [data-theme="light"] #about{background:#fff!important;}
@@ -788,6 +789,43 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 </style>
 
 <link rel="stylesheet" href="neumorphic.css"/>
+<style id="sherig-watch-page">
+/* ── Watch page (player + related videos) ── */
+.int-badge{position:absolute;bottom:.85rem;left:.85rem;z-index:2;background:#f5c25a;color:#1a2340;font-size:.66rem;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.watch-box{background:var(--bg);color:var(--text);border:1px solid var(--card-border);border-radius:22px;width:96%;max-width:1280px;max-height:94vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.watch-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;background:var(--bg);border-bottom:1px solid var(--card-border)}
+.watch-btn{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font:600 .85rem 'DM Sans',sans-serif;padding:8px 16px;border-radius:999px;cursor:pointer;transition:background .15s}
+.watch-btn:hover{background:var(--gold-soft)}
+.watch-top-title{flex:1;min-width:0;text-align:center;font-weight:600;font-size:.9rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.watch-layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:1.4rem;padding:1.2rem}
+.watch-player{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden}
+.watch-info{padding:1rem .2rem 0}
+.watch-info h2{font-family:'DM Sans',sans-serif;font-size:1.3rem;line-height:1.35;color:var(--text);margin:0 0 .6rem}
+[data-lang="dz"] .watch-info h2{font-family:'ThinWangTJoyig',sans-serif;line-height:1.8}
+.watch-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.8rem}
+.watch-chip{background:var(--gold-soft);color:var(--gold-text);border:1px solid var(--border);font-size:.74rem;font-weight:600;padding:4px 12px;border-radius:999px}
+.watch-desc{color:var(--text2);font-size:.92rem;line-height:1.7;margin:0 0 1rem;white-space:pre-line}
+.watch-next{display:inline-flex;align-items:center;gap:.5rem;border:none;cursor:pointer;background:linear-gradient(135deg,var(--gold-light,#f5c25a),var(--gold,#e0951c));color:#1a2340;font:700 .88rem 'DM Sans',sans-serif;padding:10px 20px;border-radius:999px}
+.watch-side{align-self:start;position:sticky;top:64px;max-height:calc(94vh - 90px);overflow-y:auto;padding-right:.2rem}
+.watch-side h4{font-family:'DM Sans',sans-serif;font-size:1rem;color:var(--text);margin:0 0 .6rem;padding:0 .3rem}
+.watch-side h4:not(:first-child){margin-top:1.2rem}
+.watch-side h4 small{font-weight:500;color:var(--text2);font-size:.78rem}
+.rel-item{display:grid;grid-template-columns:136px minmax(0,1fr);gap:.7rem;padding:.45rem;border-radius:14px;cursor:pointer;border:1px solid transparent;transition:background .15s}
+.rel-item:hover{background:var(--gold-soft)}
+.rel-item.now{background:var(--gold-soft);border-color:var(--border);cursor:default}
+.rel-thumb{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--media-bg,#1a2340)}
+.rel-dur{position:absolute;right:5px;bottom:5px;background:rgba(0,0,0,.75);color:#fff;font-size:.66rem;font-weight:600;padding:2px 6px;border-radius:6px;z-index:1}
+.rel-lock{position:absolute;left:5px;top:5px;font-size:.8rem;z-index:1}
+.rel-title{font-size:.86rem;font-weight:600;line-height:1.35;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rel-meta{font-size:.72rem;color:var(--text2);margin-top:.25rem}
+.rel-now{font-size:.72rem;font-weight:700;color:var(--gold-text);margin-top:.25rem}
+.rel-empty{color:var(--text2);font-size:.85rem;padding:.4rem .3rem}
+@media(max-width:900px){
+  .watch-layout{grid-template-columns:1fr;padding:.8rem}
+  .watch-side{position:static;max-height:none;overflow:visible}
+  .watch-box{width:100%;max-height:100vh;border-radius:0}
+}
+</style>
 </head>
 <body>
 
@@ -821,9 +859,10 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     <nav class="side-nav">
       <a class="side-link" href="#home" data-section="home"><span class="si">🏠</span><span data-en="Home" data-dz="གདོང་ཤོག">Home</span></a>
       <a class="side-link learning-link" href="student.html"><span class="si">🎓</span><span data-en="My Learning" data-dz="ངའི་ལྷབ་སྦྱང་།">My Learning</span><span class="learning-badge">TASKS</span></a>
+      <a class="side-link" href="#videos" data-section="videos"><span class="si">🎥</span><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></a>
+      <a class="side-link" href="#interactive" data-section="interactive"><span class="si">⚡</span><span data-en="Interactive Videos">Interactive Videos</span></a>
       <a class="side-link" href="#lessons" data-section="lessons"><span class="si">📖</span><span data-en="Lessons" data-dz="སློབ་སྟོན།">Lessons</span></a>
       <a class="side-link" href="#resources" data-section="resources"><span class="si">📁</span><span data-en="Resources" data-dz="ཡིག་ཆ།">Resources</span></a>
-      <a class="side-link" href="#videos" data-section="videos"><span class="si">🎥</span><span data-en="Videos" data-dz="བརྙན་ཐུང་།">Videos</span></a>
       <a class="side-link" href="#games" data-section="games"><span class="si">🎮</span><span data-en="EduGames" data-dz="རྩེད་མོ།">EduGames</span></a>
       <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
       <a class="side-link" href="#about" data-section="about"><span class="si">✦</span><span data-en="Why SherigSpace?" data-dz="SherigSpace ག་ཅི་གི་དོན་ལུ?">Why SherigSpace?</span></a>
@@ -852,7 +891,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <button class="sidebar-hamburger" id="sidebarHamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="topbar-search">
         <span>🔍</span>
-        <input id="searchInput" type="search" placeholder="Search lessons, resources, videos, articles…" autocomplete="off"/>
+        <input id="searchInput" type="search" placeholder="Search videos, lessons, resources, articles…" autocomplete="off"/>
       </div>
       <div class="topbar-right">
         <div class="lang-toggle">
@@ -871,6 +910,40 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <div id="membership-notice" style="display:none"></div>
 
       <div class="dash-content">
+
+<!-- VIDEOS -->
+<section id="videos">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Video Lessons" data-dz="✦ བརྙན་ཐུང་།">✦ Video Lessons</p>
+      <h2 class="section-title" data-en="Watch & Learn" data-dz="བལྟ་སྟེ་ལྷབ་སྦྱང་མཛད་གནང་།་">Watch & Learn</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="Video tutorials to help you learn at your own pace." data-dz="ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་བརྙན་ཐུང་།">Video tutorials to help you learn at your own pace.</p>
+    </div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="videos-grid" aria-label="Scroll left">‹</button>
+      <div class="videos-grid scroll-track" id="videos-grid"></div>
+      <button class="scroll-arrow right" data-scroll="videos-grid" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE VIDEOS -->
+<section id="interactive">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Learn by Doing">✦ Learn by Doing</p>
+      <h2 class="section-title" data-en="Interactive Videos">Interactive Videos</h2>
+      <div class="divider"></div>
+      <p class="section-desc" data-en="These videos pause and ask you questions along the way, so you learn actively.">These videos pause and ask you questions along the way, so you learn actively.</p>
+    </div>
+    <div class="scroll-row">
+      <button class="scroll-arrow left" data-scroll="interactive-grid" aria-label="Scroll left">‹</button>
+      <div class="videos-grid scroll-track" id="interactive-grid"></div>
+      <button class="scroll-arrow right" data-scroll="interactive-grid" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+</section>
 
 <!-- LESSONS -->
 <section id="lessons">
@@ -902,23 +975,6 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
       <button class="scroll-arrow left" data-scroll="resources-grid" aria-label="Scroll left">‹</button>
       <div class="resources-grid scroll-track" id="resources-grid"></div>
       <button class="scroll-arrow right" data-scroll="resources-grid" aria-label="Scroll right">›</button>
-    </div>
-  </div>
-</section>
-
-<!-- VIDEOS -->
-<section id="videos">
-  <div class="inner">
-    <div class="fade-in">
-      <p class="section-label" data-en="✦ Video Lessons" data-dz="✦ བརྙན་ཐུང་།">✦ Video Lessons</p>
-      <h2 class="section-title" data-en="Watch & Learn" data-dz="བལྟ་སྟེ་ལྷབ་སྦྱང་མཛད་གནང་།་">Watch & Learn</h2>
-      <div class="divider"></div>
-      <p class="section-desc" data-en="Video tutorials to help you learn at your own pace." data-dz="ཁྱོད་རའི་ལྕོགས་གྲུབ་དང་མགྱོགས་ལྷོད་འཁྲིལ་ཏེ་ ལྷབ་སྦྱང་འབད་ཚུགས་པའི་བརྙན་ཐུང་།">Video tutorials to help you learn at your own pace.</p>
-    </div>
-    <div class="scroll-row">
-      <button class="scroll-arrow left" data-scroll="videos-grid" aria-label="Scroll left">‹</button>
-      <div class="videos-grid scroll-track" id="videos-grid"></div>
-      <button class="scroll-arrow right" data-scroll="videos-grid" aria-label="Scroll right">›</button>
     </div>
   </div>
 </section>
@@ -993,12 +1049,25 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   </div>
 </div>
 
-<!-- VIDEO PLAYER MODAL -->
+<!-- VIDEO WATCH PAGE (player + related videos) -->
 <div class="modal-overlay" id="video-modal">
-  <div class="modal-box" style="max-width:1200px;width:95%">
-    <div class="modal-head"><h3 id="video-modal-title">▶ Video</h3><button class="modal-close" onclick="closeVideoModal()">✕</button></div>
-    <div class="modal-body" style="padding:0">
-      <div id="video-embed-wrap" style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#000"></div>
+  <div class="watch-box">
+    <div class="watch-top">
+      <button class="watch-btn" onclick="closeVideoModal()">← Back</button>
+      <div class="watch-top-title" id="video-modal-title">▶ Video</div>
+      <button class="watch-btn" onclick="closeVideoModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="watch-layout">
+      <div class="watch-main">
+        <div class="watch-player" id="video-embed-wrap"></div>
+        <div class="watch-info">
+          <h2 id="watch-title"></h2>
+          <div class="watch-chips" id="watch-chips"></div>
+          <p class="watch-desc" id="watch-desc"></p>
+          <button class="watch-next" id="watch-next" onclick="playNextVideo()" style="display:none">Up next ▶</button>
+        </div>
+      </div>
+      <aside class="watch-side" id="related-list"></aside>
     </div>
   </div>
 </div>
@@ -1279,8 +1348,11 @@ function renderNormalVideo(embed){
     `<iframe src="${esc(embed)}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
 }
 
-window.openVideoModal = async function(url, id, title){
+let watchMode = 'plain';   // 'plain' = Watch & Learn (no questions) · 'interactive' = Interactive Videos section
+window.openVideoModal = async function(url, id, title, mode){
+  watchMode = mode === 'interactive' ? 'interactive' : 'plain';
   trackOpen('videos', id);
+  const _cur = videosCache.find(x => String(x.id) === String(id));
 
   const embed = getEmbedUrl(url);
   if(!embed){
@@ -1292,6 +1364,8 @@ window.openVideoModal = async function(url, id, title){
   const wrap = document.getElementById('video-embed-wrap');
   wrap.innerHTML = '';
   document.getElementById('video-modal').classList.add('open');
+  renderWatchPage(_cur, title);
+  document.querySelector('#video-modal .watch-box').scrollTop = 0;
 
   if(activeInteractiveVideo){
     try{ activeInteractiveVideo.destroy(); }catch(e){}
@@ -1299,7 +1373,7 @@ window.openVideoModal = async function(url, id, title){
   }
 
   const youtubeId = getYouTubeId(url);
-  const questions = youtubeId ? await loadInteractiveQuestions(id) : [];
+  const questions = (youtubeId && watchMode === 'interactive') ? await loadInteractiveQuestions(id) : [];
 
   // Interactive mode only applies to YouTube videos that have questions attached.
   if(youtubeId && questions.length && window.SherigInteractiveVideo){
@@ -1756,39 +1830,149 @@ async function renderGames(){
   });
 }
 
-// ── RENDER VIDEOS ──
-async function renderVideos(){
-  const { data: raw, error: loadErr } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
-  if(loadErr) console.error('Could not load videos:', loadErr);
-  const items = (raw||[]).filter(matchesClass);
-  const g = document.getElementById('videos-grid');
-  if(!items.length){ g.innerHTML=`<div class="empty-state fade-in"><div class="ei">🎥</div><p>${emptyMsg('videos')}</p></div>`; return; }
-  g.innerHTML = items.map(v => {
+// ── RENDER VIDEOS (+ Interactive Videos) ──
+// One fetch feeds both sections, the watch page and its "Related videos" list.
+let videosCache = [];               // every video, in the order the admin set
+let interactiveIds = new Set();     // ids of videos that have questions
+
+async function fetchVideosOrdered(){
+  // Admin order first (Admin → Videos → ▲ ▼), newest first for ties.
+  let r = await supabase.from('videos').select('*')
+    .order('sort_order',{ascending:true,nullsFirst:false})
+    .order('created_at',{ascending:false,nullsFirst:false});
+  // sort_order column not created yet (VIDEO_ORDER_SETUP.sql) → fall back to newest first.
+  if(r.error) r = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  return r;
+}
+async function fetchInteractiveIds(){
+  try{
+    const { data, error } = await supabase.from('interactive_questions').select('video_id').eq('enabled', true);
+    if(error) return new Set();
+    return new Set((data||[]).map(q => String(q.video_id)));
+  }catch(e){ return new Set(); }
+}
+
+function videoCardHtml(v, interactiveSection=false){
+  const title = lang()==='dz' && v.dz ? v.dz : v.title;
+  const url = safeUrl(v.url);
+  const thumb = thumbFor(v);
+  const state = accessState('videos', v);
+  const isInt = interactiveIds.has(String(v.id));
+  return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}" data-premium="${v.is_premium?'1':''}">
+    <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div>${interactiveSection?'<span class="int-badge">⚡ Interactive</span>':''}<div class="play-btn">▶</div></div>
+    <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}${v.series?`<span>📚 ${esc(v.series)}</span>`:''}</div></div>
+    ${lockOverlayHtml(state, v)}
+  </div>`;
+}
+
+// Same rules for a card and for a "related" row: login / pay / pending / play.
+function openVideoItem(v, mode){
+  if(!v) return;
+  const state = accessState('videos', v);
+  if(state === 'locked-anon'){ window.location='login.html'; return; }
+  if(state === 'locked-pay'){
     const title = lang()==='dz' && v.dz ? v.dz : v.title;
-    const icon = ICONS[v.subject]||'🎬';
-    const url = safeUrl(v.url);
-    const thumb = thumbFor(v);
-    const state = accessState('videos', v);
-    return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}" data-premium="${v.is_premium?'1':''}">
-      <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div><div class="play-btn">▶</div></div>
-      <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}</div></div>
-      ${lockOverlayHtml(state, v)}
-    </div>`;
-  }).join('');
+    if(v.is_premium) openPaymentModal('videos', v.id, title, v.price||0);
+    else openPaymentModal('membership', 'general', 'Site Membership', membershipPrice());
+    return;
+  }
+  if(state === 'pending') return;
+  openVideoModal(safeUrl(v.url), v.id, lang()==='dz' && v.dz ? v.dz : v.title, mode || 'plain');
+}
+
+function bindVideoCards(g, mode){
   g.querySelectorAll('.video-card').forEach(card=>{
-    const state = card.getAttribute('data-state');
     card.addEventListener('click', ()=>{
-      if(state === 'locked-anon') { window.location='login.html'; return; }
-      if(state === 'locked-pay') {
-        if(card.getAttribute('data-premium')) openPaymentModal('videos', card.getAttribute('data-id'), card.getAttribute('data-title'), card.getAttribute('data-price'));
-        else openPaymentModal('membership', 'general', 'Site Membership', membershipPrice());
-        return;
-      }
-      if(state === 'pending') return;
-      openVideoModal(card.getAttribute('data-url'), card.getAttribute('data-id'), card.getAttribute('data-title'));
+      openVideoItem(videosCache.find(x => String(x.id) === card.getAttribute('data-id')), mode);
     });
   });
 }
+
+async function renderVideos(){
+  const [{ data: raw, error: loadErr }, ids] = await Promise.all([fetchVideosOrdered(), fetchInteractiveIds()]);
+  if(loadErr) console.error('Could not load videos:', loadErr);
+  videosCache = raw || [];
+  interactiveIds = ids;
+
+  const g = document.getElementById('videos-grid');
+  const items = videosCache.filter(matchesClass);
+  g.innerHTML = items.length
+    ? items.map(videoCardHtml).join('')
+    : `<div class="empty-state fade-in"><div class="ei">🎥</div><p>${emptyMsg('videos')}</p></div>`;
+  bindVideoCards(g, 'plain');
+
+  const ig = document.getElementById('interactive-grid');
+  const iItems = items.filter(v => interactiveIds.has(String(v.id)));
+  ig.innerHTML = iItems.length
+    ? iItems.map(v => videoCardHtml(v, true)).join('')
+    : `<div class="empty-state fade-in"><div class="ei">⚡</div><p>${emptyMsg('interactive videos')}</p></div>`;
+  bindVideoCards(ig, 'interactive');
+}
+
+// ── WATCH PAGE: details + related videos ──
+let nextVideoId = null;
+function relatedFor(v){
+  // Inside Interactive Videos, "related" only lists other interactive videos; in Watch & Learn it lists everything.
+  const pool = watchMode === 'interactive' ? videosCache.filter(x => interactiveIds.has(String(x.id))) : videosCache;
+  const others = pool.filter(x => String(x.id) !== String(v.id));
+  const series = v.series ? pool.filter(x => x.series === v.series) : [];   // includes the current video
+  const inSeries = new Set(series.map(x => String(x.id)));
+  const score = x => (x.subject && x.subject === v.subject ? 2 : 0) + (x.class_level && x.class_level === v.class_level ? 1 : 0);
+  // Array.sort is stable, so equal scores keep the admin's order.
+  const rest = others.filter(x => !inSeries.has(String(x.id))).sort((a,b) => score(b) - score(a)).slice(0, 14);
+  return { series, rest };
+}
+function relItemHtml(x, now){
+  const t = lang()==='dz' && x.dz ? x.dz : x.title;
+  const thumb = thumbFor(x);
+  const st = accessState('videos', x);
+  const sub = [x.subject, watchMode === 'interactive' ? '⚡ Interactive' : ''].filter(Boolean).map(esc).join(' · ');
+  return `<div class="rel-item${now?' now':''}" data-id="${esc(x.id)}" data-state="${st}">
+    <div class="rel-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}${x.duration?`<span class="rel-dur">${esc(x.duration)}</span>`:''}${st.startsWith('locked')?'<span class="rel-lock">🔒</span>':''}</div>
+    <div><div class="rel-title">${esc(t)}</div>${sub?`<div class="rel-meta">${sub}</div>`:''}${now?'<div class="rel-now">▶ Now playing</div>':''}</div>
+  </div>`;
+}
+function renderWatchPage(v, fallbackTitle){
+  const titleEl = document.getElementById('watch-title');
+  const chips = document.getElementById('watch-chips');
+  const desc = document.getElementById('watch-desc');
+  const side = document.getElementById('related-list');
+  const nextBtn = document.getElementById('watch-next');
+  nextVideoId = null; nextBtn.style.display = 'none';
+  if(!v){ titleEl.textContent = fallbackTitle || ''; chips.innerHTML = ''; desc.textContent = ''; side.innerHTML = ''; return; }
+
+  titleEl.textContent = lang()==='dz' && v.dz ? v.dz : v.title;
+  chips.innerHTML = [
+    v.subject, (v.class_level && v.class_level !== 'All Classes') ? v.class_level : '',
+    v.duration ? '⏱ ' + v.duration : '', watchMode === 'interactive' ? '⚡ Interactive' : ''
+  ].filter(Boolean).map(c => `<span class="watch-chip">${esc(c)}</span>`).join('');
+  desc.textContent = v.description || '';
+
+  const { series, rest } = relatedFor(v);
+  let htmlOut = '';
+  if(series.length > 1){
+    const pos = series.findIndex(x => String(x.id) === String(v.id));
+    htmlOut += `<h4>${esc(v.series)} <small>· ${pos+1} of ${series.length}</small></h4>` +
+               series.map(x => relItemHtml(x, String(x.id) === String(v.id))).join('');
+    const nxt = series[pos+1];
+    if(nxt) nextVideoId = nxt.id;
+  }
+  if(rest.length){
+    htmlOut += `<h4>${series.length > 1 ? 'More videos' : 'Related videos'}</h4>` + rest.map(x => relItemHtml(x, false)).join('');
+    if(nextVideoId == null) nextVideoId = rest[0].id;
+  }
+  side.innerHTML = htmlOut || `<h4>Related videos</h4><div class="rel-empty">No other videos yet.</div>`;
+  if(nextVideoId != null) nextBtn.style.display = '';
+}
+document.getElementById('related-list').addEventListener('click', e=>{
+  const el = e.target.closest('.rel-item');
+  if(!el || el.classList.contains('now')) return;
+  openVideoItem(videosCache.find(x => String(x.id) === el.getAttribute('data-id')), watchMode);
+});
+window.playNextVideo = function(){
+  if(nextVideoId == null) return;
+  openVideoItem(videosCache.find(x => String(x.id) === String(nextVideoId)), watchMode);
+};
 
 // ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
@@ -1930,7 +2114,7 @@ searchInput.addEventListener('keydown', e=>{
   if(e.key === 'Enter'){
     clearTimeout(searchTimer);
     runSearch().then(()=>{
-      const hit = [['lessons','.lesson-card'],['resources','.resource-card'],['videos','.video-card'],['games','.resource-card'],['blog','.blog-card']].find(([id,c])=>document.querySelector('#'+id+' '+c));
+      const hit = [['videos','.video-card'],['interactive','.video-card'],['lessons','.lesson-card'],['resources','.resource-card'],['games','.resource-card'],['blog','.blog-card']].find(([id,c])=>document.querySelector('#'+id+' '+c));
       if(hit) document.getElementById(hit[0]).scrollIntoView({behavior:'smooth'});
     });
   }
