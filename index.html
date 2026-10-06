@@ -1262,7 +1262,7 @@ function renderNav(){
   const role = String(s.role || 'user').toLowerCase();
   // Teacher access is membership-based. Normal users see the membership CTA;
   // existing teacher/admin accounts keep direct dashboard access.
-  const teacherSide = (role === 'teacher' || role === 'admin')
+  const teacherSide = (role === 'teacher' || role === 'admin' || myTeacherActive)
     ? `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher Dashboard</span></a>`
     : `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Become a Teacher</span></a>`;
   const adminSide = role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
@@ -1291,7 +1291,7 @@ window.openProfile = async function(){
       <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
       <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
     </div>
-    ${profile?.role === 'admin' || profile?.role === 'teacher'
+    ${profile?.role === 'admin' || profile?.role === 'teacher' || myTeacherActive
       ? `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">👨‍🏫 Teacher Dashboard</a>`
       : `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">👨‍🏫 Become a Teacher</a>`}
     ${profile?.role === 'student' ? `<a href="student.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🎓 My Learning</a>` : ''}
@@ -1466,6 +1466,7 @@ function membershipPrice(){ return Number(siteSettings && siteSettings.membershi
 // People who already paid the old one-time fee get one free quarter counted from this date.
 const MEMBERSHIP_QUARTER_START = new Date('2026-10-05T00:00:00');
 let myMembership = { status:'none', until:null };   // 'active' | 'pending' | 'expired' | 'none'
+let myTeacherActive = false;                         // approved, unexpired row in teacher_subscriptions (role stays 'user')
 let myYoutube = false;                               // tapped "I've subscribed" on the YouTube step
 let siteSettings = {};
 let myPurchases = {}; // "type:id" -> 'pending' | 'approved'
@@ -1475,10 +1476,24 @@ async function loadSiteSettings(){
   siteSettings = data || {};
 }
 
+// Teacher access is subscription-based: admin approval writes to teacher_subscriptions
+// and never changes profiles.role, so check the latest subscription row here.
+async function loadTeacherAccess(){
+  myTeacherActive = false;
+  const s = session();
+  if(!s) return;
+  try{
+    const { data } = await supabase.from('teacher_subscriptions').select('status,expires_at')
+      .eq('teacher_id', s.id).order('created_at', { ascending:false }).limit(1).maybeSingle();
+    myTeacherActive = !!(data && data.status === 'approved' && (!data.expires_at || new Date(data.expires_at) > new Date()));
+  }catch(e){ console.warn('Teacher access check:', e); }
+}
+
 async function loadMyPurchases(){
   myPurchases = {};
   const s = session();
-  if(!s) return;
+  if(!s){ myTeacherActive = false; return; }
+  await loadTeacherAccess();
   await loadMyBonuses();
   const { data } = await supabase.from('purchases').select('item_type,item_id,status,reviewed_at').eq('user_id', s.id);
   (data||[]).forEach(p=>{ myPurchases[`${p.item_type}:${p.item_id}`] = p.status; });
@@ -1491,7 +1506,7 @@ function computeMembership(rows){
   const s = session();
   if(!s) return { status:'none', until:null };
   const role = String(s.role || '').toLowerCase();
-  if(role === 'teacher' || role === 'admin') return { status:'active', until:null, staff:true };   // teacher plan includes member access
+  if(role === 'teacher' || role === 'admin' || myTeacherActive) return { status:'active', until:null, staff:true };   // teacher plan includes member access
   const mem = rows.filter(p => p.item_type === 'membership');
   const paid = mem.filter(p => p.status === 'approved').sort((a, b) => new Date(a.reviewed_at || 0) - new Date(b.reviewed_at || 0));
   // Paid quarters and admin-granted bonus days are stacked in the order they happened.
@@ -2213,6 +2228,7 @@ async function renderAll(){
   renderNav();
   renderClassTabs();
   await Promise.all([loadSiteSettings(), loadMyPurchases(), loadMyYoutube()]);
+  renderNav();   // teacher access is loaded above, so refresh the Teacher Dashboard link
   renderMembershipNotice();
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), renderBanner()]);
   observeFadeIns();
