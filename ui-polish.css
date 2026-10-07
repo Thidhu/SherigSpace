@@ -90,6 +90,19 @@ html :is(
 html[data-theme] body :is(input,textarea)::placeholder{color:var(--text2) !important;opacity:.95 !important}
 html[data-theme="light"] body :is(input,textarea)::placeholder{color:#5b6b7d !important}   /* was #8190a0 (too faint on white) */
 
+/* Night mode: fields a bit brighter so they stand out from the dark cards and bars */
+html[data-theme="dark"] :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,textarea
+):not(nav *):not(.sidebar *):not(.search-box *):not(.topbar-search *){
+  background:#2b3759 !important;
+  color:#f4f1ea;
+  border-color:rgba(255,255,255,.22) !important;
+  box-shadow:inset 2px 2px 6px rgba(0,0,0,.28),inset -2px -2px 6px rgba(255,255,255,.05) !important;
+}
+html[data-theme="dark"] body :is(input,textarea)::placeholder{color:#aeb8d0 !important}
+html[data-theme="dark"] select option{background:#222d4c;color:#f4f1ea}
+
 /* ── 4. Focus ring + status badges ────────────────────────────────  */
 html[data-theme] body :is(input,select,textarea):focus{
   outline:none !important;

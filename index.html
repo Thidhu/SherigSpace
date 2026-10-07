@@ -697,7 +697,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 [data-theme="light"] .modal-box,[data-theme="light"] .modal-content{background:#fff!important;border-color:#e5e7eb!important;}
 [data-theme="light"] .user-dropdown{background:#fff!important;border-color:#e5e7eb!important;}
 [data-theme="light"] .udrop-item:hover{background:#f5f7fa!important;}
-[data-theme="light"] .topbar-search,.
+[data-theme="light"] .topbar-search,
 [data-theme="light"] .search-panel{background:#fff!important;}
 </style>
 
@@ -843,6 +843,44 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cf-item small{display:block;color:var(--text2);margin-top:.15rem}
 .cf-chip{align-self:flex-start;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
 .cf-chip.pending{background:#fff3cd;color:#8a6100}.cf-chip.approved{background:#d8f5e3;color:#14703d}.cf-chip.rejected{background:#fde0e0;color:#a32525}
+</style>
+<style id="sherig-v23-fixes">
+/* ── v23: search bar colours, brighter night fields, compact spacing ── */
+
+/* DAY MODE search: the top bar is "dark" for the soft-shadow theme, which painted the
+   typed text's box navy-black. Force a white field with dark text. */
+html[data-theme="light"] .topbar-search{background:#fff!important;border:1px solid #d5dde8!important}
+html[data-theme="light"] .topbar-search input#searchInput{background:#fff!important;color:#1a2340!important;-webkit-text-fill-color:#1a2340;caret-color:#1a2340;box-shadow:none!important;border:0!important}
+html[data-theme="light"] .topbar-search input#searchInput::placeholder{color:#718296!important;-webkit-text-fill-color:#718296}
+html[data-theme="light"] .topbar-search:focus-within{border-color:#00BFFF!important;box-shadow:0 0 0 3px rgba(0,191,255,.14)}
+
+/* NIGHT MODE search: lighter field so it stands out from the bar */
+html[data-theme="dark"] .topbar-search{background:#2a3658!important;border:1px solid rgba(255,255,255,.22)!important}
+html[data-theme="dark"] .topbar-search input#searchInput{background:transparent!important;color:#f4f1ea!important;box-shadow:none!important;border:0!important}
+html[data-theme="dark"] .topbar-search input#searchInput::placeholder{color:#b4bdd4!important}
+html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!important}
+
+/* phones: the search box that drops down under the round button */
+@media(max-width:560px){
+  html[data-theme="light"] .topbar-search input#searchInput{background:#fff!important;border:1px solid #00BFFF!important;box-shadow:0 12px 30px rgba(26,35,64,.18)!important}
+  html[data-theme="dark"] .topbar-search input#searchInput{background:#2a3658!important;border:1px solid var(--gold)!important;box-shadow:0 12px 30px rgba(0,0,0,.4)!important}
+}
+
+/* COMPACT public site: smaller gaps between a section's heading, its cards and the next section */
+.dash-wrap{padding-top:1.1rem;padding-bottom:2rem}
+.banner{min-height:300px;padding:2.2rem 5%;margin-bottom:1rem}
+.dash-wrap section{padding:0 0 .7rem}
+.dash-wrap .section-label{margin-bottom:.3rem}
+.dash-wrap .section-title{font-size:clamp(1.45rem,2.6vw,1.95rem);margin-bottom:.3rem;line-height:1.2}
+.dash-wrap .divider{margin:.5rem 0 .7rem}
+.dash-wrap .section-desc{margin-bottom:.9rem;line-height:1.55;font-size:.95rem}
+.dash-wrap .scroll-track{padding-bottom:.3rem}
+.dash-wrap .empty-state{padding:1.3rem 1rem}
+.dash-wrap .empty-state .ei{font-size:2rem;margin-bottom:.4rem}
+.dash-wrap .lesson-card{padding:1.3rem}
+.dash-wrap .resource-card{padding:1.1rem}
+.dash-wrap #about{padding:.8rem 0 1.6rem}
+#membership-notice:not([style*="none"]){margin-bottom:.8rem}
 </style>
 </head>
 <body>
@@ -1387,6 +1425,7 @@ window.openVideoModal = async function(url, id, title, mode){
   const wrap = document.getElementById('video-embed-wrap');
   wrap.innerHTML = '';
   document.getElementById('video-modal').classList.add('open');
+  saveView({ video:{ id:String(id), mode:watchMode } });
   renderWatchPage(_cur, title);
   document.querySelector('#video-modal .watch-box').scrollTop = 0;
 
@@ -1453,6 +1492,7 @@ window.closeVideoModal = function(){
   }
   document.getElementById('video-modal').classList.remove('open');
   document.getElementById('video-embed-wrap').innerHTML = '';
+  saveView({ video:null });
 };
 
 document.getElementById('video-modal').addEventListener('click', e=>{
@@ -2233,6 +2273,7 @@ async function renderAll(){
   renderMembershipNotice();
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), renderBanner()]);
   observeFadeIns();
+  if(!viewRestored){ viewRestored = true; restoreView(); }   // put the visitor back where they were before the refresh
 }
 
 // ── SEARCH ──
@@ -2349,6 +2390,73 @@ window.addEventListener('scroll',()=>{
   secs.forEach(s=>{ if(window.scrollY>=s.offsetTop-140) cur=s.id; });
   sideLinks.forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+cur));
 });
+
+// ── REMEMBER WHERE THE VISITOR IS (survives a refresh) ──
+// Saves: scroll position (as "section + distance into it", so it stays right even if
+// the page above changes height), the open video, and the search text.
+// Kept in sessionStorage = per browser tab, so a brand-new visit still starts at the top.
+const VIEW_KEY = 'sherig_index_view';
+let viewRestored = false;
+let scrollLock = true;            // don't overwrite the saved spot while the page is still loading
+if('scrollRestoration' in history) history.scrollRestoration = 'manual';   // we do it ourselves, after content has loaded
+function readView(){ try{ return JSON.parse(sessionStorage.getItem(VIEW_KEY) || 'null'); }catch(e){ return null; } }
+function saveView(patch){
+  try{ sessionStorage.setItem(VIEW_KEY, JSON.stringify(Object.assign(readView() || {}, patch))); }catch(e){}
+}
+function sectionEls(){ return Array.from(document.querySelectorAll('.dash-wrap section[id], #home')); }
+function saveScroll(){
+  if(scrollLock) return;
+  let cur = null;
+  sectionEls().forEach(s => { if(window.scrollY >= s.getBoundingClientRect().top + window.scrollY - 140) cur = s; });
+  if(!cur) cur = document.getElementById('home');
+  saveView({ sec: cur.id, off: Math.round(window.scrollY - (cur.getBoundingClientRect().top + window.scrollY)) });
+}
+let scrollSaveTimer = null;
+window.addEventListener('scroll', () => { clearTimeout(scrollSaveTimer); scrollSaveTimer = setTimeout(saveScroll, 120); }, { passive:true });
+window.addEventListener('pagehide', saveScroll);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') saveScroll(); });
+
+// search text: restore before the first render so the right cards are drawn straight away
+(function(){
+  const v = readView();
+  if(v && v.q){
+    searchInput.value = v.q;
+    searchQuery = v.q.trim().toLowerCase();
+    const w = document.querySelector('.topbar-search'); if(w) w.classList.add('has-q');
+  }
+  searchInput.addEventListener('input', () => saveView({ q: searchInput.value }));
+})();
+
+async function restoreView(){
+  const v = readView() || {};
+  let userMoved = false;
+  const stop = () => { userMoved = true; };
+  ['wheel','touchstart','keydown','mousedown'].forEach(ev => window.addEventListener(ev, stop, { once:true, passive:true }));
+  const place = () => {
+    if(userMoved) return;
+    let top = null;
+    if(v.sec){
+      const el = document.getElementById(v.sec);
+      if(el) top = el.getBoundingClientRect().top + window.scrollY + (v.off || 0);
+    }else if(location.hash.length > 1){
+      const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      if(el) top = el.getBoundingClientRect().top + window.scrollY - 80;
+    }
+    if(top !== null) window.scrollTo({ top: Math.max(0, top), behavior:'instant' });
+  };
+  place();
+  // images / the banner can still change heights for a moment, so settle again before saving resumes
+  setTimeout(place, 500);
+  setTimeout(() => { place(); scrollLock = false; }, 1400);
+
+  // re-open the video that was playing
+  if(v.video && v.video.id){
+    const item = videosCache.find(x => String(x.id) === String(v.video.id));
+    const st = item ? accessState('videos', item) : '';
+    if(item && (st === 'free' || st === 'approved')) openVideoItem(item, v.video.mode);
+    else saveView({ video:null });
+  }
+}
 
 // ── SYNC SUPABASE SESSION → localStorage on load AND on change ──
 // The site is open to browse for anyone. Signed-out visitors see every

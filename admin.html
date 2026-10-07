@@ -525,7 +525,11 @@ async function checkAccess(){
   // Access granted
   document.getElementById('gate').classList.add('hide');
   document.getElementById('sfoot-user').textContent = `${profile.name} · ${profile.email}`;
-  renderAll();
+  // after a refresh, go back to the page that was open (go() also draws the data)
+  let savedPage = null;
+  try{ savedPage = sessionStorage.getItem('sherig_admin_page'); }catch(e){}
+  if(savedPage && savedPage !== 'dash' && document.getElementById('p-' + savedPage)) go(savedPage);
+  else renderAll();
   loadSettings();
 }
 
@@ -545,6 +549,7 @@ window.go = function(p){
   const map={dash:'dashboard',banners:'banners',loginbg:'login backgrounds',lessons:'lessons',resources:'resources',videos:'videos',games:'edugames',articles:'articles',payments:'payments',contributions:'contributions',users:'users',settings:'settings'};
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
+  try{ sessionStorage.setItem('sherig_admin_page', p); }catch(e){}   // remembered so a refresh stays on this page
 };
 
 // ── RENDER ALL ──

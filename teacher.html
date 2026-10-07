@@ -447,6 +447,19 @@ async function checkAccess(){
       document.getElementById('app-layout').style.display = 'flex';
       await renderClasses();
       renderBilling(subRow);
+      // after a refresh, go back to the page (and class) that was open
+      try{
+        const sp = sessionStorage.getItem('sherig_teacher_page');
+        if(sp === 'class-detail'){
+          const sc = JSON.parse(sessionStorage.getItem('sherig_teacher_class') || 'null');
+          if(sc){
+            const { data: stillThere } = await supabase.from('classes').select('id').eq('id', sc.id).maybeSingle();
+            if(stillThere) openClass(sc.id, sc.name, sc.code);
+          }
+        }else if(sp && sp !== 'classes' && document.getElementById('p-' + sp)){
+          go(sp);
+        }
+      }catch(e){ console.warn('Could not restore page:', e); }
     } else {
       renderTeacherMembershipGate(subRow);
     }
@@ -527,6 +540,7 @@ window.go = function(p){
   if(p==='analytics'){ document.querySelectorAll('.sitem')[1]?.classList.add('on'); renderAnalytics(); }
   if(p==='ai'){ document.querySelectorAll('.sitem')[2]?.classList.add('on'); initAITools(); }
   if(p==='billing') document.querySelectorAll('.sitem')[3]?.classList.add('on');
+  try{ sessionStorage.setItem('sherig_teacher_page', p); }catch(e){}   // remembered so a refresh stays on this page
 };
 
 
@@ -1035,6 +1049,7 @@ window.setAllLibraryItems = async function(visible){
 
 window.openClass = function(id, name, code){
   currentClassId = id;
+  try{ sessionStorage.setItem('sherig_teacher_class', JSON.stringify({ id, name, code })); }catch(e){}
   const aiSel = document.getElementById('ai-class');
   if(aiSel) aiSel.value = String(id);
   document.getElementById('detail-class-name').textContent = name;
