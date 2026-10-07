@@ -161,6 +161,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 .present-mark.ok{color:var(--ok-text,#7ed9b0)}.present-mark.bad{color:var(--err-text,#f09090)}
 .present-links{display:flex;flex-wrap:wrap;gap:1rem;font-size:1.1rem}
 .present-links a{color:var(--gold-text,var(--gold))}
+.ans-file{display:block;width:100%;margin:0 0 .6rem}
+.ans-file img,.ans-file video{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-bottom:.35rem}
+.ans-file audio{display:block;width:100%;margin-bottom:.35rem}
+.ans-links a.ans-media{display:block;padding:0;border:0}
+.file-fail{display:inline-block;margin:0 .5rem .4rem 0;font-size:.78rem;color:var(--text2)}
+.present-links .ans-file{flex:1 1 100%}
+.present-links .ans-file img,.present-links .ans-file video{max-height:62vh;margin:0 auto .5rem}
 .present-nav{display:flex;align-items:center;justify-content:center;gap:1rem;padding:1rem;border-top:1px solid var(--border);flex-shrink:0}
 .present-nav select{max-width:240px}
 @media(max-width:640px){.present-content{padding:1.6rem 5vw}.present-student{font-size:1.5rem}.present-a{font-size:1.25rem}}
@@ -1795,11 +1802,7 @@ window.viewAnswers = async function(assignmentId){
 
     const links = String(r.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
     const paths = String(r.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
-    const fileLinks = await Promise.all(paths.map(async p => {
-      const { data } = await supabase.storage.from('task-answers').createSignedUrl(p, 3600);
-      const name = p.split('/').pop().replace(/^\d+-/, '');
-      return data?.signedUrl ? `<a href="${esc(data.signedUrl)}" target="_blank" rel="noopener noreferrer">📎 ${esc(name)}</a>` : `<span style="font-size:.78rem;color:var(--text2)">📎 ${esc(name)} (cannot open)</span>`;
-    }));
+    const fileLinks = await Promise.all(paths.map(p => answerFileHtml(p)));
 
     // Question-by-question answers, with automatic checking of multiple choice
     let autoOk = 0, autoTotal = 0, answeredQ = 0;
@@ -1857,6 +1860,27 @@ window.viewAnswers = async function(assignmentId){
   }));
 };
 
+// ── Show a file a student uploaded: photo / video / audio / PDF / anything else ──
+async function answerFileHtml(p, big){
+  const name = p.split('/').pop().replace(/^\d+-/, '');
+  const { data, error } = await supabase.storage.from('task-answers').createSignedUrl(p, 3600);
+  const url = data && data.signedUrl;
+  if(!url){
+    console.warn('Could not open student file', p, error);
+    return `<span class="file-fail">📎 ${esc(name)} — ${T('cannot open','ཁ་ཕྱེ་མི་ཚུགས')}${error && error.message ? ' (' + esc(error.message) + ')' : ''}</span>`;
+  }
+  const u = esc(url), n = esc(name);
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const dl = `<a href="${u}" target="_blank" rel="noopener noreferrer">📎 ${n}</a>`;
+  if(['png','jpg','jpeg','gif','webp','bmp','svg','avif'].includes(ext))
+    return `<div class="ans-file"><a class="ans-media" href="${u}" target="_blank" rel="noopener noreferrer"><img src="${u}" alt="${n}" loading="lazy" onerror="this.style.display='none'"></a>${dl}</div>`;
+  if(['mp4','webm','mov','m4v','ogv'].includes(ext))
+    return `<div class="ans-file"><video src="${u}" controls playsinline preload="metadata"></video>${dl}</div>`;
+  if(['mp3','wav','m4a','aac','ogg','oga'].includes(ext))
+    return `<div class="ans-file"><audio src="${u}" controls preload="metadata"></audio>${dl}</div>`;
+  return dl;
+}
+
 // ── Present a student's work to the whole class (for a projector or shared screen) ──
 let presentCtx = null;
 
@@ -1912,11 +1936,7 @@ async function presentAnswerHtml(ctx, idx){
 
   const links = String(row.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
   const paths = String(row.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
-  const fileLinks = await Promise.all(paths.map(async p => {
-    const { data } = await supabase.storage.from('task-answers').createSignedUrl(p, 3600);
-    const name = p.split('/').pop().replace(/^\d+-/, '');
-    return data?.signedUrl ? `<a href="${esc(data.signedUrl)}" target="_blank" rel="noopener noreferrer">📎 ${esc(name)}</a>` : '';
-  }));
+  const fileLinks = await Promise.all(paths.map(p => answerFileHtml(p, true)));
   const note = (row.answer_text || '').trim();
 
   return `
