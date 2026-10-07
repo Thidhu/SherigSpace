@@ -233,7 +233,6 @@
     var s=document.createElement('style');
     s.id='sherig-day-blue-gradient-final';
     s.textContent=`
-<style id="sherig-day-blue-gradient-final">
 /* SherigSpace DAY MODE FINAL PALETTE
    Night mode is intentionally untouched.
    Pure white surfaces + Deep Sky Blue gradient (#00BFFF). */
@@ -433,7 +432,6 @@
 /* Dark overlays remain neutral */
 [data-theme="light"] .modal-overlay,
 [data-theme="light"] .overlay { background:rgba(26,35,64,.48) !important; }
-</style>
 `;
     (document.head||document.documentElement).appendChild(s);
   })();

@@ -11,71 +11,92 @@
    4. Visible focus + badges     8. Review card (teacher answers)
    ══════════════════════════════════════════════════════════════════ */
 
-/* ── 1. One accent colour ─────────────────────────────────────────
-   Blue = things you press.  Gold stays for small highlights only
-   (badges, active sidebar item, headings).                           */
+/* ── 1. One accent colour: your Sky Blue ─────────────────────────
+   Same family as the Day-mode palette (#00BFFF → #007BFF), a touch
+   deeper so white button text stays easy to read.
+   Blue = things you press.  Gold stays in Night mode highlights only.
+   NOTE: selectors below start with  html[data-theme] body  on purpose —
+   theme.js paints every .btn blue with !important in Day mode, and this
+   prefix makes these rules win over it.                              */
 html{
-  --accent:#2f6fd6;
-  --accent-hover:#2560c0;
+  --accent:#0078f0;
+  --accent-hover:#0063cc;
   --accent-ink:#ffffff;
-  --accent-text:#1f55b0;                 /* blue used as TEXT on light surfaces */
-  --accent-soft:rgba(47,111,214,.12);
-  --accent-line:rgba(47,111,214,.45);
-  --ring:0 0 0 3px rgba(47,111,214,.40);
+  --accent-text:#0062c4;                 /* blue used as TEXT on light surfaces */
+  --accent-soft:rgba(0,120,240,.10);
+  --accent-line:rgba(0,120,240,.45);
+  --grad:linear-gradient(135deg,#00a8f8 0%,#0072e8 100%);
+  --grad-hover:linear-gradient(135deg,#0097e6 0%,#0063cc 100%);
+  --ring:0 0 0 3px rgba(0,120,240,.35);
 }
 html[data-theme="dark"]{
-  --accent-text:#8db3f0;
-  --accent-soft:rgba(92,141,224,.16);
-  --accent-line:rgba(141,179,240,.45);
-  --ring:0 0 0 3px rgba(141,179,240,.45);
+  --accent-text:#7cc4ff;
+  --accent-soft:rgba(0,168,248,.16);
+  --accent-line:rgba(124,196,255,.45);
+  --ring:0 0 0 3px rgba(124,196,255,.45);
 }
 
 /* ── 2. Button hierarchy ──────────────────────────────────────────
-   Primary   = filled blue, raised (one per screen)
-   Secondary = flat outline, no raised shadow                         */
-html :is(.btn-gold,.btn-primary,.gate-btn,.login-btn,.cta-btn,.search-btn){
-  background:linear-gradient(180deg,#3b7be6,var(--accent)) !important;
+   Primary   = filled blue (one per screen)
+   Secondary = flat outline
+   Danger    = soft red (Remove / delete)                             */
+html[data-theme] body :is(.btn-gold,.btn-primary,.gate-btn,.login-btn,.cta-btn){
+  background:var(--grad) !important;
   color:var(--accent-ink) !important;
   border-color:transparent !important;
 }
-html :is(.btn-gold,.btn-primary,.gate-btn,.login-btn,.cta-btn,.search-btn):not(:disabled):hover{
-  background:linear-gradient(180deg,var(--accent),var(--accent-hover)) !important;
+html[data-theme="light"] body :is(.btn-gold,.btn-primary,.gate-btn,.login-btn,.cta-btn){
+  box-shadow:0 6px 16px rgba(0,114,232,.25) !important;
 }
-html :is(.btn-ghost,.btn-cancel){
+html[data-theme] body :is(.btn-gold,.btn-primary,.gate-btn,.login-btn,.cta-btn):not(:disabled):hover{
+  background:var(--grad-hover) !important;
+}
+
+html[data-theme] body :is(.btn-ghost,.btn-cancel,.btn-edit){
   background:transparent !important;
   color:var(--accent-text) !important;
   border:1px solid var(--accent-line) !important;
   box-shadow:none !important;
+  filter:none !important;
 }
-html :is(.btn-ghost,.btn-cancel):not(:disabled):hover{
+html[data-theme] body :is(.btn-ghost,.btn-cancel,.btn-edit):not(:disabled):hover{
   background:var(--accent-soft) !important;
   border-color:var(--accent) !important;
   transform:translateY(-1px);
   box-shadow:none !important;
 }
-html :is(.btn-ghost,.btn-cancel):not(:disabled):active{transform:none;box-shadow:none !important}
-html .btn:disabled,html .btn[disabled]{opacity:.55;filter:saturate(.6)}
-/* destructive stays red, soft */
-html .btn-del{background:rgba(224,92,92,.12) !important;color:var(--red) !important}
+html[data-theme] body :is(.btn-ghost,.btn-cancel,.btn-edit):not(:disabled):active{transform:none}
 
-/* ── 3. Fields: visible edge + readable placeholders ──────────────
-   Soft shadows alone make field edges hard to see, so add a hairline. */
+html[data-theme="light"] body .btn-del{
+  background:#fdeaea !important;color:#b42318 !important;
+  border:1px solid rgba(180,35,24,.35) !important;box-shadow:none !important;filter:none !important;
+}
+html[data-theme="dark"] body .btn-del{
+  background:rgba(224,92,92,.14) !important;color:#f09090 !important;
+  border:1px solid rgba(224,92,92,.35) !important;box-shadow:none !important;
+}
+html[data-theme] body .btn-del:not(:disabled):hover{
+  background:rgba(224,92,92,.26) !important;transform:translateY(-1px);box-shadow:none !important;
+}
+html .btn:disabled,html .btn[disabled]{opacity:.55;filter:saturate(.6)}
+
+/* ── 3. Fields: visible edge + readable placeholders ──────────────  */
 html :is(
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
   select,textarea
 ):not(nav *):not(.sidebar *):not(.search-box *){
   border:1px solid color-mix(in srgb,var(--nm-lo) 38%,transparent) !important;
 }
-html :is(input,textarea)::placeholder{color:var(--text2) !important;opacity:.95 !important}
-html[data-theme="light"] .field input::placeholder{color:#5d584b !important}
+html[data-theme] body :is(input,textarea)::placeholder{color:var(--text2) !important;opacity:.95 !important}
+html[data-theme="light"] body :is(input,textarea)::placeholder{color:#5b6b7d !important}   /* was #8190a0 (too faint on white) */
 
 /* ── 4. Focus ring + status badges ────────────────────────────────  */
-html :is(input,select,textarea):focus{
+html[data-theme] body :is(input,select,textarea):focus{
   outline:none !important;
   border-color:var(--accent) !important;
-  box-shadow:var(--nm-inset),var(--ring) !important;
+  box-shadow:var(--ring) !important;
 }
-html :is(button,a,.btn,.sitem,.tab,.s-tab,.lib-chip,.class-tab,.tk-stat,[role="button"]):focus-visible{
+html[data-theme] body :is(button,a,.btn,.sitem,.tab,.s-tab,.lib-chip,.class-tab,.tk-stat,[role="button"]):focus-visible{
   outline:none;
   box-shadow:var(--ring) !important;
 }
@@ -83,8 +104,8 @@ html :is(button,a,.btn,.sitem,.tab,.s-tab,.lib-chip,.class-tab,.tk-stat,[role="b
 /* day mode: darker text on pale badges (≈4.5:1 or better) */
 html[data-theme="light"] .ans-badge.sub{background:#d3eee0;color:#0f5c37}
 html[data-theme="light"] .ans-badge.none{background:#fadada;color:#8f1f1f}
-html[data-theme="light"] .ans-badge.plain{background:#fbe6bd;color:#6e3d00}
-html[data-theme="light"] .cbadge{background:#fbe6bd;color:#6e3d00}
+html[data-theme="light"] .ans-badge.plain{background:#dbeeff;color:#0b4f9c}
+html[data-theme="light"] .cbadge{background:#dbeeff;color:#0b4f9c}
 .ans-badge{display:inline-flex;align-items:center;gap:.3em;white-space:nowrap}
 
 /* ── 5. Raised look used more sparingly ───────────────────────────
