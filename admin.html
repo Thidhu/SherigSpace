@@ -417,6 +417,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
       <div class="phead"><div><div class="ptitle">Contributions</div><div class="psub">Content shared by your community. Approve to publish it and reward the contributor with extra membership days.</div></div></div>
       <div class="card"><div class="card-head"><h3>Pending Review</h3><span class="cbadge" id="c-contrib-pending">0</span></div><div id="l-contrib-pending"></div></div>
       <div class="card"><div class="card-head"><h3>Reviewed</h3></div><div id="l-contrib-reviewed"></div></div>
+      <div class="card"><div class="card-head"><h3>💬 Feedback &amp; Suggestions</h3><span class="cbadge" id="c-feedback-new">0</span></div><div id="l-feedback"></div></div>
     </div>
 
     <div class="page" id="p-users">
@@ -628,11 +629,45 @@ async function renderAll(){
   renderUsers(U||[]);
   renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[], games:GM||[]});
   renderContributions();
+  renderFeedback();
 }
 
 
 
 // ── CONTRIBUTIONS ──
+let _pendingContribCount = 0, _newFeedbackCount = 0;
+function updateContribBadge(){
+  const n = _pendingContribCount + _newFeedbackCount;
+  const nb = document.getElementById('contrib-nav-badge');
+  if(nb){ nb.textContent = n; nb.classList.toggle('show', n>0); }
+}
+const FB_CAT = { suggestion:'💡 Suggestion', problem:'🛠️ Problem', content:'📚 Content request', compliment:'😊 Compliment', other:'💬 Other' };
+async function renderFeedback(){
+  const el = document.getElementById('l-feedback'); if(!el) return;
+  const { data, error } = await supabase.from('feedback').select('*').order('created_at',{ascending:false}).limit(200);
+  if(error){ el.innerHTML = empty('⚠️','Could not load feedback — run FEEDBACK_SETUP.sql in Supabase first. ('+esc(error.message)+')'); return; }
+  const rows = data || [];
+  _newFeedbackCount = rows.filter(f=>f.status==='new').length;
+  document.getElementById('c-feedback-new').textContent = _newFeedbackCount;
+  updateContribBadge();
+  el.innerHTML = rows.length ? rows.map(f=>`<div class="irow" style="grid-template-columns:1fr auto;gap:.6rem;${f.status==='new'?'':'opacity:.65'}">
+      <div><div class="iname">${esc(FB_CAT[f.category]||f.category||'')} ${f.status==='new'?'<span class="cbadge">new</span>':''}</div>
+      <div class="imeta">${esc(f.name||'Anonymous')} · ${new Date(f.created_at).toLocaleDateString()}</div>
+      <div class="imeta" style="margin-top:.3rem;white-space:pre-line;color:var(--text)">${esc(f.message)}</div></div>
+      <div class="ibtns">${f.status==='new'?`<button class="btn btn-edit btn-sm" onclick="markFeedbackRead('${esc(f.id)}')">✓ Read</button>`:''}<button class="btn btn-del btn-sm" onclick="deleteFeedback('${esc(f.id)}')">✕</button></div></div>`).join('')
+    : empty('💬','No feedback yet');
+}
+window.markFeedbackRead = async function(id){
+  const { error } = await supabase.from('feedback').update({ status:'read' }).eq('id', id);
+  if(error){ toast('Error: '+error.message, true); return; }
+  renderFeedback();
+};
+window.deleteFeedback = async function(id){
+  if(!confirm('Delete this feedback?')) return;
+  const { error } = await supabase.from('feedback').delete().eq('id', id);
+  if(error){ toast('Error: '+error.message, true); return; }
+  renderFeedback();
+};
 const CONTRIB_TABLE = { video:'videos', resource:'resources', article:'articles' };
 const CONTRIB_ICON  = { video:'🎥', resource:'📁', article:'✍️' };
 let _contribs = [];
@@ -646,8 +681,7 @@ async function renderContributions(){
   const pending = _contribs.filter(c=>c.status==='pending');
   const reviewed = _contribs.filter(c=>c.status!=='pending');
   document.getElementById('c-contrib-pending').textContent = pending.length;
-  const nb = document.getElementById('contrib-nav-badge');
-  if(nb){ nb.textContent = pending.length; nb.classList.toggle('show', pending.length>0); }
+  _pendingContribCount = pending.length; updateContribBadge();
   document.getElementById('l-contrib-pending').innerHTML = pending.length ? pending.map(contribRow).join('') : empty('🤝','No submissions waiting for review');
   document.getElementById('l-contrib-reviewed').innerHTML = reviewed.length ? reviewed.map(c=>`<div class="irow"><div><div class="iname">${CONTRIB_ICON[c.content_type]||''} ${esc(c.title)}</div><div class="imeta">${esc(c.contributor_name||'Unknown')} · ${c.status==='approved'?'✅ Published · 🎁 +'+esc(c.reward_days)+' days':'❌ Rejected'}${c.admin_note?' · '+esc(c.admin_note):''}</div></div><div class="ibtns"><button class="btn btn-del btn-sm" onclick="deleteContribution('${esc(c.id)}')">✕</button></div></div>`).join('') : empty('📋','Nothing reviewed yet');
 }

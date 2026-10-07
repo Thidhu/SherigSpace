@@ -922,6 +922,7 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
       <a class="side-link" href="#games" data-section="games"><span class="si">🎮</span><span data-en="EduGames" data-dz="རྩེད་མོ།">EduGames</span></a>
       <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
       <a class="side-link" id="contribLink" onclick="openContribute()" style="cursor:pointer"><span class="si">🤝</span><span data-en="Contribute">Contribute</span></a>
+      <a class="side-link" id="feedbackLink" onclick="openFeedback()" style="cursor:pointer"><span class="si">💬</span><span data-en="Feedback">Feedback</span></a>
       <a class="side-link" href="#about" data-section="about"><span class="si">✦</span><span data-en="Why SherigSpace?" data-dz="SherigSpace ག་ཅི་གི་དོན་ལུ?">Why SherigSpace?</span></a>
     </nav>
     <div class="sidebar-profile" onclick="openProfile()">
@@ -1128,7 +1129,7 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 <!-- CONTRIBUTE MODAL -->
 <div class="modal-overlay" id="contrib-modal">
   <div class="modal-box contrib-box">
-    <div class="modal-head"><h3>🤝 Contribute to SherigSpace</h3><button class="modal-close" onclick="closeContribute()">✕</button></div>
+    <div class="modal-head"><h3 id="contrib-title">🤝 Contribute to SherigSpace</h3><button class="modal-close" onclick="closeContribute()">✕</button></div>
     <div class="modal-body" id="contrib-body"></div>
   </div>
 </div>
@@ -1811,10 +1812,19 @@ window.openContribute = async function(){
   document.getElementById('contrib-modal').classList.add('open');
   renderContribForm('video');
 };
+// Feedback / suggestions: open to everyone (no login needed)
+window.openFeedback = function(){
+  closeSidebar();
+  document.getElementById('contrib-modal').classList.add('open');
+  renderContribForm('feedback');
+};
 window.closeContribute = () => document.getElementById('contrib-modal').classList.remove('open');
 document.getElementById('contrib-modal').addEventListener('click', e=>{ if(e.target.id === 'contrib-modal') closeContribute(); });
 
 function renderContribForm(type){
+  const titleEl = document.getElementById('contrib-title');
+  if(titleEl) titleEl.textContent = type === 'feedback' ? '💬 Feedback & Suggestions' : '🤝 Contribute to SherigSpace';
+  if(type === 'feedback'){ renderFeedbackForm(); return; }
   const levels = ['All Classes','PP','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
   document.getElementById('contrib-body').innerHTML = `
     <div class="cf-note">Share a video, worksheet or article with other learners. Our team reviews every submission before it goes live. If it is published, you are credited by name and your membership is <b>extended as a thank-you</b>.</div>
@@ -1823,6 +1833,7 @@ function renderContribForm(type){
         <option value="video"${type==='video'?' selected':''}>🎥 Video (YouTube link)</option>
         <option value="resource"${type==='resource'?' selected':''}>📁 Resource / worksheet (Google Drive link)</option>
         <option value="article"${type==='article'?' selected':''}>✍️ Article (link)</option>
+        <option value="feedback">💬 Feedback / suggestion</option>
       </select></div>
     <div class="cf-field"><label>Title *</label><input id="cf-title" maxlength="140" placeholder="e.g. Dzongkha alphabet song"/></div>
     <div class="cf-field"><label>Link *</label><input id="cf-url" placeholder="https://…  (make sure anyone with the link can view it)"/></div>
@@ -1836,6 +1847,57 @@ function renderContribForm(type){
   loadMyContributions();
 }
 window.renderContribForm = renderContribForm;
+
+function renderFeedbackForm(){
+  const loggedIn = !!session();
+  document.getElementById('contrib-body').innerHTML = `
+    <div class="cf-note">Help us make SherigSpace better. Tell us what you like, what is not working, or what you would like to see. We read every message. 💛</div>
+    ${loggedIn ? `<div class="cf-field"><label>I want to share…</label>
+      <select id="cf-type" onchange="renderContribForm(this.value)">
+        <option value="video">🎥 Video (YouTube link)</option>
+        <option value="resource">📁 Resource / worksheet (Google Drive link)</option>
+        <option value="article">✍️ Article (link)</option>
+        <option value="feedback" selected>💬 Feedback / suggestion</option>
+      </select></div>` : ''}
+    <div class="cf-field"><label>What kind of message is this?</label>
+      <select id="fb-cat">
+        <option value="suggestion">💡 Suggestion / new idea</option>
+        <option value="problem">🛠️ Something is not working</option>
+        <option value="content">📚 Request a lesson, video or resource</option>
+        <option value="compliment">😊 Something I like</option>
+        <option value="other">💬 Other</option>
+      </select></div>
+    <div class="cf-field"><label>Your message *</label><textarea id="fb-msg" maxlength="1500" style="min-height:120px" placeholder="Write here… the more detail, the better we can help."></textarea></div>
+    ${loggedIn ? '' : `<div class="cf-field"><label>Your name or contact (optional)</label><input id="fb-name" maxlength="80" placeholder="So we can reply to you if needed"/></div>`}
+    <p id="cf-status" style="font-size:.82rem;min-height:1.1rem;margin-bottom:.6rem"></p>
+    <button class="btn-primary" id="fb-submit" style="width:100%;border:none;cursor:pointer" onclick="submitFeedback()">Send feedback</button>`;
+}
+
+window.submitFeedback = async function(){
+  const s = session();
+  const g = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  const st = document.getElementById('cf-status'), btn = document.getElementById('fb-submit');
+  const fail = m => { st.textContent = m; st.style.color = '#e05c5c'; };
+  const message = g('fb-msg');
+  if(message.length < 5) return fail('Please write a few words so we can understand.');
+  btn.disabled = true; btn.textContent = 'Sending…'; st.textContent = '';
+  const { error } = await supabase.from('feedback').insert({
+    user_id: s ? s.id : null,
+    name: s ? s.name : (g('fb-name') || null),
+    category: g('fb-cat') || 'other',
+    message,
+    status: 'new'
+  });
+  btn.disabled = false; btn.textContent = 'Send feedback';
+  if(error) return fail('Could not send: ' + error.message);
+  document.getElementById('contrib-body').innerHTML = `
+    <div style="text-align:center;padding:.8rem 0 .2rem">
+      <div style="font-size:2.4rem;margin-bottom:.5rem">💛</div>
+      <h4 style="color:var(--text);margin-bottom:.4rem">Thank you!</h4>
+      <p style="font-size:.86rem;color:var(--text2);margin-bottom:1.1rem">Your feedback helps us improve SherigSpace.</p>
+      <button class="btn-primary" style="border:none;cursor:pointer" onclick="closeContribute()">Close</button>
+    </div>`;
+};
 
 async function loadMyContributions(){
   const wrap = document.getElementById('cf-mine'); const s = session();
