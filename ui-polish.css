@@ -1,0 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Tibetan:wght@400;600&display=swap');
+
+/* ══════════════════════════════════════════════════════════════════
+   SherigSpace — UI polish (loads AFTER neumorphic.css on every page)
+   STYLE ONLY: no text, links, data or button actions are changed here.
+   To undo everything, remove the <link> to this file from a page.
+
+   1. One accent colour          5. Raised look used more sparingly
+   2. Button hierarchy           6. Dzongkha text comfort
+   3. Readable placeholders      7. Phones: sheets, tap size, bottom bar
+   4. Visible focus + badges     8. Review card (teacher answers)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. One accent colour ─────────────────────────────────────────
+   Blue = things you press.  Gold stays for small highlights only
+   (badges, active sidebar item, headings).                           */
+html{
+  --accent:#2f6fd6;
+  --accent-hover:#2560c0;
+  --accent-ink:#ffffff;
+  --accent-text:#1f55b0;                 /* blue used as TEXT on light surfaces */
+  --accent-soft:rgba(47,111,214,.12);
+  --accent-line:rgba(47,111,214,.45);
+  --ring:0 0 0 3px rgba(47,111,214,.40);
+}
+html[data-theme="dark"]{
+  --accent-text:#8db3f0;
+  --accent-soft:rgba(92,141,224,.16);
+  --accent-line:rgba(141,179,240,.45);
+  --ring:0 0 0 3px rgba(141,179,240,.45);
+}
+
+/* ── 2. Button hierarchy ──────────────────────────────────────────
+   Primary   = filled blue, raised (one per screen)
+   Secondary = flat outline, no raised shadow                         */
+html :is(.btn-gold,.btn-primary,.gate-btn,.login-btn,.cta-btn,.search-btn){
+  background:linear-gradient(180deg,#3b7be6,var(--accent)) !important;
+  color:var(--accent-ink) !important;
+  border-color:transparent !important;
+}
+html :is(.btn-gold,.btn-primary,.gate-btn,.login-btn,.cta-btn,.search-btn):not(:disabled):hover{
+  background:linear-gradient(180deg,var(--accent),var(--accent-hover)) !important;
+}
+html :is(.btn-ghost,.btn-cancel){
+  background:transparent !important;
+  color:var(--accent-text) !important;
+  border:1px solid var(--accent-line) !important;
+  box-shadow:none !important;
+}
+html :is(.btn-ghost,.btn-cancel):not(:disabled):hover{
+  background:var(--accent-soft) !important;
+  border-color:var(--accent) !important;
+  transform:translateY(-1px);
+  box-shadow:none !important;
+}
+html :is(.btn-ghost,.btn-cancel):not(:disabled):active{transform:none;box-shadow:none !important}
+html .btn:disabled,html .btn[disabled]{opacity:.55;filter:saturate(.6)}
+/* destructive stays red, soft */
+html .btn-del{background:rgba(224,92,92,.12) !important;color:var(--red) !important}
+
+/* ── 3. Fields: visible edge + readable placeholders ──────────────
+   Soft shadows alone make field edges hard to see, so add a hairline. */
+html :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([type="color"]),
+  select,textarea
+):not(nav *):not(.sidebar *):not(.search-box *){
+  border:1px solid color-mix(in srgb,var(--nm-lo) 38%,transparent) !important;
+}
+html :is(input,textarea)::placeholder{color:var(--text2) !important;opacity:.95 !important}
+html[data-theme="light"] .field input::placeholder{color:#5d584b !important}
+
+/* ── 4. Focus ring + status badges ────────────────────────────────  */
+html :is(input,select,textarea):focus{
+  outline:none !important;
+  border-color:var(--accent) !important;
+  box-shadow:var(--nm-inset),var(--ring) !important;
+}
+html :is(button,a,.btn,.sitem,.tab,.s-tab,.lib-chip,.class-tab,.tk-stat,[role="button"]):focus-visible{
+  outline:none;
+  box-shadow:var(--ring) !important;
+}
+
+/* day mode: darker text on pale badges (≈4.5:1 or better) */
+html[data-theme="light"] .ans-badge.sub{background:#d3eee0;color:#0f5c37}
+html[data-theme="light"] .ans-badge.none{background:#fadada;color:#8f1f1f}
+html[data-theme="light"] .ans-badge.plain{background:#fbe6bd;color:#6e3d00}
+html[data-theme="light"] .cbadge{background:#fbe6bd;color:#6e3d00}
+.ans-badge{display:inline-flex;align-items:center;gap:.3em;white-space:nowrap}
+
+/* ── 5. Raised look used more sparingly ───────────────────────────
+   Slightly tighter shadows overall; cards inside popups go flat. */
+html,
+html :is(nav,.sidebar,.navbar,.topbar,.side-panel,.sidenav,.site-footer){
+  --nm-raise:-5px -5px 12px var(--nm-hi),5px 5px 12px var(--nm-lo);
+  --nm-raise-sm:-3px -3px 7px var(--nm-hi),3px 3px 7px var(--nm-lo);
+  --nm-lift:-9px -9px 18px var(--nm-hi),9px 9px 18px var(--nm-lo);
+  --nm-lift-sm:-5px -5px 11px var(--nm-hi),5px 5px 11px var(--nm-lo);
+}
+html :is(.overlay,.modal,.modal-box,.vm-box) :is(.ans-card,.q-item,.qbank-card,.comment-item,.task-att){
+  box-shadow:none !important;
+  border:1px solid color-mix(in srgb,var(--nm-lo) 30%,transparent) !important;
+}
+html[data-theme="light"] .overlay .modal{box-shadow:0 18px 50px rgba(40,60,100,.28) !important}
+html .modal :is(.mhead,.mfoot){border-color:color-mix(in srgb,var(--nm-lo) 30%,transparent)}
+
+/* ── 6. Dzongkha text comfort ─────────────────────────────────────
+   Tibetan stacks are tall: more line height, a touch larger, and
+   buttons/tabs get room so nothing is clipped.                      */
+html:root{--font-dz:'ThinWangTJoyig','Noto Serif Tibetan','Noto Sans Tibetan','Jomolhari','Kailasa','Microsoft Himalaya',sans-serif}
+html[data-lang="dz"]{font-size:106%}
+html[data-lang="dz"] body{line-height:1.8}
+html[data-lang="dz"] :is(button,.btn,.sitem,.tab,.s-tab,.lib-chip,.class-tab,.tk-stat,.ans-badge,.cbadge,.sherig-theme-btn,.sherig-lang-btn,label,th,td,option){
+  line-height:1.75;
+}
+html[data-lang="dz"] :is(.btn,.tab,.s-tab,.lib-chip,.class-tab,.tk-stat,.ans-badge){padding-top:.5em;padding-bottom:.5em}
+html[data-lang="dz"] :is(h1,h2,h3,h4){line-height:1.55}
+html[data-lang="dz"] :is(input,textarea,select){line-height:1.7}
+
+/* ── 7. Phones & touch ────────────────────────────────────────────  */
+@media (pointer:coarse){
+  html :is(.btn,.sitem,.tab,.s-tab,.lib-chip,.class-tab,.tk-stat,.mclose,select,
+           input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])){min-height:44px}
+  html .btn-sm{min-height:40px}
+}
+@media (max-width:650px){
+  /* popups become bottom sheets with the action bar always visible */
+  html .overlay{padding:0;align-items:flex-end}
+  html .overlay .modal{
+    max-width:100% !important;width:100%;max-height:94vh;
+    border-radius:18px 18px 0 0;border-left:0;border-right:0;border-bottom:0;
+  }
+  html .modal .mfoot{
+    position:sticky;bottom:0;z-index:2;background:inherit;
+    padding-bottom:calc(.9rem + env(safe-area-inset-bottom,0px));
+  }
+  html .mbody{padding:1.1rem}
+
+  /* teacher + admin used to HIDE the sidebar on phones (no navigation at all).
+     Now it becomes a bottom bar: language / theme / logout on top, pages below. */
+  html .layout > .sidebar{
+    display:flex !important;flex-direction:column;
+    position:fixed;left:0;right:0;bottom:0;top:auto;
+    width:100%;height:auto;z-index:450;
+    border-right:0;border-top:1px solid var(--border);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  html .layout > .sidebar .logo{display:none}
+  html .layout > .sidebar .sidenav{
+    display:flex;flex:none;padding:0;overflow-x:auto;order:2;
+    scrollbar-width:none;
+  }
+  html .layout > .sidebar .sidenav::-webkit-scrollbar{display:none}
+  html .layout > .sidebar .sitem{
+    flex:1 0 auto;flex-direction:column;justify-content:center;gap:.1rem;
+    padding:.45rem .8rem;font-size:.68rem;text-align:center;white-space:nowrap;
+    border-left:0;border-top:2px solid transparent;
+  }
+  html .layout > .sidebar .sitem.on{border-top-color:var(--accent);color:var(--gold-text,var(--gold))}
+  html .layout > .sidebar .sfoot{
+    order:1;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:.4rem;
+    padding:.35rem .6rem;border-top:0;border-bottom:1px solid var(--border);overflow-x:auto;
+  }
+  html .layout > .sidebar .sfoot > *{flex:1 0 auto;width:auto;padding:5px 9px;font-size:.7rem;white-space:nowrap}
+  html .layout > .main{padding-bottom:9.5rem}
+  html .toast{bottom:9.5rem}
+}
+
+/* ── 8. Teacher review card (answers popup) ───────────────────────  */
+.ans-card .ans-head{flex-wrap:wrap}
+.ans-card .ans-head > b{flex:1 1 auto;min-width:0}
+.ans-review{display:grid;grid-template-columns:150px 1fr;gap:.6rem;align-items:start;margin-top:.6rem}
+.ans-review.no-marks{grid-template-columns:1fr}
+.ans-review .ans-grade input{width:100%}
+.ans-review .ans-fb{margin-top:0}
+.ans-review .ans-fb textarea{min-height:46px}
+.ans-review .ans-fb .btn{align-self:flex-start;min-width:84px;justify-content:center}
+.ans-review .btn.saved{background:var(--green,#2a9160) !important;color:#fff !important}
+.ans-attach{margin-top:.55rem}
+@media (max-width:650px){
+  .ans-review{grid-template-columns:1fr}
+  .ans-review .ans-fb{flex-direction:column}
+  .ans-review .ans-fb .btn{align-self:stretch}
+}
+
+/* ── 9. Loading placeholder (skeleton) + friendly empty state ─────── */
+@keyframes sherig-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+.skeleton{
+  border-radius:10px;min-height:1em;
+  background:linear-gradient(90deg,transparent 25%,color-mix(in srgb,var(--nm-hi) 70%,transparent) 50%,transparent 75%),
+             color-mix(in srgb,var(--nm-lo) 18%,transparent);
+  background-size:200% 100%;animation:sherig-shimmer 1.4s linear infinite;
+}
+html .empty{border:1px dashed color-mix(in srgb,var(--nm-lo) 45%,transparent);border-radius:14px;margin:.5rem 0}
+@media (prefers-reduced-motion:reduce){.skeleton{animation:none}}

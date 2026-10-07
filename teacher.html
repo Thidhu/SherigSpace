@@ -176,6 +176,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 <script src="theme.js"></script>
 <script src="assignment-interactive.js"></script>
 <link rel="stylesheet" href="neumorphic.css"/>
+<link rel="stylesheet" href="ui-polish.css"/>
 </head>
 <body>
 
@@ -1045,7 +1046,7 @@ window.openClass = function(id, name, code){
   renderAssignments();
 };
 
-window.closeModal = function(){ document.getElementById('overlay').classList.remove('open'); document.querySelector('#overlay .modal').style.maxWidth = ''; document.getElementById('m-save-btn').style.display = ''; };
+window.closeModal = function(){ document.getElementById('overlay').classList.remove('open'); document.querySelector('#overlay .modal').style.maxWidth = ''; document.getElementById('m-save-btn').style.display = ''; const cb = document.querySelector('#overlay .mfoot .btn-ghost'); if(cb) cb.style.display = ''; };
 document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
 
 // ── STUDENTS ──
@@ -1775,6 +1776,7 @@ window.viewAnswers = async function(assignmentId){
   body.innerHTML = `<div class="empty"><p>${T('Loading…','འདྲེན་བཞིནམ...')}</p></div>`;
   const btn = document.getElementById('m-save-btn');
   btn.textContent = T('Close','ཁ་བསྡམས།'); btn.disabled = false; btn.onclick = closeModal;
+  const cancelBtn = document.querySelector('#overlay .mfoot .btn-ghost'); if(cancelBtn) cancelBtn.style.display = 'none';
   document.getElementById('overlay').classList.add('open');
 
   const cfg = await ensureV2();
@@ -1797,8 +1799,7 @@ window.viewAnswers = async function(assignmentId){
 
   const cards = await Promise.all(students.map(async st => {
     const r = byStudent[st.student_id];
-    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">${T('Not submitted','སྙན་ཞུ་མ་འབད་བར')}</span></div>
-      <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">${T('🖥 Present to class','🖥 དཔྱེ་སློབ་ལུ་སྟོན')}</button></div>`;
+    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">✗ ${T('Not submitted','སྙན་ཞུ་མ་འབད་བར')}</span></div></div>`;
 
     const links = String(r.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
     const paths = String(r.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
@@ -1820,8 +1821,8 @@ window.viewAnswers = async function(assignmentId){
     }).join('');
 
     const hasAnswer = answeredQ || (r.answer_text || '').trim() || links.length || paths.length;
-    const badge = hasAnswer ? `<span class="ans-badge sub">${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</span>` : `<span class="ans-badge plain">${T('Marked complete','མཇུག་བསྡུ་སྦེ་རྟགས་བཞག')}</span>`;
-    const late = asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ` <span class="ans-badge none">${T('Late','དུས་ལས་བརྒལ')}</span>` : '';
+    const badge = hasAnswer ? `<span class="ans-badge sub">✓ ${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</span>` : `<span class="ans-badge plain">● ${T('Marked complete','མཇུག་བསྡུ་སྦེ་རྟགས་བཞག')}</span>`;
+    const late = asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ` <span class="ans-badge none">⏰ ${T('Late','དུས་ལས་བརྒལ')}</span>` : '';
 
     return `<div class="ans-card">
       <div class="ans-head"><b>${esc(st.display_name)}</b><span>${badge}${late}</span>
@@ -1830,9 +1831,12 @@ window.viewAnswers = async function(assignmentId){
       ${autoTotal ? `<div class="ans-auto">${T('Auto-checked:','རང་བཞིན་ཞིབ་དཔྱད:')} ${autoOk} / ${autoTotal} ${T('multiple-choice correct','གདམ་ཁ་མང་པོ་ལེགས་ཤོམ')}</div>` : ''}
       ${(r.answer_text || '').trim() ? `<div class="ans-text">${esc(r.answer_text)}</div>` : ''}
       ${(links.length || fileLinks.length) ? `<div class="ans-links">${links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(u.replace(/^https?:\/\//,'').slice(0,40))}</a>`).join('')}${fileLinks.join('')}</div>` : ''}
+      <div class="ans-review${cfg.extras ? '' : ' no-marks'}">
       ${cfg.extras ? `<div class="ans-grade"><input data-score-input="${esc(st.student_id)}" placeholder="${T('Marks (e.g. 8/10)','ལེན་ཐང (དཔེར་ན 8/10)')}" value="${esc(r.score || '')}"/></div>` : ''}
       <div class="ans-fb"><textarea data-fb-input="${esc(st.student_id)}" placeholder="${T('Feedback for','དོན་ལུ་བསམ་བཀོད')} ${esc(st.display_name)}…">${esc(r.teacher_feedback || '')}</textarea>
         <button type="button" class="btn btn-gold btn-sm" data-fb-save="${esc(st.student_id)}">${T('Save','སྲུང་བཞག')}</button></div>
+
+      </div>
     </div>`;
   }));
 
@@ -1857,6 +1861,8 @@ window.viewAnswers = async function(assignmentId){
     b.disabled = false;
     if(upErr){ toast(T('Could not save: ','སྲུང་བཞག་མ་ཚུགས: ') + upErr.message, true); return; }
     toast(T('Feedback saved ✓','བསམ་བཀོད་སྲུང་བཞག་འབད་ཡོད ✓'));
+    const keep = b.textContent; b.textContent = T('✓ Saved','✓ སྲུང་ཡོད'); b.classList.add('saved');
+    setTimeout(() => { b.textContent = keep; b.classList.remove('saved'); }, 2000);
   }));
 };
 
