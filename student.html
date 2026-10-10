@@ -551,6 +551,16 @@ function libPremiumState(item){
   return 'locked';
 }
 
+
+// Admin order first (Admin → ▲ ▼), newest first for ties. Falls back if sort_order column isn't created yet (ORDER_SETUP.sql).
+async function fetchOrderedTable(table){
+  let r = await supabase.from(table).select('*')
+    .order('sort_order',{ascending:true,nullsFirst:false})
+    .order('created_at',{ascending:false,nullsFirst:false});
+  if(r.error) r = await supabase.from(table).select('*').order('created_at',{ascending:false,nullsFirst:false});
+  return r;
+}
+
 async function loadLibrary(force){
   if(LIB.loaded && !force) return;
   try{ const { data: ss } = await supabase.from('site_settings').select('free_mode').eq('id', 1).maybeSingle(); LIB_FREE = isFreeMode(ss); }catch(e){ LIB_FREE = isFreeMode(null); }
@@ -581,8 +591,8 @@ async function loadLibrary(force){
   }catch(e){}
 
   const [rs, vs] = await Promise.all([
-    supabase.from('resources').select('*').order('created_at', { ascending:false, nullsFirst:false }),
-    supabase.from('videos').select('*').order('created_at', { ascending:false, nullsFirst:false })
+    fetchOrderedTable('resources'),
+    fetchOrderedTable('videos')
   ]);
   if(rs.error) console.error('resources:', rs.error);
   if(vs.error) console.error('videos:', vs.error);
@@ -642,7 +652,7 @@ function renderLibrary(){
     const meta = it.__type === 'videos' ? (it.duration ? '⏱ ' + esc(it.duration) : '') : esc(it.filesize || '');
     return `<div class="lib-card" data-key="${esc(it.__type + ':' + it.id)}">
       <div class="lib-thumb"><span class="ico">${m.icon}</span>${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"/>` : ''}
-        <div class="lib-pills">${pills}</div>${it.__type === 'videos' ? '<div class="lib-play">▶</div>' : ''}</div>
+        <div class="lib-pills">${pills}</div></div>
       <div class="lib-body"><h4>${esc(title)}</h4>${it.description ? `<p>${esc(it.description)}</p>` : ''}<div class="lib-meta">${meta}</div></div>
       ${locked ? `<div class="lib-lock"><div>🔒 ${T('Premium','Premium')}${it.price != null ? ' · Nu. ' + esc(it.price) : ''}</div><a href="index.html#${it.__type}" onclick="event.stopPropagation()">${T('Unlock on SherigSpace →','Unlock on SherigSpace →')}</a></div>` : ''}
     </div>`;

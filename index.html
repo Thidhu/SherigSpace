@@ -198,8 +198,8 @@ footer .gold{color:var(--gold)}
 .card-media{position:relative;aspect-ratio:16/9;background:var(--media-bg);overflow:hidden}
 .card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .media-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.8rem}
-.pill-row{position:absolute;top:.85rem;left:.85rem;right:.85rem;display:flex;gap:.4rem;flex-wrap:wrap;z-index:1}
-.pill{background:rgba(15,27,61,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font-family:var(--font-en);font-size:.68rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:999px;line-height:1.2}
+.pill-row{position:absolute;top:.6rem;left:.6rem;right:.6rem;display:flex;gap:.3rem;flex-wrap:wrap;z-index:1}
+.pill{background:rgba(15,27,61,.34);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:rgba(255,255,255,.95);font-family:var(--font-en);font-size:.56rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;line-height:1.2}
 .card-body{padding:1.1rem 1.2rem 1.2rem}
 .lesson-card h3,.video-body h3,.blog-body h3{font-family:var(--font-en);font-weight:700;font-size:1.05rem;line-height:1.4;color:var(--text);margin-bottom:.45rem}
 .lesson-card p,.video-body p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.9rem}
@@ -368,10 +368,16 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .dash-wrap #about .section-label{color:var(--gold-text)}
 .dash-wrap #about .section-desc{color:var(--text2)}
 .dash-wrap footer{margin:0 -5% -3rem;border-radius:0}
-.banner{position:relative;overflow:hidden;min-height:360px;display:flex;align-items:center;justify-content:flex-start;padding:3rem 5%;margin:0 -5% 1.8rem;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 60%,var(--hero3) 100%);background-size:cover;background-position:center;background-repeat:no-repeat;transition:background-image .3s}
+.banner{position:relative;overflow:hidden;min-height:360px;display:grid;align-items:stretch;padding:0;margin:0 -5% 1.8rem;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 60%,var(--hero3) 100%);background-size:cover;background-position:center;background-repeat:no-repeat;transition:background-image .3s}
 .banner::before{content:'';position:absolute;top:-90px;right:-90px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(0,191,255,.14) 0%,transparent 70%);pointer-events:none}
-.banner-slide{display:none;position:relative;z-index:1;max-width:680px}
-.banner-slide.active{display:block;animation:fadeUp .6s ease both}
+.banner-slide{grid-area:1/1;position:relative;z-index:1;width:100%;box-sizing:border-box;padding:3rem 5%;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:0;pointer-events:none;translate:100% 0;transition:translate 0s}
+.banner-slide>*{max-width:680px}
+.banner-slide.active{opacity:1;pointer-events:auto;translate:0 0;transition:translate var(--banner-swipe,.8s) cubic-bezier(.65,0,.35,1)}
+.banner-slide.leaving{opacity:1;translate:-100% 0;transition:translate var(--banner-swipe,.8s) cubic-bezier(.65,0,.35,1)}
+.banner-slide.dir-prev{translate:-100% 0}
+.banner-slide.dir-prev.active{translate:0 0}
+.banner-slide.dir-prev.leaving{translate:100% 0}
+@media(prefers-reduced-motion: reduce){.banner-slide,.banner-slide.dir-prev{translate:0 0!important;transition:opacity .4s ease!important}.banner-slide.leaving{opacity:0}}
 .banner-tag{display:inline-block;background:rgba(201,168,76,.15);border:1px solid rgba(0,191,255,.4);color:var(--gold-light);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:1rem}
 .banner-title{font-family:'Playfair Display','DDC Joyig',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;color:#fff;line-height:1.2;margin-bottom:.8rem}
 .banner-title span{color:var(--gold)}
@@ -400,7 +406,8 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .topbar{padding:0 4%;gap:.6rem}
   .topbar-search{max-width:none}
   .dash-wrap{padding:1.2rem 4% 2rem}
-  .banner{padding:2rem 4%;margin:0 -4% 1.4rem;min-height:280px}
+  .banner{padding:0;margin:0 -4% 1.4rem;min-height:280px}
+  .banner-slide{padding:2rem 4%}
 }
 
 /* ═══ Horizontal scrolling rows (lessons/resources/videos/articles) instead of stacking down the page ═══ */
@@ -792,7 +799,7 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 <link rel="stylesheet" href="ui-polish.css"/>
 <style id="sherig-watch-page">
 /* ── Watch page (player + related videos) ── */
-.int-badge{position:absolute;bottom:.85rem;left:.85rem;z-index:2;background:#f5c25a;color:#1a2340;font-size:.66rem;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.int-badge{position:absolute;bottom:.6rem;left:.6rem;z-index:2;background:rgba(245,194,90,.88);color:#1a2340;font-size:.56rem;font-weight:600;letter-spacing:.03em;padding:3px 8px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .watch-box{background:var(--bg);color:var(--text);border:1px solid var(--card-border);border-radius:22px;width:96%;max-width:1280px;max-height:94vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.45)}
 .watch-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;background:var(--bg);border-bottom:1px solid var(--card-border)}
 .watch-btn{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font:600 .85rem 'DM Sans',sans-serif;padding:8px 16px;border-radius:999px;cursor:pointer;transition:background .15s}
@@ -868,7 +875,8 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 
 /* COMPACT public site: smaller gaps between a section's heading, its cards and the next section */
 .dash-wrap{padding-top:1.1rem;padding-bottom:2rem}
-.banner{min-height:300px;padding:2.2rem 5%;margin-bottom:1rem}
+.banner{min-height:300px;padding:0;margin-bottom:1rem}
+.banner-slide{padding:2.2rem 5%}
 .dash-wrap section{padding:0 0 .7rem}
 .dash-wrap .section-label{margin-bottom:.3rem}
 .dash-wrap .section-title{font-size:clamp(1.45rem,2.6vw,1.95rem);margin-bottom:.3rem;line-height:1.2}
@@ -1971,7 +1979,7 @@ function creditHtml(x){ return x && x.contributed_by ? `<div class="credit">✨ 
 
 // ── RENDER LESSONS ──
 async function renderLessons(){
-  const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await fetchOrderedTable('lessons');
   if(loadErr) console.error('Could not load lessons:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('lessons-grid');
@@ -2013,7 +2021,7 @@ async function renderLessons(){
 
 // ── RENDER RESOURCES ──
 async function renderResources(){
-  const { data: raw, error: loadErr } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await fetchOrderedTable('resources');
   if(loadErr) console.error('Could not load resources:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('resources-grid');
@@ -2054,7 +2062,7 @@ async function renderResources(){
 
 // ── RENDER GAMES ──
 async function renderGames(){
-  const { data: raw, error: loadErr } = await supabase.from('games').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await fetchOrderedTable('games');
   if(loadErr) console.error('Could not load games:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('games-grid');
@@ -2093,6 +2101,15 @@ async function renderGames(){
 let videosCache = [];               // every video, in the order the admin set
 let interactiveIds = new Set();     // ids of videos that have questions
 
+
+// Admin order first (Admin → ▲ ▼), newest first for ties. Falls back if sort_order column isn't created yet (ORDER_SETUP.sql).
+async function fetchOrderedTable(table){
+  let r = await supabase.from(table).select('*')
+    .order('sort_order',{ascending:true,nullsFirst:false})
+    .order('created_at',{ascending:false,nullsFirst:false});
+  if(r.error) r = await supabase.from(table).select('*').order('created_at',{ascending:false,nullsFirst:false});
+  return r;
+}
 async function fetchVideosOrdered(){
   // Admin order first (Admin → Videos → ▲ ▼), newest first for ties.
   let r = await supabase.from('videos').select('*')
@@ -2117,7 +2134,7 @@ function videoCardHtml(v, interactiveSection=false){
   const state = accessState('videos', v);
   const isInt = interactiveIds.has(String(v.id));
   return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}" data-premium="${v.is_premium?'1':''}">
-    <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div>${interactiveSection?'<span class="int-badge">⚡ Interactive</span>':''}<div class="play-btn">▶</div></div>
+    <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div>${interactiveSection?'<span class="int-badge">⚡ Interactive</span>':''}</div>
     <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}${v.series?`<span>📚 ${esc(v.series)}</span>`:''}</div>${creditHtml(v)}</div>
     ${lockOverlayHtml(state, v)}
   </div>`;
@@ -2235,7 +2252,7 @@ window.playNextVideo = function(){
 
 // ── RENDER ARTICLES + COMMENTS ──
 async function renderArticles(){
-  const { data: raw, error: loadErr } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await fetchOrderedTable('articles');
   if(loadErr) console.error('Could not load articles:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('blog-grid');
@@ -2429,6 +2446,8 @@ async function renderBanner(){
     const desc = lang()==='dz' && b.description_dz ? b.description_dz : (b.description||'');
     const el = document.createElement('div');
     el.className = 'banner-slide' + (i===0?' active':'');
+    const bg = safeUrl(b.image_url);
+    if(bg) el.style.backgroundImage = `linear-gradient(135deg,rgba(15,22,35,.72),rgba(26,47,80,.5)), url('${bg.replace(/'/g,"%27")}')`;
     el.innerHTML = `${tag?`<div class="banner-tag">${esc(tag)}</div>`:''}<h1 class="banner-title">${b._default ? title : esc(title)}</h1>${desc?`<p class="banner-desc">${esc(desc)}</p>`:''}`;
     wrap.insertBefore(el, dotsWrap);
   });
@@ -2437,19 +2456,25 @@ async function renderBanner(){
   dotsWrap.innerHTML = slides.map((_,i)=>`<span class="banner-dot${i===0?' active':''}" data-i="${i}"></span>`).join('');
   const dots = Array.from(dotsWrap.children);
   let cur = 0, timer = null;
-  function applyBg(i){
-    const img = safeUrl(bannerData[i] && bannerData[i].image_url);
-    wrap.style.backgroundImage = img ? `linear-gradient(135deg,rgba(15,22,35,.72),rgba(26,47,80,.5)), url('${img.replace(/'/g,"%27")}')` : '';
-  }
+  const BANNER_INTERVAL = 3000;   // a new slide every 3 seconds
+  // Slides swipe in from the right and push the old one out to the left
+  // (going back a slide mirrors it, so the direction always matches the move).
   function show(i){
-    cur = (i+slides.length)%slides.length;
-    slides.forEach((s,j)=>s.classList.toggle('active', j===cur));
+    const n = slides.length, prev = cur, next = (i+n)%n;
+    if(next===prev) return;
+    const goingForward = ((i - prev + n) % n) <= n/2;
+    cur = next;
+    slides.forEach((sl,j)=>{
+      sl.classList.remove('leaving','dir-prev');
+      if(!goingForward) sl.classList.add('dir-prev');
+      if(j===cur) sl.classList.add('active');
+      else if(j===prev){ sl.classList.add('leaving'); setTimeout(()=>{ if(slides.indexOf(sl)!==cur) sl.classList.remove('active','leaving'); }, 900); }
+      else sl.classList.remove('active');
+    });
     dots.forEach((d,j)=>d.classList.toggle('active', j===cur));
-    applyBg(cur);
   }
-  function restart(){ clearInterval(timer); timer = setInterval(()=>show(cur+1), 6000); }
+  function restart(){ clearInterval(timer); timer = setInterval(()=>show(cur+1), BANNER_INTERVAL); }
   dots.forEach(d=>d.addEventListener('click', ()=>{ show(Number(d.getAttribute('data-i'))); restart(); }));
-  applyBg(0);
   restart();
 }
 

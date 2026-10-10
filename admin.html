@@ -379,12 +379,12 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
     </div>
 
     <div class="page" id="p-lessons">
-      <div class="phead"><div><div class="ptitle">Lessons</div><div class="psub">Add and manage your teaching lessons</div></div><button class="btn btn-gold" onclick="openForm('lesson')">+ Add Lesson</button></div>
+      <div class="phead"><div><div class="ptitle">Lessons</div><div class="psub">Add and manage your teaching lessons · use ▲ ▼ to set the order shown on the site</div></div><button class="btn btn-gold" onclick="openForm('lesson')">+ Add Lesson</button></div>
       <div class="card"><div class="card-head"><h3>All Lessons</h3><span class="cbadge" id="c-lessons">0</span></div><div id="l-lessons"></div></div>
     </div>
 
     <div class="page" id="p-resources">
-      <div class="phead"><div><div class="ptitle">Resources</div><div class="psub">Manage downloadable files and guides</div></div><button class="btn btn-gold" onclick="openForm('resource')">+ Add Resource</button></div>
+      <div class="phead"><div><div class="ptitle">Resources</div><div class="psub">Manage downloadable files and guides · use ▲ ▼ to set the order shown on the site</div></div><button class="btn btn-gold" onclick="openForm('resource')">+ Add Resource</button></div>
       <div class="card"><div class="card-head"><h3>All Resources</h3><span class="cbadge" id="c-resources">0</span></div><div id="l-resources"></div></div>
     </div>
 
@@ -394,12 +394,12 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
     </div>
 
     <div class="page" id="p-games">
-      <div class="phead"><div><div class="ptitle">EduGames</div><div class="psub">Manage the interactive games shown in the EduGames panel</div></div><button class="btn btn-gold" onclick="openForm('game')">+ Add Game</button></div>
+      <div class="phead"><div><div class="ptitle">EduGames</div><div class="psub">Manage the interactive games shown in the EduGames panel · use ▲ ▼ to set the order shown on the site</div></div><button class="btn btn-gold" onclick="openForm('game')">+ Add Game</button></div>
       <div class="card"><div class="card-head"><h3>All Games</h3><span class="cbadge" id="c-games">0</span></div><div id="l-games"></div></div>
     </div>
 
     <div class="page" id="p-articles">
-      <div class="phead"><div><div class="ptitle">Articles</div><div class="psub">Manage your blog posts</div></div><button class="btn btn-gold" onclick="openForm('article')">+ Add Article</button></div>
+      <div class="phead"><div><div class="ptitle">Articles</div><div class="psub">Manage your blog posts · use ▲ ▼ to set the order shown on the site</div></div><button class="btn btn-gold" onclick="openForm('article')">+ Add Article</button></div>
       <div class="card"><div class="card-head"><h3>All Articles</h3><span class="cbadge" id="c-articles">0</span></div><div id="l-articles"></div></div>
     </div>
 
@@ -579,18 +579,18 @@ async function renderAll(){
     { data: LB, error: lbErr },
     { count: visitCount }
   ] = await Promise.all([
-    supabase.from('lessons').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
-    supabase.from('resources').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    fetchOrdered('lessons'),
+    fetchOrdered('resources'),
     (async()=>{
       let r = await supabase.from('videos').select('*',{count:'exact'}).order('sort_order',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false,nullsFirst:false});
       if(r.error) r = await supabase.from('videos').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false});
       return r;
     })(),
-    supabase.from('articles').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    fetchOrdered('articles'),
     supabase.from('profiles').select('*',{count:'exact'}).order('joined_at',{ascending:false}),
     supabase.from('announcements').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
     supabase.from('banners').select('*',{count:'exact'}).order('sort_order',{ascending:true}),
-    supabase.from('games').select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false}),
+    fetchOrdered('games'),
     supabase.from('login_backgrounds').select('*').order('sort_order',{ascending:true}),
     supabase.from('page_views').select('*',{count:'exact',head:true})
   ]);
@@ -614,13 +614,14 @@ async function renderAll(){
   document.getElementById('c-announce').textContent  = anc||0;
   document.getElementById('c-users').textContent     = uc||0;
 
-  document.getElementById('d-lessons').innerHTML  = L?.length ? L.slice(0,3).map(i=>row(i,'lesson')).join('') : empty('📚','No lessons yet');
+  document.getElementById('d-lessons').innerHTML  = L?.length ? [...L].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,3).map(i=>row(i,'lesson')).join('') : empty('📚','No lessons yet');
   window.__videos = V || [];
+  window.__lists = { lesson:L||[], resource:R||[], video:V||[], article:A||[], game:GM||[] };
   document.getElementById('d-videos').innerHTML   = V?.length ? [...V].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,3).map(i=>row(i,'video')).join('')  : empty('🎥','No videos yet');
-  document.getElementById('l-lessons').innerHTML   = L?.length ? L.map(i=>row(i,'lesson')).join('')   : empty('📚','No lessons yet. Click + Add Lesson!');
-  document.getElementById('l-resources').innerHTML = R?.length ? R.map(i=>row(i,'resource')).join('') : empty('📁','No resources yet. Click + Add Resource!');
+  document.getElementById('l-lessons').innerHTML   = L?.length ? L.map((i,n)=>row(i,'lesson',{order:true,n,total:L.length})).join('')   : empty('📚','No lessons yet. Click + Add Lesson!');
+  document.getElementById('l-resources').innerHTML = R?.length ? R.map((i,n)=>row(i,'resource',{order:true,n,total:R.length})).join('') : empty('📁','No resources yet. Click + Add Resource!');
   document.getElementById('l-videos').innerHTML    = V?.length ? V.map((i,n)=>row(i,'video',{order:true,n,total:V.length})).join('')    : empty('🎥','No videos yet. Click + Add Video!');
-  document.getElementById('l-articles').innerHTML  = A?.length ? A.map(i=>row(i,'article')).join('')  : empty('✍️','No articles yet. Click + Add Article!');
+  document.getElementById('l-articles').innerHTML  = A?.length ? A.map((i,n)=>row(i,'article',{order:true,n,total:A.length})).join('')  : empty('✍️','No articles yet. Click + Add Article!');
   document.getElementById('l-announce').innerHTML  = AN?.length
     ? AN.map(a=>`<div class="irow"><div><div class="iname">${esc(a.emoji||'📢')} ${esc(a.message||'')}</div><div class="imeta">${a.active?'✅ Active':'❌ Hidden'}${a.link_label?' · '+esc(a.link_label):''}</div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('announce','${esc(a.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('announce','${esc(a.id)}')">✕</button></div></div>`).join('')
     : empty('📢','No announcements yet. Click + New Announcement!');
@@ -636,7 +637,7 @@ async function renderAll(){
       ? LB.map(b=>`<div class="irow"><div class="irow-left">${b.image_url?`<img class="irow-thumb" src="${esc(b.image_url)}" referrerpolicy="no-referrer"/>`:''}<div><div class="iname">${esc(b.title||'Untitled background')}</div><div class="imeta">Order ${esc(b.sort_order??0)} · ${b.active===false?'❌ Hidden':'✅ Showing'}</div></div></div><div class="ibtns"><button class="btn btn-edit btn-sm" onclick="openForm('loginbg','${esc(b.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('loginbg','${esc(b.id)}')">✕</button></div></div>`).join('')
       : empty('🌄','No backgrounds yet — the login page keeps its plain navy look. Click + Add Background!'));
   document.getElementById('c-games').textContent = gmc||0;
-  document.getElementById('l-games').innerHTML = GM?.length ? GM.map(i=>row(i,'game')).join('') : empty('🎮','No games yet. Click + Add Game!');
+  document.getElementById('l-games').innerHTML = GM?.length ? GM.map((i,n)=>row(i,'game',{order:true,n,total:GM.length})).join('') : empty('🎮','No games yet. Click + Add Game!');
 
   renderUsers(U||[]);
   renderPayments({lessons:L||[], resources:R||[], videos:V||[], articles:A||[], games:GM||[]});
@@ -729,10 +730,7 @@ window.approveContribution = async function(id){
               : c.content_type==='resource' ? { rtype:c.detail||'Other', filesize:'' }
               : { article_date:new Date().toISOString().slice(0,10), category:c.subject||'' };
   let item = { ...base, ...extra };
-  if(c.content_type==='video'){
-    const orders = (window.__videos||[]).map(v=>Number(v.sort_order)).filter(n=>!isNaN(n));
-    item.sort_order = (orders.length ? Math.min(...orders) : 1) - 1;
-  }
+  item.sort_order = topSortOrder(c.content_type);
   let { error } = await supabase.from(table).insert(item);
   if(error && /access_level|sort_order/i.test(error.message||'')){
     const { access_level, sort_order, ...rest } = item;
@@ -917,7 +915,7 @@ function row(item,type,opts){
     game:`${item.gtype||'—'}`
   }[type]||'';
   const thumb = item.thumbnail_url ? `<img class="irow-thumb" src="${esc(item.thumbnail_url)}"/>` : '';
-  const arrows = (opts && opts.order) ? `<button class="btn btn-ghost btn-sm" title="Move up" ${opts.n===0?'disabled':''} onclick="moveVideo('${esc(item.id)}',-1)">▲</button><button class="btn btn-ghost btn-sm" title="Move down" ${opts.n===opts.total-1?'disabled':''} onclick="moveVideo('${esc(item.id)}',1)">▼</button>` : '';
+  const arrows = (opts && opts.order) ? `<button class="btn btn-ghost btn-sm" title="Move up" ${opts.n===0?'disabled':''} onclick="moveItem('${type}','${esc(item.id)}',-1)">▲</button><button class="btn btn-ghost btn-sm" title="Move down" ${opts.n===opts.total-1?'disabled':''} onclick="moveItem('${type}','${esc(item.id)}',1)">▼</button>` : '';
   const downloads = `⬇ ${item.download_count||0}`;
   const premiumTag = item.is_premium ? ` · <span style="color:var(--gold-text,var(--gold))">🔒 Nu.${esc(item.price||0)}</span>`
     : ({ login:' · 👤 Account', subscriber:' · ▶ Subscriber' }[item.access_level] || ' · ⭐ Member');
@@ -925,19 +923,32 @@ function row(item,type,opts){
   return `<div class="irow"><div class="irow-left">${thumb}<div><div class="iname">${esc(item.title||'Untitled')}</div><div class="imeta">${esc(sub)} · ${downloads}${classTag}${premiumTag}</div></div></div><div class="ibtns">${arrows}<button class="btn btn-edit btn-sm" onclick="openForm('${type}','${esc(item.id)}')">✏ Edit</button><button class="btn btn-del btn-sm" onclick="del('${type}','${esc(item.id)}')">✕</button></div></div>`;
 }
 
-// ── VIDEO ORDER (▲ ▼) ──
-// Renumbers every video 1..n in the new order so the public site shows exactly this order.
-window.moveVideo = async function(id, dir){
-  const list = [...(window.__videos||[])];
+// ── ORDER (▲ ▼) for videos, lessons, resources, articles and games ──
+// Renumbers every item 1..n in the new order so the public site shows exactly this order.
+const ORDER_TABLE = { video:'videos', lesson:'lessons', resource:'resources', article:'articles', game:'games' };
+async function fetchOrdered(table){
+  let r = await supabase.from(table).select('*',{count:'exact'}).order('sort_order',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false,nullsFirst:false});
+  // sort_order column not created yet (ORDER_SETUP.sql) → fall back to newest first.
+  if(r.error) r = await supabase.from(table).select('*',{count:'exact'}).order('created_at',{ascending:false,nullsFirst:false});
+  return r;
+}
+function topSortOrder(type){
+  const orders = ((window.__lists||{})[type]||[]).map(v=>Number(v.sort_order)).filter(n=>!isNaN(n));
+  return (orders.length ? Math.min(...orders) : 1) - 1;
+}
+window.moveItem = async function(type, id, dir){
+  const table = ORDER_TABLE[type]; if(!table) return;
+  const list = [...((window.__lists||{})[type]||[])];
   const i = list.findIndex(v=>String(v.id)===String(id)), j = i + dir;
   if(i < 0 || j < 0 || j >= list.length) return;
   [list[i], list[j]] = [list[j], list[i]];
   const changed = list.map((v,n)=>({id:v.id, n:n+1, old:v.sort_order})).filter(x=>x.n!==x.old);
-  const results = await Promise.all(changed.map(x=>supabase.from('videos').update({sort_order:x.n}).eq('id',x.id)));
+  const results = await Promise.all(changed.map(x=>supabase.from(table).update({sort_order:x.n}).eq('id',x.id)));
   const err = results.find(r=>r.error);
-  if(err){ toast('Could not reorder: '+err.error.message+' — run VIDEO_ORDER_SETUP.sql in Supabase first.', true); return; }
+  if(err){ toast('Could not reorder: '+err.error.message+' — run ORDER_SETUP.sql in Supabase first.', true); return; }
   toast('Order saved ✓'); renderAll();
 };
+window.moveVideo = (id,dir)=>window.moveItem('video',id,dir);
 
 // ── FORM ──
 const SUBJECTS=['Dzongkha','English','Mathematics','Science','Language Arts','History','Technology','Social Studies','Arts','Physical Education','Other'];
@@ -1494,10 +1505,7 @@ window.saveItem = async function(){
 
   const newItem = { ...base, ...extra };
   // New videos go to the top of the admin order (existing ones keep theirs).
-  if(_type==='video' && !_id){
-    const orders = (window.__videos||[]).map(v=>Number(v.sort_order)).filter(n=>!isNaN(n));
-    newItem.sort_order = (orders.length ? Math.min(...orders) : 1) - 1;
-  }
+  if(ORDER_TABLE[_type] && !_id) newItem.sort_order = topSortOrder(_type);
 
   let error;
   let savedId=_id;
@@ -1521,11 +1529,16 @@ window.saveItem = async function(){
     ({ error } = await supabase.from(table).insert(rest));
     if(!error) toast('Added, but the access level was NOT saved — run ACCESS_LEVELS_SETUP.sql in Supabase first.', true);
   }
+  if(error && ORDER_TABLE[_type] && _type!=='video' && /sort_order/i.test(error.message || '')){
+    const { sort_order, ...rest } = newItem;
+    ({ error } = _id ? await supabase.from(table).update(rest).eq('id', _id) : await supabase.from(table).insert(rest));
+    if(!error) toast('Saved, but the order was NOT saved — run ORDER_SETUP.sql in Supabase first.', true);
+  }
   if(error && _type==='video' && /series|sort_order/i.test(error.message || '')){
     // Columns not created yet: save everything else so nothing is lost.
     const { series, sort_order, ...rest } = newItem;
     ({ error } = _id ? await supabase.from(table).update(rest).eq('id', _id) : await supabase.from(table).insert(rest));
-    if(!error) toast('Saved, but series/order were NOT saved — run VIDEO_ORDER_SETUP.sql in Supabase first.', true);
+    if(!error) toast('Saved, but series/order were NOT saved — run ORDER_SETUP.sql in Supabase first.', true);
   }
   if(error){ toast('Error: ' + error.message, true); }
   else {

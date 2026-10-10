@@ -179,8 +179,8 @@ footer .gold{color:var(--gold)}
 .card-media{position:relative;aspect-ratio:16/9;background:var(--media-bg);overflow:hidden}
 .card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .media-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.8rem}
-.pill-row{position:absolute;top:.85rem;left:.85rem;right:.85rem;display:flex;gap:.4rem;flex-wrap:wrap;z-index:1}
-.pill{background:rgba(15,27,61,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font-family:var(--font-en);font-size:.68rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:999px;line-height:1.2}
+.pill-row{position:absolute;top:.6rem;left:.6rem;right:.6rem;display:flex;gap:.3rem;flex-wrap:wrap;z-index:1}
+.pill{background:rgba(15,27,61,.34);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:rgba(255,255,255,.95);font-family:var(--font-en);font-size:.56rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;line-height:1.2}
 .card-body{padding:1.1rem 1.2rem 1.2rem}
 .lesson-card h3,.video-body h3,.blog-body h3{font-family:var(--font-en);font-weight:700;font-size:1.05rem;line-height:1.4;color:var(--text);margin-bottom:.45rem}
 .lesson-card p,.video-body p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.9rem}
@@ -341,20 +341,21 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
    whether you're moving to a later or earlier slide. Falls back to a plain, motion-safe
    crossfade for anyone whose system has "reduce motion" turned on. */
 .banner{position:relative;overflow:hidden;min-height:360px;display:flex;align-items:center;padding:3rem 5%;margin:0 -5% 1.8rem;background:var(--navy)}
-.banner-bg{position:absolute;inset:-4%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;transform:scale(1.06);z-index:0}
+.banner-bg{position:absolute;inset:-4%;background-size:cover;background-position:center;opacity:1;translate:100% 0;transition:translate var(--banner-swipe,.8s) cubic-bezier(.65,0,.35,1);transform:scale(1.06);z-index:0}
 .banner-bg.on{opacity:1;animation:bannerDrift 9s ease-in-out infinite alternate}
 .banner-scrim{position:absolute;inset:0;background:linear-gradient(100deg,var(--hero1) 18%,rgba(26,35,64,.55) 55%,rgba(26,47,80,.3) 100%);z-index:0}
 .banner::after{content:'';position:absolute;top:-90px;right:-90px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.14) 0%,transparent 70%);pointer-events:none;z-index:0}
-.banner-slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:3rem 5%;max-width:680px;z-index:1;opacity:0;pointer-events:none;clip-path:polygon(0 0,0 0,0 100%,0 100%);transition:clip-path .85s cubic-bezier(.65,0,.35,1),opacity .01s .85s}
-.banner-slide.active{opacity:1;pointer-events:auto;clip-path:polygon(0 0,100% 0,100% 100%,0 100%);transition:clip-path .85s cubic-bezier(.65,0,.35,1),opacity .01s}
-.banner-slide.leaving{clip-path:polygon(100% 0,100% 0,100% 100%,100% 100%);transition:clip-path .7s cubic-bezier(.65,0,.35,1),opacity .01s .7s}
-.banner-slide.dir-prev{clip-path:polygon(100% 0,100% 0,100% 100%,100% 100%)}
-.banner-slide.dir-prev.active{clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
-.banner-slide.dir-prev.leaving{clip-path:polygon(0 0,0 0,0 100%,0 100%)}
-.banner-tag,.banner-title,.banner-desc{opacity:0;transform:translateY(16px)}
-.banner-slide.active .banner-tag{animation:bannerRise .55s .32s ease both}
-.banner-slide.active .banner-title{animation:bannerRise .6s .44s ease both}
-.banner-slide.active .banner-desc{animation:bannerRise .6s .58s ease both}
+.banner-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:3rem 5%;z-index:1;opacity:0;pointer-events:none;translate:100% 0;transition:translate 0s}
+.banner-slide>*{max-width:680px}
+.banner-slide.active{opacity:1;pointer-events:auto;translate:0 0;transition:translate var(--banner-swipe,.8s) cubic-bezier(.65,0,.35,1)}
+.banner-slide.leaving{opacity:1;translate:-100% 0;transition:translate var(--banner-swipe,.8s) cubic-bezier(.65,0,.35,1)}
+.banner-slide.dir-prev{translate:-100% 0}
+.banner-slide.dir-prev.active{translate:0 0}
+.banner-slide.dir-prev.leaving{translate:100% 0}
+.banner-tag,.banner-title,.banner-desc{opacity:1}
+
+
+
 .banner-tag{display:inline-block;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold-light);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:1rem;width:fit-content}
 .banner-title{font-family:'Playfair Display','DDC Joyig',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;color:#fff;line-height:1.2;margin-bottom:.8rem}
 .banner-title span{color:var(--gold)}
@@ -362,15 +363,15 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .banner-dots{position:absolute;bottom:1.3rem;left:5%;display:flex;gap:.5rem;z-index:2}
 .banner-dot{width:22px;height:4px;border-radius:3px;background:rgba(255,255,255,.28);cursor:pointer;padding:0;border:none;overflow:hidden;position:relative}
 .banner-dot span{position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:left;border-radius:3px}
-.banner-dot.active span{animation:bannerProgress 6s linear forwards}
+.banner-dot.active span{animation:bannerProgress 3s linear forwards}
 @keyframes bannerRise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes bannerProgress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes bannerDrift{from{transform:scale(1.06) translate(0,0)}to{transform:scale(1.13) translate(-1%,-1%)}}
 @media(prefers-reduced-motion: reduce){
-  .banner-bg{transition:opacity .4s ease;animation:none!important;transform:none}
-  .banner-slide,.banner-slide.dir-prev{clip-path:none!important;transition:opacity .4s ease}
-  .banner-slide.active{opacity:1}
-  .banner-slide:not(.active){opacity:0}
+  .banner-bg{translate:0 0!important;opacity:0;transition:opacity .4s ease!important;animation:none!important;transform:none}
+  .banner-bg.on{opacity:1}
+  .banner-slide,.banner-slide.dir-prev{translate:0 0!important;transition:opacity .4s ease!important}
+  .banner-slide.leaving{opacity:0}
   .banner-tag,.banner-title,.banner-desc{animation:none!important;opacity:1;transform:none}
   .banner-dot.active span{animation:none;transform:scaleX(1)}
 }
@@ -1065,8 +1066,18 @@ async function loadStats(){
   document.getElementById('st-users').textContent   = uCount ?? 0;
 }
 
+
+// Admin order first (Admin → ▲ ▼), newest first for ties. Falls back if sort_order column isn't created yet (ORDER_SETUP.sql).
+async function fetchOrderedTable(table){
+  let r = await supabase.from(table).select('*')
+    .order('sort_order',{ascending:true,nullsFirst:false})
+    .order('created_at',{ascending:false,nullsFirst:false});
+  if(r.error) r = await supabase.from(table).select('*').order('created_at',{ascending:false,nullsFirst:false});
+  return r;
+}
+
 async function renderLessons(){
-  const { data: raw, error: loadErr } = await supabase.from('lessons').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await fetchOrderedTable('lessons');
   if(loadErr) console.error('Could not load lessons:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('lessons-grid');
@@ -1104,7 +1115,7 @@ async function renderLessons(){
 }
 
 async function renderResources(){
-  const { data: raw, error: loadErr } = await supabase.from('resources').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await fetchOrderedTable('resources');
   if(loadErr) console.error('Could not load resources:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('resources-grid');
@@ -1141,7 +1152,7 @@ async function renderResources(){
 }
 
 async function renderVideos(){
-  const { data: raw, error: loadErr } = await supabase.from('videos').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await fetchOrderedTable('videos');
   if(loadErr) console.error('Could not load videos:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('videos-grid');
@@ -1153,7 +1164,7 @@ async function renderVideos(){
     const thumb = thumbFor(v);
     const state = accessState('videos', v);
     return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}">
-      <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div><div class="play-btn">▶</div></div>
+      <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div></div>
       <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}</div></div>
       ${lockOverlayHtml(state, v)}
     </div>`;
@@ -1170,7 +1181,7 @@ async function renderVideos(){
 }
 
 async function renderArticles(){
-  const { data: raw, error: loadErr } = await supabase.from('articles').select('*').order('created_at',{ascending:false,nullsFirst:false});
+  const { data: raw, error: loadErr } = await fetchOrderedTable('articles');
   if(loadErr) console.error('Could not load articles:', loadErr);
   const items = (raw||[]).filter(matchesClass);
   const g = document.getElementById('blog-grid');
@@ -1309,13 +1320,17 @@ async function renderBanner(){
 
   // Crossfades onto whichever background layer isn't currently showing, and restarts
   // that layer's slow Ken Burns drift from scratch so every slide gets the same motion.
-  function setBg(i){
+  function setBg(i, forward, instant){
     const img = safeUrl(bannerData[i] && bannerData[i].image_url);
-    const next = bannerLayers[1 - bannerOnLayer];
+    const cur = bannerLayers[bannerOnLayer], next = bannerLayers[1 - bannerOnLayer];
+    const sign = forward ? 1 : -1;
     next.style.backgroundImage = img ? `url('${img.replace(/'/g,"%27")}')` : 'none';
-    bannerLayers[bannerOnLayer].classList.remove('on');
-    next.style.animation = 'none'; void next.offsetWidth; next.style.animation = '';
-    next.classList.add('on');
+    // park the incoming layer just outside, then slide it in while the old one slides out
+    next.style.transition = 'none'; next.style.translate = instant ? '0 0' : (sign*100)+'% 0';
+    next.style.animation = 'none'; void next.offsetWidth;
+    next.style.transition = ''; next.style.animation = '';
+    next.style.translate = '0 0'; next.classList.add('on');
+    cur.classList.remove('on'); cur.style.translate = (-sign*100)+'% 0';
     bannerOnLayer = 1 - bannerOnLayer;
   }
   // Whichever way we're moving decides the wipe's direction (dir-prev mirrors it),
@@ -1332,12 +1347,12 @@ async function renderBanner(){
       else s.classList.remove('active');
     });
     dots.forEach((d,j)=>d.classList.toggle('active', j===bannerCur));
-    setBg(bannerCur);
+    setBg(bannerCur, goingForward);
   }
-  function restart(){ clearInterval(bannerTimer); bannerTimer = setInterval(()=>show(bannerCur+1), 6000); }
+  function restart(){ clearInterval(bannerTimer); bannerTimer = setInterval(()=>show(bannerCur+1), 3000); }   // new slide every 3 seconds
   dots.forEach(d=>d.addEventListener('click', ()=>{ show(Number(d.getAttribute('data-i'))); restart(); }));
-  slides[0].classList.add('active'); dots[0].classList.add('active');
-  setBg(0);
+  bannerCur = 0; slides[0].classList.add('active'); dots[0].classList.add('active');
+  setBg(0, true, true);
   restart();
 }
 
