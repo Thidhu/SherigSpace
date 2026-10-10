@@ -431,6 +431,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
         <h4>🔑 Admin Access</h4>
         <p>Admin access is now controlled by your Supabase <code>profiles.role</code> column instead of a shared password — anyone logged in with <code>role = 'admin'</code> can reach this panel, and everyone else is redirected. To grant or revoke admin access for someone, update their <code>role</code> in the Users tab's underlying table (or directly in the Supabase dashboard). Make sure your Row Level Security policies also check this role before allowing writes — a client-side check alone doesn't stop direct API calls.</p>
       </div>
+      <div class="card" style="border:1px solid var(--gold,#c9a84c)">
+        <div class="card-head"><h3>🆓 Free Mode</h3></div>
+        <div style="padding:1.4rem;display:flex;flex-direction:column;gap:.8rem">
+          <label style="display:flex;align-items:center;gap:.7rem;cursor:pointer;font-weight:600">
+            <input type="checkbox" id="s-freemode" style="width:20px;height:20px" onchange="saveFreeMode(this)"/>
+            <span id="s-freemode-label">Free mode</span>
+          </label>
+          <p style="font-size:.85rem;color:var(--text2);line-height:1.6"><b>ON:</b> no payment is asked. New members unlock everything by subscribing to the YouTube channel; teachers get unlimited classes and students; premium items open too.<br><b>OFF:</b> the paid structure comes back exactly as before (membership, premium items, teacher plan). Nothing is deleted either way, and this saves instantly.</p>
+          <p id="s-freemode-status" style="font-size:.82rem;min-height:1.2rem"></p>
+        </div>
+      </div>
       <div class="card">
         <div class="card-head"><h3>Site Information</h3></div>
         <div style="padding:1.4rem;display:flex;flex-direction:column;gap:1rem">
@@ -1548,6 +1559,8 @@ document.getElementById('overlay').addEventListener('click', e=>{ if(e.target===
 window.loadSettings = async function(){
   const { data: s } = await supabase.from('site_settings').select('*').eq('id', 1).single();
   if(!s) return;
+  const fm = document.getElementById('s-freemode');
+  if(fm){ fm.checked = typeof s.free_mode === 'boolean' ? s.free_mode : true; setFreeLabel(fm.checked); }
   document.getElementById('s-sitename').value = s.sitename || 'SherigSpace';
   document.getElementById('s-tagline').value  = s.tagline || '';
   document.getElementById('s-email').value    = s.contact_email || '';
@@ -1560,6 +1573,28 @@ window.loadSettings = async function(){
   document.getElementById('s-youtubeurl').value = s.youtube_url || '';
   document.getElementById('s-qrurl').value    = s.qr_image_url || '';
   document.getElementById('qr-preview').innerHTML = s.qr_image_url ? `<img src="${esc(s.qr_image_url)}" referrerpolicy="no-referrer" onerror="this.outerHTML='<span style=&quot;font-size:.8rem&quot;>The saved QR could not load — upload it again.</span>'"/>` : '';
+};
+
+function setFreeLabel(on){
+  const l = document.getElementById('s-freemode-label');
+  if(l) l.textContent = on ? 'Free mode is ON — everything is free (YouTube subscribe needed)' : 'Free mode is OFF — paid structure is active';
+}
+window.saveFreeMode = async function(box){
+  const st = document.getElementById('s-freemode-status');
+  const on = box.checked;
+  st.style.color = 'var(--text2)'; st.textContent = 'Saving…';
+  const { error } = await supabase.from('site_settings').update({ free_mode: on, updated_at: new Date().toISOString() }).eq('id', 1);
+  if(error){
+    box.checked = !on; setFreeLabel(box.checked);
+    st.style.color = 'var(--red,#e05c5c)';
+    st.textContent = /free_mode|schema cache|column/i.test(error.message || '')
+      ? 'Not saved — run FREE_MODE_SETUP.sql once in Supabase → SQL Editor, then try again.'
+      : 'Could not save: ' + error.message;
+    return;
+  }
+  setFreeLabel(on);
+  st.style.color = 'var(--green,#4caf82)';
+  st.textContent = on ? 'Saved ✓ The site is now free.' : 'Saved ✓ The paid structure is active again.';
 };
 
 window.handleQrPick = async function(e){

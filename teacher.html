@@ -323,7 +323,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { AUTH_OPTIONS } from './auth-storage.js';
-import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc, safeUrl } from './config.js';
+import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, isFreeMode, esc, safeUrl } from './config.js';
 
 const jsq=v=>esc(JSON.stringify(String(v==null?'':v)));
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
@@ -431,7 +431,7 @@ async function checkAccess(){
     );
     if(subError) console.warn('Subscription check:', subError);
     subRow = sub || null;
-    subActive = !!(sub && sub.status === 'approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date()));
+    subActive = !!(sub && sub.status === 'approved' && (!sub.expires_at || new Date(sub.expires_at) > new Date()));   // FREE_MODE: teacher tools are free for now
 
     const { data: settings, error: settingsError } = await withTimeout(
       supabase.from('site_settings').select('*').eq('id',1).single(),
@@ -439,6 +439,7 @@ async function checkAccess(){
     );
     if(settingsError) console.warn('Site settings check:', settingsError);
     siteSettings = settings || {};
+    if(isFreeMode(siteSettings)) subActive = true;   // free mode (Admin → Settings): teacher tools are unlimited
 
     // Admins can always enter. Normal users enter only after their teacher
     // membership has been approved. Everyone else sees the teacher paywall.

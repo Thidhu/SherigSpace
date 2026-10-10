@@ -21,6 +21,19 @@ export const GOOGLE_DRIVE_FOLDER_ID = '1jwhfD--6LaIMlzT452ebRqMOBnPXxoSo';
 // with no Google sign-in popup. See drive-upload-backend.gs.
 export const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxgiYWwfzCZMq4WcHokn_gPXcSmZ16oi4M-9WBYtz5wXgRJmkOfeLPas0wyCg4EuvJr2A/exec';
 
+// ── FREE MODE ──
+// The real on/off switch now lives in Admin → Settings (stored in the
+// database as site_settings.free_mode), so nothing here needs editing.
+// FREE_MODE_DEFAULT is only used until FREE_MODE_SETUP.sql has been run
+// (i.e. while the free_mode column does not exist yet).
+//   free  = everyone gets in after subscribing to the YouTube channel;
+//           no membership/premium payment is asked for; teachers unlimited.
+//   paid  = the original structure: membership, premium items, teacher plan.
+export const FREE_MODE_DEFAULT = true;
+export function isFreeMode(settings) {
+  return settings && typeof settings.free_mode === 'boolean' ? settings.free_mode : FREE_MODE_DEFAULT;
+}
+
 // Escape any string before dropping it into innerHTML. Every field that
 // came from the database (titles, descriptions, comments, etc.) must be
 // passed through this before being rendered, since anyone able to write

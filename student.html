@@ -527,7 +527,7 @@ a.btn{text-decoration:none;display:inline-block}
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { AUTH_OPTIONS } from './auth-storage.js';
-import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
+import { SUPABASE_URL, SUPABASE_KEY, isFreeMode, esc, safeUrl } from './config.js';
 import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions, autoThumbFor } from './assignment-utils.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
@@ -542,8 +542,9 @@ const TYPE_ICON = { lessons:'📚', resources:'📁', videos:'🎥', articles:'�
 const LIB = { loaded:false, enrolled:false, classes:[], items:[], hidden:{}, purchases:{}, type:'all', classId:'all', q:'' };
 const TYPE_META = { videos:{ icon:'🎥', label:'Video' }, resources:{ icon:'📄', label:'Resource' } };
 
+let LIB_FREE = isFreeMode(null);   // refreshed from Admin → Settings in loadLibrary
 function libPremiumState(item){
-  if(!item.is_premium) return 'free';
+  if(LIB_FREE || !item.is_premium) return 'free';
   const pm = LIB.purchases['premium_membership:general'], st = LIB.purchases[item.__type + ':' + item.id];
   if(pm === 'approved' || st === 'approved') return 'free';
   return 'locked';
@@ -551,6 +552,7 @@ function libPremiumState(item){
 
 async function loadLibrary(force){
   if(LIB.loaded && !force) return;
+  try{ const { data: ss } = await supabase.from('site_settings').select('free_mode').eq('id', 1).maybeSingle(); LIB_FREE = isFreeMode(ss); }catch(e){ LIB_FREE = isFreeMode(null); }
   const grid = document.getElementById('lib-grid');
   grid.innerHTML = `<div class="lib-empty" style="grid-column:1/-1"><div class="ei">⏳</div>${T('Loading…','འདྲེན་བཞིནམ...')}</div>`;
   const { data: enr } = await supabase.from('class_students').select('class_id').eq('student_id', me.id);

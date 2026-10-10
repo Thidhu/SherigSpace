@@ -881,6 +881,11 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 .dash-wrap .resource-card{padding:1.1rem}
 .dash-wrap #about{padding:.8rem 0 1.6rem}
 #membership-notice:not([style*="none"]){margin-bottom:.8rem}
+/* DESKTOP: cards sit in 2 rows; the row only becomes swipeable once both rows are full (see layoutTracks) */
+@media(min-width:901px){
+  .dash-wrap .scroll-track.two-rows{display:grid;grid-template-columns:repeat(var(--cols,1),var(--cw,270px));grid-auto-rows:auto;gap:1rem;align-items:stretch}
+  .dash-wrap .scroll-track.two-rows>*{flex:none;min-width:0}
+}
 </style>
 </head>
 <body>
@@ -1146,7 +1151,7 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { AUTH_OPTIONS } from './auth-storage.js';
-import { SUPABASE_URL, SUPABASE_KEY, esc, safeUrl } from './config.js';
+import { SUPABASE_URL, SUPABASE_KEY, isFreeMode, esc, safeUrl } from './config.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 
@@ -1302,7 +1307,7 @@ function renderNav(){
   const role = String(s.role || 'user').toLowerCase();
   // Teacher access is membership-based. Normal users see the membership CTA;
   // existing teacher/admin accounts keep direct dashboard access.
-  const teacherSide = (role === 'teacher' || role === 'admin' || myTeacherActive)
+  const teacherSide = (role === 'teacher' || role === 'admin' || myTeacherActive || isFreeMode(siteSettings))
     ? `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher Dashboard</span></a>`
     : `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Become a Teacher</span></a>`;
   const adminSide = role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
@@ -1331,7 +1336,7 @@ window.openProfile = async function(){
       <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
       <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
     </div>
-    ${profile?.role === 'admin' || profile?.role === 'teacher' || myTeacherActive
+    ${profile?.role === 'admin' || profile?.role === 'teacher' || myTeacherActive || isFreeMode(siteSettings)
       ? `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">👨‍🏫 Teacher Dashboard</a>`
       : `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">👨‍🏫 Become a Teacher</a>`}
     ${profile?.role === 'student' ? `<a href="student.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🎓 My Learning</a>` : ''}
@@ -1584,6 +1589,13 @@ async function loadMyYoutube(){
 function accessState(type, item){
   const s = session();
   if(!s) return 'locked-anon';
+  if(isFreeMode(siteSettings)){
+    // Free period: every item opens once the person has subscribed to the YouTube channel.
+    // Teachers, admins, teacher-enrolled students and anyone who already paid are exempt.
+    const r = String(s.role || '').toLowerCase();
+    if(myYoutube || r === 'student' || r === 'teacher' || r === 'admin' || myTeacherActive || myMembership.status === 'active') return 'free';
+    return 'locked-sub';
+  }
   if(item.is_premium){
     // A Premium Membership subscription unlocks every premium item at once,
     // as an alternative to buying this one item on its own.
@@ -1605,6 +1617,7 @@ function accessState(type, item){
 }
 
 function lockLeft(item){
+  if(isFreeMode(siteSettings)) return '▶ Subscribe to unlock';
   if(item.is_premium) return `🔒 ${esc(item.price != null ? 'Nu. ' + item.price : 'Paid')}`;
   return item.access_level === 'subscriber' ? '▶ Subscribers' : '⭐ Members Only';
 }
@@ -1705,7 +1718,7 @@ window.openSubscribeModal = function(){
       : `<p style="font-size:.85rem;color:var(--red,#e05c5c);margin-bottom:.7rem">The channel link has not been set yet. Please tell the admin to add it in Admin → Settings.</p>`}
     <button id="sub-confirm-btn" class="btn-primary" disabled onclick="confirmYoutubeSubscribed()" style="width:100%;border:none;cursor:pointer;opacity:.5">✓ I've subscribed</button>
     <p id="sub-status" style="font-size:.82rem;margin-top:.6rem;min-height:1.2rem"></p>
-    <p style="font-size:.78rem;color:var(--text2);margin-top:.6rem;line-height:1.6">Want everything? <a href="#" onclick="event.preventDefault();openPaymentModal('membership','general','Site Membership',membershipPrice())" style="color:var(--gold-text)">Become a member — Nu. ${esc(membershipPrice())} per 3 months</a>.</p>`;
+    ${isFreeMode(siteSettings) ? '' : `<p style="font-size:.78rem;color:var(--text2);margin-top:.6rem;line-height:1.6">Want everything? <a href="#" onclick="event.preventDefault();openPaymentModal('membership','general','Site Membership',membershipPrice())" style="color:var(--gold-text)">Become a member — Nu. ${esc(membershipPrice())} per 3 months</a>.</p>`}`;
   document.getElementById('payment-modal').classList.add('open');
 };
 window.confirmYoutubeSubscribed = async function(){
@@ -1725,8 +1738,8 @@ window.confirmYoutubeSubscribed = async function(){
   document.getElementById('payment-modal-body').innerHTML = `
     <div style="text-align:center;padding:.5rem 0 .2rem">
       <div style="font-size:2.2rem;margin-bottom:.5rem">🎉</div>
-      <h4 style="color:var(--text);margin-bottom:.4rem">Starter content unlocked!</h4>
-      <p style="font-size:.85rem;color:var(--text2);margin-bottom:1.1rem">Thank you for subscribing. Want every lesson, resource and video? Become a member for Nu. ${esc(membershipPrice())} per 3 months.</p>
+      <h4 style="color:var(--text);margin-bottom:.4rem">${isFreeMode(siteSettings) ? 'Everything unlocked!' : 'Starter content unlocked!'}</h4>
+      <p style="font-size:.85rem;color:var(--text2);margin-bottom:1.1rem">${isFreeMode(siteSettings) ? 'Thank you for subscribing. Everything on SherigSpace is now open for you.' : `Thank you for subscribing. Want every lesson, resource and video? Become a member for Nu. ${esc(membershipPrice())} per 3 months.`}</p>
       <button class="btn-primary" style="border:none;cursor:pointer;margin-right:.4rem" onclick="closePaymentModal()">Start learning</button>
     </div>`;
   renderAll();
@@ -2223,7 +2236,7 @@ async function renderArticles(){
     const url = safeUrl(a.url);
     const thumb = thumbFor(a);
     const state = accessState('articles', a);
-    const lockLabel = a.is_premium ? `Nu.${esc(a.price||0)}` : (a.access_level === 'subscriber' ? 'Subscribers' : 'Members Only');
+    const lockLabel = isFreeMode(siteSettings) ? 'Subscribers' : a.is_premium ? `Nu.${esc(a.price||0)}` : (a.access_level === 'subscriber' ? 'Subscribers' : 'Members Only');
     const priceTag = state==='locked-anon' ? ` <span style="color:var(--gold-text);font-size:.78rem">🔒 ${lockLabel} · log in</span>`
                     : state==='locked-pay' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer" data-pay="1">🔒 ${lockLabel} · tap to unlock</span>`
                     : state==='locked-sub' ? ` <span style="color:var(--gold-text);font-size:.78rem;cursor:pointer">▶ ${lockLabel} · subscribe to unlock</span>`
@@ -2291,6 +2304,19 @@ async function loadComments(wrap, s){
 function renderMembershipNotice(){
   const el = document.getElementById('membership-notice');
   if(!el) return;
+  if(isFreeMode(siteSettings)){   // free period: the only ask is the YouTube subscribe
+    const sOn = session();
+    const r = String(sOn?.role || '').toLowerCase();
+    const exempt = r === 'student' || r === 'teacher' || r === 'admin' || myTeacherActive || myMembership.status === 'active';
+    if(!sOn){
+      el.style.display = 'block';
+      el.innerHTML = `<div class="membership-cta"><div class="mc-icon">🔓</div><div class="mc-text"><b>SherigSpace is free</b><span>Create a free account and subscribe to our YouTube channel to open every lesson, resource and video.</span></div><div style="display:flex;gap:.5rem;flex-wrap:wrap"><a href="login.html" class="mc-btn" style="text-decoration:none;display:inline-flex;align-items:center">Log In / Sign Up →</a></div></div>`;
+    } else if(!myYoutube && !exempt){
+      el.style.display = 'block';
+      el.innerHTML = `<div class="membership-cta"><div class="mc-icon">▶</div><div class="mc-text"><b>One last step</b><span>Subscribe to our YouTube channel to open every lesson, resource, video, game and article — free.</span></div><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="mc-btn" onclick="openSubscribeModal()">▶ Subscribe to unlock</button></div></div>`;
+    } else { el.style.display = 'none'; el.innerHTML = ''; }
+    return;
+  }
   const price = membershipPrice();
   const fmt = d => d.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
   const cta = (icon, title, text, buttons, pending) => {
@@ -2519,6 +2545,28 @@ async function restoreView(){
     else saveView({ video:null });
   }
 }
+
+// ── DESKTOP: always 2 rows, 4 cards wide; swipe sideways only once both rows are full ──
+function layoutTracks(){
+  const desktop = window.matchMedia('(min-width:901px)').matches;
+  document.querySelectorAll('.dash-wrap .scroll-track').forEach(t => {
+    const kids = Array.from(t.children);
+    const cards = kids.filter(k => !k.classList.contains('empty-state'));
+    if(!desktop || !cards.length || cards.length !== kids.length){ t.classList.remove('two-rows'); t.style.removeProperty('--cols'); t.style.removeProperty('--cw'); return; }
+    const gap = 16, perRow = 4;
+    const cw = Math.max(200, Math.floor((t.clientWidth - gap * (perRow - 1)) / perRow));   // 4 cards span the width
+    const n = cards.length;
+    const cols = n === 1 ? 1 : Math.ceil(n / 2);        // top row gets the first half, bottom row the rest
+    t.style.setProperty('--cw', cw + 'px');
+    t.style.setProperty('--cols', cols);
+    t.classList.add('two-rows');
+  });
+}
+let layoutRaf = 0;
+function queueLayout(){ cancelAnimationFrame(layoutRaf); layoutRaf = requestAnimationFrame(layoutTracks); }
+window.addEventListener('resize', queueLayout);
+new MutationObserver(queueLayout).observe(document.querySelector('.dash-content'), { childList:true, subtree:true });
+queueLayout();
 
 // ── SYNC SUPABASE SESSION → localStorage on load AND on change ──
 // The site is open to browse for anyone. Signed-out visitors see every
