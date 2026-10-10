@@ -153,7 +153,7 @@
 
   var css = [
     "",
-    ":root{--font-en:'DDC Joyig','DM Sans',sans-serif;--font-dz:'DDC Joyig','Noto Serif Tibetan',sans-serif}",
+    ":root{--font-en:'DM Sans','DDC Joyig',sans-serif;--font-dz:'DDC Joyig','Noto Serif Tibetan',sans-serif}",
     '[data-lang="dz"] :is(h1,h2,h3,h4,h5,p,span,a,li,button,label,div,td,th,option){font-family:var(--font-dz)}',
     '[data-lang="dz"] input,[data-lang="dz"] textarea,[data-lang="dz"] select{font-family:var(--font-dz)}',
 

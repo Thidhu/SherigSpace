@@ -14,27 +14,27 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--surface:#192035;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--red:#e05c5c;--green:#4caf84}
-body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
+body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
 #gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f1623,#1a2340,#1a2f50);display:flex;align-items:center;justify-content:center;padding:1rem}
 #gate.hide{display:none}
 .gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;max-width:380px;padding:2rem;text-align:center}
 .gate-icon{font-size:2.5rem;margin-bottom:.75rem}
-.gate-card h2{font-family:'DDC Joyig','Playfair Display',serif;color:var(--gold-text,var(--gold));margin-bottom:.4rem}
+.gate-card h2{font-family:'Playfair Display','DDC Joyig',serif;color:var(--gold-text,var(--gold));margin-bottom:.4rem}
 .gate-card p{font-size:.85rem;color:var(--text2);margin-bottom:1.2rem}
-.gate-btn{padding:11px 20px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font-family:'DDC Joyig','DM Sans',sans-serif}
+.gate-btn{padding:11px 20px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font-family:'DM Sans','DDC Joyig',sans-serif}
 nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;border-bottom:1px solid var(--border);background:#131c2e}
-.nav-logo{font-family:'DDC Joyig','Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1.2rem}
+.nav-logo{font-family:'Playfair Display','DDC Joyig',serif;color:var(--gold-text,var(--gold));font-size:1.2rem}
 .nav-right{display:flex;align-items:center;gap:1rem;font-size:.85rem;color:var(--text2)}
-.nav-right button{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.25);color:var(--red);padding:7px 14px;border-radius:4px;cursor:pointer;font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.8rem}
+.nav-right button{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.25);color:var(--red);padding:7px 14px;border-radius:4px;cursor:pointer;font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.8rem}
 main{max-width:860px;margin:0 auto;padding:2rem 5%}
-.class-heading{font-family:'DDC Joyig','Playfair Display',serif;font-size:1.3rem;color:var(--gold-text,var(--gold));margin:1.6rem 0 .8rem}
+.class-heading{font-family:'Playfair Display','DDC Joyig',serif;font-size:1.3rem;color:var(--gold-text,var(--gold));margin:1.6rem 0 .8rem}
 .class-heading:first-child{margin-top:0}
 .assign-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:1.2rem 1.4rem;margin-bottom:1rem}
 .assign-card.done{border-left-color:var(--green);opacity:.75}
 .assign-title{font-weight:600;font-size:.95rem;margin-bottom:.3rem}
 .answer-box{margin:.9rem 0 .5rem;padding:1rem;border:1px dashed var(--border);border-radius:10px;background:rgba(201,168,76,.06)}
 .answer-title{font-weight:600;font-size:.9rem;margin-bottom:.55rem}
-.answer-box textarea,.answer-box input[type=text]{width:100%;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.9rem;padding:9px 11px;outline:none}
+.answer-box textarea,.answer-box input[type=text]{width:100%;background:var(--surface2,#202b4a);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.9rem;padding:9px 11px;outline:none}
 .answer-box textarea{min-height:110px;resize:vertical;line-height:1.55}
 .answer-box textarea:focus,.answer-box input[type=text]:focus{border-color:var(--gold)}
 .answer-add{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.6rem 0 .3rem}
@@ -57,7 +57,7 @@ main{max-width:860px;margin:0 auto;padding:2rem 5%}
 .assign-desc{font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:.7rem}
 .assign-meta{font-size:.76rem;color:var(--text2);margin-bottom:.8rem}
 .assign-actions{display:flex;gap:.6rem;flex-wrap:wrap}
-.btn{padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DDC Joyig','DM Sans',sans-serif}
+.btn{padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans','DDC Joyig',sans-serif}
 .btn-gold{background:var(--gold);color:#1a2340}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}
 .btn-green{background:rgba(76,175,132,.15);border:1px solid rgba(76,175,132,.35);color:var(--green)}
@@ -70,10 +70,10 @@ main{max-width:860px;margin:0 auto;padding:2rem 5%}
 .learning-stat .num{font-size:1.45rem;font-weight:700;color:var(--gold-text,var(--gold))}
 .learning-stat .lab{font-size:.72rem;color:var(--text2);margin-top:.2rem}
 .learning-progress{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1.2rem}
-.learning-progress h3{font-family:'DDC Joyig','Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1rem;margin-bottom:.65rem}
+.learning-progress h3{font-family:'Playfair Display','DDC Joyig',serif;color:var(--gold-text,var(--gold));font-size:1rem;margin-bottom:.65rem}
 .achievement-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1.2rem}
 .achievement-head{display:flex;justify-content:space-between;align-items:center;gap:.7rem;margin-bottom:.7rem}
-.achievement-head h3{font-family:'DDC Joyig','Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1rem}
+.achievement-head h3{font-family:'Playfair Display','DDC Joyig',serif;color:var(--gold-text,var(--gold));font-size:1rem}
 .xp-pill{padding:.28rem .65rem;border-radius:999px;background:rgba(201,168,76,.12);border:1px solid var(--border);color:var(--gold-light);font-weight:700;font-size:.78rem}
 .badge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.55rem}
 .badge{border:1px solid var(--border);border-radius:9px;padding:.65rem;background:rgba(255,255,255,.02);opacity:.45}
@@ -223,7 +223,7 @@ a.btn{text-decoration:none;display:inline-block}
 .answer-sub{font-size:.8rem;color:var(--text2);margin:.2rem 0 .4rem}
 
 .certificate-card{border:1px solid rgba(201,168,76,.35);border-radius:10px;padding:1rem;margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(255,255,255,.02))}
-.certificate-head{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;margin-bottom:.45rem}.certificate-head h3{font-family:'DDC Joyig','Playfair Display',serif;color:var(--gold-text,var(--gold));font-size:1rem}
+.certificate-head{display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap;margin-bottom:.45rem}.certificate-head h3{font-family:'Playfair Display','DDC Joyig',serif;color:var(--gold-text,var(--gold));font-size:1rem}
 .certificate-state{font-size:.8rem;color:var(--text2);line-height:1.5}.certificate-actions{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.65rem}
 </style>
 <script src="theme.js"></script>
@@ -764,7 +764,7 @@ function printLearningCertificate({student,className,completed,avg,date}){
   const safe=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const issued=date.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
   w.document.write(`<!doctype html><html><head><title>SherigSpace Learning Certificate</title><style>
-  @page{size:A4 landscape;margin:0}*{box-sizing:border-box}body{margin:0;background:#eee;font-family:'DDC Joyig',Georgia,'Times New Roman',serif;color:#243047}.cert{width:297mm;height:210mm;margin:auto;background:#fffdf7;border:14px solid #c9a84c;outline:5px solid #243047;outline-offset:-26px;padding:30mm 28mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.brand{font-family:'DDC Joyig',Arial,sans-serif;letter-spacing:.16em;font-size:14px;font-weight:700;color:#8b6b20}.title{font-size:42px;margin:18px 0 8px;color:#243047}.subtitle{font-size:18px;color:#586274}.name{font-size:38px;font-weight:700;color:#8b6b20;margin:18px 0 10px;border-bottom:1px solid #c9a84c;padding:0 30px 8px}.body{font-size:18px;line-height:1.7;max-width:850px}.meta{margin-top:20px;font-family:'DDC Joyig',Arial,sans-serif;font-size:13px;color:#586274}.seal{margin-top:18px;font-size:28px}.print{position:fixed;right:20px;top:20px;padding:10px 16px;border:0;background:#243047;color:white;border-radius:6px;cursor:pointer}@media print{body{background:white}.print{display:none}.cert{margin:0}}</style></head><body><button class="print" onclick="print()">Print</button><div class="cert"><div class="brand">SHERIGSPACE</div><div class="title">Certificate of Learning Achievement</div><div class="subtitle">This certificate is proudly presented to</div><div class="name">${safe(student)}</div><div class="body">for completing <b>${completed}</b> learning assignments in <b>${safe(className)}</b> with an overall average score of <b>${avg}%</b>.</div><div class="seal">🏆 🎓 🏆</div><div class="meta">Issued ${safe(issued)} · SherigSpace Digital Learning Platform</div></div></body></html>`);
+  @page{size:A4 landscape;margin:0}*{box-sizing:border-box}body{margin:0;background:#eee;font-family:Georgia,'DDC Joyig','Times New Roman',serif;color:#243047}.cert{width:297mm;height:210mm;margin:auto;background:#fffdf7;border:14px solid #c9a84c;outline:5px solid #243047;outline-offset:-26px;padding:30mm 28mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.brand{font-family:Arial,'DDC Joyig',sans-serif;letter-spacing:.16em;font-size:14px;font-weight:700;color:#8b6b20}.title{font-size:42px;margin:18px 0 8px;color:#243047}.subtitle{font-size:18px;color:#586274}.name{font-size:38px;font-weight:700;color:#8b6b20;margin:18px 0 10px;border-bottom:1px solid #c9a84c;padding:0 30px 8px}.body{font-size:18px;line-height:1.7;max-width:850px}.meta{margin-top:20px;font-family:Arial,'DDC Joyig',sans-serif;font-size:13px;color:#586274}.seal{margin-top:18px;font-size:28px}.print{position:fixed;right:20px;top:20px;padding:10px 16px;border:0;background:#243047;color:white;border-radius:6px;cursor:pointer}@media print{body{background:white}.print{display:none}.cert{margin:0}}</style></head><body><button class="print" onclick="print()">Print</button><div class="cert"><div class="brand">SHERIGSPACE</div><div class="title">Certificate of Learning Achievement</div><div class="subtitle">This certificate is proudly presented to</div><div class="name">${safe(student)}</div><div class="body">for completing <b>${completed}</b> learning assignments in <b>${safe(className)}</b> with an overall average score of <b>${avg}%</b>.</div><div class="seal">🏆 🎓 🏆</div><div class="meta">Issued ${safe(issued)} · SherigSpace Digital Learning Platform</div></div></body></html>`);
   w.document.close(); w.focus();
 }
 async function renderLearningDashboard(){

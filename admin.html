@@ -10,22 +10,22 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--surface:#192035;--surface2:#202b4a;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--red:#e05c5c;--green:#4caf84;--blue:#5c8de0}
-body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
+body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
 #gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f1623,#1a2340,#1a2f50);display:flex;align-items:center;justify-content:center;padding:1rem}
 #gate.hide{display:none}
 .gate-card{background:rgba(25,32,53,.98);border:1px solid var(--border);border-radius:10px;width:100%;max-width:380px;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5)}
 .gate-icon{font-size:2.5rem;margin-bottom:.75rem}
-.gate-card h2{font-family:'DDC Joyig','Playfair Display',serif;font-size:1.4rem;color:var(--gold-text,var(--gold));margin-bottom:.3rem}
+.gate-card h2{font-family:'Playfair Display','DDC Joyig',serif;font-size:1.4rem;color:var(--gold-text,var(--gold));margin-bottom:.3rem}
 .gate-card p{font-size:.83rem;color:var(--text2);margin-bottom:1.5rem}
-.gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s;text-decoration:none;display:inline-block}
+.gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s;text-decoration:none;display:inline-block}
 .gate-btn:hover{background:var(--gold-light)}
 .gate-err{font-size:.85rem;color:var(--err-text,#f09090);margin-top:1rem}
 .gate-spin{font-size:.85rem;color:var(--text2)}
 .layout{display:flex;min-height:100vh}
 .sidebar{width:220px;flex-shrink:0;background:#131c2e;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
 .logo{padding:1.4rem 1.5rem;border-bottom:1px solid var(--border)}
-.logo h2{font-family:'DDC Joyig','Playfair Display',serif;font-size:1.15rem;color:var(--gold-text,var(--gold))}
-.logo small{display:block;font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.7rem;color:var(--text2);font-weight:400;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.logo h2{font-family:'Playfair Display','DDC Joyig',serif;font-size:1.15rem;color:var(--gold-text,var(--gold))}
+.logo small{display:block;font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.7rem;color:var(--text2);font-weight:400;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
 .sidenav{padding:.8rem 0;flex:1}
 .sitem{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.4rem;font-size:.87rem;font-weight:500;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .2s}
 .sitem:hover{color:var(--text);background:rgba(255,255,255,.04)}
@@ -33,18 +33,18 @@ body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:v
 .sitem:has(.payment-badge.show){color:var(--text)}
 .sfoot{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.6rem}
 .sfoot-user{font-size:.76rem;color:var(--text2);padding:0 .1rem;word-break:break-all}
-.sfoot a,.sfoot button{display:block;text-align:center;padding:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:4px;color:var(--gold-text,var(--gold));font-size:.8rem;text-decoration:none;cursor:pointer;font-family:'DDC Joyig','DM Sans',sans-serif;transition:background .2s;width:100%}
+.sfoot a,.sfoot button{display:block;text-align:center;padding:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:4px;color:var(--gold-text,var(--gold));font-size:.8rem;text-decoration:none;cursor:pointer;font-family:'DM Sans','DDC Joyig',sans-serif;transition:background .2s;width:100%}
 .sfoot a:hover,.sfoot button:hover{background:rgba(201,168,76,.2)}
 .sfoot button.logout{background:rgba(224,92,92,.1);border-color:rgba(224,92,92,.25);color:var(--red)}
 .sfoot button.logout:hover{background:rgba(224,92,92,.2)}
 .main{flex:1;padding:2rem;overflow-x:hidden}
 .page{display:none}.page.on{display:block}
 .phead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.8rem;flex-wrap:wrap;gap:1rem}
-.ptitle{font-family:'DDC Joyig','Playfair Display',serif;font-size:1.7rem}
+.ptitle{font-family:'Playfair Display','DDC Joyig',serif;font-size:1.7rem}
 .psub{font-size:.83rem;color:var(--text2);margin-top:3px}
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
 .sbox{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--gold);border-radius:6px;padding:1.1rem 1.3rem}
-.sbox .n{font-family:'DDC Joyig','Playfair Display',serif;font-size:1.9rem;color:var(--gold-text,var(--gold));font-weight:700}
+.sbox .n{font-family:'Playfair Display','DDC Joyig',serif;font-size:1.9rem;color:var(--gold-text,var(--gold));font-weight:700}
 .sbox .l{font-size:.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:1.5rem}
 .card-head{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.4rem;border-bottom:1px solid var(--border)}
@@ -67,7 +67,7 @@ body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:v
 .role-badge{font-size:.7rem;font-weight:600;padding:3px 8px;border-radius:10px;text-transform:uppercase}
 .role-user{background:rgba(92,141,224,.15);color:var(--blue)}
 .role-admin{background:rgba(201,168,76,.15);color:var(--gold-text,var(--gold))}
-.btn{display:inline-flex;align-items:center;gap:.35rem;padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DDC Joyig','DM Sans',sans-serif;transition:all .2s}
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:8px 16px;border-radius:4px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans','DDC Joyig',sans-serif;transition:all .2s}
 .btn-gold{background:var(--gold);color:#1a2340}.btn-gold:hover{background:var(--gold-light)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-ghost:hover{border-color:var(--gold);color:var(--gold-text,var(--gold))}
 .btn-edit{background:rgba(92,141,224,.12);border:1px solid rgba(92,141,224,.25);color:var(--blue)}.btn-edit:hover{background:rgba(92,141,224,.22)}
@@ -78,13 +78,13 @@ body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:v
 .overlay.open{display:flex}
 .modal{background:#131c2e;border:1px solid var(--border);border-radius:8px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
 .mhead{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)}
-.mhead h3{font-family:'DDC Joyig','Playfair Display',serif;font-size:1.15rem;color:var(--gold-text,var(--gold))}
+.mhead h3{font-family:'Playfair Display','DDC Joyig',serif;font-size:1.15rem;color:var(--gold-text,var(--gold))}
 .mclose{background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;padding:2px 6px}.mclose:hover{color:var(--text)}
 .mbody{padding:1.4rem;display:flex;flex-direction:column;gap:.9rem}
 .mfoot{padding:.9rem 1.4rem;border-top:1px solid var(--border);display:flex;gap:.7rem;justify-content:flex-end}
 .field{display:flex;flex-direction:column;gap:.35rem}
 .field label{font-size:.76rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
-.field input,.field select,.field textarea{background:#202b4a;border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.88rem;padding:9px 11px;outline:none;transition:border-color .2s;width:100%}
+.field input,.field select,.field textarea{background:#202b4a;border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.88rem;padding:9px 11px;outline:none;transition:border-color .2s;width:100%}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
 .field textarea{resize:vertical;min-height:75px}
 .field select option{background:#1a2340}

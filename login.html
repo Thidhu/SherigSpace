@@ -14,7 +14,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#c9a84c;--gold-light:#e8c97a;--navy:#0f1623;--navy2:#1a2340;--border:rgba(201,168,76,0.2);--text:#e8e4dc;--text2:#9aa3b8;--surface:#192035;--red:#e05c5c;--green:#4caf84}
-body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
 .bg{position:fixed;inset:0;z-index:0;background:linear-gradient(135deg,#0f1623 0%,#1a2340 60%,#1a2f50 100%)}
 .bg::before{content:'';position:absolute;top:-100px;right:-100px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.08) 0%,transparent 70%)}
 
@@ -33,7 +33,7 @@ body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:v
 .wrap{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
 .card{background:rgba(25,32,53,.93);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:14px;width:100%;max-width:800px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,370px)}
 .side{padding:2rem 1.8rem;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
-.side h1{font-family:'DDC Joyig','Playfair Display',serif;font-size:clamp(1.7rem,3vw,2.3rem);line-height:1.15;color:var(--gold-text,var(--gold));letter-spacing:.01em}
+.side h1{font-family:'Playfair Display','DDC Joyig',serif;font-size:clamp(1.7rem,3vw,2.3rem);line-height:1.15;color:var(--gold-text,var(--gold));letter-spacing:.01em}
 .side p.tagline{font-size:.92rem;color:var(--text);opacity:.85;margin-top:.9rem;line-height:1.6}
 .side .side-hint{text-align:left;margin-top:1.6rem;font-size:.9rem}
 .main-col{min-width:0;display:flex;flex-direction:column}
@@ -58,16 +58,16 @@ body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:v
 .form.on{display:flex}
 .field{display:flex;flex-direction:column;gap:.35rem}
 .field label{font-size:.76rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
-.field input,.field select{background:#202b4a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.92rem;padding:11px 13px;outline:none;transition:border-color .2s;width:100%}
+.field input,.field select{background:#202b4a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.92rem;padding:11px 13px;outline:none;transition:border-color .2s;width:100%}
 .field input:focus,.field select:focus{border-color:var(--gold)}
 .field input::placeholder{color:rgba(255,255,255,.25)}
 .field select option{background:#1a2340}
-.btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s,transform .15s;margin-top:.3rem}
+.btn{width:100%;padding:12px;background:var(--gold);color:var(--navy2);border:none;border-radius:5px;font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s,transform .15s;margin-top:.3rem}
 .btn:hover{background:var(--gold-light);transform:translateY(-1px)}
 .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 
 /* Google button */
-.btn-google{width:100%;padding:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:5px;color:var(--text);font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem;transition:background .2s,border-color .2s}
+.btn-google{width:100%;padding:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:5px;color:var(--text);font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem;transition:background .2s,border-color .2s}
 .btn-google:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25)}
 .btn-google svg{flex-shrink:0}
 .divider{display:flex;align-items:center;gap:.75rem;color:var(--text2);font-size:.75rem}
@@ -91,11 +91,11 @@ body{font-family:'DDC Joyig','DM Sans',sans-serif;background:var(--navy);color:v
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem}
 .modal.show{display:flex}
 .modal-box{width:100%;max-width:400px;background:rgba(19,28,46,.98);border:1px solid var(--border);border-radius:10px;padding:1.6rem;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.modal-box h2{font-family:'DDC Joyig','Playfair Display',serif;color:var(--gold-text,var(--gold));margin-bottom:.4rem;font-size:1.3rem}
+.modal-box h2{font-family:'Playfair Display','DDC Joyig',serif;color:var(--gold-text,var(--gold));margin-bottom:.4rem;font-size:1.3rem}
 .modal-text{color:var(--text2);font-size:.83rem;margin-bottom:1.1rem;line-height:1.5}
 .modal-field{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1rem}
 .modal-field label{font-size:.73rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
-.modal-field input{background:#202b4a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DDC Joyig','DM Sans',sans-serif;font-size:.9rem;padding:10px 12px;outline:none;transition:border-color .2s;width:100%}
+.modal-field input{background:#202b4a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Sans','DDC Joyig',sans-serif;font-size:.9rem;padding:10px 12px;outline:none;transition:border-color .2s;width:100%}
 .modal-field input:focus{border-color:var(--gold)}
 .modal-actions{display:flex;gap:.6rem;margin-top:.5rem}
 .modal-actions .btn{margin-top:0}

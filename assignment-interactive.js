@@ -69,7 +69,7 @@
       </div>`;
     document.body.appendChild(overlay);
     const css = `
-      .sav-editor-overlay{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:18px;font-family:'DDC Joyig',DM Sans,Arial,sans-serif}
+      .sav-editor-overlay{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:18px;font-family:DM Sans,'DDC Joyig',Arial,sans-serif}
       .sav-editor-modal{width:min(1120px,96vw);max-height:94vh;overflow:auto;background:#151c2d;color:#e8e4dc;border:1px solid rgba(201,168,76,.35);border-radius:14px;box-shadow:0 20px 70px rgba(0,0,0,.5)}
       .sav-editor-head,.sav-editor-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(201,168,76,.18)}
       .sav-editor-foot{border-top:1px solid rgba(201,168,76,.18);border-bottom:0}.sav-editor-sub,.sav-hint{font-size:12px;color:#9aa3b8;margin-top:3px}.sav-x{background:none;border:0;color:#e8e4dc;font-size:28px;cursor:pointer}
