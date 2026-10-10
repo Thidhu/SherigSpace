@@ -425,6 +425,18 @@ async function checkAccess(){
     if(profileError && profileError.code !== 'PGRST116') throw profileError;
     me = { id: session.user.id, name: profile?.name || session.user.email, email: session.user.email, role: String(profile?.role || 'user').toLowerCase() };
 
+    // Students (role 'student', or enrolled in any class even if the role was left
+    // as 'user') can never use the teacher dashboard or ask to become a teacher.
+    let isEnrolledStudent = false;
+    try{
+      const { data: en } = await supabase.from('class_students').select('id').eq('student_id', me.id).limit(1);
+      isEnrolledStudent = !!(en && en.length);
+    }catch(e){ console.warn('Student check:', e); }
+    if(me.role === 'student' || isEnrolledStudent){
+      gate.innerHTML = `<div class="gate-icon">🎓</div><h2>${T('This area is for teachers','འདི་ དགེ་རྒན་ཚུ་གི་ཆེད་ཨིན')}</h2><p>${T('Student accounts cannot open the teacher dashboard. Please go to My Learning.','སློབ་ཕྲུག་གི་ཐོ་ཁྲ་གིས་ དགེ་རྒན་གྱི་ཌེཤ་བོརཌ་ ཁ་ཕྱེ་མི་ཚུགས། ངའི་ལྷབ་སྦྱང་ལུ་འགྱོ་གནང་།')}</p><p style="margin-top:1rem"><a href="student.html" style="color:var(--gold-text,#c9a84c);font-weight:600">${T('Go to My Learning →','ངའི་ལྷབ་སྦྱང་ལུ་འགྱོ་ →')}</a></p>`;
+      return;
+    }
+
     const { data: sub, error: subError } = await withTimeout(
       supabase.from('teacher_subscriptions').select('*').eq('teacher_id', me.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
       12000, 'Subscription check'

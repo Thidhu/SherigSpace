@@ -1307,12 +1307,12 @@ function renderNav(){
   const role = String(s.role || 'user').toLowerCase();
   // Teacher access is membership-based. Normal users see the membership CTA;
   // existing teacher/admin accounts keep direct dashboard access.
-  const teacherSide = (role === 'teacher' || role === 'admin' || myTeacherActive || isFreeMode(siteSettings))
+  const teacherSide = isStudentUser(s) ? '' : (role === 'teacher' || role === 'admin' || myTeacherActive || isFreeMode(siteSettings))
     ? `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Teacher Dashboard</span></a>`
     : `<a class="side-link" href="teacher.html"><span class="si">👨‍🏫</span><span>Become a Teacher</span></a>`;
   const adminSide = role === 'admin' ? `<a class="side-link" href="admin.html"><span class="si">🛠️</span><span>Admin</span></a>` : '';
   const learningLink = document.querySelector('.learning-link');
-  if(learningLink) learningLink.style.display = role === 'student' ? '' : 'none';
+  if(learningLink) learningLink.style.display = isStudentUser(s) ? '' : 'none';
   document.getElementById('sidebarFooter').innerHTML =
     `${teacherSide}${adminSide}<a class="side-link" onclick="logout()"><span class="si">🔒</span><span>Log Out</span></a>`;
 }
@@ -1336,10 +1336,10 @@ window.openProfile = async function(){
       <div class="pstat"><div class="pn">${esc(new Date(profile?.joined_at||Date.now()).toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</div><div class="pl">Joined</div></div>
       <div class="pstat"><div class="pn">${esc(profile?.role||'user')}</div><div class="pl">Role</div></div>
     </div>
-    ${profile?.role === 'admin' || profile?.role === 'teacher' || myTeacherActive || isFreeMode(siteSettings)
+    ${isStudentUser(profile) ? '' : profile?.role === 'admin' || profile?.role === 'teacher' || myTeacherActive || isFreeMode(siteSettings)
       ? `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">👨‍🏫 Teacher Dashboard</a>`
       : `<a href="teacher.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">👨‍🏫 Become a Teacher</a>`}
-    ${profile?.role === 'student' ? `<a href="student.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🎓 My Learning</a>` : ''}
+    ${isStudentUser(profile) ? `<a href="student.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🎓 My Learning</a>` : ''}
     ${profile?.role === 'admin' ? `<a href="admin.html" style="display:block;text-align:center;width:100%;padding:10px;margin-bottom:.6rem;background:var(--gold-soft);border:1px solid var(--border);border-radius:4px;color:var(--gold-text);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;text-decoration:none;box-sizing:border-box">🛠️ Open Admin Panel</a>` : ''}
     <button onclick="logout()" style="width:100%;padding:10px;background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.25);border-radius:4px;color:#e05c5c;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer">🔒 Log Out</button>`;
   document.getElementById('profile-modal').classList.add('open');
@@ -1576,6 +1576,17 @@ function computeMembership(rows){
   return { status: until ? 'expired' : 'none', until };
 }
 
+let myIsStudent = false;   // enrolled in a teacher's class (even if the profile role was left as 'user')
+async function loadMyStudentFlag(){
+  myIsStudent = false;
+  const s = session(); if(!s) return;
+  try{
+    const { data } = await supabase.from('class_students').select('id').eq('student_id', s.id).limit(1);
+    myIsStudent = !!(data && data.length);
+  }catch(e){}
+}
+function isStudentUser(u){ return String(u?.role || '').toLowerCase() === 'student' || myIsStudent; }
+
 async function loadMyYoutube(){
   myYoutube = false;
   const s = session(); if(!s) return;
@@ -1593,7 +1604,7 @@ function accessState(type, item){
     // Free period: every item opens once the person has subscribed to the YouTube channel.
     // Teachers, admins, teacher-enrolled students and anyone who already paid are exempt.
     const r = String(s.role || '').toLowerCase();
-    if(myYoutube || r === 'student' || r === 'teacher' || r === 'admin' || myTeacherActive || myMembership.status === 'active') return 'free';
+    if(myYoutube || isStudentUser(s) || r === 'teacher' || r === 'admin' || myTeacherActive || myMembership.status === 'active') return 'free';
     return 'locked-sub';
   }
   if(item.is_premium){
@@ -2307,7 +2318,7 @@ function renderMembershipNotice(){
   if(isFreeMode(siteSettings)){   // free period: the only ask is the YouTube subscribe
     const sOn = session();
     const r = String(sOn?.role || '').toLowerCase();
-    const exempt = r === 'student' || r === 'teacher' || r === 'admin' || myTeacherActive || myMembership.status === 'active';
+    const exempt = isStudentUser(sOn) || r === 'teacher' || r === 'admin' || myTeacherActive || myMembership.status === 'active';
     if(!sOn){
       el.style.display = 'block';
       el.innerHTML = `<div class="membership-cta"><div class="mc-icon">🔓</div><div class="mc-text"><b>SherigSpace is free</b><span>Create a free account and subscribe to our YouTube channel to open every lesson, resource and video.</span></div><div style="display:flex;gap:.5rem;flex-wrap:wrap"><a href="login.html" class="mc-btn" style="text-decoration:none;display:inline-flex;align-items:center">Log In / Sign Up →</a></div></div>`;
@@ -2356,7 +2367,7 @@ function renderMembershipNotice(){
 async function renderAll(){
   renderNav();
   renderClassTabs();
-  await Promise.all([loadSiteSettings(), loadMyPurchases(), loadMyYoutube()]);
+  await Promise.all([loadSiteSettings(), loadMyPurchases(), loadMyYoutube(), loadMyStudentFlag()]);
   renderNav();   // teacher access is loaded above, so refresh the Teacher Dashboard link
   renderMembershipNotice();
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), renderBanner()]);
