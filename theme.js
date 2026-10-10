@@ -152,15 +152,15 @@
   root.setAttribute('data-lang', read());
 
   var css = [
-    "@font-face{font-family:'ThinWangTJoyig';src:url('ThinWangTJoyig-Regular.ttf') format('truetype');font-weight:normal;font-style:normal;font-display:swap}",
-    ":root{--font-en:'DM Sans',sans-serif;--font-dz:'ThinWangTJoyig','Noto Serif Tibetan',sans-serif}",
+    "",
+    ":root{--font-en:'DDC Joyig','DM Sans',sans-serif;--font-dz:'DDC Joyig','Noto Serif Tibetan',sans-serif}",
     '[data-lang="dz"] :is(h1,h2,h3,h4,h5,p,span,a,li,button,label,div,td,th,option){font-family:var(--font-dz)}',
     '[data-lang="dz"] input,[data-lang="dz"] textarea,[data-lang="dz"] select{font-family:var(--font-dz)}',
 
     /* ── toggle button, same look as index.html's nav toggle ── */
     '.sherig-lang-toggle{display:inline-flex;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:20px;overflow:hidden;flex-shrink:0}',
     '.sherig-lang-btn{padding:5px 11px;font-size:.75rem;font-weight:600;color:var(--text2,rgba(255,255,255,.6));background:transparent;border:none;cursor:pointer;transition:background .2s,color .2s;line-height:1.4;font-family:var(--font-en)!important}',
-    ".sherig-lang-btn[data-lang-btn='dz']{font-family:'ThinWangTJoyig',sans-serif!important;font-size:.8rem}",
+    ".sherig-lang-btn[data-lang-btn='dz']{font-family:'DDC Joyig',sans-serif!important;font-size:.8rem}",
     '.sherig-lang-btn.on{background:var(--gold);color:#1a2340;border-radius:18px}',
     '.sfoot .sherig-lang-toggle{width:100%;justify-content:center;border-radius:4px}',
     '.sfoot .sherig-lang-btn{flex:1;padding:8px 6px}',

@@ -140,7 +140,7 @@ html .modal :is(.mhead,.mfoot){border-color:color-mix(in srgb,var(--nm-lo) 30%,t
 /* ── 6. Dzongkha text comfort ─────────────────────────────────────
    Tibetan stacks are tall: more line height, a touch larger, and
    buttons/tabs get room so nothing is clipped.                      */
-html:root{--font-dz:'ThinWangTJoyig','Noto Serif Tibetan','Noto Sans Tibetan','Jomolhari','Kailasa','Microsoft Himalaya',sans-serif}
+html:root{--font-dz:'DDC Joyig','Noto Serif Tibetan','Noto Sans Tibetan','Jomolhari','Kailasa','Microsoft Himalaya',sans-serif}
 html[data-lang="dz"]{font-size:106%}
 html[data-lang="dz"] body{line-height:1.8}
 html[data-lang="dz"] :is(button,.btn,.sitem,.tab,.s-tab,.lib-chip,.class-tab,.tk-stat,.ans-badge,.cbadge,.sherig-theme-btn,.sherig-lang-btn,label,th,td,option){
