@@ -541,6 +541,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { AUTH_OPTIONS } from './auth-storage.js';
 import { SUPABASE_URL, SUPABASE_KEY, isFreeMode, esc, safeUrl } from './config.js';
 import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions, autoThumbFor } from './assignment-utils.js';
+import { isStructured, widgetHtml, wireWidgets, answerText } from './question-types.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 let me = null;
@@ -1303,6 +1304,7 @@ function questionsHtml(a){
       `<label class="q-opt"><input type="radio" name="qr-${esc(id)}-${esc(q.id)}" ${attrs} data-val="${esc(o)}" ${val === o ? 'checked' : ''}/><span>${esc(q.type==='truefalse' ? (o==='True' ? T('True','བདེན།') : T('False','རྫུན།')) : o)}</span></label>`).join('')}</div>`;
     else if(q.type === 'image') input = `<div class="q-media">${q.media_url ? `<img src="${esc(q.media_url)}" alt="Question image" loading="lazy" style="max-width:100%;border-radius:8px;margin:.4rem 0"/>` : ''}<input type="text" ${attrs} value="${esc(val)}" placeholder="${T('Type your answer…','ཁྱོད་ཀྱི་ལན…')}"/></div>`;
     else if(q.type === 'audio') input = `<div class="q-media">${q.media_url ? `<audio controls preload="none" src="${esc(q.media_url)}" style="width:100%;margin:.4rem 0"></audio>` : ''}<input type="text" ${attrs} value="${esc(val)}" placeholder="${T('Type what you heard…','ཁྱོད་ཀྱིས་གོ་མི་འདི་བྲིས…')}"/></div>`;
+    else if(isStructured(q.type)) input = widgetHtml(q, val, { scope: id });
     else input = `<input type="text" ${attrs} value="${esc(val)}" placeholder="${q.type==='fillblank' ? T('Fill in the blank…','ས་སྟོང་བཀང་གནང…') : T('Your answer…','ཁྱོད་ཀྱི་ལན…')}"/>`;
     return `<div class="q-item"><div class="q-text"><span class="q-num">${i+1}.</span>${esc(q.text)}</div>${input}</div>`;
   }).join('') + `</div>`;
@@ -1313,7 +1315,7 @@ function lockedAnswerHtml(a, row){
   const ans = (row.answers && typeof row.answers === 'object') ? row.answers : {};
   const items = qs.map((q, i) => {
     const v = ans[q.id] == null ? '' : String(ans[q.id]).trim();
-    return `<div class="tk-ans-q"><div class="tk-ans-qt"><span class="q-num">${i+1}.</span>${esc(q.text)}</div><div class="tk-ans-a">${v ? esc(v) : '<i>' + T('No answer','ལན་མིན་འདུག') + '</i>'}</div></div>`;
+    return `<div class="tk-ans-q"><div class="tk-ans-qt"><span class="q-num">${i+1}.</span>${esc(q.text)}</div><div class="tk-ans-a">${v ? esc(answerText(q, v)) : '<i>' + T('No answer','ལན་མིན་འདུག') + '</i>'}</div></div>`;
   }).join('');
   const note = String(row.answer_text || '').trim();
   const links = splitLines(row.answer_links).map(fixUrl).filter(Boolean);
@@ -1333,7 +1335,7 @@ function sealedAnswerHtml(a, row){
   if(resultsVisible(a, row)){
     const qs = questionsForDisplay(a), ans = (row.answers && typeof row.answers === 'object') ? row.answers : {};
     body = qs.map((q, i) => { const v = ans[q.id] == null ? '' : String(ans[q.id]).trim();
-      return `<div class="tk-ans-q"><div class="tk-ans-qt"><span class="q-num">${i+1}.</span>${esc(q.text)}</div><div class="tk-ans-a">${v ? esc(v) : '<i>' + T('No answer','ལན་མིན་འདུག') + '</i>'}</div></div>`; }).join('');
+      return `<div class="tk-ans-q"><div class="tk-ans-qt"><span class="q-num">${i+1}.</span>${esc(q.text)}</div><div class="tk-ans-a">${v ? esc(answerText(q, v)) : '<i>' + T('No answer','ལན་མིན་འདུག') + '</i>'}</div></div>`; }).join('');
     const note = String(row.answer_text || '').trim();
     if(note) body += `<div class="tk-ans-q"><div class="tk-ans-qt">${T('Your note','ཁྱོད་ཀྱི་བསམ་བཀོད')}</div><div class="tk-ans-a">${linkify(note)}</div></div>`;
   }
@@ -1363,6 +1365,10 @@ function answerBoxHtml(a){
   </div>`;
 }
 function wireAnswerBoxes(root){
+  wireWidgets(root, {
+    getValue: (scope, qid) => { const v = getDraft(scope).answers[qid]; return v == null ? '' : String(v); },
+    setValue: (scope, qid, val) => { getDraft(scope).answers[qid] = val; saveLocalDraft(scope); }
+  });
   root.querySelectorAll('[data-answer-text]').forEach(t => t.addEventListener('input', () => { getDraft(t.dataset.id).text = t.value; saveLocalDraft(t.dataset.id); }));
   root.querySelectorAll('[data-q-input]').forEach(el => el.addEventListener(el.type === 'radio' ? 'change' : 'input', () => {
     const d = getDraft(el.dataset.id);

@@ -133,7 +133,8 @@ export function parseQuestions(row) {
     .map(q => {
       // fillblank / image / audio used to be turned into plain short-answer questions
       // (losing the picture or sound), so they are now kept as saved.
-      const type = ['short', 'long', 'choice', 'truefalse', 'fillblank', 'image', 'audio'].includes(q.type) ? q.type : 'short';
+      const type = ['short', 'long', 'choice', 'truefalse', 'fillblank', 'image', 'audio', 'ordering', 'matching', 'dragdrop', 'dropfill'].includes(q.type) ? q.type : 'short';
+      const arr = a => Array.isArray(a) ? a.map(x => String(x == null ? '' : x)) : [];
       return {
         id: String(q.id),
         type,
@@ -141,7 +142,11 @@ export function parseQuestions(row) {
         media_url: safeUrl(q.media_url) || '',
         points: Math.max(0, Number(q.points ?? 1) || 0),
         // True/False always has exactly these two options, regardless of what was stored.
-        options: type === 'truefalse' ? ['True', 'False'] : (Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : [])
+        options: type === 'truefalse' ? ['True', 'False'] : (Array.isArray(q.options) ? q.options.map(String).filter(Boolean) : []),
+        // new question types (no correct answers in here — those live in assignment_keys)
+        ...(type === 'ordering' || type === 'dragdrop' ? { items: arr(q.items) } : {}),
+        ...(type === 'matching' ? { left: arr(q.left) } : {}),
+        ...(type === 'dropfill' ? { template: String(q.template || ''), blanks: Array.isArray(q.blanks) ? q.blanks.map(b => ({ options: arr(b && b.options) })) : [] } : {})
       };
     });
 }

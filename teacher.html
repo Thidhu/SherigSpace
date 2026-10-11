@@ -330,6 +330,7 @@ const jsq=v=>esc(JSON.stringify(String(v==null?'':v)));
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions } from './assignment-utils.js';
 import { importQuestionsFromFile, downloadQuestionTemplate } from './question-import.js';
+import { isStructured, defaultSq, buildForSave, fromSaved, builderHtml, wireStructuredBuilder, itemsFromBuilder, openQuestionPreview, answerText, checkAnswer } from './question-types.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 
@@ -820,7 +821,7 @@ async function openGradebook(assignmentId){
     const keyRes=await supabase.from('assignment_keys').select('answers').eq('assignment_id',asg.id).maybeSingle(); const key=(keyRes.data&&keyRes.data.answers)||{};
     const chosen=document.getElementById('gb-q-select').value;
     const list=qs.filter(q=>!chosen||String(q.id)===String(chosen));
-    document.getElementById('gb-detail').innerHTML = `<div class="card" style="margin-top:.8rem"><div class="card-head"><h3>${esc(st.display_name||'Student')}</h3><span style="font-size:.8rem;color:var(--text2)">Final: ${r.score!=null?esc(r.score)+'%':'Not graded'}</span></div>${list.map((q,i)=>{const ans=String(answers[q.id]??''); const gr=gm.get(gkey({student_id:sid,question_id:q.id})); let auto=''; if(objective(q)&&key[q.id]!=null){const exp=Array.isArray(key[q.id])?key[q.id]:[key[q.id]]; const norm=x=>String(x??'').trim().toLowerCase().replace(/\s+/g,' '); auto=exp.some(x=>norm(x)===norm(ans))?'✓ Correct':'✗ Incorrect';} const markControl=q.type==='long'?`<label style="font-size:.8rem">Marks <input data-gb-mark="${esc(q.id)}" type="number" min="0" max="${esc(q.points||1)}" step="0.01" value="${gr?.points_awarded??''}" style="width:90px"></label>`:`<span style="font-size:.76rem;color:var(--text2)">Automatically graded</span>`; const saveControl=q.type==='long'?`<button class="btn btn-gold btn-sm" data-gb-save="${esc(q.id)}">Save</button>`:''; return `<div style="padding:.8rem 0;border-top:1px solid var(--border)"><div><b>Q${qs.indexOf(q)+1}.</b> ${esc(q.text||'')} <span style="color:var(--text2)">(${esc(q.points||1)} pt)</span></div><div style="margin:.45rem 0;color:var(--text2);font-size:.82rem"><b>Answer:</b> ${ans?esc(ans):'<i>No answer</i>'} ${auto?`<span class="qa-mark ${auto[0]==='✓'?'ok':'bad'}">${auto}</span>`:''}</div><div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">${markControl}<input data-gb-fb="${esc(q.id)}" placeholder="Question feedback (optional)" value="${esc(gr?.feedback||'')}" style="flex:1;min-width:240px">${saveControl}</div></div>`;}).join('')}</div>`;
+    document.getElementById('gb-detail').innerHTML = `<div class="card" style="margin-top:.8rem"><div class="card-head"><h3>${esc(st.display_name||'Student')}</h3><span style="font-size:.8rem;color:var(--text2)">Final: ${r.score!=null?esc(r.score)+'%':'Not graded'}</span></div>${list.map((q,i)=>{const ans=String(answers[q.id]??''); const gr=gm.get(gkey({student_id:sid,question_id:q.id})); let auto=''; if(isStructured(q.type)&&key[q.id]!=null){const r=checkAnswer(q,ans,key[q.id]); auto=r.status==='correct'?'✓ Correct':r.status==='partial'?'◐ Partly ('+r.ok+'/'+r.total+')':'✗ Incorrect';} else if(objective(q)&&key[q.id]!=null){const exp=Array.isArray(key[q.id])?key[q.id]:[key[q.id]]; const norm=x=>String(x??'').trim().toLowerCase().replace(/\s+/g,' '); auto=exp.some(x=>norm(x)===norm(ans))?'✓ Correct':'✗ Incorrect';} const markControl=(q.type==='long'||isStructured(q.type))?`<label style="font-size:.8rem">Marks <input data-gb-mark="${esc(q.id)}" type="number" min="0" max="${esc(q.points||1)}" step="0.01" value="${gr?.points_awarded??''}" style="width:90px"></label>`:`<span style="font-size:.76rem;color:var(--text2)">Automatically graded</span>`; const saveControl=(q.type==='long'||isStructured(q.type))?`<button class="btn btn-gold btn-sm" data-gb-save="${esc(q.id)}">Save</button>`:''; return `<div style="padding:.8rem 0;border-top:1px solid var(--border)"><div><b>Q${qs.indexOf(q)+1}.</b> ${esc(q.text||'')} <span style="color:var(--text2)">(${esc(q.points||1)} pt)</span></div><div style="margin:.45rem 0;color:var(--text2);font-size:.82rem"><b>Answer:</b> ${ans?esc(answerText(q,ans)):'<i>No answer</i>'} ${auto?`<span class="qa-mark ${auto[0]==='✓'?'ok':'bad'}">${auto}</span>`:''}</div><div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">${markControl}<input data-gb-fb="${esc(q.id)}" placeholder="Question feedback (optional)" value="${esc(gr?.feedback||'')}" style="flex:1;min-width:240px">${saveControl}</div></div>`;}).join('')}</div>`;
     document.querySelectorAll('[data-gb-save]').forEach(btn=>btn.onclick=async()=>{const qid=btn.dataset.gbSave; const markEl=document.querySelector('[data-gb-mark="'+CSS.escape(qid)+'"]'); const fbEl=document.querySelector('[data-gb-fb="'+CSS.escape(qid)+'"]'); const q=qs.find(x=>String(x.id)===String(qid)); const val=markEl.value.trim(); const payload={assignment_id:String(asg.id),student_id:sid,question_id:String(qid),points_awarded:val===''?null:Math.min(Number(q.points||1),Math.max(0,Number(val))),feedback:fbEl.value.trim()||null,graded_by:me.id,graded_at:new Date().toISOString()}; btn.disabled=true; const {error}=await supabase.from('assignment_question_grades').upsert(payload,{onConflict:'assignment_id,student_id,question_id'}); if(error){toast('Could not save: '+error.message,true);btn.disabled=false;return;} const rpc=await supabase.rpc('grade_assignment_submission',{p_assignment_id:String(asg.id),p_student_id:sid}); btn.disabled=false; if(rpc.error){toast('Saved, but final score could not be recalculated: '+rpc.error.message,true);} else {toast('Question mark saved ✓'); await openGradebook(asg.id); setTimeout(()=>showDetail(sid),80);}});
   };
   document.querySelectorAll('[data-gb-student]').forEach(b=>b.onclick=()=>showDetail(b.dataset.gbStudent));
@@ -1281,8 +1282,8 @@ async function ensureV2(){
   return v2;
 }
 
-const Q_TYPE_LABEL_DZ = { short:'ལན་ཐུང་ཀུ', long:'དོན་ཚན།', choice:'གདམ་ཁ་མང་པོ།', truefalse:'བདེན་/རྫུན།', fillblank:'ས་སྟོང་བཀང་བ།', image:'པར་གྱི་དྲི་བ།', audio:'སྒྲའི་དྲི་བ།' };
-const Q_TYPE_LABEL = new Proxy({ short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False', fillblank:'Fill in the blank', image:'Image question', audio:'Audio question' }, {
+const Q_TYPE_LABEL_DZ = { short:'ལན་ཐུང་ཀུ', long:'དོན་ཚན།', choice:'གདམ་ཁ་མང་པོ།', truefalse:'བདེན་/རྫུན།', fillblank:'ས་སྟོང་བཀང་བ།', image:'པར་གྱི་དྲི་བ།', audio:'སྒྲའི་དྲི་བ།', ordering:'རིམ་པ་བཀོད་པ།', matching:'མཐུན་སྒྲིག', dragdrop:'འདྲུད་ནི་དང་བཞག་ནི།', dropfill:'ས་སྟོང་བཀང་ (གདམ་ཁ་)' };
+const Q_TYPE_LABEL = new Proxy({ short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False', fillblank:'Fill in the blank', image:'Image question', audio:'Audio question', ordering:'Order / Sequence', matching:'Matching', dragdrop:'Drag & drop', dropfill:'Fill blanks (dropdown)' }, {
   get(target, key){ return T(target[key], Q_TYPE_LABEL_DZ[key]); }
 });
 let taskAttachments = []; // [{ url, label, type, resource_key, interactiveQuestions }]
@@ -1341,6 +1342,7 @@ async function renderAssignments(){
         ${(!isScheduled && !isDraft && v2 && v2.drafts) ? `<button class="btn btn-ghost btn-sm" title="${T('Send students who have not submitted a reminder','Send students who have not submitted a reminder')}" onclick="remindStudents(${jsq(a.id)})">🔔 ${T('Remind','Remind')}</button>` : ''}
         <button class="btn btn-ghost btn-sm" title="${T('Copy this task to another class','Copy this task to another class')}" onclick="openCopyAssignment(${jsq(a.id)})">⧉ ${T('Copy','Copy')}</button>
         <button class="btn btn-gold btn-sm" onclick="viewAnswers(${jsq(a.id)})">${T('✍ Answers','✍ ལན།')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="previewSavedTask(${jsq(a.id)})" title="See the questions as students see them">👁 ${T('Preview','སྔོན་བལྟ།')}</button>
         <button class="btn btn-ghost btn-sm" onclick="viewProgress(${jsq(a.id)})">${T('📊 Progress','📊 ཡར་རྒྱས།')}</button>
         <button class="btn btn-ghost btn-sm" onclick="presentStudent(${jsq(a.id)})">${T('🖥 Present','🖥 སྟོན།')}</button>
         <button class="btn btn-edit btn-sm" onclick="openAssignmentForm(${jsq(a.id)})">${T('✏ Edit','✏ ཞུན་དག')}</button>
@@ -1483,7 +1485,7 @@ window.openAssignmentForm = async function(editId){
       if(a){ a.interactive = true; (a.interactiveQuestions ||= []).push(q); }
     });
   }
-  taskQuestions = editing ? parseQuestions(existing).map(q => ({ ...q, accepted: Array.isArray(keyMap[q.id]) ? keyMap[q.id].join(', ') : (typeof keyMap[q.id] === 'string' ? keyMap[q.id] : (q.accepted_answers||[]).join(', ')), media_url: q.media_url || '', correct: (q.type === 'choice' || q.type === 'truefalse') && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null, points: Math.max(0, Number(q.points ?? 1) || 0) })) : [];
+  taskQuestions = editing ? parseQuestions(existing).map(q => isStructured(q.type) ? fromSaved(q, keyMap[q.id]) : ({ ...q, accepted: Array.isArray(keyMap[q.id]) ? keyMap[q.id].join(', ') : (typeof keyMap[q.id] === 'string' ? keyMap[q.id] : (q.accepted_answers||[]).join(', ')), media_url: q.media_url || '', correct: (q.type === 'choice' || q.type === 'truefalse') && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null, points: Math.max(0, Number(q.points ?? 1) || 0) })) : [];
 
   document.getElementById('m-title').textContent = editing ? T('Edit Task','ལཱ་ཞུན་དག') : T('Assign a Task','ལཱ་སྤྲོད་');
   document.querySelector('#overlay .modal').style.maxWidth = '700px';
@@ -1534,9 +1536,14 @@ window.openAssignmentForm = async function(editId){
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('fillblank')">${T('＋ Fill in the blank','＋ ས་སྟོང་བཀང་བ')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('image')">${T('＋ Image question','＋ པར་གྱི་དྲི་བ')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('audio')">${T('＋ Audio question','＋ སྒྲའི་དྲི་བ')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('ordering')">${T('＋ Order / Sequence','＋ རིམ་པ་བཀོད་པ།')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('matching')">${T('＋ Matching','＋ མཐུན་སྒྲིག')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('dragdrop')">${T('＋ Drag & drop','＋ འདྲུད་ནི་དང་བཞག་ནི།')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('dropfill')">${T('＋ Fill blanks (dropdown)','＋ ས་སྟོང་བཀང་ (གདམ་ཁ་)')}</button>
         <input type="file" id="f-q-import" accept=".docx,.xlsx,.xls,.csv" style="display:none" onchange="importQuestionsChosen(event)"/>
         <button type="button" class="btn btn-gold btn-sm" onclick="document.getElementById('f-q-import').click()" title="Add questions from a Word (.docx) or Excel (.xlsx, .csv) file on your computer">📥 ${T('Import Word / Excel','Import Word / Excel')}</button>
         <button type="button" class="btn btn-gold btn-sm" onclick="openQuestionBank()">📚 ${T('Question Bank','དྲི་བའི་མཛོད')}</button>
+        <button type="button" class="btn btn-gold btn-sm" onclick="previewTaskQuestions()" title="See the questions exactly as students will, and try them">👁 ${T('Preview as student','སློབ་ཕྲུག་གིས་བལྟ་སྟངས་སྔོན་བལྟ།')}</button>
       </div>
       <div class="hint">${T('Students answer these on their own page.','སློབ་ཕྲུག་ཚུ་གིས་རང་སོའི་ཤོག་ལེབ་ནང་ལན་བྲིས')}${cfg.keys ? T(' For multiple choice, tick the correct option and it will be checked for you — students never see which option is correct.',' གདམ་ཁ་མང་པོ་ཡོད་མི་ནང་ལེགས་ཤོམ་གྱི་གདམ་ཁ་ལུ་རྟགས་བཞག་པ་ཅིན་རང་བཞིན་གྱིས་ཞིབ་དཔྱད་འབད་འོང་') : ''}</div>
       <div id="q-import-status" class="hint" style="display:none"></div>
@@ -1650,10 +1657,16 @@ window.openAssignmentForm = async function(editId){
       }));
       const qs = [];
       for(const q of taskQuestions){
-        const text = q.text.trim();
+        let text = q.text.trim();
+        if(!text && q.type === 'dropfill') text = 'Choose the correct answer for each blank.';
         if(!text) continue;
         const item = { id: q.id, type: q.type, text };
-        if(q.type === 'choice'){
+        if(isStructured(q.type)){
+          const r = buildForSave({ ...q, text });
+          if(r.error){ toast(r.error + ' (' + text.slice(0,30) + ')', true); return; }
+          Object.assign(item, r.item);
+          if(r.key != null) keyOut[q.id] = r.key;
+        } else if(q.type === 'choice'){
           const opts = []; let correct = null;
           q.options.forEach((o, j) => { const t = o.trim(); if(!t) return; if(j === q.correct) correct = t; opts.push(t); });
           if(opts.length < 2){ toast(T('Multiple-choice question "','གདམ་ཁ་མང་པོའི་དྲི་བ "') + text.slice(0,30) + T('" needs at least two options.','" ལུ་གདམ་ཁ་གཉིས་ཡང་ན་དེ་ལས་མང་བ་དགོ'), true); return; }
@@ -1756,10 +1769,28 @@ window.loadTlmOptions = async function(){
   sel.innerHTML = (data||[]).map(i=>`<option value="${esc(i.id)}">${esc(i.title)}</option>`).join('') || '<option value="">(none available)</option>';
 };
 
+// ── Preview: see the questions exactly as students do, and try them ──
+window.previewTaskQuestions = function(onlyIndex){
+  const list = typeof onlyIndex === 'number' ? [taskQuestions[onlyIndex]].filter(Boolean) : taskQuestions;
+  const { items, errors } = itemsFromBuilder(list);
+  if(errors.length) toast(errors[0], true);
+  if(!items.length){ if(!errors.length) toast(T('Add a question first, then preview it.','དང་པ་དྲི་བ་ཁ་སྐོང་འབད། དེ་ལས་སྔོན་བལྟ།'), true); return; }
+  openQuestionPreview(items, { title: T('This is how students will see the questions. Nothing here is saved.','སློབ་ཕྲུག་གིས་དྲི་བ་འདི་བལྟ་སྟངས་འདི་ཨིན། ཁ་སྐོང་འདི་སྲུང་བཞག་མི་འབད།') });
+};
+window.previewSavedTask = async function(id){
+  const { data: a, error } = await supabase.from('assignments').select('*').eq('id', id).maybeSingle();
+  if(error || !a){ toast('Could not open this task: ' + (error ? error.message : 'not found'), true); return; }
+  const qs = parseQuestions(a);
+  if(!qs.length){ toast(T('This task has no questions to preview.','ལཱ་འདི་ལུ་སྔོན་བལྟ་ནིའི་དྲི་བ་མིན་འདུག'), true); return; }
+  let keyMap = {};
+  try{ const r = await supabase.from('assignment_keys').select('answers').eq('assignment_id', id).maybeSingle(); keyMap = (r.data && r.data.answers) || {}; }catch(e){}
+  openQuestionPreview(qs.map(q => ({ q, key: keyMap[q.id] == null ? null : keyMap[q.id] })), { title: a.title || '' });
+};
+
 // ── Question builder ──
 window.addQuestion = function(type){
   const options = type === 'choice' ? ['',''] : type === 'truefalse' ? ['True', 'False'] : [];
-  taskQuestions.push({ id: newQid(), type, text: '', options, correct: null, accepted: '', media_url: '', points: 1 });
+  taskQuestions.push({ id: newQid(), type, text: '', options, correct: null, accepted: '', media_url: '', points: 1, ...(isStructured(type) ? { sq: defaultSq(type) } : {}) });
   renderQuestionBuilder();
   const last = document.querySelector('#q-builder .qb:last-child [data-q-text]');
   if(last) last.focus();
@@ -1773,6 +1804,7 @@ function renderQuestionBuilder(){
       <div class="qb-head">
         <b>${T('Question','དྲི་བ')} ${i+1}</b><span class="qb-type">${esc(Q_TYPE_LABEL[q.type])}</span>
         <span class="qb-tools">
+          <button type="button" class="btn btn-ghost btn-sm" data-q-preview title="${T('Preview this question','དྲི་བ་འདི་སྔོན་བལྟ།')}">👁</button>
           <button type="button" class="btn btn-ghost btn-sm" data-q-up title="${T('Move up','ཡར་སྤོ')}" ${i===0?'disabled':''}>↑</button>
           <button type="button" class="btn btn-ghost btn-sm" data-q-down title="${T('Move down','མར་སྤོ')}" ${i===taskQuestions.length-1?'disabled':''}>↓</button>
           <button type="button" class="btn btn-ghost btn-sm" data-q-savebank title="Save this question to your private question bank">📚</button>
@@ -1802,6 +1834,7 @@ function renderQuestionBuilder(){
         ${q.type==='image'||q.type==='audio' ? `<input data-q-media value="${esc(q.media_url||'')}" placeholder="${q.type==='image'?T('Image URL…','པར་གྱི URL…'):T('Audio URL…','སྒྲའི URL…')}"/>` : ''}
         <input data-q-accepted value="${esc(q.accepted||'')}" placeholder="${T('Accepted answers (comma or new line separated)…','ངོས་ལེན་ལན་ཚུ (comma ཡང་ན་གདོང་ཐིག་གིས་སོ་སོར་དབྱེ)…')}"/>
       </div>` : ''}
+      ${isStructured(q.type) ? builderHtml(q) : ''}
     </div>`).join('') : `<div class="hint">${T('No questions yet.','ད་ལྟོ་དྲི་བ་མིན་འདུག')}</div>`;
 }
 
@@ -1809,6 +1842,7 @@ function renderQuestionBuilder(){
 function wireQuestionBuilder(){
   const el = document.getElementById('q-builder');
   if(!el) return;
+  wireStructuredBuilder(el, () => taskQuestions, renderQuestionBuilder);
   const qOf = t => { const box = t.closest('.qb'); return box ? taskQuestions[Number(box.dataset.qi)] : null; };
   el.addEventListener('input', e => {
     const q = qOf(e.target); if(!q) return;
@@ -1829,6 +1863,7 @@ function wireQuestionBuilder(){
     if(b.hasAttribute('data-q-del')) taskQuestions.splice(i, 1);
     else if(b.hasAttribute('data-q-up') && i > 0) [taskQuestions[i-1], taskQuestions[i]] = [taskQuestions[i], taskQuestions[i-1]];
     else if(b.hasAttribute('data-q-down') && i < taskQuestions.length-1) [taskQuestions[i+1], taskQuestions[i]] = [taskQuestions[i], taskQuestions[i+1]];
+    else if(b.hasAttribute('data-q-preview')){ window.previewTaskQuestions(i); return; }
     else if(b.hasAttribute('data-q-optadd')) q.options.push('');
     else if(b.hasAttribute('data-q-savebank')){ saveQuestionToBank(q); return; }
     else if(b.hasAttribute('data-q-optdel')){
@@ -1864,7 +1899,7 @@ window.importQuestionsChosen = async function(ev){
 // ── Question Bank ──
 let questionBankItems = [];
 function questionBankClone(q){
-  return { id:newQid(), type:q.type||'short', text:q.text||'', options:Array.isArray(q.options)?q.options.slice():[], correct:q.correct==null?null:Number(q.correct), accepted:Array.isArray(q.accepted_answers)?q.accepted_answers.join(', '):(q.accepted||''), media_url:q.media_url||'', points:Math.max(0,Number(q.points??1)||0) };
+  return { id:newQid(), type:q.type||'short', ...(q.sq ? { sq: JSON.parse(JSON.stringify(q.sq)) } : {}), text:q.text||'', options:Array.isArray(q.options)?q.options.slice():[], correct:q.correct==null?null:Number(q.correct), accepted:Array.isArray(q.accepted_answers)?q.accepted_answers.join(', '):(q.accepted||''), media_url:q.media_url||'', points:Math.max(0,Number(q.points??1)||0) };
 }
 function bankTopicForItem(x){ return String(x.topic||'General').trim() || 'General'; }
 window.openQuestionBank = async function(){
@@ -1908,7 +1943,7 @@ async function saveQuestionToBank(q){
   if(!me) return; const text=String(q.text||'').trim(); if(!text){ toast('Type the question before saving it.',true); return; }
   const topic=prompt('Topic/category for this question:', 'General'); if(topic===null) return; let classLevel='';
   try{ const {data}=await supabase.from('classes').select('class_level,name').eq('id',currentClassId).maybeSingle(); classLevel=data?.class_level||data?.name||''; }catch{}
-  const payload={teacher_id:me.id,class_level:classLevel,topic:String(topic).trim()||'General',question:{type:q.type,text,options:Array.isArray(q.options)?q.options:[],correct:q.correct==null?null:q.correct,accepted:q.accepted||'',accepted_answers:String(q.accepted||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean),media_url:q.media_url||'',points:Math.max(0,Number(q.points??1)||0)}};
+  const payload={teacher_id:me.id,class_level:classLevel,topic:String(topic).trim()||'General',question:{type:q.type,sq:q.sq||null,text,options:Array.isArray(q.options)?q.options:[],correct:q.correct==null?null:q.correct,accepted:q.accepted||'',accepted_answers:String(q.accepted||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean),media_url:q.media_url||'',points:Math.max(0,Number(q.points??1)||0)}};
   const {error}=await supabase.from('question_bank').insert(payload); if(error) toast('Could not save to question bank: '+error.message,true); else toast('Saved to Question Bank ✓');
 }
 
@@ -1956,12 +1991,16 @@ window.viewAnswers = async function(assignmentId){
       const ans = String(answers[q.id] == null ? '' : answers[q.id]).trim();
       if(ans) answeredQ++;
       let mark = '';
-      if((q.type === 'choice' || q.type === 'truefalse') && key[q.id] != null){
+      if(isStructured(q.type) && key[q.id] != null){
+        const r = checkAnswer(q, ans, key[q.id]); autoTotal++;
+        if(r.status === 'correct'){ autoOk++; mark = `<span class="qa-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>`; }
+        else mark = `<span class="qa-mark bad">${r.status === 'partial' ? '◐ ' + r.ok + '/' + r.total + ' · ' : '✗ '}${T('Correct:','ལེགས་ཤོམ:')} ${esc(answerText(q, key[q.id]))}</span>`;
+      } else if((q.type === 'choice' || q.type === 'truefalse') && key[q.id] != null){
         autoTotal++;
         if(ans && ans === key[q.id]){ autoOk++; mark = `<span class="qa-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>`; }
         else mark = `<span class="qa-mark bad">✗ ${T('Correct:','ལེགས་ཤོམ:')} ${esc(key[q.id])}</span>`;
       }
-      return `<div class="qa"><div class="qa-q">${i+1}. ${esc(q.text)}</div><div class="qa-a">${ans ? esc(ans) : `<i style="color:var(--text2)">${T('No answer','ལན་མིན་འདུག')}</i>`}${mark}</div></div>`;
+      return `<div class="qa"><div class="qa-q">${i+1}. ${esc(q.text)}</div><div class="qa-a">${ans ? esc(answerText(q, ans)) : `<i style="color:var(--text2)">${T('No answer','ལན་མིན་འདུག')}</i>`}${mark}</div></div>`;
     }).join('');
 
     const hasAnswer = answeredQ || (r.answer_text || '').trim() || links.length || paths.length;
@@ -2078,10 +2117,13 @@ async function presentAnswerHtml(ctx, idx){
   const qaHtml = ctx.questions.map((q,i) => {
     const ans = String(answers[q.id] == null ? '' : answers[q.id]).trim();
     let mark = '';
-    if((q.type === 'choice' || q.type === 'truefalse') && ctx.key[q.id] != null){
+    if(isStructured(q.type) && ctx.key[q.id] != null){
+      const r = checkAnswer(q, ans, ctx.key[q.id]);
+      mark = r.status === 'correct' ? `<span class="present-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>` : `<span class="present-mark bad">${r.status === 'partial' ? '◐ ' + r.ok + '/' + r.total + ' · ' : '✗ '}${T('Correct answer:','ལེགས་ཤོམ་གྱི་ལན:')} ${esc(answerText(q, ctx.key[q.id]))}</span>`;
+    } else if((q.type === 'choice' || q.type === 'truefalse') && ctx.key[q.id] != null){
       mark = ans && ans === ctx.key[q.id] ? `<span class="present-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>` : `<span class="present-mark bad">✗ ${T('Correct answer:','ལེགས་ཤོམ་གྱི་ལན:')} ${esc(ctx.key[q.id])}</span>`;
     }
-    return `<div class="present-qa"><div class="present-q">${i+1}. ${esc(q.text)}</div><div class="present-a">${ans ? esc(ans) : `<i>${T('No answer','ལན་མིན་འདུག')}</i>`}${mark}</div></div>`;
+    return `<div class="present-qa"><div class="present-q">${i+1}. ${esc(q.text)}</div><div class="present-a">${ans ? esc(answerText(q, ans)) : `<i>${T('No answer','ལན་མིན་འདུག')}</i>`}${mark}</div></div>`;
   }).join('');
 
   const links = String(row.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
