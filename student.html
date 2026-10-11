@@ -915,7 +915,7 @@ async function renderLearningDashboard(){
     }
     const [{data: assignmentsAll,error:e2},{data: statuses,error:e3},{data: videoProgress,error:e4}] = await Promise.all([
       supabase.from('assignments').select('*').in('class_id',classIds).order('created_at',{ascending:false}),
-      supabase.from('assignment_status').select('assignment_id,status,score,submitted_at,completed_at').eq('student_id',me.id),
+      supabase.from('assignment_status').select('assignment_id,status,score,submitted_at,completed_at,reviewed_at').eq('student_id',me.id),
       supabase.from('assignment_video_progress').select('assignment_id,completed,completion_percentage,updated_at').eq('student_id',me.id)
     ]);
     if(e2) throw e2;
@@ -927,7 +927,7 @@ async function renderLearningDashboard(){
     const rows=(statuses||[]).filter(s=>asgIds.has(String(s.assignment_id)));
     const completed=rows.filter(s=>s.status==='done').length;
     const inProgress=rows.filter(s=>s.status && s.status!=='done').length;
-    const scored=rows.map(s=>Number(s.score)).filter(n=>Number.isFinite(n));
+    const scored=rows.filter(s=>{ const a=amap.get(String(s.assignment_id)); return !(a && a.show_results===false && !s.reviewed_at); }).map(s=>Number(s.score)).filter(n=>Number.isFinite(n));   // test scores stay hidden until reviewed
     const avg=scored.length ? Math.round(scored.reduce((a,b)=>a+b,0)/scored.length) : null;
     const highScores=scored.filter(n=>n>=90).length;
     const videoDone=(videoProgress||[]).filter(v=>v.completed && asgIds.has(String(v.assignment_id))).length;
@@ -1217,7 +1217,15 @@ function readAttachments(a){
 
 // ── Task state: To do → Submitted → Reviewed (reviewed = locked) ──
 function rowOf(id){ return statusRows[String(id)] || {}; }
-function isLocked(id){ return !!rowOf(id).reviewed_at; }
+function isLocked(id){
+  const r = rowOf(id), a = assignmentsById[String(id)];
+  return !!r.reviewed_at || !!(a && a.allow_edit === false && (r.submitted_at || r.status === 'done'));   // reviewed, or a one-attempt test that was already handed in
+}
+function lockedMsg(id){
+  return rowOf(id).reviewed_at ? T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།')
+    : T('This task allows one attempt and you have already submitted it, so it can no longer be changed.','ལཱ་འདི་ལུ་ཐེངས་གཅིག་རྐྱངམ་ཅིག་འབད་ཆོག་པའི་ཁར་ཁྱོད་ཀྱིས་སྙན་ཞུ་འབད་ཚར་ཡོདཔ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།');
+}
+const resultsVisible = (a, row) => a.show_results !== false || !!(row && row.reviewed_at);
 function isOverdueTask(a, state){
   if(state !== 'todo' || !a.due_date) return false;
   const d = new Date(a.due_date + 'T00:00:00'); const t = new Date(); t.setHours(0,0,0,0);
@@ -1319,10 +1327,23 @@ function lockedAnswerHtml(a, row){
     ${(!items && !note && !links.length && !files.length) ? `<div class="tk-ans-a"><i>${T('Marked complete.','མཇུག་བསྡུ་བརྟགས་ཚར་ཡོད།')}</i></div>` : ''}`;
 }
 
+function sealedAnswerHtml(a, row){
+  const when = row.submitted_at ? ' · ' + esc(new Date(row.submitted_at).toLocaleString()) : '';
+  let body = '';
+  if(resultsVisible(a, row)){
+    const qs = questionsForDisplay(a), ans = (row.answers && typeof row.answers === 'object') ? row.answers : {};
+    body = qs.map((q, i) => { const v = ans[q.id] == null ? '' : String(ans[q.id]).trim();
+      return `<div class="tk-ans-q"><div class="tk-ans-qt"><span class="q-num">${i+1}.</span>${esc(q.text)}</div><div class="tk-ans-a">${v ? esc(v) : '<i>' + T('No answer','ལན་མིན་འདུག') + '</i>'}</div></div>`; }).join('');
+    const note = String(row.answer_text || '').trim();
+    if(note) body += `<div class="tk-ans-q"><div class="tk-ans-qt">${T('Your note','ཁྱོད་ཀྱི་བསམ་བཀོད')}</div><div class="tk-ans-a">${linkify(note)}</div></div>`;
+  }
+  return `<div class="tk-lock"><span>🔒</span><div><b>${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</b>${when}<br>${T('This task allows one attempt, so your answers cannot be changed.','ལཱ་འདི་ལུ་ཐེངས་གཅིག་རྐྱངམ་ཅིག་འབད་ཆོག་པས་ལན་བསྒྱུར་མི་ཚུགས།')}${resultsVisible(a, row) ? '' : '<br>' + T('Your teacher will share the results later.','སློབ་དཔོན་གྱིས་གྲུབ་འབྲས་ཤུལ་ལས་སྟོནམ་ཨིན།')}</div></div>${body}`;
+}
 function answerBoxHtml(a){
   const id = String(a.id), d = getDraft(id), row = rowOf(id);
   if(row.reviewed_at) return lockedAnswerHtml(a, row);          // teacher has reviewed → read-only
   const submitted = !!row.submitted_at;
+  if(a.allow_edit === false && submitted) return sealedAnswerHtml(a, row);   // test mode: one attempt
   const hasQ = questionsFor(a).length > 0;
   return `<div class="answer-box">
     ${submitted ? `<div class="tk-note">✓ ${T('Submitted','སྙན་ཞུ་འབད་ཡོད')} ${esc(new Date(row.submitted_at).toLocaleString())} — ${T('you can still edit and submit again until your teacher reviews it.','སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་མ་འབད་ཚུན་ཚོད་ཞུན་དག་འབད་དེ་ལོག་སྙན་ཞུ་འབད་ཆོག')}</div>` : ''}
@@ -1363,7 +1384,7 @@ function wireAnswerBoxes(root){
   root.querySelectorAll('[data-answer-file]').forEach(inp => inp.addEventListener('change', async () => {
     const id = inp.dataset.id, file = inp.files[0]; inp.value = '';
     if(!file) return;
-    if(isLocked(id)){ setAnsStatus(id, T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།'), 'err'); return; }
+    if(isLocked(id)){ setAnsStatus(id, lockedMsg(id), 'err'); return; }
     if(file.size > 20 * 1024 * 1024){ setAnsStatus(id, T('Please choose a file under 20 MB.','ཡིག་ཆ་ 20MB ལས་ཉུང་སུ་ཅིག་སེལ་འཐུ་འབད'), 'err'); return; }
     setAnsStatus(id, T('Uploading "','བཙུགས་བཞིནམ "') + file.name + '"…', 'wait');
     try{
@@ -1377,7 +1398,7 @@ function wireAnswerBoxes(root){
   root.querySelectorAll('.chips').forEach(c => refreshChips(c.dataset.id));
 }
 async function submitAnswer(id, btn){
-  if(isLocked(id)){ setAnsStatus(id, T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།'), 'err'); await renderAssignments(); return; }
+  if(isLocked(id)){ setAnsStatus(id, lockedMsg(id), 'err'); await renderAssignments(); return; }
   const d = getDraft(id);
   const qs = questionsFor(assignmentsById[id] || {});
   const cleanAnswers = {};
@@ -1405,7 +1426,8 @@ async function submitAnswer(id, btn){
     if(!gr.error && gr.data?.[0]){
       const g = gr.data[0];
       await supabase.from('assignment_status').update({ score: g.score_percent }).eq('assignment_id', id).eq('student_id', me.id);
-      setAnsStatus(id, T('Submitted and auto-graded ✓ ','སྙན་ཞུ་དང་རང་བཞིན་གྱིས་གྲངས་བཀོད་ཚར་ཡོད ✓ ') + g.score_percent + '%', 'ok');
+      const aa = assignmentsById[String(id)] || {};
+      setAnsStatus(id, aa.show_results === false ? T('Submitted ✓ Your teacher will share the results.','སྙན་ཞུ་འབད་ཚར་ཡོད ✓ སློབ་དཔོན་གྱིས་གྲུབ་འབྲས་སྟོནམ་ཨིན།') : T('Submitted and auto-graded ✓ ','སྙན་ཞུ་དང་རང་བཞིན་གྱིས་གྲངས་བཀོད་ཚར་ཡོད ✓ ') + g.score_percent + '%', 'ok');
     }
   }
   clearLocalDraft(id);
@@ -1469,6 +1491,14 @@ function dueHtml(a, done){
   return `<div class="assign-meta">📅 ${T('Due','འབྱུང་ཉིནམ')} ${esc(d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }))}${tag}</div>`;
 }
 
+// the day the teacher published (assigned) the task — a scheduled task shows the day it was released
+function publishedChip(a){
+  const d = new Date(a.publish_at || a.created_at || '');
+  if(isNaN(d)) return '';
+  const day = d.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  const full = d.toLocaleString(undefined, { day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit' });
+  return `<span class="tk-pill plain" title="${esc(full)}">📤 ${T('Published','བཏངམ།')} ${esc(day)}</span>`;
+}
 function dueChip(a, state){
   if(!a.due_date) return '';
   const d = new Date(a.due_date + 'T00:00:00');
@@ -1528,6 +1558,7 @@ async function renderAssignmentCard(a, done){
   const stateLabel = { todo: T('To do','ལཱ་འབད་ནི།'), submitted: T('Submitted','སྙན་ཞུ་འབད་ཡོད'), reviewed: T('Reviewed','ཞིབ་དཔྱད་འབད་ཚར་ཡོད') }[state];
   const stateIcon = { todo:'📝', submitted:'✓', reviewed:'✔' }[state];
   const meta = `<span class="tk-pill ${state}">${stateIcon} ${stateLabel}</span>`
+    + publishedChip(a)
     + dueChip(a, state)
     + (state !== 'todo' && isLateSubmit(a, row) ? `<span class="tk-pill late">⏰ ${T('Submitted late','དུས་ལས་བརྒལ་ཏེ་བཙུགས་ཡོད')}</span>` : '')
     + (resources.length ? `<span class="tk-pill plain">📎 ${resources.length}</span>` : '')
@@ -1535,7 +1566,7 @@ async function renderAssignmentCard(a, done){
     + (row.score != null && state === 'reviewed' ? `<span class="tk-pill reviewed">⭐ ${esc(row.score)}%</span>` : '');
 
   const fbParts = [];
-  const showScore = row.score != null && state !== 'todo';
+  const showScore = row.score != null && state !== 'todo' && resultsVisible(a, row);
   if(showScore || row.teacher_feedback){
     fbParts.push(`<div class="tk-fb"><div class="tk-fb-h"><span>💬 ${T('Teacher feedback','སློབ་དཔོན་གྱི་བསམ་བཀོད')}</span>${showScore ? `<span class="tk-score">⭐ ${esc(row.score)}%</span>` : ''}</div>${row.teacher_feedback ? `<div class="tk-fb-b">${linkify(row.teacher_feedback)}</div>` : ''}</div>`);
   }
@@ -1557,7 +1588,7 @@ async function renderAssignmentCard(a, done){
 
   return `<article class="tk st-${state}${overdue ? ' is-overdue' : ''}${open ? ' open' : ''}" data-assignment-card data-card-id="${esc(id)}"
       data-title="${esc(title.toLowerCase())}" data-search="${esc((title + ' ' + desc).toLowerCase())}" data-status="${state}" data-overdue="${overdue ? 'true' : 'false'}"
-      data-created="${esc(a.created_at||'')}" data-due="${esc(a.due_date||'')}">
+      data-created="${esc(a.publish_at||a.created_at||'')}" data-due="${esc(a.due_date||'')}">
     <div class="tk-head" role="button" tabindex="0" aria-expanded="${open ? 'true' : 'false'}">
       <div class="tk-ico">${interactive ? '✨' : (resources.length ? '📎' : '📝')}</div>
       <div class="tk-headtext"><h3 class="tk-title">${esc(title)}${newTaskIds.has(String(a.id)) ? '<span class="tk-new">NEW</span>' : ''}${newFeedbackIds.has(String(a.id)) ? '<span class="tk-new">💬 ' + T('FEEDBACK','བསམ་བཀོད') + '</span>' : ''}</h3><div class="tk-meta">${meta}</div></div>
@@ -1575,7 +1606,7 @@ async function renderAssignmentCard(a, done){
 }
 
 async function submitInteractiveAssignment(assignmentId, btn){
-  if(isLocked(assignmentId)){ alert(T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།')); await renderAssignments(); return; }
+  if(isLocked(assignmentId)){ alert(lockedMsg(assignmentId)); await renderAssignments(); return; }
   btn.disabled = true;
   const old = btn.textContent;
   btn.textContent = T('Submitting…','སྙན་ཞུ་འབད་བཞིནམ...');
@@ -1610,7 +1641,7 @@ async function submitInteractiveAssignment(assignmentId, btn){
 }
 
 window.markDone = async function(assignmentId){
-  if(isLocked(assignmentId)){ alert(T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།')); renderAssignments(); return; }
+  if(isLocked(assignmentId)){ alert(lockedMsg(assignmentId)); renderAssignments(); return; }
   const { error } = await supabase.from('assignment_status').upsert({
     assignment_id: assignmentId, student_id: me.id, status: 'done', completed_at: new Date().toISOString()
   }, { onConflict: 'assignment_id,student_id' });

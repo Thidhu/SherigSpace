@@ -1268,15 +1268,16 @@ window.deleteStudent = async function(id){
 let v2 = null; // { extras: attachments/questions/answers/score columns exist, keys: assignment_keys table exists }
 async function ensureV2(){
   if(v2) return v2;
-  const [a, s, k, sh, sc, dr] = await Promise.all([
+  const [a, s, k, sh, sc, dr, op] = await Promise.all([
     supabase.from('assignments').select('attachments,questions').limit(1),
     supabase.from('assignment_status').select('answers,score').limit(1),
     supabase.from('assignment_keys').select('assignment_id').limit(1),
     supabase.from('assignments').select('shuffle_questions,shuffle_options').limit(1),
     supabase.from('assignments').select('publish_at').limit(1),
-    supabase.from('assignments').select('is_draft,reminded_at').limit(1)
+    supabase.from('assignments').select('is_draft,reminded_at').limit(1),
+    supabase.from('assignments').select('allow_edit,show_results').limit(1)
   ]);
-  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error, sched: !sc.error, drafts: !dr.error };
+  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error, sched: !sc.error, drafts: !dr.error, opts: !op.error };
   return v2;
 }
 
@@ -1324,10 +1325,13 @@ async function renderAssignments(){
     const meta = [
       isDraft ? '<b style="color:#8a94a6">📝 ' + T('Draft — students cannot see it yet','Draft — students cannot see it yet') + '</b>' : '',
       isScheduled ? '<b style="color:#e8a317">🕒 ' + T('Scheduled for ','Scheduled for ') + esc(new Date(a.publish_at).toLocaleString([], {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})) + '</b>' : '',
+      (!isDraft && !isScheduled && (a.publish_at || a.created_at)) ? '📤 ' + T('Published ','Published ') + esc(new Date(a.publish_at || a.created_at).toLocaleDateString([], {day:'numeric',month:'short',year:'numeric'})) : '',
       a.due_date ? T('Due ','འབྱུང་ཉིནམ ') + esc(a.due_date) : '',
       attCount ? '📎 ' + attCount + ' ' + T('resource'+(attCount>1?'s':''),'ཡིག་ཆ') : '',
       qCount ? '❓ ' + qCount + ' ' + T('question'+(qCount>1?'s':''),'དྲི་བ') : '',
       (doneBy[a.id]||0) + '/' + (totalStudents||0) + ' ' + T('completed','མཇུག་བསྡུ་ཡོད'),
+      a.allow_edit === false ? '🧪 ' + T('One attempt','One attempt') : '',
+      a.show_results === false ? '🙈 ' + T('Results hidden','Results hidden') : '',
       lateBy[a.id] ? '<span style="color:#e5252a">⏰ ' + lateBy[a.id] + ' ' + T('late','late') + '</span>' : ''
     ].filter(Boolean).join(' · ');
     return `<div class="irow">
@@ -1558,6 +1562,11 @@ window.openAssignmentForm = async function(editId){
       <input type="datetime-local" id="f-publish-at" style="display:none;margin-top:.5rem"/>
       <div style="font-size:.74rem;color:var(--text2);margin-top:.35rem">${T('A scheduled task stays hidden from students until that time. Then it appears by itself and they get a red notification.','A scheduled task stays hidden from students until that time. Then it appears by itself and they get a red notification.')}</div>
     </div>` : `<div style="font-size:.76rem;color:var(--text2);margin:-.2rem 0 .9rem">🕒 Scheduling needs one setup step: run <b>ASSIGNMENT_SCHEDULE_SETUP.sql</b> in Supabase.</div>`}
+    ${cfg.opts ? `<div class="field"><label>🧪 ${T('Answer settings (for tests, uncheck these)','Answer settings (for tests, uncheck these)')}</label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text);margin:.25rem 0"><input type="checkbox" id="f-allow-edit" checked style="width:auto;flex:none;margin:0;accent-color:var(--gold)"/> ✏️ ${T('Students can edit their answers after submitting','Students can edit their answers after submitting')}</label>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text);margin:.25rem 0"><input type="checkbox" id="f-show-results" checked style="width:auto;flex:none;margin:0;accent-color:var(--gold)"/> 👁 ${T('Students can see their answers and score after submitting','Students can see their answers and score after submitting')}</label>
+      <div style="font-size:.74rem;color:var(--text2);margin-top:.3rem">${T('Unchecked = test mode: one attempt, and results stay hidden until you mark the work as reviewed.','Unchecked = test mode: one attempt, and results stay hidden until you mark the work as reviewed.')}</div>
+    </div>` : ''}
   `;
 
   // Prefill when editing
@@ -1577,6 +1586,7 @@ window.openAssignmentForm = async function(editId){
       const pa = document.getElementById('f-publish-at'); pa.style.display = ''; pa.value = toLocalInput(new Date(existing.publish_at));
     }
     if(cfg.drafts && existing.is_draft) document.getElementById('f-publish-mode').value = 'draft';
+    if(cfg.opts){ document.getElementById('f-allow-edit').checked = existing.allow_edit !== false; document.getElementById('f-show-results').checked = existing.show_results !== false; }
   } else {
     await loadTlmOptions();
   }
@@ -1600,6 +1610,10 @@ window.openAssignmentForm = async function(editId){
       due_date: fv('f-due-date') || null,
       attachment_url: taskAttachments.map(a => a.url).join('\n')   // kept so older pages still work
     };
+    if(cfg.opts){
+      payload.allow_edit = !!(document.getElementById('f-allow-edit') || {}).checked;
+      payload.show_results = !!(document.getElementById('f-show-results') || {}).checked;
+    }
     if(cfg.sched){
       const mode = fv('f-publish-mode');
       if(mode === 'draft'){
