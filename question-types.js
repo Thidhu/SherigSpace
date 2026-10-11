@@ -3,6 +3,7 @@
 //   matching  – match each item on the left with its answer (dropdown beside it)
 //   dragdrop  – drag items into the correct group box (tap an item, then tap a box, also works)
 //   dropfill  – a passage with blanks; each blank is a box with a dropdown to choose the answer
+//               (with drag:true the same question is answered by dragging words from a word bank into the blanks)
 //
 // Loaded by teacher.html (builder + preview) and student.html (answering), so both
 // pages draw and read the questions exactly the same way.
@@ -28,6 +29,11 @@ export const TYPE_LABELS = {
 };
 export const typeLabel = t => (TYPE_LABELS[t] ? T(TYPE_LABELS[t][0], TYPE_LABELS[t][1]) : t);
 export const DROPFILL_DEFAULT_TEXT = () => T('Choose the correct answer for each blank.');
+export const DRAGFILL_DEFAULT_TEXT = () => T('Drag the right word into each blank.', 'ས་སྟོང་རེ་རེ་ནང་ཚིག་ཁག་ཏོ་འདྲུད་ཏེ་བཞག');
+/** True for the "drag words into the blanks" version of a fill-the-blanks question */
+export const isDragFill = q => !!q && q.type === 'dropfill' && !!q.drag;
+export const typeLabelFor = q => (isDragFill(q) ? T('Drag & drop (fill the blanks)', 'འདྲུད་ནི་དང་བཞག་ནི། (ས་སྟོང་བཀང་)') : typeLabel(q && q.type));
+const blankCount = q => (String(q.template || '').match(/\{\{\d+\}\}/g) || []).length;
 
 // ── small helpers ────────────────────────────────────────────────────────
 const norm = s => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
@@ -63,6 +69,7 @@ export function defaultSq(type) {
   if (type === 'matching') return { pairs: [{ l: '', r: '' }, { l: '', r: '' }, { l: '', r: '' }], extras: '' };
   if (type === 'dragdrop') return { groups: ['', ''], items: [{ t: '', g: 0 }, { t: '', g: 0 }, { t: '', g: 1 }, { t: '', g: 1 }] };
   if (type === 'dropfill') return { passage: '', wrong: [] };
+  if (type === 'dragfill') return { passage: '', wrong: [], extras: '' };
   return null;
 }
 
@@ -101,6 +108,10 @@ export function buildForSave(q) {
     const template = passage.replace(/\[\[([^\]]+?)\]\]/g, (m, a) => { correct.push(a.trim()); return '{{' + (correct.length - 1) + '}}'; });
     if (!correct.length) return { error: T('Write the passage and put each correct answer inside double brackets, like [[answer]].') };
     if (correct.some(c => !c)) return { error: T('A blank in the passage is empty.') };
+    if (q.drag) {   // drag the words into the blanks: one shared word bank (every correct word + the extra wrong words)
+      const bank = scrambled([...correct, ...splitList(sq.extras)], q.id + '|bank');
+      return { item: { ...base, text: base.text || DRAGFILL_DEFAULT_TEXT(), template, blanks: correct.map(() => ({ options: [] })), drag: true, bank }, key: JSON.stringify(correct) };
+    }
     const blanks = correct.map((c, i) => ({ options: shuffleDet(unique([c, ...splitList((sq.wrong || [])[i])]), q.id + '|' + i) }));
     return { item: { ...base, text: base.text || DROPFILL_DEFAULT_TEXT(), template, blanks }, key: JSON.stringify(correct) };
   }
@@ -125,8 +136,15 @@ export function fromSaved(q, keyVal) {
   } else if (q.type === 'dropfill') {
     const blanks = q.blanks || [];
     const passage = String(q.template || '').replace(/\{\{(\d+)\}\}/g, (m, i) => '[[' + ((k && k[Number(i)]) || '?') + ']]');
-    const wrong = blanks.map((b, i) => (b.options || []).filter(o => !k || norm(o) !== norm(k[i])).join(', '));
-    out.sq = { passage, wrong };
+    if (q.drag) {
+      out.drag = true;
+      const left = (q.bank || []).slice();
+      (k || []).forEach(c => { const at = left.findIndex(w => norm(w) === norm(c)); if (at >= 0) left.splice(at, 1); });   // what is left over = the extra wrong words
+      out.sq = { passage, wrong: [], extras: left.join(', ') };
+    } else {
+      const wrong = blanks.map((b, i) => (b.options || []).filter(o => !k || norm(o) !== norm(k[i])).join(', '));
+      out.sq = { passage, wrong };
+    }
   }
   return out;
 }
@@ -135,9 +153,10 @@ export function fromSaved(q, keyVal) {
 const ic = (act, j, label, extra = '') => `<button type="button" class="sqb-btn" data-sq-act="${act}" data-j="${j}" ${extra}>${label}</button>`;
 const hint = s => `<div class="sqb-hint">${s}</div>`;
 
-function blanksHtml(sq) {
+function blanksHtml(sq, drag) {
   const found = [...String(sq.passage || '').matchAll(/\[\[([^\]]+?)\]\]/g)].map(m => m[1].trim());
   if (!found.length) return `<div class="sqb-hint">${T('No blanks yet. Put each correct answer inside double brackets: [[answer]].')}</div>`;
+  if (drag) return `<div class="sqb-row" style="flex-wrap:wrap">${found.map((c, j) => `<span class="sqb-n">${j + 1}</span><b class="sqb-ans">${esc(c)}</b>`).join('')}</div>`;
   return found.map((c, j) => `<div class="sqb-row"><span class="sqb-n">${j + 1}</span><b class="sqb-ans">${esc(c)}</b>
     <input data-sq-f="wrong" data-j="${j}" value="${esc((sq.wrong || [])[j] || '')}" placeholder="${T('Wrong choices for this blank (comma separated)…')}"/></div>`).join('');
 }
@@ -174,6 +193,14 @@ export function builderHtml(q) {
         <select data-sq-f="dg" data-j="${j}">${sq.groups.map((g, gi) => `<option value="${gi}" ${it.g === gi ? 'selected' : ''}>${esc(g.trim() || (T('Group') + ' ' + (gi + 1)))}</option>`).join('')}</select>${ic('dtem-del', j, '✕')}</div>`).join('')}
       <button type="button" class="sqb-btn" data-sq-act="dtem-add">${T('＋ Add item')}</button></div>`;
   }
+  if (q.type === 'dropfill' && q.drag) {
+    return `<div class="sqb" data-sqb="dropfill">
+      ${hint(T('Write the passage and put each correct word in <b>[[double brackets]]</b>. Students <b>drag</b> the words from a word bank into the blanks. The text above is just an instruction (optional).'))}
+      <textarea data-sq-f="passage" rows="4" placeholder="${T('Example: The [[sun]] rises in the [[east]].')}">${esc(sq.passage || '')}</textarea>
+      <div class="sqb-sub">${T('Blanks (correct words)')}</div>
+      <div data-sq-blanks>${blanksHtml(sq, true)}</div>
+      <input data-sq-f="extras" value="${esc(sq.extras || '')}" placeholder="${T('Extra wrong words for the word bank (optional, comma separated)…')}" style="margin-top:.4rem"/></div>`;
+  }
   if (q.type === 'dropfill') {
     return `<div class="sqb" data-sqb="dropfill">
       ${hint(T('Write the passage and put each correct answer in <b>[[double brackets]]</b>. Each blank becomes a box with a dropdown. The text above is just an instruction (optional).'))}
@@ -206,7 +233,7 @@ export function wireStructuredBuilder(container, getQuestions, rerender) {
     else if (f === 'passage') {
       sq.passage = v;
       const box = e.target.closest('.sqb').querySelector('[data-sq-blanks]');
-      if (box) box.innerHTML = blanksHtml(sq);
+      if (box) box.innerHTML = blanksHtml(sq, q.drag);
     }
   });
   container.addEventListener('change', e => {            // group names feed the item dropdowns -> redraw when finished typing
@@ -275,6 +302,30 @@ function currentOrder(q, value) {
   return (a && sameMultiset(a, q.items || [])) ? a : (q.items || []).slice();
 }
 
+// ── drag the words into the blanks ──
+// The answer is stored exactly like the dropdown version: a list with the chosen word for each blank.
+// The word bank (q.bank) holds every correct word plus the extra wrong words, in a fixed mixed-up order.
+function bankState(q, value) {
+  const bank = q.bank || [], n = blankCount(q), a = parseArr(value) || [];
+  const used = bank.map(() => false), slotChip = [], placed = [];
+  for (let i = 0; i < n; i++) {
+    const w = a[i] || '';
+    const k = w ? bank.findIndex((b, j) => !used[j] && b === w) : -1;
+    if (k >= 0) used[k] = true;
+    slotChip.push(k); placed.push(k >= 0 ? w : '');
+  }
+  return { bank, n, used, slotChip, placed };
+}
+function dragFillHtml(q, value, ro) {
+  const st = bankState(q, value), dis = ro ? 'disabled' : '';
+  const free = st.bank.map((w, k) => k).filter(k => !st.used[k]);
+  const chip = (k, from) => `<button type="button" class="sq-chip" data-sq-bchip="${k}" ${from == null ? '' : `data-sq-from="${from}"`} ${dis}>${esc(st.bank[k])}</button>`;
+  const blank = i => `<span class="sq-dblank${st.slotChip[i] >= 0 ? ' filled' : ''}" data-sq-bz="${i}"><i class="sq-dn">${i + 1}</i>${st.slotChip[i] >= 0 ? chip(st.slotChip[i], i) : ''}</span>`;
+  return `<div class="sq-dtext">${String(q.template || '').split(/\{\{(\d+)\}\}/).map((p, k) => k % 2 === 0 ? esc(p).replace(/\n/g, '<br>') : blank(Number(p))).join('')}</div>
+    <div class="sq-bank" data-sq-bz="-1">${free.length ? free.map(k => chip(k)).join('') : `<span class="sq-empty">${T('All words placed ✓')}</span>`}</div>
+    ${ro ? '' : `<div class="sq-help">${T('Drag each word into a blank (or tap a word, then tap a blank). Tap a placed word to take it back.')}</div>`}`;
+}
+
 function innerHtml(q, value, ro) {
   const dis = ro ? 'disabled' : '';
   if (q.type === 'ordering') {
@@ -299,6 +350,7 @@ function innerHtml(q, value, ro) {
         <div class="sq-gdrop">${items.map((t, i) => i).filter(i => where(i) === gi).map(chip).join('')}</div></div>`).join('')}</div>
       ${ro ? '' : `<div class="sq-help">${T('Drag each item into its group (or tap an item, then tap a group).')}</div>`}`;
   }
+  if (q.type === 'dropfill' && q.drag) return dragFillHtml(q, value, ro);
   if (q.type === 'dropfill') {
     const a = parseArr(value) || [];
     const sel = i => `<span class="sq-blank"><select data-sq-sel="${i}" ${dis}><option value="">${T('— choose —', '— གདམ་ཁ —')}</option>${(((q.blanks || [])[i] || {}).options || []).map(o => `<option value="${esc(o)}" ${a[i] === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></span>`;
@@ -346,6 +398,14 @@ export function wireWidgets(root, handlers) {
     arr[idx] = zone < 0 ? '' : (c.q.options || [])[zone] || '';
     write(c, arr);
   };
+  const placeWord = (c, k, from, to) => {      // k = word in the bank, from = blank it came from (-1 = bank), to = blank (-1 = back to the bank)
+    if (from === to) return;
+    const st = bankState(c.q, read(c)), arr = st.placed.slice(), word = (c.q.bank || [])[k];
+    if (word == null) return;
+    if (to >= 0) { const prev = arr[to]; arr[to] = word; if (from >= 0) arr[from] = prev || ''; }
+    else if (from >= 0) arr[from] = '';
+    write(c, arr);
+  };
   const moveItem = (c, from, to) => {
     const order = currentOrder(c.q, read(c));
     if (to < 0 || to >= order.length || from === to) return;
@@ -372,6 +432,24 @@ export function wireWidgets(root, handlers) {
       moveItem(c, i, i + Number(mv.getAttribute('data-sq-move')));
       return;
     }
+    const bchip = e.target.closest && e.target.closest('[data-sq-bchip]');
+    if (bchip) {                                                   // word-bank chip (drag into the blanks)
+      const c = ctxOf(bchip); if (!c || c.ro) return;
+      const k = Number(bchip.getAttribute('data-sq-bchip')), fa = bchip.getAttribute('data-sq-from'), from = fa == null ? -1 : Number(fa);
+      const holding = SEL && SEL.bank && SEL.scope === c.scope && SEL.qid === c.qid ? SEL : null;
+      c.w.querySelectorAll('.sq-sel').forEach(n => n.classList.remove('sq-sel'));
+      if (holding && holding.k === k && holding.from === from) { SEL = null; return; }                 // tapped it again: let go
+      if (holding && from >= 0) { SEL = null; placeWord(c, holding.k, holding.from, from); return; }    // put the held word on this (filled) blank
+      if (!holding && from >= 0) { SEL = null; placeWord(c, k, from, -1); return; }                      // tap a placed word: back to the bank
+      SEL = { scope: c.scope, qid: c.qid, bank: true, k, from }; bchip.classList.add('sq-sel');
+      return;
+    }
+    const bz = e.target.closest && e.target.closest('[data-sq-bz]');
+    if (bz && SEL && SEL.bank) {
+      const c = ctxOf(bz);
+      if (c && !c.ro && SEL.scope === c.scope && SEL.qid === c.qid) { const s = SEL; SEL = null; placeWord(c, s.k, s.from, Number(bz.getAttribute('data-sq-bz'))); }
+      return;
+    }
     const chip = e.target.closest && e.target.closest('[data-sq-chip]');
     if (chip) {
       const c = ctxOf(chip); if (!c || c.ro) return;
@@ -394,10 +472,11 @@ export function wireWidgets(root, handlers) {
     const c = ctxOf(h); if (!c || c.ro) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     const isOrder = h.hasAttribute('data-sq-handle');
+    const isBank = h.hasAttribute('data-sq-bchip');
     const src = isOrder ? h.closest('.sq-oitem') : h;
     const sx = e.clientX, sy = e.clientY;
     let ghost = null, dragging = false;
-    const targetAt = (x, y) => { const el = document.elementFromPoint(x, y); return el ? el.closest(isOrder ? '.sq-oitem' : '[data-sq-zone]') : null; };
+    const targetAt = (x, y) => { const el = document.elementFromPoint(x, y); return el ? el.closest(isOrder ? '.sq-oitem' : isBank ? '[data-sq-bz]' : '[data-sq-zone]') : null; };
     const clearOver = () => c.w.querySelectorAll('.sq-over').forEach(n => n.classList.remove('sq-over'));
     const cleanup = () => {
       window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel);
@@ -423,6 +502,7 @@ export function wireWidgets(root, handlers) {
       suppressUntil = Date.now() + 350;
       if (!t || !c.w.contains(t)) return;
       if (isOrder) moveItem(c, Number(src.getAttribute('data-sq-i')), Number(t.getAttribute('data-sq-i')));
+      else if (isBank) { SEL = null; const fa = src.getAttribute('data-sq-from'); placeWord(c, Number(src.getAttribute('data-sq-bchip')), fa == null ? -1 : Number(fa), Number(t.getAttribute('data-sq-bz'))); }
       else place(c, Number(src.getAttribute('data-sq-chip')), Number(t.getAttribute('data-sq-zone')));
     };
     const cancel = () => cleanup();
@@ -438,7 +518,7 @@ export function itemsFromBuilder(list) {
   const items = [], errors = [];
   (list || []).forEach((q, n) => {
     let text = String(q.text || '').trim();
-    if (q.type === 'dropfill' && !text) text = DROPFILL_DEFAULT_TEXT();
+    if (q.type === 'dropfill' && !text) text = q.drag ? DRAGFILL_DEFAULT_TEXT() : DROPFILL_DEFAULT_TEXT();
     if (!text) return;
     if (isStructured(q.type)) {
       const r = buildForSave({ ...q, text });
@@ -573,7 +653,11 @@ export function openQuestionPreview(items, opts = {}) {
 .sq-blank select{appearance:none;-webkit-appearance:none;border:0;background:transparent;color:var(--text,inherit);font:inherit;padding:.35rem 1.9rem .35rem .6rem;min-width:130px;width:100%;cursor:pointer;
   background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 15px) 55%,calc(100% - 10px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
 .sq-blank select option{color:#111;background:#fff}
-.sq-dtext{line-height:2.4}
+.sq-dtext{line-height:2.6}
+.sq-dblank{display:inline-flex;align-items:center;gap:.3rem;min-width:7.5rem;min-height:2.3rem;padding:.12rem .35rem;border:1.5px dashed var(--gold,#00bfff);border-radius:10px;vertical-align:middle;margin:0 .15rem;background:var(--input-bg,rgba(127,127,127,.06))}
+.sq-dblank.filled{border-style:solid;background:transparent}
+.sq-dn{font-size:.65rem;opacity:.6;font-style:normal;min-width:.9rem;text-align:center}
+.sq-dtext+.sq-bank{margin-top:.7rem}
 .sq-bank,.sq-gdrop{display:flex;flex-wrap:wrap;gap:.45rem;min-height:2.6rem;padding:.5rem;border:1.5px dashed var(--border,#3a4a66);border-radius:10px}
 .sq-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem;margin-top:.6rem}
 .sq-group{border:1.5px solid var(--border,#3a4a66);border-radius:12px;padding:.45rem;background:var(--surface2,rgba(127,127,127,.06))}

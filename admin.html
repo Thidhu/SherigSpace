@@ -505,7 +505,7 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
-import { classifyUrl } from './assignment-utils.js';
+import { classifyUrl, autoThumbFor } from './assignment-utils.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -1001,19 +1001,8 @@ function isValidUrl(u){
 // The thumbnail is always stored as one plain URL in thumbnail_url. The form just
 // decides how that URL is chosen: automatically from the link/file, from an image
 // the admin supplies, or not at all.
-function autoThumbFor(url){
-  if(!url) return '';
-  const c = classifyUrl(url);
-  if(c.kind === 'video' && c.embed && c.embed.indexOf('youtube-nocookie.com/embed/') >= 0){
-    return 'https://img.youtube.com/vi/' + c.embed.split('/embed/')[1] + '/hqdefault.jpg';
-  }
-  if(c.media === 'image') return url;
-  if((c.kind === 'file' || c.kind === 'doc') && c.embed){
-    const m = c.embed.match(/\/d\/([\w-]+)/);
-    if(m && m[1] !== 'e') return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600';
-  }
-  return '';
-}
+// autoThumbFor() comes from assignment-utils.js, so the admin form, the public site and
+// the student pages all make exactly the same automatic thumbnail.
 function inferThumbMode(url, thumb, isExisting){
   const auto = autoThumbFor(url);
   if(!isExisting) return 'auto';

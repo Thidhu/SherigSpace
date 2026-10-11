@@ -330,7 +330,7 @@ const jsq=v=>esc(JSON.stringify(String(v==null?'':v)));
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions } from './assignment-utils.js';
 import { importQuestionsFromFile, downloadQuestionTemplate } from './question-import.js';
-import { isStructured, defaultSq, buildForSave, fromSaved, builderHtml, wireStructuredBuilder, itemsFromBuilder, openQuestionPreview, answerText, checkAnswer } from './question-types.js';
+import { isStructured, isDragFill, typeLabelFor, defaultSq, buildForSave, fromSaved, builderHtml, wireStructuredBuilder, itemsFromBuilder, openQuestionPreview, answerText, checkAnswer } from './question-types.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 
@@ -1269,21 +1269,23 @@ window.deleteStudent = async function(id){
 let v2 = null; // { extras: attachments/questions/answers/score columns exist, keys: assignment_keys table exists }
 async function ensureV2(){
   if(v2) return v2;
-  const [a, s, k, sh, sc, dr, op] = await Promise.all([
+  const [a, s, k, sh, sc, dr, op, tl, tt] = await Promise.all([
     supabase.from('assignments').select('attachments,questions').limit(1),
     supabase.from('assignment_status').select('answers,score').limit(1),
     supabase.from('assignment_keys').select('assignment_id').limit(1),
     supabase.from('assignments').select('shuffle_questions,shuffle_options').limit(1),
     supabase.from('assignments').select('publish_at').limit(1),
     supabase.from('assignments').select('is_draft,reminded_at').limit(1),
-    supabase.from('assignments').select('allow_edit,show_results').limit(1)
+    supabase.from('assignments').select('allow_edit,show_results').limit(1),
+    supabase.from('assignments').select('time_limit_minutes,time_limit_kind').limit(1),
+    supabase.from('assignment_timers').select('assignment_id').limit(1)
   ]);
-  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error, sched: !sc.error, drafts: !dr.error, opts: !op.error };
+  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error, sched: !sc.error, drafts: !dr.error, opts: !op.error, timer: !tl.error && !tt.error };
   return v2;
 }
 
-const Q_TYPE_LABEL_DZ = { short:'ལན་ཐུང་ཀུ', long:'དོན་ཚན།', choice:'གདམ་ཁ་མང་པོ།', truefalse:'བདེན་/རྫུན།', fillblank:'ས་སྟོང་བཀང་བ།', image:'པར་གྱི་དྲི་བ།', audio:'སྒྲའི་དྲི་བ།', ordering:'རིམ་པ་བཀོད་པ།', matching:'མཐུན་སྒྲིག', dragdrop:'འདྲུད་ནི་དང་བཞག་ནི།', dropfill:'ས་སྟོང་བཀང་ (གདམ་ཁ་)' };
-const Q_TYPE_LABEL = new Proxy({ short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False', fillblank:'Fill in the blank', image:'Image question', audio:'Audio question', ordering:'Order / Sequence', matching:'Matching', dragdrop:'Drag & drop', dropfill:'Fill blanks (dropdown)' }, {
+const Q_TYPE_LABEL_DZ = { short:'ལན་ཐུང་ཀུ', long:'དོན་ཚན།', choice:'གདམ་ཁ་མང་པོ།', truefalse:'བདེན་/རྫུན།', fillblank:'ས་སྟོང་བཀང་བ།', image:'པར་གྱི་དྲི་བ།', audio:'སྒྲའི་དྲི་བ།', ordering:'རིམ་པ་བཀོད་པ།', matching:'མཐུན་སྒྲིག', dragdrop:'སྡེ་ཚན་ནང་བཀོད་', dropfill:'ས་སྟོང་བཀང་ (གདམ་ཁ་)' };
+const Q_TYPE_LABEL = new Proxy({ short:'Short answer', long:'Paragraph', choice:'Multiple choice', truefalse:'True / False', fillblank:'Fill in the blank', image:'Image question', audio:'Audio question', ordering:'Order / Sequence', matching:'Matching', dragdrop:'Sort into groups', dropfill:'Fill blanks (dropdown)' }, {
   get(target, key){ return T(target[key], Q_TYPE_LABEL_DZ[key]); }
 });
 let taskAttachments = []; // [{ url, label, type, resource_key, interactiveQuestions }]
@@ -1331,6 +1333,7 @@ async function renderAssignments(){
       attCount ? '📎 ' + attCount + ' ' + T('resource'+(attCount>1?'s':''),'ཡིག་ཆ') : '',
       qCount ? '❓ ' + qCount + ' ' + T('question'+(qCount>1?'s':''),'དྲི་བ') : '',
       (doneBy[a.id]||0) + '/' + (totalStudents||0) + ' ' + T('completed','མཇུག་བསྡུ་ཡོད'),
+      a.time_limit_minutes ? '⏱ ' + a.time_limit_minutes + ' ' + T('min','སྐར་མ') : '',
       a.allow_edit === false ? '🧪 ' + T('One attempt','One attempt') : '',
       a.show_results === false ? '🙈 ' + T('Results hidden','Results hidden') : '',
       lateBy[a.id] ? '<span style="color:#e5252a">⏰ ' + lateBy[a.id] + ' ' + T('late','late') + '</span>' : ''
@@ -1538,7 +1541,8 @@ window.openAssignmentForm = async function(editId){
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('audio')">${T('＋ Audio question','＋ སྒྲའི་དྲི་བ')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('ordering')">${T('＋ Order / Sequence','＋ རིམ་པ་བཀོད་པ།')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('matching')">${T('＋ Matching','＋ མཐུན་སྒྲིག')}</button>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('dragdrop')">${T('＋ Drag & drop','＋ འདྲུད་ནི་དང་བཞག་ནི།')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('dragfill')">${T('＋ Drag & drop (fill blanks)','＋ འདྲུད་ནི་དང་བཞག་ནི། (ས་སྟོང་བཀང་)')}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('dragdrop')">${T('＋ Sort into groups','＋ སྡེ་ཚན་ནང་བཀོད་')}</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('dropfill')">${T('＋ Fill blanks (dropdown)','＋ ས་སྟོང་བཀང་ (གདམ་ཁ་)')}</button>
         <input type="file" id="f-q-import" accept=".docx,.xlsx,.xls,.csv" style="display:none" onchange="importQuestionsChosen(event)"/>
         <button type="button" class="btn btn-gold btn-sm" onclick="document.getElementById('f-q-import').click()" title="Add questions from a Word (.docx) or Excel (.xlsx, .csv) file on your computer">📥 ${T('Import Word / Excel','Import Word / Excel')}</button>
@@ -1574,6 +1578,19 @@ window.openAssignmentForm = async function(editId){
       <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text);margin:.25rem 0"><input type="checkbox" id="f-show-results" checked style="width:auto;flex:none;margin:0;accent-color:var(--gold)"/> 👁 ${T('Students can see their answers and score after submitting','Students can see their answers and score after submitting')}</label>
       <div style="font-size:.74rem;color:var(--text2);margin-top:.3rem">${T('Unchecked = test mode: one attempt, and results stay hidden until you mark the work as reviewed.','Unchecked = test mode: one attempt, and results stay hidden until you mark the work as reviewed.')}</div>
     </div>` : ''}
+    ${cfg.timer ? `<div class="field"><label>⏱ ${T('Time limit (optional)','དུས་ཚོད་ཚད་བཀག (དགོས་མཁོ་མེད་ཡང་རུང)')}</label>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+        <input type="number" id="f-time-limit" min="1" max="600" step="1" placeholder="${T('No limit','ཚད་བཀག་མེད')}" style="width:130px;flex:none"/>
+        <span style="font-size:.85rem;color:var(--text2)">${T('minutes','སྐར་མ')}</span>
+        <select id="f-time-kind" style="width:auto;flex:none">
+          <option value="test">${T('Start button says: Test','Start button says: Test')}</option>
+          <option value="quiz">${T('Start button says: Quiz','Start button says: Quiz')}</option>
+          <option value="exam">${T('Start button says: Exam','Start button says: Exam')}</option>
+          <option value="task">${T('Start button says: Task','Start button says: Task')}</option>
+        </select>
+      </div>
+      <div style="font-size:.74rem;color:var(--text2);margin-top:.35rem">${T('Students first see a "Start" button. The countdown begins when they press it (it keeps running even if they refresh or close the page), and when it reaches zero their answers are submitted automatically. A timed task can only be done once. Leave empty for no time limit.','Students first see a "Start" button. The countdown begins when they press it (it keeps running even if they refresh or close the page), and when it reaches zero their answers are submitted automatically. A timed task can only be done once. Leave empty for no time limit.')}</div>
+    </div>` : `<div style="font-size:.76rem;color:var(--text2);margin:-.2rem 0 .9rem">⏱ Time limits need one setup step: run <b>TIMED_TASKS_SETUP.sql</b> in Supabase (SQL Editor), then reload this page.</div>`}
   `;
 
   // Prefill when editing
@@ -1594,6 +1611,7 @@ window.openAssignmentForm = async function(editId){
     }
     if(cfg.drafts && existing.is_draft) document.getElementById('f-publish-mode').value = 'draft';
     if(cfg.opts){ document.getElementById('f-allow-edit').checked = existing.allow_edit !== false; document.getElementById('f-show-results').checked = existing.show_results !== false; }
+    if(cfg.timer){ document.getElementById('f-time-limit').value = existing.time_limit_minutes || ''; document.getElementById('f-time-kind').value = existing.time_limit_kind || 'test'; }
   } else {
     await loadTlmOptions();
   }
@@ -1620,6 +1638,13 @@ window.openAssignmentForm = async function(editId){
     if(cfg.opts){
       payload.allow_edit = !!(document.getElementById('f-allow-edit') || {}).checked;
       payload.show_results = !!(document.getElementById('f-show-results') || {}).checked;
+    }
+    if(cfg.timer){
+      const mins = parseInt(fv('f-time-limit'), 10);
+      if(fv('f-time-limit') && (!(mins >= 1) || mins > 600)){ toast(T('Time limit: enter a number of minutes from 1 to 600, or leave it empty.','Time limit: enter a number of minutes from 1 to 600, or leave it empty.'), true); return; }
+      if(mins >= 1 && taskAttachments.some(x => x.interactive)){ toast(T('A time limit cannot be used together with an interactive video. Remove one of them.','A time limit cannot be used together with an interactive video. Remove one of them.'), true); return; }
+      payload.time_limit_minutes = mins >= 1 ? mins : null;
+      payload.time_limit_kind = mins >= 1 ? (fv('f-time-kind') || 'test') : null;
     }
     if(cfg.sched){
       const mode = fv('f-publish-mode');
@@ -1658,7 +1683,7 @@ window.openAssignmentForm = async function(editId){
       const qs = [];
       for(const q of taskQuestions){
         let text = q.text.trim();
-        if(!text && q.type === 'dropfill') text = 'Choose the correct answer for each blank.';
+        if(!text && q.type === 'dropfill') text = q.drag ? 'Drag the right word into each blank.' : 'Choose the correct answer for each blank.';
         if(!text) continue;
         const item = { id: q.id, type: q.type, text };
         if(isStructured(q.type)){
@@ -1789,8 +1814,10 @@ window.previewSavedTask = async function(id){
 
 // ── Question builder ──
 window.addQuestion = function(type){
-  const options = type === 'choice' ? ['',''] : type === 'truefalse' ? ['True', 'False'] : [];
-  taskQuestions.push({ id: newQid(), type, text: '', options, correct: null, accepted: '', media_url: '', points: 1, ...(isStructured(type) ? { sq: defaultSq(type) } : {}) });
+  const drag = type === 'dragfill';            // "Drag & drop (fill blanks)" is a fill-the-blanks question answered by dragging words
+  const realType = drag ? 'dropfill' : type;
+  const options = realType === 'choice' ? ['',''] : realType === 'truefalse' ? ['True', 'False'] : [];
+  taskQuestions.push({ id: newQid(), type: realType, text: '', options, correct: null, accepted: '', media_url: '', points: 1, ...(drag ? { drag: true } : {}), ...(isStructured(realType) ? { sq: defaultSq(type) } : {}) });
   renderQuestionBuilder();
   const last = document.querySelector('#q-builder .qb:last-child [data-q-text]');
   if(last) last.focus();
@@ -1802,7 +1829,7 @@ function renderQuestionBuilder(){
   el.innerHTML = taskQuestions.length ? taskQuestions.map((q,i)=>`
     <div class="qb" data-qi="${i}">
       <div class="qb-head">
-        <b>${T('Question','དྲི་བ')} ${i+1}</b><span class="qb-type">${esc(Q_TYPE_LABEL[q.type])}</span>
+        <b>${T('Question','དྲི་བ')} ${i+1}</b><span class="qb-type">${esc(isDragFill(q) ? typeLabelFor(q) : Q_TYPE_LABEL[q.type])}</span>
         <span class="qb-tools">
           <button type="button" class="btn btn-ghost btn-sm" data-q-preview title="${T('Preview this question','དྲི་བ་འདི་སྔོན་བལྟ།')}">👁</button>
           <button type="button" class="btn btn-ghost btn-sm" data-q-up title="${T('Move up','ཡར་སྤོ')}" ${i===0?'disabled':''}>↑</button>
@@ -1899,7 +1926,7 @@ window.importQuestionsChosen = async function(ev){
 // ── Question Bank ──
 let questionBankItems = [];
 function questionBankClone(q){
-  return { id:newQid(), type:q.type||'short', ...(q.sq ? { sq: JSON.parse(JSON.stringify(q.sq)) } : {}), text:q.text||'', options:Array.isArray(q.options)?q.options.slice():[], correct:q.correct==null?null:Number(q.correct), accepted:Array.isArray(q.accepted_answers)?q.accepted_answers.join(', '):(q.accepted||''), media_url:q.media_url||'', points:Math.max(0,Number(q.points??1)||0) };
+  return { id:newQid(), type:q.type||'short', ...(q.drag ? { drag:true } : {}), ...(q.sq ? { sq: JSON.parse(JSON.stringify(q.sq)) } : {}), text:q.text||'', options:Array.isArray(q.options)?q.options.slice():[], correct:q.correct==null?null:Number(q.correct), accepted:Array.isArray(q.accepted_answers)?q.accepted_answers.join(', '):(q.accepted||''), media_url:q.media_url||'', points:Math.max(0,Number(q.points??1)||0) };
 }
 function bankTopicForItem(x){ return String(x.topic||'General').trim() || 'General'; }
 window.openQuestionBank = async function(){
@@ -1926,7 +1953,7 @@ function renderQuestionBank(){
   const rows=questionBankItems.filter(x=>{ const q=x.question||{}; const hay=[q.text||'',x.topic||'',x.class_level||'',Q_TYPE_LABEL[q.type]||''].join(' ').toLowerCase(); return (!search||hay.includes(search))&&(!type||q.type===type)&&(!topic||bankTopicForItem(x)===topic); });
   document.getElementById('qbank-count').textContent=`${rows.length} question${rows.length===1?'':'s'} found`;
   const list=document.getElementById('qbank-list');
-  list.innerHTML=rows.length?rows.map(x=>{const q=x.question||{}; return `<div class="qbank-card"><label class="qbank-select"><input type="checkbox" data-bank-check="${esc(x.id)}"/><span><b>${esc(Q_TYPE_LABEL[q.type]||q.type||'Question')}</b><div class="qbank-preview">${esc(q.text||'Untitled question')}</div><div class="qbank-meta">${esc(bankTopicForItem(x))} · ${esc(x.class_level||'All classes')} · ${esc(q.points??1)} pt</div></span></label><div class="qbank-actions"><button class="btn btn-ghost btn-sm" data-bank-add="${esc(x.id)}">＋ Add</button><button class="btn btn-del btn-sm" data-bank-delete="${esc(x.id)}">Delete</button></div></div>`;}).join(''):`<div class="empty" style="grid-column:1/-1"><div class="ei">📚</div><p>No saved questions match your filters.</p></div>`;
+  list.innerHTML=rows.length?rows.map(x=>{const q=x.question||{}; return `<div class="qbank-card"><label class="qbank-select"><input type="checkbox" data-bank-check="${esc(x.id)}"/><span><b>${esc(q.drag ? typeLabelFor(q) : (Q_TYPE_LABEL[q.type]||q.type||'Question'))}</b><div class="qbank-preview">${esc(q.text||'Untitled question')}</div><div class="qbank-meta">${esc(bankTopicForItem(x))} · ${esc(x.class_level||'All classes')} · ${esc(q.points??1)} pt</div></span></label><div class="qbank-actions"><button class="btn btn-ghost btn-sm" data-bank-add="${esc(x.id)}">＋ Add</button><button class="btn btn-del btn-sm" data-bank-delete="${esc(x.id)}">Delete</button></div></div>`;}).join(''):`<div class="empty" style="grid-column:1/-1"><div class="ei">📚</div><p>No saved questions match your filters.</p></div>`;
 }
 function bankSelectedIds(){ return [...document.querySelectorAll('[data-bank-check]:checked')].map(x=>x.getAttribute('data-bank-check')); }
 function addBankItems(ids){ const picked=questionBankItems.filter(x=>ids.includes(String(x.id))); picked.forEach(x=>taskQuestions.push(questionBankClone(x.question||{}))); renderQuestionBuilder(); if(picked.length) toast(`${picked.length} question${picked.length===1?'':'s'} added ✓`); return picked.length; }
@@ -1943,7 +1970,7 @@ async function saveQuestionToBank(q){
   if(!me) return; const text=String(q.text||'').trim(); if(!text){ toast('Type the question before saving it.',true); return; }
   const topic=prompt('Topic/category for this question:', 'General'); if(topic===null) return; let classLevel='';
   try{ const {data}=await supabase.from('classes').select('class_level,name').eq('id',currentClassId).maybeSingle(); classLevel=data?.class_level||data?.name||''; }catch{}
-  const payload={teacher_id:me.id,class_level:classLevel,topic:String(topic).trim()||'General',question:{type:q.type,sq:q.sq||null,text,options:Array.isArray(q.options)?q.options:[],correct:q.correct==null?null:q.correct,accepted:q.accepted||'',accepted_answers:String(q.accepted||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean),media_url:q.media_url||'',points:Math.max(0,Number(q.points??1)||0)}};
+  const payload={teacher_id:me.id,class_level:classLevel,topic:String(topic).trim()||'General',question:{type:q.type,...(q.drag?{drag:true}:{}),sq:q.sq||null,text,options:Array.isArray(q.options)?q.options:[],correct:q.correct==null?null:q.correct,accepted:q.accepted||'',accepted_answers:String(q.accepted||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean),media_url:q.media_url||'',points:Math.max(0,Number(q.points??1)||0)}};
   const {error}=await supabase.from('question_bank').insert(payload); if(error) toast('Could not save to question bank: '+error.message,true); else toast('Saved to Question Bank ✓');
 }
 
@@ -2005,7 +2032,8 @@ window.viewAnswers = async function(assignmentId){
 
     const hasAnswer = answeredQ || (r.answer_text || '').trim() || links.length || paths.length;
     const badge = hasAnswer ? `<span class="ans-badge sub">✓ ${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</span>` : `<span class="ans-badge plain">● ${T('Marked complete','མཇུག་བསྡུ་སྦེ་རྟགས་བཞག')}</span>`;
-    const late = asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ` <span class="ans-badge none">⏰ ${T('Late','དུས་ལས་བརྒལ')}</span>` : '';
+    const late = (asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ` <span class="ans-badge none">⏰ ${T('Late','དུས་ལས་བརྒལ')}</span>` : '')
+      + (Number(r.over_time_seconds) > 60 ? ` <span class="ans-badge none">⏱ ${T('Finished','Finished')} ${Math.ceil(Number(r.over_time_seconds) / 60)} ${T('min after time was up','min after time was up')}</span>` : '');
 
     return `<div class="ans-card">
       <div class="ans-head"><b>${esc(st.display_name)}</b><span>${badge}${late}</span>

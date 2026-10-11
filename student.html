@@ -135,6 +135,20 @@ main{max-width:860px}
 a.tk-link{color:var(--gold-text,var(--gold));text-decoration:underline;overflow-wrap:anywhere}
 .tk-lock{display:flex;gap:.6rem;align-items:flex-start;padding:.7rem .9rem;border-radius:10px;border:1px solid rgba(76,175,132,.35);background:rgba(76,175,132,.1);color:var(--ok-text,#7ed9b0);font-size:.84rem;line-height:1.5;margin-bottom:.7rem}
 .tk-note{font-size:.8rem;color:var(--ok-text,#7ed9b0);margin-bottom:.6rem}
+/* timed tasks (countdown, like Moodle) */
+.tm-start{text-align:center;padding:1.4rem 1rem!important}
+.tm-start .tm-ico{font-size:2.3rem;line-height:1}
+.tm-start .answer-sub{max-width:34rem;margin:.45rem auto 1rem;line-height:1.55}
+.tm-bar{display:flex;align-items:center;gap:.4rem .8rem;flex-wrap:wrap;padding:.6rem .85rem;margin-bottom:.9rem;border:1px solid var(--border);border-radius:10px;background:rgba(127,127,127,.08);font-weight:600}
+.tm-bar b{font-variant-numeric:tabular-nums;font-size:1.3rem;letter-spacing:.02em}
+.tm-bar .tm-hint{font-weight:400;font-size:.76rem;color:var(--text2)}
+.tm-track{flex:1 1 100%;height:6px;border-radius:99px;background:rgba(127,127,127,.22);overflow:hidden}
+.tm-track i{display:block;height:100%;background:var(--ok,#4caf84);transition:width 1s linear}
+.tm-bar.tm-warn b{color:#e8a317}.tm-bar.tm-warn .tm-track i{background:#e8a317}
+.tm-bar.tm-danger b{color:#e5252a}.tm-bar.tm-danger .tm-track i{background:#e5252a}
+#tm-float{position:fixed;top:.6rem;right:.75rem;z-index:99990;display:none;align-items:center;gap:.5rem;padding:.4rem .95rem;border-radius:999px;background:var(--surface,#fff);color:var(--text,#222);border:1.5px solid var(--gold,#c9a84c);box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer;font-weight:700;font-variant-numeric:tabular-nums;max-width:calc(100vw - 1.5rem);font-size:.9rem}
+#tm-float span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:11rem;font-weight:500;font-size:.78rem;opacity:.8}
+#tm-float.tm-warn{border-color:#e8a317}#tm-float.tm-danger{border-color:#e5252a;color:#e5252a}
 .tk-ans-q{padding:.65rem .8rem;border:1px solid var(--border);border-radius:10px;background:rgba(201,168,76,.04);margin-bottom:.5rem}
 .tk-ans-qt{font-size:.84rem;font-weight:600;margin-bottom:.3rem}
 .tk-ans-a{font-size:.86rem;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
@@ -981,6 +995,7 @@ async function renderAssignments(){
     return;
   }
   assignments.forEach(a => { assignmentsById[String(a.id)] = a; });
+  await loadTimers(assignments);
   myClassIds = classIds; knownReleased = new Set(assignments.map(a => String(a.id)));
   newTaskIds = new Set(computeNew(assignments, new Set(Object.keys(statusMap).filter(k => statusMap[k] === 'done'))).map(a => String(a.id)));
   newFeedbackIds = new Set(computeFeedback().map(r => String(r.assignment_id)));
@@ -1174,6 +1189,101 @@ const drafts = {};            // assignment id -> { text, links[], files[], answ
 const statusRows = {};        // assignment id -> saved status row
 const assignmentsById = {};   // assignment id -> assignment row
 
+// ── Timed tasks (countdown like Moodle) ──────────────────────────────────
+// The teacher sets a time limit. The student first sees a "Start" button; pressing it asks the SERVER to
+// note the time (so it survives a refresh and cannot be cheated by changing the device clock). When the
+// countdown reaches zero the answers are submitted automatically. Needs TIMED_TASKS_SETUP.sql.
+let timersEnabled = false;      // true when the database part is installed and this student has timed tasks
+const timers = {};              // assignment id -> moment the student pressed Start (server time, ms)
+let serverOffset = 0;           // server clock minus this device's clock (ms)
+const autoSubmitting = new Set(), autoSubmitted = new Set();
+const KIND_NAME = { test:'Test', quiz:'Quiz', exam:'Exam', task:'Task' };
+const limitOf = a => Math.max(0, Math.floor(Number(a && a.time_limit_minutes) || 0));
+const timedOn = a => timersEnabled && limitOf(a) > 0;
+const kindName = a => KIND_NAME[a && a.time_limit_kind] || 'Test';
+const serverNow = () => Date.now() + serverOffset;
+const parseTs = v => Date.parse(String(v || '').replace(/(\.\d{3})\d+/, '$1'));
+function fmtClock(ms){
+  const s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60, p = n => String(n).padStart(2, '0');
+  return h ? h + ':' + p(m) + ':' + p(x) : p(m) + ':' + p(x);
+}
+function timeLeftMs(a){ const st = timers[String(a.id)]; return st ? st + limitOf(a) * 60000 - serverNow() : null; }
+async function loadTimers(list){
+  timersEnabled = false;
+  if(!list.some(a => limitOf(a) > 0)) return;
+  const { data, error } = await supabase.rpc('sherig_task_timers');
+  if(error || !data){ console.warn('Timed tasks are not set up (run TIMED_TASKS_SETUP.sql):', error); return; }
+  timersEnabled = true;
+  serverOffset = parseTs(data.now) - Date.now();
+  (data.timers || []).forEach(t => { timers[String(t.assignment_id)] = parseTs(t.started_at); });
+}
+function startPanelHtml(a){
+  const lim = limitOf(a), name = kindName(a), nQ = questionsFor(a).length;
+  return `<div class="answer-box tm-start"><div class="tm-ico">⏱</div>
+    <div class="answer-title">${esc(name)} · ${lim} ${T('minutes','སྐར་མ')}</div>
+    <div class="answer-sub">${T('You have ' + lim + ' minute' + (lim > 1 ? 's' : '') + (nQ ? ' to answer ' + nQ + ' question' + (nQ > 1 ? 's' : '') : '') + '. When you press Start the timer begins and it cannot be paused — it keeps running even if you leave this page. When time is up your answers are submitted automatically. You can only do this once.')}</div>
+    <div class="ans-status" data-id="${esc(a.id)}"></div>
+    <button type="button" class="btn btn-gold" data-start-timer="${esc(a.id)}">▶ ${T('Start','འགོ་བཙུགས།')} ${esc(name.toLowerCase())}</button></div>`;
+}
+function timerBarHtml(a){
+  const left = Math.max(0, timeLeftMs(a) || 0), pct = Math.min(100, left / (limitOf(a) * 600));
+  return `<div class="tm-bar${left <= 60000 ? ' tm-danger' : left <= 300000 ? ' tm-warn' : ''}" data-tm-bar data-id="${esc(a.id)}"><span>⏱ ${T('Time left','ལྷག་ཡོད་པའི་དུས་ཚོད།')}</span><b data-tm-left>${fmtClock(left)}</b>
+    <span class="tm-hint">${T('Your answers are submitted automatically when time is up.')}</span><div class="tm-track"><i data-tm-fill style="width:${pct}%"></i></div></div>`;
+}
+async function startTimedTask(id, btn){
+  const a = assignmentsById[String(id)]; if(!a) return;
+  const lim = limitOf(a), name = kindName(a).toLowerCase();
+  if(!confirm(T('Start the ' + name + '? You will have ' + lim + ' minute' + (lim > 1 ? 's' : '') + '. The timer begins now and cannot be paused.'))) return;
+  btn.disabled = true;
+  const { data, error } = await supabase.rpc('sherig_start_task', { p_assignment_id: String(id) });
+  if(error || !data){ setAnsStatus(id, T('Could not start: ','འགོ་བཙུགས་མ་ཚུགས: ') + (error ? error.message : ''), 'err'); btn.disabled = false; return; }
+  serverOffset = parseTs(data.now) - Date.now();
+  timers[String(id)] = parseTs(data.started_at);
+  cardOpen[String(id)] = true;
+  await renderAssignments();
+  const card = document.querySelector('[data-card-id="' + (window.CSS && CSS.escape ? CSS.escape(String(id)) : String(id)) + '"]');
+  if(card) card.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function autoSubmit(id){
+  id = String(id);
+  if(autoSubmitting.has(id)) return;
+  autoSubmitting.add(id);
+  submitAnswer(id, null, { auto:true })
+    .catch(e => console.warn('Auto-submit failed, will retry:', e))
+    .finally(() => setTimeout(() => autoSubmitting.delete(id), 5000));   // if it failed (weak connection) it is tried again shortly
+}
+function tickTimers(){
+  if(!timersEnabled) return;
+  let soon = null;
+  Object.keys(timers).forEach(id => {
+    const a = assignmentsById[id];
+    if(!a || !timedOn(a) || rowOf(id).submitted_at || rowOf(id).reviewed_at) return;
+    const left = timeLeftMs(a);
+    if(left == null) return;
+    if(left <= 0){ autoSubmit(id); return; }
+    if(!soon || left < soon.left) soon = { a, left };
+  });
+  document.querySelectorAll('[data-tm-bar]').forEach(bar => {
+    const a = assignmentsById[bar.dataset.id]; if(!a) return;
+    const left = Math.max(0, timeLeftMs(a) || 0);
+    bar.querySelector('[data-tm-left]').textContent = fmtClock(left);
+    bar.querySelector('[data-tm-fill]').style.width = Math.min(100, left / (limitOf(a) * 600)) + '%';
+    bar.classList.toggle('tm-danger', left <= 60000); bar.classList.toggle('tm-warn', left > 60000 && left <= 300000);
+  });
+  let pill = document.getElementById('tm-float');
+  if(!pill){
+    pill = document.createElement('div'); pill.id = 'tm-float'; pill.setAttribute('role', 'timer'); pill.title = T('Go to your timed task');
+    pill.addEventListener('click', () => { const c = pill.dataset.id && document.querySelector('[data-card-id="' + pill.dataset.id + '"]'); if(c) c.scrollIntoView({ behavior:'smooth', block:'start' }); });
+    document.body.appendChild(pill);
+  }
+  if(!soon){ pill.style.display = 'none'; return; }
+  pill.dataset.id = String(soon.a.id);
+  pill.innerHTML = '⏱ ' + fmtClock(soon.left) + ' <span>' + esc(soon.a.title || kindName(soon.a)) + '</span>';
+  pill.className = soon.left <= 60000 ? 'tm-danger' : soon.left <= 300000 ? 'tm-warn' : '';
+  pill.style.display = 'flex';
+}
+setInterval(tickTimers, 1000);
+
 // ── Links: make every URL a teacher typed clickable, and never lose an attachment ──
 const URL_RE = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
 function fixUrl(u){
@@ -1220,9 +1330,10 @@ function readAttachments(a){
 function rowOf(id){ return statusRows[String(id)] || {}; }
 function isLocked(id){
   const r = rowOf(id), a = assignmentsById[String(id)];
-  return !!r.reviewed_at || !!(a && a.allow_edit === false && (r.submitted_at || r.status === 'done'));   // reviewed, or a one-attempt test that was already handed in
+  return !!r.reviewed_at || !!(a && (a.allow_edit === false || timedOn(a)) && (r.submitted_at || r.status === 'done'));   // reviewed, or a one-attempt / timed test that was already handed in
 }
 function lockedMsg(id){
+  if(!rowOf(id).reviewed_at && timedOn(assignmentsById[String(id)])) return T('This timed task was already submitted, so it can no longer be changed.');
   return rowOf(id).reviewed_at ? T('This task has been reviewed by your teacher, so it can no longer be changed.','འདི་སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་འབད་ཚར་ཡོདཔ་ལས་ཤུལ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།')
     : T('This task allows one attempt and you have already submitted it, so it can no longer be changed.','ལཱ་འདི་ལུ་ཐེངས་གཅིག་རྐྱངམ་ཅིག་འབད་ཆོག་པའི་ཁར་ཁྱོད་ཀྱིས་སྙན་ཞུ་འབད་ཚར་ཡོདཔ་ལས་བསྒྱུར་བཅོས་འབད་མི་ཚུགས།');
 }
@@ -1339,15 +1450,24 @@ function sealedAnswerHtml(a, row){
     const note = String(row.answer_text || '').trim();
     if(note) body += `<div class="tk-ans-q"><div class="tk-ans-qt">${T('Your note','ཁྱོད་ཀྱི་བསམ་བཀོད')}</div><div class="tk-ans-a">${linkify(note)}</div></div>`;
   }
-  return `<div class="tk-lock"><span>🔒</span><div><b>${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</b>${when}<br>${T('This task allows one attempt, so your answers cannot be changed.','ལཱ་འདི་ལུ་ཐེངས་གཅིག་རྐྱངམ་ཅིག་འབད་ཆོག་པས་ལན་བསྒྱུར་མི་ཚུགས།')}${resultsVisible(a, row) ? '' : '<br>' + T('Your teacher will share the results later.','སློབ་དཔོན་གྱིས་གྲུབ་འབྲས་ཤུལ་ལས་སྟོནམ་ཨིན།')}</div></div>${body}`;
+  return `<div class="tk-lock"><span>🔒</span><div><b>${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</b>${when}<br>${T('This task allows one attempt, so your answers cannot be changed.','ལཱ་འདི་ལུ་ཐེངས་གཅིག་རྐྱངམ་ཅིག་འབད་ཆོག་པས་ལན་བསྒྱུར་མི་ཚུགས།')}${autoSubmitted.has(String(a.id)) ? '<br>⏱ ' + T('Time ran out, so your answers were submitted automatically.') : ''}${resultsVisible(a, row) ? '' : '<br>' + T('Your teacher will share the results later.','སློབ་དཔོན་གྱིས་གྲུབ་འབྲས་ཤུལ་ལས་སྟོནམ་ཨིན།')}</div></div>${body}`;
 }
 function answerBoxHtml(a){
   const id = String(a.id), d = getDraft(id), row = rowOf(id);
   if(row.reviewed_at) return lockedAnswerHtml(a, row);          // teacher has reviewed → read-only
   const submitted = !!row.submitted_at;
-  if(a.allow_edit === false && submitted) return sealedAnswerHtml(a, row);   // test mode: one attempt
+  const timed = timedOn(a);
+  if((a.allow_edit === false || timed) && submitted) return sealedAnswerHtml(a, row);   // test mode / timed task: one attempt
+  let timerUi = '';
+  if(timed){
+    const left = timeLeftMs(a);
+    if(left == null) return startPanelHtml(a);                                         // not started yet: only the Start button
+    if(left <= 0) return `<div class="answer-box"><div class="tk-note" style="color:#e8a317">⏱ ${T('Time is up — submitting your answers…')}</div><div class="ans-status" data-id="${esc(id)}"></div></div>`;
+    timerUi = timerBarHtml(a);
+  }
   const hasQ = questionsFor(a).length > 0;
   return `<div class="answer-box">
+    ${timerUi}
     ${submitted ? `<div class="tk-note">✓ ${T('Submitted','སྙན་ཞུ་འབད་ཡོད')} ${esc(new Date(row.submitted_at).toLocaleString())} — ${T('you can still edit and submit again until your teacher reviews it.','སློབ་དཔོན་གྱིས་ཞིབ་དཔྱད་མ་འབད་ཚུན་ཚོད་ཞུན་དག་འབད་དེ་ལོག་སྙན་ཞུ་འབད་ཆོག')}</div>` : ''}
     ${questionsHtml(a)}
     ${hasQ ? `<div class="answer-sub">${T('Anything else you want to tell your teacher? (optional)','སློབ་དཔོན་ལུ་གཞན་ཡང་ལབ་ནི་ཡོད་ག? (དགོས་མཁོ་མེད་ཡང་རུང)')}</div>` : ''}
@@ -1401,24 +1521,27 @@ function wireAnswerBoxes(root){
     }catch(err){ setAnsStatus(id, T('Upload failed: ','བཙུགས་མ་ཚུགས: ') + err.message, 'err'); }
   }));
   root.querySelectorAll('[data-submit-answer]').forEach(b => b.addEventListener('click', () => submitAnswer(b.dataset.id, b)));
+  root.querySelectorAll('[data-start-timer]').forEach(b => b.addEventListener('click', () => startTimedTask(b.dataset.startTimer, b)));
   root.querySelectorAll('.chips').forEach(c => refreshChips(c.dataset.id));
 }
-async function submitAnswer(id, btn){
-  if(isLocked(id)){ setAnsStatus(id, lockedMsg(id), 'err'); await renderAssignments(); return; }
+async function submitAnswer(id, btn, opts){
+  const auto = !!(opts && opts.auto);        // true when the time ran out: send whatever the student has, without asking
+  if(isLocked(id)){ if(!auto) setAnsStatus(id, lockedMsg(id), 'err'); await renderAssignments(); return; }
   const d = getDraft(id);
   const qs = questionsFor(assignmentsById[id] || {});
   const cleanAnswers = {};
   qs.forEach(q => { const v = String(d.answers[q.id] == null ? '' : d.answers[q.id]).trim(); if(v) cleanAnswers[q.id] = v; });
   const answered = Object.keys(cleanAnswers).length;
 
-  if(!answered && !d.text.trim() && !d.links.length && !d.files.length){
+  if(!auto && !answered && !d.text.trim() && !d.links.length && !d.files.length){
     setAnsStatus(id, qs.length ? T('Please answer at least one question, or add a note, link or file.','ལེ་ཤཱལ་གཅིག་ལུ་ལན་བྲིས་ ཡང་ན་ བསམ་བཀོད/འབྲེལ་མཐུད/ཡིག་ཆ་ཁ་སྐོང་འབད') : T('Please write an answer, or add a link or file, first.','དང་པ་ལན་བྲིས་ ཡང་ན་ འབྲེལ་མཐུད/ཡིག་ཆ་ཁ་སྐོང་འབད'), 'err');
     return;
   }
   const blank = qs.length - answered;
-  if(blank > 0 && !confirm(T('You left ','ཁྱོད་ཀྱིས་') + blank + ' ' + T('question'+(blank > 1 ? 's' : ''),'དྲི་བ') + T(' unanswered. Submit anyway?',' ལན་མ་བྲིས་པར་བཞག་ཡོདཔ། ད་རུང་སྙན་ཞུ་འབད་ནི་ག?'))) return;
+  if(!auto && blank > 0 && !confirm(T('You left ','ཁྱོད་ཀྱིས་') + blank + ' ' + T('question'+(blank > 1 ? 's' : ''),'དྲི་བ') + T(' unanswered. Submit anyway?',' ལན་མ་བྲིས་པར་བཞག་ཡོདཔ། ད་རུང་སྙན་ཞུ་འབད་ནི་ག?'))) return;
 
-  btn.disabled = true; const label = btn.textContent; btn.textContent = T('Submitting…','སྙན་ཞུ་འབད་བཞིནམ...');
+  const label = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = T('Submitting…','སྙན་ཞུ་འབད་བཞིནམ...'); }
   const now = new Date().toISOString();
   const payload = {
     assignment_id: id, student_id: me.id, status: 'done', completed_at: now, submitted_at: now,
@@ -1426,8 +1549,13 @@ async function submitAnswer(id, btn){
   };
   if(questionsEnabled) payload.answers = cleanAnswers;
   const { error } = await supabase.from('assignment_status').upsert(payload, { onConflict: 'assignment_id,student_id' });
-  if(error){ setAnsStatus(id, T('Could not submit: ','སྙན་ཞུ་འབད་མ་ཚུགས: ') + error.message, 'err'); btn.disabled = false; btn.textContent = label; return; }
-  if(questionsEnabled && answered){
+  if(error){
+    setAnsStatus(id, (auto ? T('Time is up, but your answers could not be sent yet — trying again… ') : T('Could not submit: ','སྙན་ཞུ་འབད་མ་ཚུགས: ')) + error.message, 'err');
+    if(btn){ btn.disabled = false; btn.textContent = label; }
+    return;
+  }
+  if(auto) autoSubmitted.add(String(id));
+  if(questionsEnabled && (answered || auto)){
     const gr = await supabase.rpc('grade_assignment_submission', { p_assignment_id: String(id), p_student_id: me.id });
     if(!gr.error && gr.data?.[0]){
       const g = gr.data[0];
@@ -1569,6 +1697,7 @@ async function renderAssignmentCard(a, done){
     + (state !== 'todo' && isLateSubmit(a, row) ? `<span class="tk-pill late">⏰ ${T('Submitted late','དུས་ལས་བརྒལ་ཏེ་བཙུགས་ཡོད')}</span>` : '')
     + (resources.length ? `<span class="tk-pill plain">📎 ${resources.length}</span>` : '')
     + (nQ ? `<span class="tk-pill plain">❓ ${nQ}</span>` : '')
+    + (timedOn(a) && !interactive ? `<span class="tk-pill plain">⏱ ${limitOf(a)} ${T('min','སྐར་མ')}</span>` : '')
     + (row.score != null && state === 'reviewed' ? `<span class="tk-pill reviewed">⭐ ${esc(row.score)}%</span>` : '');
 
   const fbParts = [];
@@ -1590,7 +1719,7 @@ async function renderAssignmentCard(a, done){
     ? `<button class="btn btn-green" disabled>✔ ${T('Reviewed','ཞིབ་དཔྱད་འབད་ཚར་ཡོད')}</button>`
     : (done
         ? `<button class="btn btn-green" disabled>✓ ${T('Completed','མཇུག་བསྡུ་ཡོད')}</button>`
-        : (hasQ ? '' : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">${T('Mark Complete','མཇུག་བསྡུ་བརྟགས')}</button>`));
+        : ((hasQ || (timedOn(a) && !interactive)) ? '' : `<button class="btn btn-ghost" data-mark-done="${esc(a.id)}">${T('Mark Complete','མཇུག་བསྡུ་བརྟགས')}</button>`));
 
   return `<article class="tk st-${state}${overdue ? ' is-overdue' : ''}${open ? ' open' : ''}" data-assignment-card data-card-id="${esc(id)}"
       data-title="${esc(title.toLowerCase())}" data-search="${esc((title + ' ' + desc).toLowerCase())}" data-status="${state}" data-overdue="${overdue ? 'true' : 'false'}"

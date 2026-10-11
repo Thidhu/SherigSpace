@@ -146,9 +146,20 @@ export function parseQuestions(row) {
         // new question types (no correct answers in here — those live in assignment_keys)
         ...(type === 'ordering' || type === 'dragdrop' ? { items: arr(q.items) } : {}),
         ...(type === 'matching' ? { left: arr(q.left) } : {}),
-        ...(type === 'dropfill' ? { template: String(q.template || ''), blanks: Array.isArray(q.blanks) ? q.blanks.map(b => ({ options: arr(b && b.options) })) : [] } : {})
+        ...(type === 'dropfill' ? { template: String(q.template || ''), blanks: Array.isArray(q.blanks) ? q.blanks.map(b => ({ options: arr(b && b.options) })) : [] } : {}),
+        // dropfill + drag: students drag words from a shared word bank into the blanks
+        ...(type === 'dropfill' && q.drag ? { drag: true, bank: arr(q.bank) } : {})
       };
     });
+}
+
+/** The video id of a YouTube link (watch, youtu.be, embed, shorts, live), or '' if it is not YouTube. */
+export function youtubeIdFor(url) {
+  if (!url) return '';
+  const c = classifyUrl(url);
+  if (c.kind !== 'video' || !c.embed) return '';
+  const m = c.embed.match(/youtube(?:-nocookie)?\.com\/embed\/([\w-]+)/);
+  return m ? m[1] : '';
 }
 
 /**
@@ -159,10 +170,9 @@ export function parseQuestions(row) {
  */
 export function autoThumbFor(url) {
   if (!url) return '';
+  const yt = youtubeIdFor(url);
+  if (yt) return 'https://img.youtube.com/vi/' + yt + '/hqdefault.jpg';
   const c = classifyUrl(url);
-  if (c.kind === 'video' && c.embed && c.embed.indexOf('youtube-nocookie.com/embed/') >= 0) {
-    return 'https://img.youtube.com/vi/' + c.embed.split('/embed/')[1] + '/hqdefault.jpg';
-  }
   if (c.media === 'image') return url;
   if ((c.kind === 'file' || c.kind === 'doc') && c.embed) {
     const m = c.embed.match(/\/d\/([\w-]+)/);
