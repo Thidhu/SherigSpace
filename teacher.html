@@ -1268,13 +1268,15 @@ window.deleteStudent = async function(id){
 let v2 = null; // { extras: attachments/questions/answers/score columns exist, keys: assignment_keys table exists }
 async function ensureV2(){
   if(v2) return v2;
-  const [a, s, k, sh] = await Promise.all([
+  const [a, s, k, sh, sc, dr] = await Promise.all([
     supabase.from('assignments').select('attachments,questions').limit(1),
     supabase.from('assignment_status').select('answers,score').limit(1),
     supabase.from('assignment_keys').select('assignment_id').limit(1),
-    supabase.from('assignments').select('shuffle_questions,shuffle_options').limit(1)
+    supabase.from('assignments').select('shuffle_questions,shuffle_options').limit(1),
+    supabase.from('assignments').select('publish_at').limit(1),
+    supabase.from('assignments').select('is_draft,reminded_at').limit(1)
   ]);
-  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error };
+  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error, sched: !sc.error, drafts: !dr.error };
   return v2;
 }
 
@@ -1295,11 +1297,14 @@ async function renderAssignments(){
 
   const ids = data.map(a => a.id);
   const [{ data: statuses }, { count: totalStudents }] = await Promise.all([
-    supabase.from('assignment_status').select('assignment_id,status').in('assignment_id', ids),
+    supabase.from('assignment_status').select('assignment_id,status,submitted_at').in('assignment_id', ids),
     supabase.from('class_students').select('*',{count:'exact',head:true}).eq('class_id', currentClassId)
   ]);
   const doneBy = {};
   (statuses||[]).forEach(s => { if(s.status === 'done') doneBy[s.assignment_id] = (doneBy[s.assignment_id]||0) + 1; });
+  const dueOf = {}; data.forEach(a => { dueOf[a.id] = a.due_date; });
+  const lateBy = {};
+  (statuses||[]).forEach(s => { const d = dueOf[s.assignment_id]; if(d && s.submitted_at && new Date(s.submitted_at) > new Date(d + 'T23:59:59')) lateBy[s.assignment_id] = (lateBy[s.assignment_id]||0) + 1; });
 
   // Library items have no title of their own — look theirs up so the list is readable.
   const tlmTitles = {};
@@ -1314,15 +1319,23 @@ async function renderAssignments(){
     const label = a.title || (a.kind === 'tlm' ? (tlmTitles[a.item_type+':'+a.item_id] || a.item_type+' item') : 'Untitled task');
     const attCount = parseAttachments(a).length;
     const qCount = parseQuestions(a).length;
+    const isDraft = !!a.is_draft;
+    const isScheduled = !isDraft && !!(a.publish_at && new Date(a.publish_at) > new Date());
     const meta = [
+      isDraft ? '<b style="color:#8a94a6">📝 ' + T('Draft — students cannot see it yet','Draft — students cannot see it yet') + '</b>' : '',
+      isScheduled ? '<b style="color:#e8a317">🕒 ' + T('Scheduled for ','Scheduled for ') + esc(new Date(a.publish_at).toLocaleString([], {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})) + '</b>' : '',
       a.due_date ? T('Due ','འབྱུང་ཉིནམ ') + esc(a.due_date) : '',
       attCount ? '📎 ' + attCount + ' ' + T('resource'+(attCount>1?'s':''),'ཡིག་ཆ') : '',
       qCount ? '❓ ' + qCount + ' ' + T('question'+(qCount>1?'s':''),'དྲི་བ') : '',
-      (doneBy[a.id]||0) + '/' + (totalStudents||0) + ' ' + T('completed','མཇུག་བསྡུ་ཡོད')
+      (doneBy[a.id]||0) + '/' + (totalStudents||0) + ' ' + T('completed','མཇུག་བསྡུ་ཡོད'),
+      lateBy[a.id] ? '<span style="color:#e5252a">⏰ ' + lateBy[a.id] + ' ' + T('late','late') + '</span>' : ''
     ].filter(Boolean).join(' · ');
     return `<div class="irow">
       <div><div class="iname">${esc(label)}</div><div class="imeta">${meta}</div></div>
       <div class="ibtns">
+        ${(isScheduled || isDraft) ? `<button class="btn btn-gold btn-sm" onclick="publishNow(${jsq(a.id)})">🚀 ${T('Publish now','Publish now')}</button>` : ''}
+        ${(!isScheduled && !isDraft && v2 && v2.drafts) ? `<button class="btn btn-ghost btn-sm" title="${T('Send students who have not submitted a reminder','Send students who have not submitted a reminder')}" onclick="remindStudents(${jsq(a.id)})">🔔 ${T('Remind','Remind')}</button>` : ''}
+        <button class="btn btn-ghost btn-sm" title="${T('Copy this task to another class','Copy this task to another class')}" onclick="openCopyAssignment(${jsq(a.id)})">⧉ ${T('Copy','Copy')}</button>
         <button class="btn btn-gold btn-sm" onclick="viewAnswers(${jsq(a.id)})">${T('✍ Answers','✍ ལན།')}</button>
         <button class="btn btn-ghost btn-sm" onclick="viewProgress(${jsq(a.id)})">${T('📊 Progress','📊 ཡར་རྒྱས།')}</button>
         <button class="btn btn-ghost btn-sm" onclick="presentStudent(${jsq(a.id)})">${T('🖥 Present','🖥 སྟོན།')}</button>
@@ -1334,6 +1347,62 @@ async function renderAssignments(){
 }
 
 
+window.publishNow = async function(id){
+  const cfg = await ensureV2();
+  const upd = { publish_at: new Date().toISOString() }; if(cfg.drafts) upd.is_draft = false;
+  const { error } = await supabase.from('assignments').update(upd).eq('id', id);
+  if(error){ toast('Error: '+error.message, true); return; }
+  toast(T('Published — students can see it now ✓','Published — students can see it now ✓'));
+  renderAssignments();
+};
+window.remindStudents = async function(id){
+  const { error } = await supabase.from('assignments').update({ reminded_at: new Date().toISOString() }).eq('id', id);
+  if(error){ toast('Error: '+error.message, true); return; }
+  toast(T('Reminder sent — students who have not submitted will see it ✓','Reminder sent — students who have not submitted will see it ✓'));
+};
+
+// Copy a task (with its resources, questions, correct answers and video questions) into other classes — as drafts.
+async function copyAssignmentTo(srcId, classId, asDraft){
+  const { data: src, error: e0 } = await supabase.from('assignments').select('*').eq('id', srcId).single();
+  if(e0 || !src) return { error: e0 || new Error('Task not found') };
+  const row = { ...src };
+  ['id','created_at','updated_at','publish_at','reminded_at'].forEach(k => delete row[k]);
+  row.class_id = classId; if(asDraft) row.is_draft = true;
+  const ins = await supabase.from('assignments').insert(row).select('id').single();
+  if(ins.error) return { error: ins.error };
+  const newId = ins.data.id;
+  const { data: key } = await supabase.from('assignment_keys').select('answers').eq('assignment_id', srcId).maybeSingle();
+  if(key && key.answers) await supabase.from('assignment_keys').upsert({ assignment_id: newId, answers: key.answers, updated_at: new Date().toISOString() }, { onConflict: 'assignment_id' });
+  const { data: vq } = await supabase.from('assignment_video_questions').select('*').eq('assignment_id', String(srcId));
+  if(vq && vq.length){
+    await supabase.rpc('save_assignment_video_questions', { p_assignment_id: String(newId), p_rows: vq.map(q => ({
+      id: crypto.randomUUID ? crypto.randomUUID() : '', resource_key: q.resource_key, timestamp_seconds: q.timestamp_seconds, question: q.question,
+      question_type: q.question_type, options: q.options || [], accepted_answers: q.accepted_answers || [], explanation: q.explanation || null,
+      points: q.points ?? 1, replay_before_seconds: q.replay_before_seconds ?? 30, require_correct: q.require_correct !== false, enabled: true, sort_order: q.sort_order || 0
+    })) });
+  }
+  return { error: null };
+}
+window.openCopyAssignment = async function(id){
+  const cfg = await ensureV2();
+  const { data: cls } = await supabase.from('classes').select('id,name').eq('teacher_id', me.id).order('created_at',{ascending:false});
+  document.getElementById('m-title').textContent = T('Copy task to other classes','Copy task to other classes');
+  document.querySelector('#overlay .modal').style.maxWidth = '520px';
+  document.getElementById('m-body').innerHTML = `<p style="font-size:.85rem;color:var(--text2);margin:0 0 .8rem">${cfg.drafts ? T('The copy is saved as a <b>draft</b>, so you can check it and publish it when you are ready.','The copy is saved as a <b>draft</b>, so you can check it and publish it when you are ready.') : T('The copy is created in each class you tick.','The copy is created in each class you tick.')}</p>` +
+    ((cls||[]).map(c => `<label style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)"><input type="checkbox" class="copy-cls" value="${esc(c.id)}" style="width:auto;flex:none;margin:0;accent-color:var(--gold)"/> ${esc(c.name)}${String(c.id)===String(currentClassId) ? ' <small style="color:var(--text2)">(' + T('this class','this class') + ')</small>' : ''}</label>`).join('') || `<p>${T('No classes found.','No classes found.')}</p>`);
+  const btn = document.getElementById('m-save-btn'); btn.textContent = T('Copy','Copy'); btn.disabled = false;
+  btn.onclick = async () => {
+    const picked = [...document.querySelectorAll('.copy-cls:checked')].map(x => x.value);
+    if(!picked.length){ toast(T('Tick at least one class.','Tick at least one class.'), true); return; }
+    btn.disabled = true; let fail = null;
+    for(const cid of picked){ const r = await copyAssignmentTo(id, cid, !!cfg.drafts); if(r.error){ fail = r.error; break; } }
+    btn.disabled = false;
+    if(fail){ toast('Error: ' + fail.message, true); return; }
+    toast(T('Copied ✓','Copied ✓') + (cfg.drafts ? ' ' + T('(as draft)','(as draft)') : '')); closeModal(); renderAssignments();
+  };
+  document.getElementById('overlay').classList.add('open');
+};
+const toLocalInput = d => { const p = n => String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); };
 window.closeProgress=function(){ document.getElementById('progress-overlay')?.classList.remove('open'); };
 window.viewProgress=async function(assignmentId){
   if(!currentClassId) return;
@@ -1480,6 +1549,15 @@ window.openAssignmentForm = async function(editId){
     </div>`}
 
     <div class="field"><label>${T('Due Date (optional)','འབྱུང་ཉིནམ (དགོས་མཁོ་མེད་ཡང་རུང)')}</label><input type="date" id="f-due-date"/></div>
+    ${cfg.sched ? `<div class="field"><label>🕒 ${T('When should students see this task?','When should students see this task?')}</label>
+      <select id="f-publish-mode" onchange="document.getElementById('f-publish-at').style.display = this.value==='later' ? '' : 'none'">
+        <option value="now">${T('Right away','Right away')}</option>
+        <option value="later">${T('Schedule for a date & time…','Schedule for a date & time…')}</option>
+        ${cfg.drafts ? `<option value="draft">${T('Save as draft (hidden — publish later)','Save as draft (hidden — publish later)')}</option>` : ''}
+      </select>
+      <input type="datetime-local" id="f-publish-at" style="display:none;margin-top:.5rem"/>
+      <div style="font-size:.74rem;color:var(--text2);margin-top:.35rem">${T('A scheduled task stays hidden from students until that time. Then it appears by itself and they get a red notification.','A scheduled task stays hidden from students until that time. Then it appears by itself and they get a red notification.')}</div>
+    </div>` : `<div style="font-size:.76rem;color:var(--text2);margin:-.2rem 0 .9rem">🕒 Scheduling needs one setup step: run <b>ASSIGNMENT_SCHEDULE_SETUP.sql</b> in Supabase.</div>`}
   `;
 
   // Prefill when editing
@@ -1494,6 +1572,11 @@ window.openAssignmentForm = async function(editId){
     document.getElementById('f-custom-title').value = existing.title || '';
     document.getElementById('f-custom-desc').value = existing.description || '';
     document.getElementById('f-due-date').value = existing.due_date || '';
+    if(cfg.sched && existing.publish_at && new Date(existing.publish_at) > new Date()){
+      document.getElementById('f-publish-mode').value = 'later';
+      const pa = document.getElementById('f-publish-at'); pa.style.display = ''; pa.value = toLocalInput(new Date(existing.publish_at));
+    }
+    if(cfg.drafts && existing.is_draft) document.getElementById('f-publish-mode').value = 'draft';
   } else {
     await loadTlmOptions();
   }
@@ -1517,6 +1600,24 @@ window.openAssignmentForm = async function(editId){
       due_date: fv('f-due-date') || null,
       attachment_url: taskAttachments.map(a => a.url).join('\n')   // kept so older pages still work
     };
+    if(cfg.sched){
+      const mode = fv('f-publish-mode');
+      if(mode === 'draft'){
+        payload.is_draft = true; payload.publish_at = null;
+      } else {
+        if(cfg.drafts) payload.is_draft = false;
+        if(mode === 'later'){
+          const d = new Date(fv('f-publish-at'));
+          if(isNaN(d)){ toast(T('Please choose the date and time to publish.','Please choose the date and time to publish.'), true); return; }
+          if(d.getTime() < Date.now() + 30000){ toast(T('Choose a time in the future, or pick "Right away".','Choose a time in the future, or pick "Right away".'), true); return; }
+          payload.publish_at = d.toISOString();
+        } else if(existing && ((existing.publish_at && new Date(existing.publish_at) > new Date()) || existing.is_draft)){
+          payload.publish_at = new Date().toISOString();   // was scheduled / a draft, now sent right away
+        } else if(!existing){
+          payload.publish_at = null;
+        }
+      }
+    }
     if(kind === 'tlm'){
       const itemId = fv('f-item-id');
       if(!itemId){ toast('Please choose an item.', true); return; }
@@ -1587,7 +1688,7 @@ window.openAssignmentForm = async function(editId){
         : await supabase.from('assignment_keys').delete().eq('assignment_id', savedId);
       if(kr.error){ toast('Task saved, but the correct answers could not be saved: ' + kr.error.message, true); closeModal(); renderAssignments(); return; }
     }
-    toast(editing ? 'Task updated ✓' : 'Assignment created ✓'); closeModal(); renderAssignments();
+    toast(payload.is_draft ? 'Draft saved — students cannot see it yet ✓' : (payload.publish_at && new Date(payload.publish_at) > new Date()) ? 'Task scheduled ✓' : (editing ? 'Task updated ✓' : 'Assignment created ✓')); closeModal(); renderAssignments();
   };
   document.getElementById('overlay').classList.add('open');
 };

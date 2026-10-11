@@ -155,6 +155,17 @@ a.tk-link{color:var(--gold-text,var(--gold));text-decoration:underline;overflow-
 .s-tab{background:none;border:0;border-bottom:3px solid transparent;color:var(--text2);font:inherit;font-weight:700;font-size:.95rem;padding:.7rem 1rem;cursor:pointer;margin-bottom:-1px;display:flex;align-items:center;gap:.4rem}
 .s-tab:hover{color:var(--text)}
 .s-tab.on{color:var(--gold-text,var(--gold));border-bottom-color:var(--gold)}
+.s-badge{min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:#e5252a;color:#fff;font-size:.68rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--navy,#0f1623);animation:badgePop .5s ease}
+@keyframes badgePop{0%{transform:scale(.2)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+.tk-new{display:inline-block;vertical-align:middle;margin-left:.45rem;background:#e5252a;color:#fff;font-size:.62rem;font-weight:800;letter-spacing:.05em;padding:2px 7px;border-radius:99px;animation:newPulse 1.6s ease-in-out infinite}
+@keyframes newPulse{0%,100%{box-shadow:0 0 0 0 rgba(229,37,42,.55)}50%{box-shadow:0 0 0 6px rgba(229,37,42,0)}}
+#newtask-pop{position:fixed;right:1.2rem;bottom:1.2rem;z-index:99998;width:min(360px,calc(100vw - 2rem));background:var(--surface,#fff);color:var(--text,#222);border:1px solid var(--border,#ddd);border-left:5px solid #e5252a;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.35);padding:1rem 1.1rem;animation:popUp .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes popUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+#newtask-pop h4{margin:0 0 .25rem;font-size:.98rem;display:flex;align-items:center;gap:.5rem}
+#newtask-pop .np-sec+.np-sec{margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border,#ddd)}
+#newtask-pop ul{margin:.2rem 0 .8rem;padding-left:1.1rem;font-size:.86rem;color:var(--text2)}
+#newtask-pop .np-btns{display:flex;gap:.5rem;justify-content:flex-end}
+@media(prefers-reduced-motion:reduce){.s-badge,.tk-new,#newtask-pop{animation:none}}
 .s-tab .cnt{font-size:.7rem;background:rgba(201,168,76,.18);color:var(--gold-text,var(--gold));padding:1px 8px;border-radius:99px}
 .lib-bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.9rem}
 .lib-search{flex:1;min-width:180px;padding:.6rem .9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit}
@@ -456,7 +467,7 @@ a.btn{text-decoration:none;display:inline-block}
   </nav>
   <main>
   <div class="s-tabs" role="tablist">
-    <button type="button" class="s-tab on" data-pane="tasks" role="tab">📝 <span>My Tasks</span></button>
+    <button type="button" class="s-tab on" data-pane="tasks" role="tab">📝 <span>My Tasks</span><span class="s-badge" id="tasks-cnt" style="display:none" aria-live="polite"></span></button>
     <button type="button" class="s-tab" data-pane="learn" role="tab">📚 <span>Learn</span><span class="cnt" id="learn-cnt" style="display:none"></span></button>
   </div>
   <div id="pane-tasks">
@@ -699,6 +710,120 @@ function closeVideoModal(){ document.getElementById('vm-overlay').classList.remo
 })();
 
 
+// ── Scheduled tasks + notifications (new task · teacher feedback · reminders · due soon) ──
+// A task with publish_at in the future (or saved as a draft) is hidden from students.
+const isReleased = a => !a.is_draft && (!a.publish_at || new Date(a.publish_at).getTime() <= Date.now());
+const releaseTime = a => new Date(a.publish_at || a.created_at || 0).getTime();
+let newTaskIds = new Set(), newFeedbackIds = new Set(), knownReleased = new Set(), myClassIds = [];
+const BASE_TITLE = document.title;
+const storeKey = () => 'sherig_tasks_v1_' + (me && me.id);
+function loadStore(){ try{ const r = localStorage.getItem(storeKey()); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+function getStore(){
+  const st = loadStore() || {};
+  ['seen','announced','fbSeen','fbAnnounced'].forEach(k => { st[k] = st[k] || []; });
+  st.nudged = st.nudged || {}; st.dueDay = st.dueDay || '';
+  return st;
+}
+function saveStore(st){ try{ ['seen','announced','fbSeen','fbAnnounced'].forEach(k => { st[k] = (st[k]||[]).slice(-600); }); localStorage.setItem(storeKey(), JSON.stringify(st)); }catch(e){} }
+function computeNew(released, doneIds){
+  const st = getStore();
+  if(!st.init){   // first visit on this device: only tasks from the last 7 days count as new
+    const cutoff = Date.now() - 7*864e5;
+    st.seen = released.filter(a => releaseTime(a) < cutoff).map(a => String(a.id)); st.init = true; saveStore(st);
+  }
+  const seen = new Set(st.seen);
+  return released.filter(a => !doneIds.has(String(a.id)) && !seen.has(String(a.id)));
+}
+function computeFeedback(){
+  const st = getStore();
+  const rows = Object.values(statusRows).filter(r => r && r.reviewed_at && knownReleased.has(String(r.assignment_id)));
+  if(!st.fbInit){
+    const cutoff = Date.now() - 7*864e5;
+    st.fbSeen = rows.filter(r => new Date(r.reviewed_at).getTime() < cutoff).map(r => String(r.assignment_id)); st.fbInit = true; saveStore(st);
+  }
+  const seen = new Set(st.fbSeen);
+  return rows.filter(r => !seen.has(String(r.assignment_id)));
+}
+function markTaskSeen(id){
+  id = String(id); const st = getStore(); let changed = false;
+  if(newTaskIds.has(id)){ newTaskIds.delete(id); if(!st.seen.includes(id)) st.seen.push(id); changed = true; }
+  if(newFeedbackIds.has(id)){ newFeedbackIds.delete(id); if(!st.fbSeen.includes(id)) st.fbSeen.push(id); changed = true; }
+  if(changed){ saveStore(st); updateTaskBadge(); }
+}
+function updateTaskBadge(){
+  const n = newTaskIds.size + newFeedbackIds.size, el = document.getElementById('tasks-cnt');
+  if(el){ el.textContent = n > 9 ? '9+' : String(n); el.style.display = n ? '' : 'none'; }
+  document.title = n ? '(' + n + ') ' + BASE_TITLE : BASE_TITLE;
+}
+const taskTitle = a => (a && a.title) || T('New task','ལཱ་གསརཔ།');
+const dueInDays = a => { if(!a.due_date) return null; const d = new Date(a.due_date + 'T00:00:00'); if(isNaN(d)) return null; const t = new Date(); t.setHours(0,0,0,0); return Math.round((d - t) / 86400000); };
+function isLateSubmit(a, row){ return !!(a.due_date && row && row.submitted_at && new Date(row.submitted_at) > new Date(a.due_date + 'T23:59:59')); }
+
+// One pop-up that can hold several kinds of news.
+function showAlerts(sections, needRefresh){
+  sections = (sections || []).filter(s => s.lines.length); if(!sections.length) return;
+  document.getElementById('newtask-pop')?.remove();
+  const box = document.createElement('div'); box.id = 'newtask-pop'; box.setAttribute('role','alert');
+  box.innerHTML = sections.map(s => '<div class="np-sec"><h4>' + s.icon + ' ' + esc(s.heading) + '</h4><ul>' + s.lines.slice(0,4).map(l => '<li>' + esc(l) + '</li>').join('') + (s.lines.length > 4 ? '<li>…</li>' : '') + '</ul></div>').join('')
+    + '<div class="np-btns"><button type="button" class="btn btn-ghost btn-sm" data-np="later">' + T('Later','ཤུལ་ལས།') + '</button><button type="button" class="btn btn-gold btn-sm" data-np="view">' + T('View tasks','ལཱ་བལྟ།') + '</button></div>';
+  document.body.appendChild(box);
+  box.addEventListener('click', async e => {
+    const b = e.target.closest('[data-np]'); if(!b) return;
+    box.remove();
+    if(b.dataset.np === 'view'){
+      window.__showStudentPane('tasks');
+      if(needRefresh) await renderAssignments();
+      const first = document.querySelector('.tk-new'); first && first.closest('.tk')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+  });
+}
+// Work out what is worth telling the student about right now (each thing is announced once).
+function buildAlerts(assignments){
+  const st = getStore(), sections = [], by = {}; assignments.forEach(a => { by[String(a.id)] = a; });
+  const newT = assignments.filter(a => newTaskIds.has(String(a.id)) && !st.announced.includes(String(a.id)));
+  if(newT.length){ sections.push({ icon:'🔔', heading: newT.length === 1 ? T('You have a new task!','ལཱ་གསརཔ་ཅིག་ཐོབ་ཡོད།') : T('You have '+newT.length+' new tasks!','ལཱ་གསརཔ་ '+newT.length+' ཐོབ་ཡོད།'), lines: newT.map(taskTitle) }); newT.forEach(a => st.announced.push(String(a.id))); }
+  const fb = [...newFeedbackIds].filter(id => !st.fbAnnounced.includes(id) && by[id]);
+  if(fb.length){ sections.push({ icon:'💬', heading: T('Your teacher reviewed your work','སློབ་དཔོན་གྱིས་ཁྱོད་ཀྱི་ལཱ་ཞིབ་དཔྱད་འབད་ཡོད'), lines: fb.map(id => taskTitle(by[id]) + (rowOf(id).score != null ? ' · ⭐ ' + rowOf(id).score + '%' : '')) }); fb.forEach(id => st.fbAnnounced.push(id)); }
+  const nudged = assignments.filter(a => a.reminded_at && stateOf(a) === 'todo' && st.nudged[String(a.id)] !== a.reminded_at);
+  if(nudged.length){ sections.push({ icon:'🔔', heading: T('Reminder from your teacher','སློབ་དཔོན་གྱི་དྲན་སྐུལ།'), lines: nudged.map(taskTitle) }); nudged.forEach(a => { st.nudged[String(a.id)] = a.reminded_at; }); }
+  const today = new Date().toISOString().slice(0,10);
+  if(st.dueDay !== today){
+    const nudgedIds = new Set(nudged.map(a => String(a.id)));
+    const soon = assignments.filter(a => stateOf(a) === 'todo' && !nudgedIds.has(String(a.id)) && [0,1].includes(dueInDays(a)));
+    if(soon.length){ sections.push({ icon:'⏰', heading: T('Due soon','འབྱུང་ནིའི་ཉེ་འདབས།'), lines: soon.map(a => taskTitle(a) + ' · ' + (dueInDays(a) === 0 ? T('today','དེ་རིང་') : T('tomorrow','ནངས་པར་'))) }); }
+    st.dueDay = today;
+  }
+  saveStore(st);
+  return sections;
+}
+// every minute (and when the student comes back to this tab): anything new? (scheduled task released, teacher feedback, reminder)
+async function pollNewTasks(){
+  if(!me || !myClassIds.length || document.hidden) return;
+  const [{ data, error }, { data: sts }] = await Promise.all([
+    supabase.from('assignments').select('*').in('class_id', myClassIds),
+    supabase.from('assignment_status').select('*').eq('student_id', me.id)
+  ]);
+  if(error || !data) return;
+  const st = getStore(), sections = [], rel = data.filter(isReleased), by = {}; rel.forEach(a => { by[String(a.id)] = a; });
+  const stMap = {}; (sts || []).forEach(r => { stMap[String(r.assignment_id)] = r; });
+  const fresh = rel.filter(a => !knownReleased.has(String(a.id)));
+  if(fresh.length){
+    fresh.forEach(a => { knownReleased.add(String(a.id)); newTaskIds.add(String(a.id)); if(!st.announced.includes(String(a.id))) st.announced.push(String(a.id)); });
+    sections.push({ icon:'🔔', heading: fresh.length === 1 ? T('You have a new task!','ལཱ་གསརཔ་ཅིག་ཐོབ་ཡོད།') : T('You have '+fresh.length+' new tasks!','ལཱ་གསརཔ་ '+fresh.length+' ཐོབ་ཡོད།'), lines: fresh.map(taskTitle) });
+  }
+  const fbNew = (sts || []).filter(r => r.reviewed_at && by[String(r.assignment_id)] && !(statusRows[String(r.assignment_id)] || {}).reviewed_at && !st.fbSeen.includes(String(r.assignment_id)) && !st.fbAnnounced.includes(String(r.assignment_id)));
+  if(fbNew.length){
+    fbNew.forEach(r => { newFeedbackIds.add(String(r.assignment_id)); st.fbAnnounced.push(String(r.assignment_id)); });
+    sections.push({ icon:'💬', heading: T('Your teacher reviewed your work','སློབ་དཔོན་གྱིས་ཁྱོད་ཀྱི་ལཱ་ཞིབ་དཔྱད་འབད་ཡོད'), lines: fbNew.map(r => taskTitle(by[String(r.assignment_id)]) + (r.score != null ? ' · ⭐ ' + r.score + '%' : '')) });
+  }
+  const nudged = rel.filter(a => a.reminded_at && !(stMap[String(a.id)] && (stMap[String(a.id)].status === 'done' || stMap[String(a.id)].submitted_at)) && st.nudged[String(a.id)] !== a.reminded_at && !fresh.includes(a));
+  if(nudged.length){ nudged.forEach(a => { st.nudged[String(a.id)] = a.reminded_at; }); sections.push({ icon:'🔔', heading: T('Reminder from your teacher','སློབ་དཔོན་གྱི་དྲན་སྐུལ།'), lines: nudged.map(taskTitle) }); }
+  if(!sections.length) return;
+  saveStore(st); updateTaskBadge(); showAlerts(sections, true);
+}
+setInterval(pollNewTasks, 60000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) pollNewTasks(); });
+
 async function init(){
   const { data: { session } } = await supabase.auth.getSession();
   const gate = document.getElementById('gate-inner');
@@ -788,12 +913,13 @@ async function renderLearningDashboard(){
       statAssigned.textContent='0';statCompleted.textContent='0';statProgress.textContent='0';statScore.textContent='—';
       renderAchievements({completed:0,videoDone:0,avgScore:null,highScores:0},[]); return;
     }
-    const [{data: assignments,error:e2},{data: statuses,error:e3},{data: videoProgress,error:e4}] = await Promise.all([
-      supabase.from('assignments').select('id,title,due_date,created_at,class_id').in('class_id',classIds).order('created_at',{ascending:false}),
+    const [{data: assignmentsAll,error:e2},{data: statuses,error:e3},{data: videoProgress,error:e4}] = await Promise.all([
+      supabase.from('assignments').select('*').in('class_id',classIds).order('created_at',{ascending:false}),
       supabase.from('assignment_status').select('assignment_id,status,score,submitted_at,completed_at').eq('student_id',me.id),
       supabase.from('assignment_video_progress').select('assignment_id,completed,completion_percentage,updated_at').eq('student_id',me.id)
     ]);
     if(e2) throw e2;
+    const assignments = (assignmentsAll||[]).filter(isReleased);
     if(e3) console.warn('Learning status error',e3);
     if(e4) console.warn('Learning video progress error',e4);
     const amap=new Map((assignments||[]).map(a=>[String(a.id),a]));
@@ -830,12 +956,13 @@ async function renderAssignments(){
   }
 
   const classIds = enrollments.map(e=>e.class_id);
-  const { data: assignments, error: assignmentsError } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
+  const { data: assignmentsRaw, error: assignmentsError } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
   if(assignmentsError){
     console.error('Student assignments query failed:', assignmentsError);
     wrap.innerHTML = `<div class="empty"><div class="ei">⚠️</div><p>${T('Your assignments could not be loaded. Please contact your teacher or administrator.','ཁྱོད་ཀྱི་ལཱ་ཁག་ཚུ་འདྲེན་མ་ཚུགས། སློབ་དཔོན་ཡང་ན་འཛིན་སྐྱོང་པ་ལུ་འབྲེལ་བ་འཐབ།')}</p><small style="display:block;margin-top:.5rem;opacity:.7">${esc(assignmentsError.message || assignmentsError.code || 'Database permission error')}</small></div>`;
     return;
   }
+  const assignments = (assignmentsRaw || []).filter(isReleased);   // scheduled tasks stay hidden until their time
   const { data: statuses, error: statusError } = await supabase.from('assignment_status').select('*').eq('student_id', me.id);
   if(statusError) console.warn('Student assignment status query:', statusError);
   const statusMap = {};
@@ -853,6 +980,9 @@ async function renderAssignments(){
     return;
   }
   assignments.forEach(a => { assignmentsById[String(a.id)] = a; });
+  myClassIds = classIds; knownReleased = new Set(assignments.map(a => String(a.id)));
+  newTaskIds = new Set(computeNew(assignments, new Set(Object.keys(statusMap).filter(k => statusMap[k] === 'done'))).map(a => String(a.id)));
+  newFeedbackIds = new Set(computeFeedback().map(r => String(r.assignment_id)));
 
   // Group by class
   const byClass = {};
@@ -908,6 +1038,8 @@ async function renderAssignments(){
   mountAssignmentInteractiveVideos(wrap);
   renderTaskStats(assignments);
   applyAssignmentFilters();
+  updateTaskBadge();
+  showAlerts(buildAlerts(assignments), false);
 }
 
 // collapse / expand a task card (one listener for the whole list)
@@ -918,6 +1050,7 @@ async function renderAssignments(){
     const open = !card.classList.contains('open');
     card.classList.toggle('open', open); head.setAttribute('aria-expanded', open ? 'true' : 'false');
     cardOpen[card.dataset.cardId] = open;
+    if(open){ markTaskSeen(card.dataset.cardId); card.querySelector('.tk-new')?.remove(); }
   };
   wrap.addEventListener('click', e => { const h = e.target.closest('.tk-head'); if(h && !e.target.closest('a,button')) toggle(h); });
   wrap.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('tk-head')){ e.preventDefault(); toggle(e.target); } });
@@ -1396,6 +1529,7 @@ async function renderAssignmentCard(a, done){
   const stateIcon = { todo:'📝', submitted:'✓', reviewed:'✔' }[state];
   const meta = `<span class="tk-pill ${state}">${stateIcon} ${stateLabel}</span>`
     + dueChip(a, state)
+    + (state !== 'todo' && isLateSubmit(a, row) ? `<span class="tk-pill late">⏰ ${T('Submitted late','དུས་ལས་བརྒལ་ཏེ་བཙུགས་ཡོད')}</span>` : '')
     + (resources.length ? `<span class="tk-pill plain">📎 ${resources.length}</span>` : '')
     + (nQ ? `<span class="tk-pill plain">❓ ${nQ}</span>` : '')
     + (row.score != null && state === 'reviewed' ? `<span class="tk-pill reviewed">⭐ ${esc(row.score)}%</span>` : '');
@@ -1426,7 +1560,7 @@ async function renderAssignmentCard(a, done){
       data-created="${esc(a.created_at||'')}" data-due="${esc(a.due_date||'')}">
     <div class="tk-head" role="button" tabindex="0" aria-expanded="${open ? 'true' : 'false'}">
       <div class="tk-ico">${interactive ? '✨' : (resources.length ? '📎' : '📝')}</div>
-      <div class="tk-headtext"><h3 class="tk-title">${esc(title)}</h3><div class="tk-meta">${meta}</div></div>
+      <div class="tk-headtext"><h3 class="tk-title">${esc(title)}${newTaskIds.has(String(a.id)) ? '<span class="tk-new">NEW</span>' : ''}${newFeedbackIds.has(String(a.id)) ? '<span class="tk-new">💬 ' + T('FEEDBACK','བསམ་བཀོད') + '</span>' : ''}</h3><div class="tk-meta">${meta}</div></div>
       <span class="tk-chev" aria-hidden="true">▾</span>
     </div>
     <div class="tk-body">
