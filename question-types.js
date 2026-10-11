@@ -33,6 +33,16 @@ export const DRAGFILL_DEFAULT_TEXT = () => T('Drag the right word into each blan
 /** True for the "drag words into the blanks" version of a fill-the-blanks question */
 export const isDragFill = q => !!q && q.type === 'dropfill' && !!q.drag;
 export const typeLabelFor = q => (isDragFill(q) ? T('Drag & drop (fill the blanks)', 'འདྲུད་ནི་དང་བཞག་ནི། (ས་སྟོང་བཀང་)') : typeLabel(q && q.type));
+/** The instruction a structured question gets when the teacher leaves the question text empty
+ *  (without it the question used to be dropped silently when the task was saved). */
+export const defaultTextFor = q => {
+  if (!q) return '';
+  if (q.type === 'dropfill') return q.drag ? DRAGFILL_DEFAULT_TEXT() : DROPFILL_DEFAULT_TEXT();
+  if (q.type === 'ordering') return T('Put these items in the correct order.', 'རིམ་པ་ཡང་དག་སྦེ་བཀོད།');
+  if (q.type === 'matching') return T('Match each item on the left with the correct answer.', 'གཡོན་ཁའི་དངོས་པོ་རེ་རེ་ལུ་ལན་ཡང་དག་མཐུན་སྒྲིག་འབད།');
+  if (q.type === 'dragdrop') return T('Drag each item into the correct group.', 'དངོས་པོ་རེ་རེ་སྡེ་ཚན་ཡང་དག་ནང་འདྲུད་ཏེ་བཞག');
+  return '';
+};
 const blankCount = q => (String(q.template || '').match(/\{\{\d+\}\}/g) || []).length;
 
 // ── small helpers ────────────────────────────────────────────────────────
@@ -236,8 +246,13 @@ export function wireStructuredBuilder(container, getQuestions, rerender) {
       if (box) box.innerHTML = blanksHtml(sq, q.drag);
     }
   });
-  container.addEventListener('change', e => {            // group names feed the item dropdowns -> redraw when finished typing
-    if (e.target.getAttribute && e.target.getAttribute('data-sq-f') === 'group') rerender();
+  container.addEventListener('change', e => {            // group names feed the item dropdowns -> refresh only those dropdowns
+    if (!(e.target.getAttribute && e.target.getAttribute('data-sq-f') === 'group')) return;   // (a full redraw here stole the keyboard focus from the next field)
+    const q = qOf(e.target), box = e.target.closest('.sqb'); if (!q || !q.sq || !box) return;
+    box.querySelectorAll('select[data-sq-f="dg"]').forEach(sel => {
+      const it = q.sq.items[Number(sel.getAttribute('data-j'))], cur = it ? it.g : 0;
+      sel.innerHTML = q.sq.groups.map((g, gi) => `<option value="${gi}" ${cur === gi ? 'selected' : ''}>${esc(String(g).trim() || (T('Group') + ' ' + (gi + 1)))}</option>`).join('');
+    });
   });
   container.addEventListener('click', e => {
     const b = e.target.closest('[data-sq-act]'); if (!b) return;

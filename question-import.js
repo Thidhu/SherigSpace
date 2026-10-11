@@ -213,3 +213,85 @@ export async function downloadQuestionTemplate() {
   XLSX.utils.book_append_sheet(wb, ws, 'Questions');
   XLSX.writeFile(wb, 'SherigSpace-question-template.xlsx');
 }
+
+// ── Export the questions of a task as a CSV file (opens in Excel / Google Sheets) ──
+// Columns match the import template (Type, Question, Option A…, Correct Answer, Points), so
+// ordinary questions can be imported again. Sorting-type questions are written in readable form.
+const TYPE_NAMES = {
+  short: 'Short answer', long: 'Paragraph', choice: 'Multiple choice', truefalse: 'True/False',
+  fillblank: 'Fill in the blank', image: 'Image question', audio: 'Audio question',
+  ordering: 'Order / Sequence', matching: 'Matching', dragdrop: 'Drag & drop (sort into groups)',
+  dropfill: 'Fill blanks (dropdown)'
+};
+const clean = v => String(v == null ? '' : v).trim();
+const splitAnswers = v => clean(v).split(/\n|,/).map(x => x.trim()).filter(Boolean);
+
+function exportRow(q) {
+  const type = q.type === 'dropfill' && q.drag ? 'Drag & drop (fill the blanks)' : (TYPE_NAMES[q.type] || q.type || '');
+  let options = [], correct = '';
+  const sq = q.sq || {};
+  if (q.type === 'choice') {
+    options = (q.options || []).map(clean).filter(Boolean);
+    const c = (q.options || [])[q.correct];
+    const at = c == null ? -1 : options.indexOf(clean(c));
+    correct = at >= 0 ? LETTERS[at] : '';
+  } else if (q.type === 'truefalse') {
+    options = [];
+    correct = q.correct === 0 ? 'True' : q.correct === 1 ? 'False' : '';
+  } else if (q.type === 'short' || q.type === 'fillblank' || q.type === 'image' || q.type === 'audio') {
+    correct = splitAnswers(q.accepted).join(' | ');
+    if (q.media_url) options = ['Media: ' + clean(q.media_url)];
+  } else if (q.type === 'ordering') {
+    options = (sq.items || []).map(clean).filter(Boolean);                 // already in the correct order
+    correct = options.join(' → ');
+  } else if (q.type === 'matching') {
+    const pairs = (sq.pairs || []).filter(p => clean(p.l) && clean(p.r));
+    options = pairs.map(p => clean(p.l) + ' → ' + clean(p.r));
+    correct = options.join(' ; ');
+    if (clean(sq.extras)) options.push('Extra wrong answers: ' + splitAnswers(sq.extras).join(', '));
+  } else if (q.type === 'dragdrop') {
+    const groups = (sq.groups || []).map(clean);
+    options = (sq.items || []).filter(it => clean(it.t) && groups[it.g]).map(it => clean(it.t) + ' → ' + groups[it.g]);
+    correct = groups.filter(Boolean).map(g => g + ': ' + (sq.items || []).filter(it => clean(it.t) && groups[it.g] === g).map(it => clean(it.t)).join(', ')).join(' ; ');
+  } else if (q.type === 'dropfill') {
+    const passage = clean(sq.passage);
+    options = [passage];
+    correct = [...passage.matchAll(/\[\[([^\]]+?)\]\]/g)].map(m => m[1].trim()).join(' | ');
+    const extra = q.drag ? splitAnswers(sq.extras) : (sq.wrong || []).flatMap(splitAnswers);
+    if (extra.length) options.push('Wrong choices: ' + extra.join(', '));
+  }
+  return { type, text: clean(q.text), options, correct, points: q.points == null ? 1 : q.points };
+}
+
+// A cell that starts with = + @ could run as a formula when the file is opened in Excel — neutralise it.
+const cell = v => {
+  let s = String(v == null ? '' : v);
+  if (/^[=+@]/.test(s) || /^-[^\d.\s]/.test(s)) s = "'" + s;
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+};
+
+/** Builder questions -> CSV text (with a UTF-8 marker so Dzongkha shows correctly in Excel). */
+export function questionsToCsv(questions, defaultText) {
+  const rows = (questions || []).map(q => {
+    const r = exportRow(q);
+    if (!r.text && defaultText) r.text = clean(defaultText(q));
+    return r;
+  }).filter(r => r.text || r.options.length);
+  const nOpt = Math.max(4, ...rows.map(r => r.options.length));
+  const head = ['Type', 'Question', ...Array.from({ length: nOpt }, (_, i) => 'Option ' + String.fromCharCode(65 + i)), 'Correct Answer', 'Points'];
+  const lines = [head].concat(rows.map(r => [r.type, r.text, ...Array.from({ length: nOpt }, (_, i) => r.options[i] || ''), r.correct, r.points]));
+  return '\uFEFF' + lines.map(l => l.map(cell).join(',')).join('\r\n');
+}
+
+export function downloadQuestionsCsv(questions, defaultText, baseName) {
+  const csv = questionsToCsv(questions, defaultText);
+  const count = csv.split('\r\n').length - 1;
+  if (count < 1) return 0;
+  const safe = clean(baseName).replace(/[^\w\u0F00-\u0FFF .-]+/g, '_').slice(0, 60) || 'questions';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = safe + '-questions.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  return count;
+}

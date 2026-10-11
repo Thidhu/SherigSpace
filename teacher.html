@@ -329,8 +329,8 @@ import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, i
 const jsq=v=>esc(JSON.stringify(String(v==null?'':v)));
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions } from './assignment-utils.js';
-import { importQuestionsFromFile, downloadQuestionTemplate } from './question-import.js';
-import { isStructured, isDragFill, typeLabelFor, defaultSq, buildForSave, fromSaved, builderHtml, wireStructuredBuilder, itemsFromBuilder, openQuestionPreview, answerText, checkAnswer } from './question-types.js';
+import { importQuestionsFromFile, downloadQuestionTemplate, downloadQuestionsCsv } from './question-import.js';
+import { isStructured, isDragFill, typeLabelFor, defaultTextFor, defaultSq, buildForSave, fromSaved, builderHtml, wireStructuredBuilder, itemsFromBuilder, openQuestionPreview, answerText, checkAnswer } from './question-types.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 
@@ -1490,6 +1490,11 @@ window.openAssignmentForm = async function(editId){
   }
   taskQuestions = editing ? parseQuestions(existing).map(q => isStructured(q.type) ? fromSaved(q, keyMap[q.id]) : ({ ...q, accepted: Array.isArray(keyMap[q.id]) ? keyMap[q.id].join(', ') : (typeof keyMap[q.id] === 'string' ? keyMap[q.id] : (q.accepted_answers||[]).join(', ')), media_url: q.media_url || '', correct: (q.type === 'choice' || q.type === 'truefalse') && keyMap[q.id] != null && q.options.indexOf(keyMap[q.id]) >= 0 ? q.options.indexOf(keyMap[q.id]) : null, points: Math.max(0, Number(q.points ?? 1) || 0) })) : [];
 
+  if(editing){
+    const noKey = taskQuestions.filter(q => isStructured(q.type) && keyMap[q.id] == null).length;
+    if(noKey) setTimeout(() => toast(noKey + ' question' + (noKey === 1 ? '' : 's') + ' (sorting / matching / blanks): the saved correct answers could not be loaded' + (cfg.keys ? '' : ' (answer-key table missing)') + '. Re-enter the correct answers before saving, otherwise they will be wrong.', true), 300);
+  }
+
   document.getElementById('m-title').textContent = editing ? T('Edit Task','ལཱ་ཞུན་དག') : T('Assign a Task','ལཱ་སྤྲོད་');
   document.querySelector('#overlay .modal').style.maxWidth = '700px';
   document.getElementById('m-body').innerHTML = `
@@ -1546,6 +1551,7 @@ window.openAssignmentForm = async function(editId){
         <button type="button" class="btn btn-ghost btn-sm" onclick="addQuestion('dropfill')">${T('＋ Fill blanks (dropdown)','＋ ས་སྟོང་བཀང་ (གདམ་ཁ་)')}</button>
         <input type="file" id="f-q-import" accept=".docx,.xlsx,.xls,.csv" style="display:none" onchange="importQuestionsChosen(event)"/>
         <button type="button" class="btn btn-gold btn-sm" onclick="document.getElementById('f-q-import').click()" title="Add questions from a Word (.docx) or Excel (.xlsx, .csv) file on your computer">📥 ${T('Import Word / Excel','Import Word / Excel')}</button>
+        <button type="button" class="btn btn-gold btn-sm" onclick="exportQuestionsCsv()" title="Download these questions (with the correct answers) as a CSV file for Excel / Google Sheets">📤 ${T('Export CSV','Export CSV')}</button>
         <button type="button" class="btn btn-gold btn-sm" onclick="openQuestionBank()">📚 ${T('Question Bank','དྲི་བའི་མཛོད')}</button>
         <button type="button" class="btn btn-gold btn-sm" onclick="previewTaskQuestions()" title="See the questions exactly as students will, and try them">👁 ${T('Preview as student','སློབ་ཕྲུག་གིས་བལྟ་སྟངས་སྔོན་བལྟ།')}</button>
       </div>
@@ -1673,7 +1679,12 @@ window.openAssignmentForm = async function(editId){
       toast(T('Please enter a title.','མགོ་མིང་བཙུགས་གནང་།'), true); return;
     }
 
-    const keyOut = {};
+    // Sorting / matching / blanks questions cannot work without the answer-key table: without it the
+    // questions are not saved and nothing can be checked, so say so instead of failing silently.
+    if(taskQuestions.some(q => isStructured(q.type)) && !(cfg.extras && cfg.keys)){
+      toast(T('These question types need the answer-key table in Supabase (assignment_keys, plus the questions / answers columns). Run the setup SQL, reload this page, and save again.','These question types need the answer-key table in Supabase (assignment_keys, plus the questions / answers columns). Run the setup SQL, reload this page, and save again.'), true); return;
+    }
+    const keyOut = {}; let skippedBlank = 0;
     if(cfg.extras){
       payload.attachments = taskAttachments.map((a,i) => ({
         url: a.url, label: (a.label || '').trim() || defaultLabel(a.url),
@@ -1683,8 +1694,8 @@ window.openAssignmentForm = async function(editId){
       const qs = [];
       for(const q of taskQuestions){
         let text = q.text.trim();
-        if(!text && q.type === 'dropfill') text = q.drag ? 'Drag the right word into each blank.' : 'Choose the correct answer for each blank.';
-        if(!text) continue;
+        if(!text && isStructured(q.type)) text = defaultTextFor(q);   // never drop a sorting / matching / blanks question just because the instruction was left empty
+        if(!text){ skippedBlank++; continue; }
         const item = { id: q.id, type: q.type, text };
         if(isStructured(q.type)){
           const r = buildForSave({ ...q, text });
@@ -1740,6 +1751,7 @@ window.openAssignmentForm = async function(editId){
         : await supabase.from('assignment_keys').delete().eq('assignment_id', savedId);
       if(kr.error){ toast('Task saved, but the correct answers could not be saved: ' + kr.error.message, true); closeModal(); renderAssignments(); return; }
     }
+    if(skippedBlank) toast(skippedBlank + ' empty question' + (skippedBlank === 1 ? ' was' : 's were') + ' skipped (no question text).', true);
     toast(payload.is_draft ? 'Draft saved — students cannot see it yet ✓' : (payload.publish_at && new Date(payload.publish_at) > new Date()) ? 'Task scheduled ✓' : (editing ? 'Task updated ✓' : 'Assignment created ✓')); closeModal(); renderAssignments();
   };
   document.getElementById('overlay').classList.add('open');
@@ -1906,6 +1918,12 @@ function wireQuestionBuilder(){
 // -- Import questions from a Word / Excel file --
 window.downloadQuestionTemplate = async function(){
   try{ await downloadQuestionTemplate(); }catch(e){ toast(e.message || 'Could not make the template.', true); }
+};
+window.exportQuestionsCsv = function(){
+  const title = (document.getElementById('f-custom-title') || {}).value || '';
+  const n = downloadQuestionsCsv(taskQuestions, defaultTextFor, title || 'task');
+  if(!n) toast(T('Add at least one question first.','Add at least one question first.'), true);
+  else toast(n + ' question' + (n === 1 ? '' : 's') + ' exported ✓');
 };
 window.importQuestionsChosen = async function(ev){
   const input = ev.target, file = input.files && input.files[0];
@@ -2474,6 +2492,10 @@ async function renderBilling(sub){
     ${statusNote}
   `;
 }
+
+// inline onclick="..." handlers can only see window, and this script is a module
+window.checkAccess = checkAccess;
+window.closeReportOverlay = closeReportOverlay;
 
 checkAccess();
 window.addEventListener('sherig:langchange', function(){
