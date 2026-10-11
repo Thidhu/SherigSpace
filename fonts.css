@@ -1,10 +1,12 @@
 /* DDC Joyig - the main Dzongkha (Tibetan-script) font for the whole site.
+   Served from the site itself, so every device shows it (no install needed).
    unicode-range = only Tibetan characters use it, so English text keeps its own
-   font automatically, and the 591 KB file is only downloaded on pages that
-   actually show Dzongkha. Every font stack on the site lists 'DDC Joyig' first. */
+   font automatically, and the file is only downloaded on pages that actually show
+   Dzongkha. Every font stack on the site lists 'DDC Joyig' first. */
 @font-face{
   font-family:'DDC Joyig';
-  src:url('ThinWangTJoyig-Regular.ttf') format('truetype');
+  src:url('DDC_Joyig.woff2') format('woff2'),
+      url('DDC_Joyig.ttf') format('truetype');
   font-weight:normal;
   font-style:normal;
   font-display:swap;
