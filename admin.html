@@ -346,6 +346,7 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
       <div class="sitem"     onclick="go('videos')">🎥 &nbsp;Videos</div>
       <div class="sitem"     onclick="go('games')">🎮 &nbsp;EduGames</div>
       <div class="sitem"     onclick="go('articles')">✍️ &nbsp;Articles</div>
+      <div class="sitem"     onclick="go('quicklinks')">🔗 &nbsp;Quick Links</div>
       <div class="sitem"     onclick="go('announce')">📢 &nbsp;Announcements</div>
       <div class="sitem"     onclick="go('payments')">💳 &nbsp;Payments <span class="payment-badge" id="payments-nav-badge" aria-label="Pending payments">0</span></div>
       <div class="sitem"     onclick="go('contributions')">🤝 &nbsp;Contributions <span class="payment-badge" id="contrib-nav-badge" aria-label="Pending contributions">0</span></div>
@@ -401,6 +402,11 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
     <div class="page" id="p-articles">
       <div class="phead"><div><div class="ptitle">Articles</div><div class="psub">Manage your blog posts · use ▲ ▼ to set the order shown on the site</div></div><button class="btn btn-gold" onclick="openForm('article')">+ Add Article</button></div>
       <div class="card"><div class="card-head"><h3>All Articles</h3><span class="cbadge" id="c-articles">0</span></div><div id="l-articles"></div></div>
+    </div>
+
+    <div class="page" id="p-quicklinks">
+      <div class="phead"><div><div class="ptitle">Quick Links</div><div class="psub">Links shown to everyone on the home page, just above "What is SherigSpace?" · paste them here, one per line · use ▲ ▼ to set the order</div></div></div>
+      <div class="card"><div id="quicklinks-mgr"></div></div>
     </div>
 
     <div class="page" id="p-announce">
@@ -506,6 +512,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 import { classifyUrl, autoThumbFor } from './assignment-utils.js';
+import { mountLinkManager } from './link-list.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -559,11 +566,23 @@ window.go = function(p){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.sitem').forEach(e=>e.classList.remove('on'));
   document.getElementById('p-'+p).classList.add('on');
-  const map={dash:'dashboard',banners:'banners',loginbg:'login backgrounds',lessons:'lessons',resources:'resources',videos:'videos',games:'edugames',articles:'articles',payments:'payments',contributions:'contributions',users:'users',settings:'settings'};
+  const map={dash:'dashboard',banners:'banners',loginbg:'login backgrounds',lessons:'lessons',resources:'resources',videos:'videos',games:'edugames',quicklinks:'quick links',articles:'articles',payments:'payments',contributions:'contributions',users:'users',settings:'settings'};
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
+  if(p==='quicklinks') loadQuickLinks();
   try{ sessionStorage.setItem('sherig_admin_page', p); }catch(e){}   // remembered so a refresh stays on this page
 };
+
+// ── QUICK LINKS (home page) ──
+let quickLinksMgr = null;
+function loadQuickLinks(){
+  const el = document.getElementById('quicklinks-mgr');
+  if(!quickLinksMgr){
+    quickLinksMgr = mountLinkManager(el, { supabase, table:'quick_links', onError: m => toast(m, true),
+      emptyText:'No quick links yet. Paste some above.',
+      placeholder:'Paste links here, one per line:\nSherigSpace YouTube | https://youtube.com/…\nDzongkha Dictionary | https://…' });
+  } else quickLinksMgr.reload();
+}
 
 // ── RENDER ALL ──
 async function renderAll(){

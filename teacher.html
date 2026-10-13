@@ -197,6 +197,7 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
       <div class="sitem on" onclick="go('classes')">🏫 &nbsp;<span data-en="My Classes" data-dz="ང་གི་དཔྱེ་སློབ།">My Classes</span></div>
       <div class="sitem" onclick="go('analytics')">📊 &nbsp;<span data-en="Analytics" data-dz="གྲངས་ཐོ་དབྱེ་ཞིབ།">Analytics</span></div>
       <div class="sitem" onclick="go('ai')">🤖 &nbsp;<span data-en="AI Teaching Tools" data-dz="AI སློབ་ཁྲིད་ལག་ཆས།">AI Teaching Tools</span></div>
+      <div class="sitem" onclick="go('shortcuts')">🔗 &nbsp;<span data-en="My Shortcuts" data-dz="My Shortcuts">My Shortcuts</span></div>
       <div class="sitem" onclick="go('billing')">💳 &nbsp;<span data-en="Subscription" data-dz="འོས་སྦྱོར།">Subscription</span></div>
     </nav>
     <div class="sfoot">
@@ -225,6 +226,7 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
         </div>
       </div>
       <div class="card"><div class="card-head"><h3 data-en="Students" data-dz="སློབ་ཕྲུག">Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()" data-en="+ Add Student" data-dz="+ སློབ་ཕྲུག་ཁ་སྐོང་།">+ Add Student</button></div><div id="plan-note-students" style="font-size:.82rem;color:var(--text2);padding:0 1rem .4rem"></div><div id="students-list"></div></div>
+      <div class="card" id="chat-card"><div class="card-head"><h3>💬 Class Chat</h3><label class="lib-switch" title="Let students in this class chat with each other"><input type="checkbox" id="chat-enabled" onchange="toggleChat(this.checked)"/><span id="chat-enabled-text">Off</span></label></div><div id="chat-body" style="padding:1rem 1.4rem"><div class="lib-note">Loading…</div></div></div>
       <div class="card" id="library-card"><div class="card-head"><h3>📚 Learning Library</h3><label class="lib-switch" title="Show videos and resources to this class"><input type="checkbox" id="lib-enabled" onchange="toggleLibrary(this.checked)"/><span id="lib-enabled-text">On</span></label></div><div id="library-body"><div class="lib-note">Loading…</div></div></div>
       <div class="card"><div class="card-head"><h3 data-en="Assignments" data-dz="ལཱ་ཁག">Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()" data-en="＋ Assign Task" data-dz="＋ ལཱ་སྤྲོད་">＋ Assign Task</button></div><div id="assignments-list"></div></div>
     </div>
@@ -235,6 +237,11 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
       <div id="analytics-stats" class="stats"></div>
       <div class="card"><div class="card-head"><h3>Assignment performance</h3><div style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" id="gradebook-open">📘 Gradebook</button><button class="btn btn-ghost btn-sm" id="class-gradebook-open">📊 Class Gradebook</button><button class="btn btn-ghost btn-sm" id="report-card-open">📄 Report Cards</button><button class="btn btn-ghost btn-sm" id="analytics-export">⬇ Export CSV</button></div></div><div id="analytics-assignments" style="overflow-x:auto"></div></div>
       <div class="card"><div class="card-head"><h3>Student progress</h3></div><div id="analytics-students" style="overflow-x:auto"></div></div>
+    </div>
+
+    <div class="page" id="p-shortcuts">
+      <div class="phead"><div><div class="ptitle">🔗 My Shortcuts</div><div class="psub">Keep your important links in one place: Google Drive, other systems, websites. Only you can see this list.</div></div></div>
+      <div class="card"><div id="shortcuts-mgr"></div></div>
     </div>
 
     <div class="page" id="p-ai">
@@ -330,6 +337,8 @@ const jsq=v=>esc(JSON.stringify(String(v==null?'':v)));
 import { uploadFileToDrive, hasValidDriveToken, connectGoogleDrive } from './drive-upload.js';
 import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions } from './assignment-utils.js';
 import { importQuestionsFromFile, downloadQuestionTemplate, downloadQuestionsCsv } from './question-import.js';
+import { mountClassChat } from './class-chat.js';
+import { mountLinkManager } from './link-list.js';
 import { isStructured, isDragFill, typeLabelFor, defaultTextFor, defaultSq, buildForSave, fromSaved, builderHtml, wireStructuredBuilder, itemsFromBuilder, openQuestionPreview, answerText, checkAnswer } from './question-types.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
@@ -554,10 +563,22 @@ window.go = function(p){
   if(p==='classes') document.querySelectorAll('.sitem')[0]?.classList.add('on');
   if(p==='analytics'){ document.querySelectorAll('.sitem')[1]?.classList.add('on'); renderAnalytics(); }
   if(p==='ai'){ document.querySelectorAll('.sitem')[2]?.classList.add('on'); initAITools(); }
-  if(p==='billing') document.querySelectorAll('.sitem')[3]?.classList.add('on');
+  if(p==='shortcuts'){ document.querySelectorAll('.sitem')[3]?.classList.add('on'); loadShortcuts(); }
+  if(p==='billing') document.querySelectorAll('.sitem')[4]?.classList.add('on');
   try{ sessionStorage.setItem('sherig_teacher_page', p); }catch(e){}   // remembered so a refresh stays on this page
 };
 
+
+// ── MY SHORTCUTS (private to this teacher) ──
+let shortcutsMgr = null;
+function loadShortcuts(){
+  const el = document.getElementById('shortcuts-mgr');
+  if(!shortcutsMgr){
+    shortcutsMgr = mountLinkManager(el, { supabase, table:'teacher_shortcuts', ownerColumn:'teacher_id', onError: m => toast(m, true),
+      emptyText:'No shortcuts yet. Paste your first link above.',
+      placeholder:'Paste links here, one per line:\nMy Google Drive | https://drive.google.com/…\nSchool portal | https://…' });
+  } else shortcutsMgr.reload();
+}
 
 // ── AI TEACHING TOOLS ──
 let aiClassesCache = [];
@@ -1074,6 +1095,46 @@ window.openClass = function(id, name, code){
   renderStudents();
   renderLibraryManager();
   renderAssignments();
+  renderChatCard();
+};
+
+
+// ── CLASS CHAT (off by default; the teacher switches it on per class) ──
+const CHATM = { mounted:null };
+function drawChat(on){
+  const box = document.getElementById('chat-body');
+  if(CHATM.mounted){ CHATM.mounted.destroy(); CHATM.mounted = null; }
+  if(!on){
+    box.innerHTML = '<div class="lib-note">Chat is off, so students in this class cannot message each other. Switch it on to let them chat as a class. You will see every message, and you can delete any message or mute a student.</div>';
+    return;
+  }
+  box.innerHTML = '';
+  CHATM.mounted = mountClassChat(box, { supabase, classId: currentClassId, role:'teacher' });
+}
+async function renderChatCard(){
+  const box = document.getElementById('chat-body'), sw = document.getElementById('chat-enabled'), txt = document.getElementById('chat-enabled-text');
+  if(CHATM.mounted){ CHATM.mounted.destroy(); CHATM.mounted = null; }
+  const id = currentClassId;
+  box.innerHTML = '<div class="lib-note">Loading…</div>';
+  const { data, error } = await supabase.from('classes').select('chat_enabled').eq('id', id).maybeSingle();
+  if(id !== currentClassId) return;   // the teacher already opened another class
+  if(error){
+    sw.disabled = true; sw.checked = false; txt.textContent = 'Off';
+    box.innerHTML = '<div class="lib-note">Class chat is not set up yet. Run <b>CHAT_SETUP.sql</b> once in Supabase → SQL Editor, then reload this page.</div>';
+    return;
+  }
+  sw.disabled = false;
+  const on = !!(data && data.chat_enabled);
+  sw.checked = on; txt.textContent = on ? 'On' : 'Off';
+  drawChat(on);
+}
+window.toggleChat = async function(on){
+  const sw = document.getElementById('chat-enabled');
+  if(on && !confirm('Turn on chat for this class? Students will be able to message each other. You can read everything, delete any message, and mute a student.')){ sw.checked = false; return; }
+  const { error } = await supabase.from('classes').update({ chat_enabled: on }).eq('id', currentClassId);
+  if(error){ sw.checked = !on; toast('Could not save: ' + error.message, true); return; }
+  document.getElementById('chat-enabled-text').textContent = on ? 'On' : 'Off';
+  drawChat(on);
 };
 
 window.closeModal = function(){ document.getElementById('overlay').classList.remove('open'); document.querySelector('#overlay .modal').style.maxWidth = ''; document.getElementById('m-save-btn').style.display = ''; const cb = document.querySelector('#overlay .mfoot .btn-ghost'); if(cb) cb.style.display = ''; };

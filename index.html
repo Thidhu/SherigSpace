@@ -364,7 +364,14 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .dash-wrap .inner{max-width:100%;margin:0}
 .dash-wrap section{padding:0 0 1.8rem}
 .dash-wrap #about{background:none;padding:1.5rem 0 2.6rem}
-.dash-wrap #about .about-inner{gap:2.5rem;grid-template-columns:220px 1fr}
+.dash-wrap #about .about-inner{gap:2.5rem;grid-template-columns:1fr;max-width:100%;margin:0}
+.ql-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.9rem}
+.ql-card{display:flex;align-items:center;gap:.8rem;background:var(--surface);border:1px solid var(--card-border);border-radius:16px;padding:.95rem 1.1rem;color:var(--text);text-decoration:none;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
+.ql-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+.ql-ico{font-size:1.5rem;flex:none}
+.ql-title{font-weight:600;font-size:.92rem;line-height:1.35;word-break:break-word}
+.ql-host{font-size:.72rem;color:var(--text2);margin-top:1px}
+.dash-wrap #about .purpose-intro,.dash-wrap #about .purpose-note,.dash-wrap #about .purpose-intro .section-title,.dash-wrap #about .why-inline-note{max-width:none;width:100%}
 .dash-wrap #about .section-title,.dash-wrap #about .section-label,.dash-wrap #about .section-desc{color:var(--text)}
 .dash-wrap #about .section-label{color:var(--gold-text)}
 .dash-wrap #about .section-desc{color:var(--text2)}
@@ -937,6 +944,7 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
       <a class="side-link" href="#blog" data-section="blog"><span class="si">✍️</span><span data-en="Articles" data-dz="རྩོམ་ཡིག།">Articles</span></a>
       <a class="side-link" id="contribLink" onclick="openContribute()" style="cursor:pointer"><span class="si">🤝</span><span data-en="Contribute">Contribute</span></a>
       <a class="side-link" id="feedbackLink" onclick="openFeedback()" style="cursor:pointer"><span class="si">💬</span><span data-en="Feedback">Feedback</span></a>
+      <a class="side-link" id="quicklinksSide" href="#quicklinks" data-section="quicklinks" style="display:none"><span class="si">🔗</span><span data-en="Quick Links">Quick Links</span></a>
       <a class="side-link" href="#about" data-section="about"><span class="si">✦</span><span data-en="Why SherigSpace?" data-dz="SherigSpace ག་ཅི་གི་དོན་ལུ?">Why SherigSpace?</span></a>
     </nav>
     <div class="sidebar-profile" onclick="openProfile()">
@@ -1080,6 +1088,18 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
   </div>
 </section>
 
+<!-- QUICK LINKS (managed in Admin → Quick Links) -->
+<section id="quicklinks" style="display:none">
+  <div class="inner">
+    <div class="fade-in">
+      <p class="section-label" data-en="✦ Shortcuts" data-dz="✦ ཐབས་ལམ།">✦ Shortcuts</p>
+      <h2 class="section-title" data-en="Quick Links" data-dz="མགྱོགས་འབྲེལ།">Quick Links</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="ql-grid" id="quicklinks-grid"></div>
+  </div>
+</section>
+
 <!-- WHY SHERIGSPACE -->
 <section id="about">
   <div class="about-inner sherigspace-purpose">
@@ -1161,6 +1181,7 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { AUTH_OPTIONS } from './auth-storage.js';
 import { SUPABASE_URL, SUPABASE_KEY, isFreeMode, esc, safeUrl } from './config.js';
+import { iconFor } from './link-list.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 
@@ -2062,6 +2083,26 @@ async function renderResources(){
 }
 
 // ── RENDER GAMES ──
+// ── Quick Links (Admin → Quick Links) — the section stays hidden until at least one link exists ──
+async function renderQuickLinks(){
+  const sec = document.getElementById('quicklinks'), grid = document.getElementById('quicklinks-grid'), side = document.getElementById('quicklinksSide');
+  if(!sec || !grid) return;
+  let rows = [];
+  try{
+    const { data, error } = await supabase.from('quick_links').select('id,title,url,sort_order,created_at')
+      .order('sort_order',{ascending:true,nullsFirst:false}).order('created_at',{ascending:true});
+    if(!error) rows = data || [];
+  }catch(e){}
+  rows = rows.filter(r => safeUrl(r.url));
+  sec.style.display = rows.length ? '' : 'none';
+  if(side) side.style.display = rows.length ? '' : 'none';
+  grid.innerHTML = rows.map(r => {
+    let host = ''; try{ host = new URL(r.url).hostname.replace(/^www\./,''); }catch(e){}
+    return `<a class="ql-card" href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener noreferrer"><span class="ql-ico">${iconFor(r.url)}</span><span><div class="ql-title">${esc(r.title)}</div><div class="ql-host">${esc(host)}</div></span></a>`;
+  }).join('');
+}
+renderQuickLinks();
+
 async function renderGames(){
   const { data: raw, error: loadErr } = await fetchOrderedTable('games');
   if(loadErr) console.error('Could not load games:', loadErr);

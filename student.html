@@ -483,6 +483,7 @@ a.btn{text-decoration:none;display:inline-block}
   <div class="s-tabs" role="tablist">
     <button type="button" class="s-tab on" data-pane="tasks" role="tab">📝 <span>My Tasks</span><span class="s-badge" id="tasks-cnt" style="display:none" aria-live="polite"></span></button>
     <button type="button" class="s-tab" data-pane="learn" role="tab">📚 <span>Learn</span><span class="cnt" id="learn-cnt" style="display:none"></span></button>
+    <button type="button" class="s-tab" data-pane="chat" role="tab">💬 <span>Class Chat</span></button>
   </div>
   <div id="pane-tasks">
   <section id="learning-dashboard" class="learning-dash" aria-label="Learning summary">
@@ -533,6 +534,10 @@ a.btn{text-decoration:none;display:inline-block}
   </div>
   </div><!-- /pane-tasks -->
 
+  <div id="pane-chat" hidden>
+    <div id="chat-class-bar" style="display:none;margin-bottom:.6rem"><select id="chat-class" class="lib-select" aria-label="Choose class"></select></div>
+    <div id="chat-mount"></div>
+  </div>
   <div id="pane-learn" hidden>
     <div class="lib-bar">
       <input id="lib-search" class="lib-search" type="search" placeholder="🔍 Search videos and resources…" aria-label="Search the library"/>
@@ -556,6 +561,7 @@ import { AUTH_OPTIONS } from './auth-storage.js';
 import { SUPABASE_URL, SUPABASE_KEY, isFreeMode, esc, safeUrl } from './config.js';
 import { KIND_META, classifyUrl, defaultLabel, parseAttachments, parseQuestions, autoThumbFor } from './assignment-utils.js';
 import { isStructured, widgetHtml, wireWidgets, answerText } from './question-types.js';
+import { mountClassChat } from './class-chat.js';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, AUTH_OPTIONS);
 let me = null;
@@ -717,8 +723,10 @@ function closeVideoModal(){ document.getElementById('vm-overlay').classList.remo
     document.querySelectorAll('.s-tab').forEach(t => t.classList.toggle('on', t.dataset.pane === name));
     document.getElementById('pane-tasks').hidden = name !== 'tasks';
     document.getElementById('pane-learn').hidden = name !== 'learn';
+    document.getElementById('pane-chat').hidden = name !== 'chat';
     try{ localStorage.setItem('sherig_student_tab', name); }catch(e){}
     if(name === 'learn') loadLibrary();
+    if(name === 'chat') openChatPane();
   }
   document.querySelector('.s-tabs').addEventListener('click', e => { const t = e.target.closest('.s-tab'); if(t) showPane(t.dataset.pane); });
   window.__showStudentPane = showPane;
@@ -839,6 +847,46 @@ async function pollNewTasks(){
 setInterval(pollNewTasks, 60000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) pollNewTasks(); });
 
+
+// ══════════════ CLASS CHAT TAB — students chat with their own class (teacher switches it on) ══════════════
+const CHAT = { classes:[], classId:null, mounted:null };
+function chatEmpty(msg){
+  const m = document.getElementById('chat-mount');
+  if(CHAT.mounted){ CHAT.mounted.destroy(); CHAT.mounted = null; }
+  document.getElementById('chat-class-bar').style.display = 'none';
+  m.innerHTML = `<div class="lib-empty"><div class="ei">💬</div>${esc(msg)}</div>`;
+}
+function mountChatFor(classId){
+  const c = CHAT.classes.find(x => String(x.id) === String(classId));
+  if(!c) return;
+  if(CHAT.mounted && String(CHAT.classId) === String(c.id)) return;   // already showing it
+  if(CHAT.mounted){ CHAT.mounted.destroy(); CHAT.mounted = null; }
+  CHAT.classId = c.id;
+  const m = document.getElementById('chat-mount'); m.innerHTML = '';
+  CHAT.mounted = mountClassChat(m, { supabase, classId:c.id, role:'student', muted:!!c.muted });
+}
+async function openChatPane(){
+  const m = document.getElementById('chat-mount');
+  if(!CHAT.mounted) m.innerHTML = `<div class="lib-empty"><div class="ei">⏳</div>${T('Loading…','འདྲེན་བཞིནམ...')}</div>`;
+  const rp = await supabase.rpc('student_chat_classes');
+  if(rp.error){
+    console.warn('student_chat_classes not available (run CHAT_SETUP.sql):', rp.error.message);
+    chatEmpty('Class chat is not available yet.'); return;
+  }
+  const all = rp.data || [];
+  if(!all.length){ chatEmpty('You are not in a class yet.'); return; }
+  CHAT.classes = all.filter(c => c.chat_enabled);
+  if(!CHAT.classes.length){ chatEmpty('Chat is switched off for your class. Your teacher can turn it on.'); return; }
+  const sel = document.getElementById('chat-class'), bar = document.getElementById('chat-class-bar');
+  const keep = CHAT.classes.some(c => String(c.id) === String(CHAT.classId)) ? CHAT.classId : CHAT.classes[0].id;
+  sel.innerHTML = CHAT.classes.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  sel.value = String(keep);
+  bar.style.display = CHAT.classes.length > 1 ? '' : 'none';
+  sel.onchange = () => mountChatFor(sel.value);
+  if(!CHAT.classes.some(c => String(c.id) === String(CHAT.classId)) && CHAT.mounted){ CHAT.mounted.destroy(); CHAT.mounted = null; }
+  mountChatFor(keep);
+}
+
 async function init(){
   const { data: { session } } = await supabase.auth.getSession();
   const gate = document.getElementById('gate-inner');
@@ -858,7 +906,7 @@ async function init(){
   document.getElementById('refresh-learning')?.addEventListener('click', renderLearningDashboard);
   loadLibrary().catch(e => console.warn('Library not loaded:', e));
   let tab = 'tasks'; try{ tab = localStorage.getItem('sherig_student_tab') || 'tasks'; }catch(e){}
-  if(tab === 'learn') window.__showStudentPane('learn');
+  if(tab === 'learn' || tab === 'chat') window.__showStudentPane(tab);
   window.addEventListener('sherig:langchange', async ()=>{ await renderAssignments(); await renderLearningDashboard(); if(LIB.loaded) renderLibrary(); });
 }
 
