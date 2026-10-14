@@ -179,7 +179,13 @@ a.tk-link{color:var(--gold-text,var(--gold));text-decoration:underline;overflow-
 #newtask-pop .np-sec+.np-sec{margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border,#ddd)}
 #newtask-pop ul{margin:.2rem 0 .8rem;padding-left:1.1rem;font-size:.86rem;color:var(--text2)}
 #newtask-pop .np-btns{display:flex;gap:.5rem;justify-content:flex-end}
-@media(prefers-reduced-motion:reduce){.s-badge,.tk-new,#newtask-pop{animation:none}}
+@media(prefers-reduced-motion:reduce){.s-badge,.tk-new,#newtask-pop,.lv-badge{animation:none}}
+.lv-card{display:flex;gap:.9rem;align-items:center;flex-wrap:wrap;background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-left:5px solid #2f6fed;border-radius:14px;padding:.85rem 1rem;margin:0 0 .7rem}
+.lv-card.live{border-left-color:#e5252a;box-shadow:0 0 0 1px rgba(229,37,42,.25),0 8px 24px rgba(229,37,42,.12)}
+.lv-ic{font-size:1.5rem}.lv-main{flex:1;min-width:180px}.lv-title{font-weight:700;overflow-wrap:anywhere}
+.lv-meta{font-size:.78rem;color:var(--text2);margin-top:.15rem}.lv-note{font-size:.8rem;margin-top:.3rem}
+.lv-badge{display:inline-block;background:#e5252a;color:#fff;font-size:.66rem;font-weight:800;letter-spacing:.04em;padding:2px 8px;border-radius:99px;margin-right:.45rem;animation:newPulse 1.6s ease-in-out infinite}
+.lv-wait{font-size:.76rem;color:var(--text2)}
 .s-tab .cnt{font-size:.7rem;background:rgba(201,168,76,.18);color:var(--gold-text,var(--gold));padding:1px 8px;border-radius:99px}
 .lib-bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.9rem}
 .lib-search{flex:1;min-width:180px;padding:.6rem .9rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit}
@@ -486,6 +492,7 @@ a.btn{text-decoration:none;display:inline-block}
     <button type="button" class="s-tab" data-pane="chat" role="tab">💬 <span>Class Chat</span></button>
   </div>
   <div id="pane-tasks">
+  <div id="live-wrap"></div>
   <section id="learning-dashboard" class="learning-dash" aria-label="Learning summary">
     <div class="learning-stat"><div class="num" id="stat-assigned">—</div><div class="lab">Assigned</div></div>
     <div class="learning-stat"><div class="num" id="stat-completed">—</div><div class="lab">Completed</div></div>
@@ -774,7 +781,7 @@ function markTaskSeen(id){
   if(changed){ saveStore(st); updateTaskBadge(); }
 }
 function updateTaskBadge(){
-  const n = newTaskIds.size + newFeedbackIds.size, el = document.getElementById('tasks-cnt');
+  const n = newTaskIds.size + newFeedbackIds.size + liveNowCount, el = document.getElementById('tasks-cnt');
   if(el){ el.textContent = n > 9 ? '9+' : String(n); el.style.display = n ? '' : 'none'; }
   document.title = n ? '(' + n + ') ' + BASE_TITLE : BASE_TITLE;
 }
@@ -886,6 +893,67 @@ async function openChatPane(){
   if(!CHAT.classes.some(c => String(c.id) === String(CHAT.classId)) && CHAT.mounted){ CHAT.mounted.destroy(); CHAT.mounted = null; }
   mountChatFor(keep);
 }
+
+// ── Live classes (a teacher's Google Meet / Zoom / Teams link) ──
+let liveClassIds = [], liveClassNames = {}, liveData = [], liveNowCount = 0;
+const liveStartMs = l => new Date(l.starts_at).getTime();
+const liveEndMs = l => liveStartMs(l) + (Number(l.duration_min)||60)*60000;
+const liveSafeLink = u => { try{ const x = new URL(String(u)); return /^https?:$/.test(x.protocol) ? x.href : ''; }catch(e){ return ''; } };
+function liveIn(ms){
+  const m = Math.max(1, Math.round(ms/60000));
+  if(m < 60) return m + ' min';
+  const h = Math.floor(m/60), r = m % 60;
+  return h >= 24 ? Math.round(h/24) + (Math.round(h/24) === 1 ? ' day' : ' days') : h + ' h' + (r ? ' ' + r + ' min' : '');
+}
+function renderLiveCards(){
+  const wrap = document.getElementById('live-wrap'); if(!wrap) return;
+  const now = Date.now(), items = liveData.filter(l => liveEndMs(l) > now);
+  const before = liveNowCount;
+  liveNowCount = items.filter(l => liveStartMs(l) <= now).length;
+  if(before !== liveNowCount) updateTaskBadge();
+  wrap.innerHTML = items.map(l => {
+    const start = new Date(l.starts_at), isLive = liveStartMs(l) <= now, canJoin = liveStartMs(l) - now <= 10*60000, link = liveSafeLink(l.link);
+    const when = start.toLocaleString(undefined, { weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit' });
+    const cls = liveClassNames[String(l.class_id)];
+    return `<div class="lv-card${isLive ? ' live' : ''}"><div class="lv-ic">🎥</div>
+      <div class="lv-main"><div class="lv-title">${isLive ? '<span class="lv-badge">● ' + T('LIVE NOW','LIVE NOW') + '</span>' : ''}${esc(l.title)}</div>
+        <div class="lv-meta">${cls ? '🏫 ' + esc(cls) + ' · ' : ''}🗓 ${esc(when)} · ⏱ ${esc(l.duration_min)} min · ${isLive ? T('ends in ','ends in ') + liveIn(liveEndMs(l) - now) : T('starts in ','starts in ') + liveIn(liveStartMs(l) - now)}</div>
+        ${l.note ? `<div class="lv-note">📝 ${esc(l.note)}</div>` : ''}</div>
+      <div>${link && canJoin ? `<a class="btn btn-gold btn-sm" href="${esc(link)}" target="_blank" rel="noopener noreferrer">${T('Join class →','Join class →')}</a>` : `<span class="lv-wait">${T('Join button opens 10 min before','Join button opens 10 min before')}</span>`}</div></div>`;
+  }).join('');
+}
+function addAlertSection(sec){
+  const box = document.getElementById('newtask-pop');
+  if(!box){ showAlerts([sec], false); return; }
+  const div = document.createElement('div'); div.className = 'np-sec';
+  div.innerHTML = '<h4>' + sec.icon + ' ' + esc(sec.heading) + '</h4><ul>' + sec.lines.slice(0,4).map(l => '<li>' + esc(l) + '</li>').join('') + '</ul>';
+  box.insertBefore(div, box.querySelector('.np-btns'));
+}
+async function loadLiveClasses(){
+  if(!liveClassIds.length) return;
+  const { data, error } = await supabase.from('live_classes').select('*').in('class_id', liveClassIds).order('starts_at', { ascending:true });
+  if(error) return;   // table not created yet → nothing to show
+  const now = Date.now();
+  liveData = (data || []).filter(l => liveEndMs(l) > now && liveStartMs(l) - now < 14*86400000).slice(0, 8);
+  renderLiveCards();
+  // tell the student once when a class is about to start (within 15 min) and once when it goes live
+  const st = getStore(); st.liveAnn = st.liveAnn || [];
+  const lines = [], heads = [];
+  liveData.forEach(l => {
+    const phase = liveStartMs(l) <= now ? 'now' : (liveStartMs(l) - now <= 15*60000 ? 'soon' : '');
+    if(!phase) return;
+    const key = l.id + '|' + phase; if(st.liveAnn.includes(key)) return;
+    st.liveAnn.push(key); heads.push(phase);
+    lines.push(l.title + (liveClassNames[String(l.class_id)] ? ' · ' + liveClassNames[String(l.class_id)] : ''));
+  });
+  if(lines.length){
+    st.liveAnn = st.liveAnn.slice(-200); saveStore(st);
+    addAlertSection({ icon:'🔴', heading: heads.includes('now') ? T('A live class is on now!','A live class is on now!') : T('A live class starts soon','A live class starts soon'), lines });
+  }
+}
+setInterval(renderLiveCards, 30000);
+setInterval(loadLiveClasses, 60000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) loadLiveClasses(); });
 
 async function init(){
   const { data: { session } } = await supabase.auth.getSession();
@@ -1019,6 +1087,8 @@ async function renderAssignments(){
   }
 
   const classIds = enrollments.map(e=>e.class_id);
+  liveClassIds = classIds; liveClassNames = {}; enrollments.forEach(e => { if(e.classes) liveClassNames[String(e.class_id)] = e.classes.name; });
+  loadLiveClasses();
   const { data: assignmentsRaw, error: assignmentsError } = await supabase.from('assignments').select('*').in('class_id', classIds).order('created_at',{ascending:false});
   if(assignmentsError){
     console.error('Student assignments query failed:', assignmentsError);

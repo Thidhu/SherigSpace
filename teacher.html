@@ -228,6 +228,7 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
       <div class="card"><div class="card-head"><h3 data-en="Students" data-dz="སློབ་ཕྲུག">Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()" data-en="+ Add Student" data-dz="+ སློབ་ཕྲུག་ཁ་སྐོང་།">+ Add Student</button></div><div id="plan-note-students" style="font-size:.82rem;color:var(--text2);padding:0 1rem .4rem"></div><div id="students-list"></div></div>
       <div class="card" id="chat-card"><div class="card-head"><h3>💬 Class Chat</h3><label class="lib-switch" title="Let students in this class chat with each other"><input type="checkbox" id="chat-enabled" onchange="toggleChat(this.checked)"/><span id="chat-enabled-text">Off</span></label></div><div id="chat-body" style="padding:1rem 1.4rem"><div class="lib-note">Loading…</div></div></div>
       <div class="card" id="library-card"><div class="card-head"><h3>📚 Learning Library</h3><label class="lib-switch" title="Show videos and resources to this class"><input type="checkbox" id="lib-enabled" onchange="toggleLibrary(this.checked)"/><span id="lib-enabled-text">On</span></label></div><div id="library-body"><div class="lib-note">Loading…</div></div></div>
+      <div class="card" id="live-card"><div class="card-head"><h3>🎥 Live Classes</h3><button class="btn btn-gold btn-sm" onclick="openLiveForm()">＋ Schedule Live Class</button></div><div id="live-list" style="padding:.2rem 1rem 1rem"></div></div>
       <div class="card"><div class="card-head"><h3 data-en="Assignments" data-dz="ལཱ་ཁག">Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()" data-en="＋ Assign Task" data-dz="＋ ལཱ་སྤྲོད་">＋ Assign Task</button></div><div id="assignments-list"></div></div>
     </div>
 
@@ -980,6 +981,88 @@ window.deleteClass = async function(id, name){
   if(currentClassId === id){ currentClassId = null; go('classes'); }
   renderClasses();
 };
+// ── LIVE CLASSES (a Google Meet / Zoom / Teams link the students can join) ──
+let liveReady = null;
+async function liveAvailable(){
+  if(liveReady === null){ const { error } = await supabase.from('live_classes').select('id').limit(1); liveReady = !error; }
+  return liveReady;
+}
+const liveEndMs = l => new Date(l.starts_at).getTime() + (Number(l.duration_min)||60)*60000;
+function normLink(v){
+  v = String(v||'').trim(); if(!v) return '';
+  if(!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  try{ const u = new URL(v); return /^https?:$/.test(u.protocol) ? u.href : ''; }catch(e){ return ''; }
+}
+async function renderLiveClasses(){
+  const box = document.getElementById('live-list'); if(!box || !currentClassId) return;
+  if(!(await liveAvailable())){
+    box.innerHTML = '<div style="font-size:.84rem;color:var(--text2)">🎥 Live classes need one setup step: run <b>LIVE_CLASSES_SETUP.sql</b> in Supabase.</div>'; return;
+  }
+  const { data, error } = await supabase.from('live_classes').select('*').eq('class_id', currentClassId).order('starts_at',{ascending:true});
+  if(error){ box.innerHTML = '<div style="color:var(--red,#e5252a);font-size:.84rem">Could not load live classes: ' + esc(error.message) + '</div>'; return; }
+  const now = Date.now();
+  const coming = (data||[]).filter(l => liveEndMs(l) > now);
+  const past = (data||[]).filter(l => liveEndMs(l) <= now).reverse().slice(0,3);
+  if(!coming.length && !past.length){ box.innerHTML = '<div style="font-size:.86rem;color:var(--text2)">No live classes yet. Press “Schedule Live Class”, paste your Google Meet / Zoom / Teams link, and your students will see it with a Join button.</div>'; return; }
+  const row = l => {
+    const start = new Date(l.starts_at), live = start.getTime() <= now && liveEndMs(l) > now, ended = liveEndMs(l) <= now;
+    const badge = live ? '<span style="background:#e5252a;color:#fff;font-size:.66rem;font-weight:800;padding:2px 8px;border-radius:99px;margin-right:.4rem">● LIVE NOW</span>' : ended ? '<span style="color:var(--text2);font-size:.72rem;margin-right:.4rem">Ended</span>' : '';
+    const when = start.toLocaleString([], { weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit' });
+    return `<div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px dashed var(--border);${ended?'opacity:.6':''}">
+      <div style="min-width:0"><div style="font-weight:700">${badge}${esc(l.title)}</div>
+        <div style="font-size:.78rem;color:var(--text2)">🗓 ${esc(when)} · ⏱ ${esc(l.duration_min)} min${l.note ? ' · ' + esc(l.note) : ''}</div></div>
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+        ${ended ? '' : `<a class="btn btn-gold btn-sm" href="${esc(l.link)}" target="_blank" rel="noopener noreferrer">${live ? '🎥 Join' : '🎥 Start'}</a>`}
+        <button class="btn btn-ghost btn-sm" onclick="copyLiveLink('${esc(l.id)}')">📋 Copy link</button>
+        <button class="btn btn-ghost btn-sm" onclick="openLiveForm('${esc(l.id)}')">✏</button>
+        <button class="btn btn-del btn-sm" onclick="deleteLive('${esc(l.id)}')">🗑</button>
+      </div></div>`;
+  };
+  window.__liveRows = data || [];
+  box.innerHTML = coming.map(row).join('') + (past.length ? '<div style="font-size:.72rem;color:var(--text2);margin:.7rem 0 .1rem">Recent</div>' + past.map(row).join('') : '');
+}
+window.copyLiveLink = async function(id){
+  const l = (window.__liveRows||[]).find(x => String(x.id) === String(id)); if(!l) return;
+  try{ await navigator.clipboard.writeText(l.link); toast('Link copied ✓'); }catch(e){ prompt('Copy this link:', l.link); }
+};
+window.deleteLive = async function(id){
+  if(!confirm('Delete this live class? Students will no longer see it.')) return;
+  const { error } = await supabase.from('live_classes').delete().eq('id', id);
+  if(error){ toast('Error: ' + error.message, true); return; }
+  toast('Deleted ✓'); renderLiveClasses();
+};
+window.openLiveForm = async function(editId){
+  if(!currentClassId){ toast('Open a class first.', true); return; }
+  if(!(await liveAvailable())){ toast('Run LIVE_CLASSES_SETUP.sql in Supabase first.', true); return; }
+  const ex = editId ? (window.__liveRows||[]).find(x => String(x.id) === String(editId)) : null;
+  const toLocal = d => { const p = n => String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); };
+  const startVal = ex ? toLocal(new Date(ex.starts_at)) : toLocal(new Date(Math.ceil((Date.now()+30*60000)/(15*60000))*15*60000));
+  document.getElementById('m-title').textContent = ex ? 'Edit live class' : 'Schedule a live class';
+  document.querySelector('#overlay .modal').style.maxWidth = '520px';
+  document.getElementById('m-body').innerHTML = `
+    <div class="field"><label>Title *</label><input id="lv-title" maxlength="120" placeholder="e.g. Class 5 Maths — fractions" value="${esc(ex ? ex.title : '')}"/></div>
+    <div class="row2">
+      <div class="field"><label>Starts *</label><input type="datetime-local" id="lv-start" value="${esc(startVal)}"/></div>
+      <div class="field"><label>Length</label><select id="lv-dur">${[30,45,60,90,120].map(m => `<option value="${m}"${(ex ? Number(ex.duration_min) : 60) === m ? ' selected' : ''}>${m} min</option>`).join('')}</select></div>
+    </div>
+    <div class="field"><label>Meeting link * <small style="color:var(--text2)">(Google Meet, Zoom, Teams…)</small></label><input id="lv-link" placeholder="https://meet.google.com/abc-defg-hij" value="${esc(ex ? ex.link : '')}"/></div>
+    <div class="field"><label>Note for students (optional)</label><input id="lv-note" maxlength="300" placeholder="e.g. Bring your notebook and a pencil" value="${esc(ex ? ex.note || '' : '')}"/></div>
+    <div style="font-size:.76rem;color:var(--text2)">Students see it on their My Tasks page with a Join button, and get a pop-up when it is about to start. The Join button opens 10 minutes before the start time.</div>`;
+  const btn = document.getElementById('m-save-btn'); btn.textContent = ex ? 'Save' : 'Schedule'; btn.disabled = false;
+  btn.onclick = async () => {
+    const title = fv('lv-title'), link = normLink(fv('lv-link')), start = new Date(fv('lv-start'));
+    if(!title){ toast('Please add a title.', true); return; }
+    if(isNaN(start)){ toast('Please choose the date and time.', true); return; }
+    if(!link){ toast('Please paste a valid meeting link.', true); return; }
+    const row = { title, starts_at: start.toISOString(), duration_min: Number(fv('lv-dur')) || 60, link, note: fv('lv-note') || null };
+    btn.disabled = true;
+    const { error } = ex ? await supabase.from('live_classes').update(row).eq('id', ex.id) : await supabase.from('live_classes').insert({ ...row, class_id: currentClassId });
+    btn.disabled = false;
+    if(error){ toast('Error: ' + error.message, true); return; }
+    toast(ex ? 'Live class updated ✓' : 'Live class scheduled ✓'); closeModal(); renderLiveClasses();
+  };
+  document.getElementById('overlay').classList.add('open');
+};
 window.deleteCurrentClass = function(){
   if(!currentClassId) return;
   deleteClass(currentClassId, document.getElementById('detail-class-name').textContent);
@@ -1095,6 +1178,7 @@ window.openClass = function(id, name, code){
   renderStudents();
   renderLibraryManager();
   renderAssignments();
+  renderLiveClasses();
   renderChatCard();
 };
 

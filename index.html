@@ -852,6 +852,12 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cf-field input,.cf-field select,.cf-field textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--card-border);background:var(--input-bg,var(--card-bg));color:var(--text);font:400 .9rem 'DM Sans',sans-serif}
 .cf-field textarea{min-height:76px;resize:vertical}
 .cf-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.cf-tabs{display:flex;gap:.4rem;margin-bottom:.55rem}
+.cf-tabs button{flex:1;padding:8px 10px;border-radius:10px;border:1px solid var(--card-border);background:transparent;color:var(--text2);font-weight:600;font-size:.8rem;cursor:pointer}
+.cf-tabs button.on{background:var(--gold-soft);border-color:var(--gold);color:var(--text)}
+.cf-hint{font-size:.74rem;color:var(--text2);margin-top:.35rem;line-height:1.5}
+.cf-bar{height:8px;border-radius:99px;background:var(--card-border);overflow:hidden;margin-top:.55rem;display:none}
+.cf-bar i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s}
 .cf-check{display:flex;gap:.6rem;align-items:flex-start;font-size:.8rem;color:var(--text2);line-height:1.5;margin:.2rem 0 .9rem}
 .cf-note{font-size:.8rem;color:var(--text2);line-height:1.6;background:var(--gold-soft);border:1px solid var(--border);border-radius:12px;padding:.7rem .9rem;margin-bottom:1rem}
 .cf-mine{margin-top:1.4rem;border-top:1px solid var(--card-border);padding-top:1rem}
@@ -1179,6 +1185,7 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 </div>
 
 <script src="./interactive-video.js"></script>
+<script src="./video-drive-upload.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { AUTH_OPTIONS } from './auth-storage.js';
@@ -1886,13 +1893,17 @@ function renderContribForm(type){
     <div class="cf-note">Share a video, worksheet or article with other learners. Our team reviews every submission before it goes live. If it is published, you are credited by name and your membership is <b>extended as a thank-you</b>.</div>
     <div class="cf-field"><label>What are you sharing?</label>
       <select id="cf-type" onchange="renderContribForm(this.value)">
-        <option value="video"${type==='video'?' selected':''}>🎥 Video (YouTube link)</option>
+        <option value="video"${type==='video'?' selected':''}>🎥 Video (upload or YouTube link)</option>
         <option value="resource"${type==='resource'?' selected':''}>📁 Resource / worksheet (Google Drive link)</option>
         <option value="article"${type==='article'?' selected':''}>✍️ Article (link)</option>
         <option value="feedback">💬 Feedback / suggestion</option>
       </select></div>
     <div class="cf-field"><label>Title *</label><input id="cf-title" maxlength="140" placeholder="e.g. Dzongkha alphabet song"/></div>
-    <div class="cf-field"><label>Link *</label><input id="cf-url" placeholder="https://…  (make sure anyone with the link can view it)"/></div>
+    ${type==='video' ? `<div class="cf-field"><label>Video *</label>
+      <div class="cf-tabs"><button type="button" id="cf-mode-upload" class="on" onclick="setCfMode('upload')">📤 Upload a file</button><button type="button" id="cf-mode-link" onclick="setCfMode('link')">🔗 YouTube / link</button></div>
+      <div id="cf-up-box"><input type="file" id="cf-file" accept="video/*"/><div class="cf-hint">Short videos work best (MP4, MOV or WebM). It is saved to our Google Drive and only goes live if our team approves it. For a long video, use the “YouTube / link” option.</div><div class="cf-bar" id="cf-bar"><i id="cf-bar-fill"></i></div></div>
+      <div id="cf-link-box" style="display:none"><input id="cf-url" placeholder="https://…  (make sure anyone with the link can view it)"/></div></div>`
+    : `<div class="cf-field"><label>Link *</label><input id="cf-url" placeholder="https://…  (make sure anyone with the link can view it)"/></div>`}
     <div class="cf-field"><label>Short description</label><textarea id="cf-desc" maxlength="600" placeholder="What will learners get from this?"></textarea></div>
     ${contribFields(type)}
     <div class="cf-field"><label>Class level</label><select id="cf-class">${levels.map(l=>`<option>${l}</option>`).join('')}</select></div>
@@ -1903,6 +1914,14 @@ function renderContribForm(type){
   loadMyContributions();
 }
 window.renderContribForm = renderContribForm;
+let cfMode = 'upload';
+window.setCfMode = function(m){
+  cfMode = m;
+  document.getElementById('cf-mode-upload').classList.toggle('on', m==='upload');
+  document.getElementById('cf-mode-link').classList.toggle('on', m==='link');
+  document.getElementById('cf-up-box').style.display = m==='upload' ? '' : 'none';
+  document.getElementById('cf-link-box').style.display = m==='link' ? '' : 'none';
+};
 
 function renderFeedbackForm(){
   const loggedIn = !!session();
@@ -1910,7 +1929,7 @@ function renderFeedbackForm(){
     <div class="cf-note">Help us make SherigSpace better. Tell us what you like, what is not working, or what you would like to see. We read every message. 💛</div>
     ${loggedIn ? `<div class="cf-field"><label>I want to share…</label>
       <select id="cf-type" onchange="renderContribForm(this.value)">
-        <option value="video">🎥 Video (YouTube link)</option>
+        <option value="video">🎥 Video (upload or YouTube link)</option>
         <option value="resource">📁 Resource / worksheet (Google Drive link)</option>
         <option value="article">✍️ Article (link)</option>
         <option value="feedback" selected>💬 Feedback / suggestion</option>
@@ -1973,11 +1992,27 @@ window.submitContribution = async function(){
   const g = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
   const st = document.getElementById('cf-status'), btn = document.getElementById('cf-submit');
   const fail = m => { st.textContent = m; st.style.color = '#e05c5c'; };
-  const type = g('cf-type'), title = g('cf-title'), url = g('cf-url');
+  const type = g('cf-type'), title = g('cf-title'); let url = g('cf-url');
+  const uploading = type === 'video' && cfMode === 'upload' && !!document.getElementById('cf-file');
+  const file = uploading ? document.getElementById('cf-file').files[0] : null;
   if(!title) return fail('Please add a title.');
-  if(!safeUrl(url) || !/^https?:\/\//i.test(url)) return fail('Please paste a full link starting with https://');
+  if(uploading){ if(!file) return fail('Please choose your video file.'); if(!window.SherigDrive) return fail('The upload tool did not load. Please refresh the page.'); }
+  else if(!safeUrl(url) || !/^https?:\/\//i.test(url)) return fail('Please paste a full link starting with https://');
   if(!document.getElementById('cf-own').checked) return fail('Please confirm the content is yours or that you have permission to share it.');
   btn.disabled = true; btn.textContent = 'Submitting…'; st.textContent = '';
+  if(uploading){
+    const bar = document.getElementById('cf-bar'), fill = document.getElementById('cf-bar-fill');
+    bar.style.display = 'block'; st.style.color = 'var(--text2)';
+    try{
+      btn.textContent = 'Uploading…';
+      const up = await SherigDrive.upload(supabase, file, { purpose:'contribution', onProgress: pct => { fill.style.width = pct + '%'; st.textContent = 'Uploading your video… ' + pct + '% (please keep this window open)'; } });
+      url = up.viewUrl; st.textContent = '';
+    }catch(e){
+      btn.disabled = false; btn.textContent = 'Submit for review'; bar.style.display = 'none'; fill.style.width = '0';
+      return fail(e.message || 'The upload failed. Please try again.');
+    }
+    btn.textContent = 'Submitting…';
+  }
   const { error } = await supabase.from('contributions').insert({
     user_id: s.id, contributor_name: s.name, content_type: type, title, url,
     description: g('cf-desc'), subject: g('cf-subject') || null, detail: g('cf-detail') || null,

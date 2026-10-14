@@ -527,6 +527,7 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
 
 <div class="toast" id="toast"></div>
 
+<script src="./video-drive-upload.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { SUPABASE_URL, SUPABASE_KEY, GOOGLE_CLIENT_ID, GOOGLE_DRIVE_FOLDER_ID, esc } from './config.js';
@@ -760,6 +761,9 @@ window.approveContribution = async function(id){
   const note = (document.getElementById('cr-note-'+id).value||'').trim();
   if(!isValidUrl(c.url)){ toast('The link is not a valid http(s) URL — reject it or ask the contributor to resubmit.', true); return; }
   if(!confirm(`Publish "${c.title}" and give ${c.contributor_name||'the contributor'} ${days} extra days?`)) return;
+  // videos uploaded to your Drive stay private until now — make this one viewable by link
+  try{ if(window.SherigDrive) await SherigDrive.publish(supabase, c.url); }
+  catch(e){ toast('Could not make the Drive file public: ' + e.message + ' — in Google Drive set it to “Anyone with the link can view”.', true); return; }
 
   // 1) publish into the matching library (Member access; edit the item afterwards to change it)
   const table = CONTRIB_TABLE[c.content_type];
@@ -1157,6 +1161,17 @@ function initThumbUi(){
   if(u) u.addEventListener('input', refreshThumb);
   refreshThumb();
 }
+window.adminVideoUpload = async function(e){
+  const file = e.target.files[0]; e.target.value = '';
+  const st = document.getElementById('drive-video-status'); if(!file || !st) return;
+  st.style.color = ''; st.textContent = 'Uploading… 0%';
+  try{
+    const up = await SherigDrive.upload(supabase, file, { purpose:'admin', onProgress: pct => { st.textContent = 'Uploading… ' + pct + '%'; } });
+    try{ await SherigDrive.publish(supabase, up.viewUrl); }catch(pe){ console.warn('Drive publish:', pe); }
+    const u = document.getElementById('f-url'); u.value = up.viewUrl; u.dispatchEvent(new Event('input', { bubbles:true }));
+    st.textContent = '✓ Uploaded — the link is filled in above';
+  }catch(err){ st.style.color = 'var(--red,#e5252a)'; st.textContent = err.message || 'Upload failed.'; }
+};
 window.handleThumbPick = async function(e){
   const file = e.target.files[0];
   e.target.value = '';
@@ -1327,7 +1342,13 @@ function buildForm(type,d={}){
     <div class="field"><label>Dzongkha Title (optional)</label><input id="f-dz" placeholder="རྩེད་མོའི་མིང་" value="${esc(v('dz'))}"/></div>`;
   if(type==='video') return`
     <div class="field"><label>Video Title *</label><input id="f-title" placeholder="e.g. Coding Basics Part 1" value="${esc(v('title'))}"/></div>
-    <div class="field"><label>YouTube / Video URL *</label><input id="f-url" placeholder="https://youtube.com/watch?v=..." value="${esc(v('url'))}"/></div>
+    <div class="field"><label>YouTube / Video URL *</label><input id="f-url" placeholder="https://youtube.com/watch?v=..." value="${esc(v('url'))}"/>
+      <div style="margin-top:.5rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+        <input type="file" id="f-drive-video" accept="video/*" style="display:none" onchange="adminVideoUpload(event)"/>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('f-drive-video').click()">📤 Upload a video file to Google Drive</button>
+        <span id="drive-video-status" class="upload-status"></span>
+      </div>
+    </div>
     <div class="row2"><div class="field"><label>Subject</label><select id="f-subject"><option value="">-- Select --</option>${sel(SUBJECTS,v('subject'))}</select></div><div class="field"><label>Duration</label><input id="f-duration" placeholder="e.g. 12:30" value="${esc(v('duration'))}"/></div></div>
     <div class="field"><label>Description</label><textarea id="f-description" placeholder="What will students learn?">${esc(v('description'))}</textarea></div>
     <div class="field"><label>Series / Playlist (optional)</label><input id="f-series" placeholder="e.g. Grammar and Language: Season 1" value="${esc(v('series'))}"/><div class="upload-status">Videos with the same series name are grouped together in the watch page, in the order set in Admin → Videos (▲ ▼).</div></div>
