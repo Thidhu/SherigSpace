@@ -1330,7 +1330,7 @@ window.deleteStudent = async function(id){
 let v2 = null; // { extras: attachments/questions/answers/score columns exist, keys: assignment_keys table exists }
 async function ensureV2(){
   if(v2) return v2;
-  const [a, s, k, sh, sc, dr, op, tl, tt] = await Promise.all([
+  const [a, s, k, sh, sc, dr, op, tl, tt, cd] = await Promise.all([
     supabase.from('assignments').select('attachments,questions').limit(1),
     supabase.from('assignment_status').select('answers,score').limit(1),
     supabase.from('assignment_keys').select('assignment_id').limit(1),
@@ -1339,9 +1339,10 @@ async function ensureV2(){
     supabase.from('assignments').select('is_draft,reminded_at').limit(1),
     supabase.from('assignments').select('allow_edit,show_results').limit(1),
     supabase.from('assignments').select('time_limit_minutes,time_limit_kind').limit(1),
-    supabase.from('assignment_timers').select('assignment_id').limit(1)
+    supabase.from('assignment_timers').select('assignment_id').limit(1),
+    supabase.from('assignments').select('shown_date').limit(1)
   ]);
-  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error, sched: !sc.error, drafts: !dr.error, opts: !op.error, timer: !tl.error && !tt.error };
+  v2 = { extras: !a.error && !s.error, keys: !k.error, shuffle: !sh.error, sched: !sc.error, drafts: !dr.error, opts: !op.error, timer: !tl.error && !tt.error, cdate: !cd.error };
   return v2;
 }
 
@@ -1389,7 +1390,7 @@ async function renderAssignments(){
     const meta = [
       isDraft ? '<b style="color:#8a94a6">📝 ' + T('Draft — students cannot see it yet','Draft — students cannot see it yet') + '</b>' : '',
       isScheduled ? '<b style="color:#e8a317">🕒 ' + T('Scheduled for ','Scheduled for ') + esc(new Date(a.publish_at).toLocaleString([], {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})) + '</b>' : '',
-      (!isDraft && !isScheduled && (a.publish_at || a.created_at)) ? '📤 ' + T('Published ','Published ') + esc(new Date(a.publish_at || a.created_at).toLocaleDateString([], {day:'numeric',month:'short',year:'numeric'})) : '',
+      (!isDraft && !isScheduled && (a.shown_date || a.publish_at || a.created_at)) ? '📤 ' + T('Published ','Published ') + esc((a.shown_date ? new Date(a.shown_date + 'T12:00:00') : new Date(a.publish_at || a.created_at)).toLocaleDateString([], {day:'numeric',month:'short',year:'numeric'})) : '',
       a.due_date ? T('Due ','འབྱུང་ཉིནམ ') + esc(a.due_date) : '',
       attCount ? '📎 ' + attCount + ' ' + T('resource'+(attCount>1?'s':''),'ཡིག་ཆ') : '',
       qCount ? '❓ ' + qCount + ' ' + T('question'+(qCount>1?'s':''),'དྲི་བ') : '',
@@ -1436,7 +1437,7 @@ async function copyAssignmentTo(srcId, classId, asDraft){
   const { data: src, error: e0 } = await supabase.from('assignments').select('*').eq('id', srcId).single();
   if(e0 || !src) return { error: e0 || new Error('Task not found') };
   const row = { ...src };
-  ['id','created_at','updated_at','publish_at','reminded_at'].forEach(k => delete row[k]);
+  ['id','created_at','updated_at','publish_at','reminded_at','shown_date'].forEach(k => delete row[k]);
   row.class_id = classId; if(asDraft) row.is_draft = true;
   const ins = await supabase.from('assignments').insert(row).select('id').single();
   if(ins.error) return { error: ins.error };
@@ -1640,6 +1641,10 @@ window.openAssignmentForm = async function(editId){
       <input type="datetime-local" id="f-publish-at" style="display:none;margin-top:.5rem"/>
       <div style="font-size:.74rem;color:var(--text2);margin-top:.35rem">${T('A scheduled task stays hidden from students until that time. Then it appears by itself and they get a red notification.','A scheduled task stays hidden from students until that time. Then it appears by itself and they get a red notification.')}</div>
     </div>` : `<div style="font-size:.76rem;color:var(--text2);margin:-.2rem 0 .9rem">🕒 Scheduling needs one setup step: run <b>ASSIGNMENT_SCHEDULE_SETUP.sql</b> in Supabase.</div>`}
+    ${cfg.cdate ? `<div class="field"><label>📅 ${T('Published date shown to students (optional)','Published date shown to students (optional)')}</label>
+      <input type="date" id="f-shown-date"/>
+      <div style="font-size:.74rem;color:var(--text2);margin-top:.35rem">${T('Leave empty to show the real date. Choose your own date if you could not post on time, or to match your plan — you can change it any time.','Leave empty to show the real date. Choose your own date if you could not post on time, or to match your plan — you can change it any time.')}</div>
+    </div>` : ''}
     ${cfg.opts ? `<div class="field"><label>🧪 ${T('Answer settings (for tests, uncheck these)','Answer settings (for tests, uncheck these)')}</label>
       <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text);margin:.25rem 0"><input type="checkbox" id="f-allow-edit" checked style="width:auto;flex:none;margin:0;accent-color:var(--gold)"/> ✏️ ${T('Students can edit their answers after submitting','Students can edit their answers after submitting')}</label>
       <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text);margin:.25rem 0"><input type="checkbox" id="f-show-results" checked style="width:auto;flex:none;margin:0;accent-color:var(--gold)"/> 👁 ${T('Students can see their answers and score after submitting','Students can see their answers and score after submitting')}</label>
@@ -1677,6 +1682,7 @@ window.openAssignmentForm = async function(editId){
       const pa = document.getElementById('f-publish-at'); pa.style.display = ''; pa.value = toLocalInput(new Date(existing.publish_at));
     }
     if(cfg.drafts && existing.is_draft) document.getElementById('f-publish-mode').value = 'draft';
+    if(cfg.cdate){ const sd = document.getElementById('f-shown-date'); if(sd) sd.value = existing.shown_date || ''; }
     if(cfg.opts){ document.getElementById('f-allow-edit').checked = existing.allow_edit !== false; document.getElementById('f-show-results').checked = existing.show_results !== false; }
     if(cfg.timer){ document.getElementById('f-time-limit').value = existing.time_limit_minutes || ''; document.getElementById('f-time-kind').value = existing.time_limit_kind || 'test'; }
   } else {
@@ -1702,6 +1708,7 @@ window.openAssignmentForm = async function(editId){
       due_date: fv('f-due-date') || null,
       attachment_url: taskAttachments.map(a => a.url).join('\n')   // kept so older pages still work
     };
+    if(cfg.cdate) payload.shown_date = fv('f-shown-date') || null;
     if(cfg.opts){
       payload.allow_edit = !!(document.getElementById('f-allow-edit') || {}).checked;
       payload.show_results = !!(document.getElementById('f-show-results') || {}).checked;

@@ -351,6 +351,7 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
       <div class="sitem"     onclick="go('payments')">💳 &nbsp;Payments <span class="payment-badge" id="payments-nav-badge" aria-label="Pending payments">0</span></div>
       <div class="sitem"     onclick="go('contributions')">🤝 &nbsp;Contributions <span class="payment-badge" id="contrib-nav-badge" aria-label="Pending contributions">0</span></div>
       <div class="sitem"     onclick="go('users')">👥 &nbsp;Users</div>
+      <div class="sitem"     onclick="go('teachers')">🧑‍🏫 &nbsp;Teachers</div>
       <div class="sitem"     onclick="go('settings')">⚙️ &nbsp;Settings</div>
     </nav>
     <div class="sfoot">
@@ -430,6 +431,21 @@ body{font-family:'DM Sans','DDC Joyig',sans-serif;background:var(--navy);color:v
     <div class="page" id="p-users">
       <div class="phead"><div><div class="ptitle">Users</div><div class="psub">People who have signed up to your site</div></div></div>
       <div class="card"><div class="card-head"><h3>All Users</h3><span class="cbadge" id="c-users">0</span></div><div id="l-users" style="overflow-x:auto;padding:.5rem 0"></div></div>
+    </div>
+
+    <div class="page" id="p-teachers">
+      <div class="phead"><div><div class="ptitle">Teachers</div><div class="psub">Everyone who has become a teacher — with their classes and students</div></div></div>
+      <div id="t-stats" class="stats" style="margin-bottom:1rem"></div>
+      <div class="card">
+        <div class="card-head"><h3>All Teachers</h3><span class="cbadge" id="c-teachers">0</span></div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;padding:.2rem 1rem .6rem">
+          <input id="t-search" placeholder="🔍 Search name or email…" oninput="renderTeachers()" style="flex:1;min-width:180px"/>
+          <select id="t-sort" onchange="renderTeachers()" style="width:auto">
+            <option value="new">Newest first</option><option value="students">Most students</option><option value="classes">Most classes</option><option value="name">Name A–Z</option>
+          </select>
+        </div>
+        <div id="l-teachers" style="overflow-x:auto;padding:.5rem 0"></div>
+      </div>
     </div>
 
     <div class="page" id="p-settings">
@@ -570,6 +586,7 @@ window.go = function(p){
   document.querySelectorAll('.sitem').forEach(e=>{ if(e.textContent.trim().toLowerCase().includes(map[p]||p)) e.classList.add('on'); });
   renderAll();
   if(p==='quicklinks') loadQuickLinks();
+  if(p==='teachers') loadTeachers();
   try{ sessionStorage.setItem('sherig_admin_page', p); }catch(e){}   // remembered so a refresh stays on this page
 };
 
@@ -909,6 +926,57 @@ window.reviewTeacherSub = async function(id, status){
   renderAll();
 };
 
+// ── TEACHERS: who became a teacher, with their classes and students ──
+async function loadTeachers(){
+  const box = document.getElementById('l-teachers');
+  box.innerHTML = '<div style="padding:1rem;color:var(--text2)">Loading…</div>';
+  const { data, error } = await supabase.rpc('admin_teacher_overview');
+  if(error){
+    box.innerHTML = empty('⚠️', 'Could not load teachers: ' + esc(error.message) + '<br><small>Run <b>TEACHER_OVERVIEW_SETUP.sql</b> in Supabase once, then refresh.</small>');
+    return;
+  }
+  window.__teachers = data || [];
+  renderTeachers();
+}
+function renderTeachers(){
+  const all = window.__teachers || [], box = document.getElementById('l-teachers');
+  if(!box) return;
+  const totClasses = all.reduce((n,t)=>n+(t.class_count||0),0), totStudents = all.reduce((n,t)=>n+(t.student_count||0),0);
+  document.getElementById('t-stats').innerHTML = stat(all.length,'Teachers') + stat(totClasses,'Classes') + stat(totStudents,'Students');
+  document.getElementById('c-teachers').textContent = all.length;
+  const q = (document.getElementById('t-search').value||'').trim().toLowerCase();
+  const sort = document.getElementById('t-sort').value;
+  let list = all.filter(t => !q || ((t.name||'')+' '+(t.email||'')).toLowerCase().includes(q));
+  list.sort((a,b)=> sort==='students' ? (b.student_count||0)-(a.student_count||0)
+                  : sort==='classes'  ? (b.class_count||0)-(a.class_count||0)
+                  : sort==='name'     ? String(a.name||'').localeCompare(String(b.name||''))
+                  : new Date(b.joined_at||0)-new Date(a.joined_at||0));
+  if(!list.length){ box.innerHTML = empty('🧑‍🏫', all.length ? 'No teacher matches your search.' : 'No one has become a teacher yet.'); return; }
+  const now = Date.now();
+  const subBadge = t => {
+    if(t.sub_expires){ const d = new Date(t.sub_expires), live = d.getTime() > now;
+      return `<span class="role-badge" style="background:${live?'rgba(46,160,67,.18);color:#3fb950':'rgba(229,37,42,.15);color:#e5252a'}">${live?'Active':'Expired'}</span><div style="font-size:.7rem;color:var(--text2);margin-top:2px">${live?'until':'on'} ${esc(d.toLocaleDateString())}</div>`; }
+    if(t.sub_status) return `<span class="role-badge" style="background:rgba(232,163,23,.18);color:#e8a317">${esc(t.sub_status)}</span>`;
+    return '<span style="color:var(--text2)">—</span>';
+  };
+  box.innerHTML = `<table class="utbl">
+    <thead><tr><th>Teacher</th><th>Joined</th><th style="text-align:center">Classes</th><th style="text-align:center">Students</th><th>Plan</th><th></th></tr></thead>
+    <tbody>${list.map((t,i)=>`<tr style="cursor:pointer" onclick="toggleTeacher(${i})">
+      <td><b>${esc(t.name||'—')}</b><div style="font-size:.74rem;color:var(--text2)">${esc(t.email||'')}</div></td>
+      <td>${t.joined_at ? esc(new Date(t.joined_at).toLocaleDateString()) : '—'}</td>
+      <td style="text-align:center;font-weight:700">${t.class_count||0}</td>
+      <td style="text-align:center;font-weight:700">${t.student_count||0}</td>
+      <td>${subBadge(t)}</td>
+      <td style="color:var(--text2)" id="t-arrow-${i}">▸</td>
+    </tr>
+    <tr id="t-detail-${i}" style="display:none"><td colspan="6" style="background:rgba(255,255,255,.025)">
+      ${(t.classes||[]).length ? (t.classes||[]).map(c=>`<div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem .2rem;border-bottom:1px dashed rgba(255,255,255,.07)"><span>🎓 ${esc(c.name||'Class')}${c.level?` <small style="color:var(--text2)">· ${esc(c.level)}</small>`:''}</span><b>${c.students||0} student${(c.students||0)===1?'':'s'}</b></div>`).join('') : '<span style="color:var(--text2)">No classes created yet.</span>'}
+    </td></tr>`).join('')}</tbody></table>`;
+}
+window.toggleTeacher = function(i){
+  const r = document.getElementById('t-detail-'+i), a = document.getElementById('t-arrow-'+i); if(!r) return;
+  const open = r.style.display === 'none'; r.style.display = open ? '' : 'none'; a.textContent = open ? '▾' : '▸';
+};
 function renderUsers(U){
   if(!U.length){ document.getElementById('l-users').innerHTML=empty('👥','No users signed up yet.'); return; }
   document.getElementById('l-users').innerHTML=`<table class="utbl">

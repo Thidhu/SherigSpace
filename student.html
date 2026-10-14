@@ -1675,10 +1675,10 @@ function dueHtml(a, done){
 
 // the day the teacher published (assigned) the task — a scheduled task shows the day it was released
 function publishedChip(a){
-  const d = new Date(a.publish_at || a.created_at || '');
+  const d = a.shown_date ? new Date(a.shown_date + 'T12:00:00') : new Date(a.publish_at || a.created_at || '');   // the teacher's own date wins
   if(isNaN(d)) return '';
   const day = d.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
-  const full = d.toLocaleString(undefined, { day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit' });
+  const full = a.shown_date ? day : d.toLocaleString(undefined, { day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit' });
   return `<span class="tk-pill plain" title="${esc(full)}">📤 ${T('Published','བཏངམ།')} ${esc(day)}</span>`;
 }
 function dueChip(a, state){
@@ -1771,7 +1771,7 @@ async function renderAssignmentCard(a, done){
 
   return `<article class="tk st-${state}${overdue ? ' is-overdue' : ''}${open ? ' open' : ''}" data-assignment-card data-card-id="${esc(id)}"
       data-title="${esc(title.toLowerCase())}" data-search="${esc((title + ' ' + desc).toLowerCase())}" data-status="${state}" data-overdue="${overdue ? 'true' : 'false'}"
-      data-created="${esc(a.publish_at||a.created_at||'')}" data-due="${esc(a.due_date||'')}">
+      data-created="${esc(a.shown_date||a.publish_at||a.created_at||'')}" data-due="${esc(a.due_date||'')}">
     <div class="tk-head" role="button" tabindex="0" aria-expanded="${open ? 'true' : 'false'}">
       <div class="tk-ico">${interactive ? '✨' : (resources.length ? '📎' : '📝')}</div>
       <div class="tk-headtext"><h3 class="tk-title">${esc(title)}${newTaskIds.has(String(a.id)) ? '<span class="tk-new">NEW</span>' : ''}${newFeedbackIds.has(String(a.id)) ? '<span class="tk-new">💬 ' + T('FEEDBACK','བསམ་བཀོད') + '</span>' : ''}</h3><div class="tk-meta">${meta}</div></div>
