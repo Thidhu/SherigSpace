@@ -205,6 +205,8 @@ footer .gold{color:var(--gold)}
 .lesson-card p,.video-body p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:.9rem}
 .lesson-meta,.video-meta{display:flex;flex-wrap:wrap;gap:.5rem 1rem;font-size:.78rem;color:var(--text2);margin-top:0}
 .video-thumb{height:auto;aspect-ratio:16/9;background:var(--media-bg);overflow:hidden}
+/* small play button: just enough to say "video" without covering the thumbnail */
+.video-thumb .play-btn{width:34px;height:34px;font-size:.72rem;padding-left:2px;z-index:1;pointer-events:none;background:rgba(0,191,255,.88);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.28)}
 .video-body{padding:1.25rem 1.4rem 1.4rem}
 .lesson-card.is-locked .card-body,.video-card.is-locked .video-body{padding-bottom:4.2rem}
 .lock-bar{color:var(--on-accent)}
@@ -893,8 +895,8 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 .dash-wrap .scroll-track{padding-bottom:.3rem}
 .dash-wrap .empty-state{padding:1.3rem 1rem}
 .dash-wrap .empty-state .ei{font-size:2rem;margin-bottom:.4rem}
-.dash-wrap .lesson-card{padding:1.3rem}
-.dash-wrap .resource-card{padding:1.1rem}
+/* thumbnails run edge to edge on every card, exactly like the video cards (the text part has its own padding) */
+.dash-wrap .lesson-card,.dash-wrap .resource-card{padding:0}
 .dash-wrap #about{padding:.8rem 0 1.6rem}
 #membership-notice:not([style*="none"]){margin-bottom:.8rem}
 /* DESKTOP: cards sit in 2 rows; the row only becomes swipeable once both rows are full (see layoutTracks) */
@@ -2176,7 +2178,7 @@ function videoCardHtml(v, interactiveSection=false){
   const state = accessState('videos', v);
   const isInt = interactiveIds.has(String(v.id));
   return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}" data-premium="${v.is_premium?'1':''}">
-    <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div>${interactiveSection?'<span class="int-badge">⚡ Interactive</span>':''}</div>
+    <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="play-btn">▶</div><div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div>${interactiveSection?'<span class="int-badge">⚡ Interactive</span>':''}</div>
     <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}${v.series?`<span>📚 ${esc(v.series)}</span>`:''}</div>${creditHtml(v)}</div>
     ${lockOverlayHtml(state, v)}
   </div>`;
