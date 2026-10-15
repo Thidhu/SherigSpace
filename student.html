@@ -1834,15 +1834,15 @@ async function renderAssignmentCard(a, done){
     const rpc = await supabase.rpc('sherig_content_item', { p_table: String(a.item_type || ''), p_id: String(a.item_id || '') });
     if(!rpc.error) item = rpc.data;
     else itemError = rpc.error;
-    if(!item){
-      const legacy = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
-      if(!legacy.error) item = legacy.data;
-      else itemError = itemError || legacy.error;
-    }
-    if(!item){   // last try: read the item directly (works when the table allows students to read it)
+    if(!item){   // read the item directly (works when the table allows students to read it)
       const direct = await supabase.from(String(a.item_type || '')).select('*').eq('id', a.item_id).maybeSingle();
       if(!direct.error && direct.data) item = direct.data;
       else itemError = itemError || direct.error;
+    }
+    if(!item){   // last try: the older *_public view (not every setup has it)
+      const legacy = await supabase.from(a.item_type+'_public').select('*').eq('id', a.item_id).single();
+      if(!legacy.error) item = legacy.data;
+      else itemError = itemError || legacy.error;
     }
     if(!item) console.warn('Library task item could not be loaded:', a.item_type, a.item_id, itemError && (itemError.message || itemError));
     title = a.title || (item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : T('(content unavailable)','(ནང་དོན་མིན་འདུག)'));
