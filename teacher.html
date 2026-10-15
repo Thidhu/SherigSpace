@@ -1010,9 +1010,11 @@ async function renderLiveClasses(){
     const when = start.toLocaleString([], { weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit' });
     return `<div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px dashed var(--border);${ended?'opacity:.6':''}">
       <div style="min-width:0"><div style="font-weight:700">${badge}${esc(l.title)}</div>
-        <div style="font-size:.78rem;color:var(--text2)">🗓 ${esc(when)} · ⏱ ${esc(l.duration_min)} min${l.note ? ' · ' + esc(l.note) : ''}</div></div>
+        <div style="font-size:.78rem;color:var(--text2)">🗓 ${esc(when)} · ⏱ ${esc(l.duration_min)} min${l.note ? ' · ' + esc(l.note) : ''}</div>
+        <div id="lv-att-${esc(l.id)}" style="font-size:.76rem;margin-top:.2rem"></div></div>
       <div style="display:flex;gap:.35rem;flex-wrap:wrap">
-        ${ended ? '' : `<a class="btn btn-gold btn-sm" href="${esc(l.link)}" target="_blank" rel="noopener noreferrer">${live ? '🎥 Join' : '🎥 Start'}</a>`}
+        ${ended ? ((l.recording_url ? `<a class="btn btn-gold btn-sm" href="${esc(l.recording_url)}" target="_blank" rel="noopener noreferrer">▶ Recording</a>` : '') + `<button class="btn btn-ghost btn-sm" onclick="setLiveRecording('${esc(l.id)}')">🎞 ${l.recording_url ? 'Change' : 'Add'} recording</button>`)
+          : `<a class="btn btn-gold btn-sm" href="${esc(l.link)}" target="_blank" rel="noopener noreferrer">${live ? '🎥 Join' : '🎥 Start'}</a>`}
         <button class="btn btn-ghost btn-sm" onclick="copyLiveLink('${esc(l.id)}')">📋 Copy link</button>
         <button class="btn btn-ghost btn-sm" onclick="openLiveForm('${esc(l.id)}')">✏</button>
         <button class="btn btn-del btn-sm" onclick="deleteLive('${esc(l.id)}')">🗑</button>
@@ -1020,7 +1022,38 @@ async function renderLiveClasses(){
   };
   window.__liveRows = data || [];
   box.innerHTML = coming.map(row).join('') + (past.length ? '<div style="font-size:.72rem;color:var(--text2);margin:.7rem 0 .1rem">Recent</div>' + past.map(row).join('') : '');
+  fillLiveAttendance([...coming, ...past].filter(l => new Date(l.starts_at).getTime() <= now));
 }
+// who pressed “Join class” (needs the attendance table from LIVE_CLASSES_SETUP.sql — silently skipped if it is missing)
+async function fillLiveAttendance(list){
+  if(!list.length) return;
+  try{
+    const [{ data: att, error }, { data: studs }] = await Promise.all([
+      supabase.from('live_attendance').select('live_id,student_id').in('live_id', list.map(l => l.id)),
+      supabase.from('class_students').select('student_id,display_name').eq('class_id', currentClassId)
+    ]);
+    if(error || !att) return;
+    const names = {}; (studs||[]).forEach(x => { names[String(x.student_id)] = x.display_name || 'Student'; });
+    const total = (studs||[]).length;
+    list.forEach(l => {
+      const el = document.getElementById('lv-att-' + l.id); if(!el) return;
+      const who = att.filter(a => String(a.live_id) === String(l.id)).map(a => names[String(a.student_id)] || 'Student');
+      el.innerHTML = who.length
+        ? `<a href="#" style="color:var(--gold)" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';return false">👥 ${who.length}${total ? ' of ' + total : ''} joined</a><div style="display:none;color:var(--text2);margin-top:.2rem">${who.map(esc).join(', ')}</div>`
+        : '<span style="color:var(--text2)">👥 No one has pressed Join yet</span>';
+    });
+  }catch(e){}
+}
+window.setLiveRecording = async function(id){
+  const l = (window.__liveRows||[]).find(x => String(x.id) === String(id)); if(!l) return;
+  const v = prompt('Paste the recording link (Google Drive, YouTube, Meet recording…). Leave empty to remove it.', l.recording_url || '');
+  if(v === null) return;
+  const link = v.trim() ? normLink(v) : null;
+  if(v.trim() && !link){ toast('That does not look like a valid link.', true); return; }
+  const { error } = await supabase.from('live_classes').update({ recording_url: link }).eq('id', id);
+  if(error){ toast(/recording_url/i.test(error.message||'') ? 'Run the updated LIVE_CLASSES_SETUP.sql in Supabase to enable recordings.' : 'Error: ' + error.message, true); return; }
+  toast(link ? 'Recording added ✓ Students can watch it' : 'Recording removed ✓'); renderLiveClasses();
+};
 window.copyLiveLink = async function(id){
   const l = (window.__liveRows||[]).find(x => String(x.id) === String(id)); if(!l) return;
   try{ await navigator.clipboard.writeText(l.link); toast('Link copied ✓'); }catch(e){ prompt('Copy this link:', l.link); }
@@ -1045,6 +1078,7 @@ window.openLiveForm = async function(editId){
       <div class="field"><label>Starts *</label><input type="datetime-local" id="lv-start" value="${esc(startVal)}"/></div>
       <div class="field"><label>Length</label><select id="lv-dur">${[30,45,60,90,120].map(m => `<option value="${m}"${(ex ? Number(ex.duration_min) : 60) === m ? ' selected' : ''}>${m} min</option>`).join('')}</select></div>
     </div>
+    ${ex ? '' : `<div class="field"><label>Repeat</label><select id="lv-repeat"><option value="1">Just once</option><option value="4">Every week for 4 weeks</option><option value="8">Every week for 8 weeks</option><option value="12">Every week for 12 weeks</option></select></div>`}
     <div class="field"><label>Meeting link * <small style="color:var(--text2)">(Google Meet, Zoom, Teams…)</small></label><input id="lv-link" placeholder="https://meet.google.com/abc-defg-hij" value="${esc(ex ? ex.link : '')}"/></div>
     <div class="field"><label>Note for students (optional)</label><input id="lv-note" maxlength="300" placeholder="e.g. Bring your notebook and a pencil" value="${esc(ex ? ex.note || '' : '')}"/></div>
     <div style="font-size:.76rem;color:var(--text2)">Students see it on their My Tasks page with a Join button, and get a pop-up when it is about to start. The Join button opens 10 minutes before the start time.</div>`;
@@ -1056,10 +1090,17 @@ window.openLiveForm = async function(editId){
     if(!link){ toast('Please paste a valid meeting link.', true); return; }
     const row = { title, starts_at: start.toISOString(), duration_min: Number(fv('lv-dur')) || 60, link, note: fv('lv-note') || null };
     btn.disabled = true;
-    const { error } = ex ? await supabase.from('live_classes').update(row).eq('id', ex.id) : await supabase.from('live_classes').insert({ ...row, class_id: currentClassId });
+    let error, made = 1;
+    if(ex){ ({ error } = await supabase.from('live_classes').update(row).eq('id', ex.id)); }
+    else {
+      // “Every week”: one session per week at the same clock time (each can be edited or deleted on its own)
+      made = Math.min(12, Math.max(1, Number((document.getElementById('lv-repeat')||{}).value) || 1));
+      const rows = []; for(let i = 0; i < made; i++){ const d = new Date(start); d.setDate(d.getDate() + 7*i); rows.push({ ...row, starts_at: d.toISOString(), class_id: currentClassId }); }
+      ({ error } = await supabase.from('live_classes').insert(rows));
+    }
     btn.disabled = false;
     if(error){ toast('Error: ' + error.message, true); return; }
-    toast(ex ? 'Live class updated ✓' : 'Live class scheduled ✓'); closeModal(); renderLiveClasses();
+    toast(ex ? 'Live class updated ✓' : (made > 1 ? made + ' weekly live classes scheduled ✓' : 'Live class scheduled ✓')); closeModal(); renderLiveClasses();
   };
   document.getElementById('overlay').classList.add('open');
 };

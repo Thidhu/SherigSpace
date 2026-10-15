@@ -773,6 +773,8 @@ window.approveContribution = async function(id){
   const extra = c.content_type==='video' ? { subject:c.subject||'', duration:c.detail||'' }
               : c.content_type==='resource' ? { rtype:c.detail||'Other', filesize:'' }
               : { article_date:new Date().toISOString().slice(0,10), category:c.subject||'' };
+  // a video stored in Google Drive gets its thumbnail automatically (Drive makes one itself)
+  if(c.content_type==='video'){ const gm = String(c.url||'').match(/drive\.google\.com\/file\/d\/([\w-]+)/); if(gm) base.thumbnail_url = 'https://drive.google.com/thumbnail?id=' + gm[1] + '&sz=w600'; }
   let item = { ...base, ...extra };
   item.sort_order = topSortOrder(c.content_type);
   let { error } = await supabase.from(table).insert(item);

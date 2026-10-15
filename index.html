@@ -865,6 +865,15 @@ img.thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cf-item{display:flex;justify-content:space-between;gap:.8rem;padding:.55rem 0;border-bottom:1px solid var(--card-border);font-size:.84rem;color:var(--text)}
 .cf-item small{display:block;color:var(--text2);margin-top:.15rem}
 .cf-chip{align-self:flex-start;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.cf-steps{display:flex;align-items:center;gap:.25rem;margin-top:.45rem;font-size:.68rem;color:var(--text2)}
+.cf-steps span{display:inline-flex;align-items:center;gap:.25rem;white-space:nowrap}
+.cf-steps i{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--card-border);color:#fff;font-size:.6rem;font-style:normal;font-weight:800}
+.cf-steps .done i{background:#2ea043}.cf-steps .now i{background:#e8a317}.cf-steps .bad i{background:#e5252a}
+.cf-steps .line{flex:1;height:2px;background:var(--card-border);min-width:10px}.cf-steps .line.done{background:#2ea043}
+.thanks-pop{position:fixed;left:50%;bottom:1.4rem;transform:translateX(-50%);z-index:99999;width:min(420px,calc(100vw - 2rem));background:var(--card-bg);color:var(--text);border:1px solid var(--card-border);border-left:5px solid #2ea043;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.4);padding:1rem 1.1rem;animation:thanksUp .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes thanksUp{from{transform:translate(-50%,40px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.thanks-pop h4{margin:0 0 .3rem;font-size:1rem}.thanks-pop p{margin:0 0 .7rem;font-size:.85rem;color:var(--text2);line-height:1.5}
+.thanks-pop button{border:none;cursor:pointer;float:right}
 .cf-chip.pending{background:#fff3cd;color:#8a6100}.cf-chip.approved{background:#d8f5e3;color:#14703d}.cf-chip.rejected{background:#fde0e0;color:#a32525}
 </style>
 <style id="sherig-v23-fixes">
@@ -1581,11 +1590,30 @@ async function loadMyPurchases(){
   if(!s){ myTeacherActive = false; return; }
   await loadTeacherAccess();
   await loadMyBonuses();
+  checkPublishedThanks();   // runs in the background
   const { data } = await supabase.from('purchases').select('item_type,item_id,status,reviewed_at').eq('user_id', s.id);
   (data||[]).forEach(p=>{ myPurchases[`${p.item_type}:${p.item_id}`] = p.status; });
   myMembership = computeMembership(data || []);
 }
 
+// A thank-you pop-up the first time a visitor opens the site after one of their contributions was published
+async function checkPublishedThanks(){
+  try{
+    const s = session(); if(!s) return;
+    const { data } = await supabase.from('contributions').select('id,title,reward_days,status,reviewed_at').eq('user_id', s.id).eq('status','approved');
+    if(!data) return;
+    const key = 'sherig_thanked_' + s.id; let seen = null;
+    try{ seen = JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){}
+    if(!Array.isArray(seen)){ localStorage.setItem(key, JSON.stringify(data.map(c => String(c.id)))); return; }   // first time on this device: don't announce old ones
+    const fresh = data.filter(c => !seen.includes(String(c.id))); if(!fresh.length) return;
+    localStorage.setItem(key, JSON.stringify(data.map(c => String(c.id))));
+    const days = fresh.reduce((n,c) => n + (Number(c.reward_days) || 0), 0);
+    const box = document.createElement('div'); box.className = 'thanks-pop'; box.setAttribute('role','status');
+    box.innerHTML = '<h4>🎉 Thank you for contributing!</h4><p>' + (fresh.length === 1 ? 'Your contribution “' + esc(fresh[0].title) + '” is now published on SherigSpace.' : fresh.length + ' of your contributions are now published on SherigSpace.') + (days ? ' We added <b>' + days + ' days</b> to your membership as a thank-you. 💛' : '') + '</p><button class="btn-primary" type="button">Close</button><div style="clear:both"></div>';
+    box.querySelector('button').onclick = () => box.remove();
+    document.body.appendChild(box); setTimeout(() => box.remove(), 20000);
+  }catch(e){ console.warn('Thanks check:', e); }
+}
 function addMonths(d, n){ const x = new Date(d); x.setMonth(x.getMonth() + n); return x; }
 // Each approved membership payment adds 3 months. Early renewals stack on top of the time left.
 function computeMembership(rows){
@@ -1863,6 +1891,7 @@ async function loadMyBonuses(){
   }catch(e){}
 }
 const CONTRIB_MAX_PENDING = 3;
+const CONTRIB_MAX_PER_DAY = 5;   // uploads per person per day
 function contribFields(type){
   if(type === 'video') return `<div class="cf-row"><div class="cf-field"><label>Subject</label><input id="cf-subject" maxlength="60" placeholder="e.g. Dzongkha"/></div><div class="cf-field"><label>Duration (optional)</label><input id="cf-detail" maxlength="20" placeholder="e.g. 12:30"/></div></div>`;
   if(type === 'resource') return `<div class="cf-row"><div class="cf-field"><label>File type</label><select id="cf-detail"><option>PDF</option><option>DOCX</option><option>Image</option><option>Spreadsheet</option><option>Presentation</option><option>Other</option></select></div><div class="cf-field"><label>Subject (optional)</label><input id="cf-subject" maxlength="60" placeholder="e.g. Mathematics"/></div></div>`;
@@ -1983,7 +2012,12 @@ async function loadMyContributions(){
     const label = { pending:'⏳ Under review', approved:'✅ Published', rejected:'Not published' }[c.status] || c.status;
     const extra = c.status==='approved' && c.reward_days ? `<small>🎁 +${esc(c.reward_days)} days added to your membership</small>` : '';
     const note = c.admin_note ? `<small>Note: ${esc(c.admin_note)}</small>` : '';
-    return `<div class="cf-item"><div><b>${esc(c.title)}</b>${extra}${note}</div><span class="cf-chip ${esc(c.status)}">${label}</span></div>`;
+    const rej = c.status === 'rejected', done = c.status === 'approved';
+    const day = d => d ? new Date(d).toLocaleDateString(undefined, { day:'numeric', month:'short' }) : '';
+    const steps = `<div class="cf-steps"><span class="done"><i>✓</i>Sent${c.created_at ? ' · ' + esc(day(c.created_at)) : ''}</span><span class="line done"></span>`
+      + `<span class="${c.status === 'pending' ? 'now' : 'done'}"><i>${c.status === 'pending' ? '…' : '✓'}</i>Under review</span><span class="line ${c.status === 'pending' ? '' : 'done'}"></span>`
+      + `<span class="${done ? 'done' : rej ? 'bad' : ''}"><i>${done ? '✓' : rej ? '✕' : '3'}</i>${rej ? 'Not published' : 'Published'}${(done || rej) && c.reviewed_at ? ' · ' + esc(day(c.reviewed_at)) : ''}</span></div>`;
+    return `<div class="cf-item"><div style="flex:1;min-width:0"><b>${esc(c.title)}</b>${extra}${note}${steps}</div><span class="cf-chip ${esc(c.status)}">${label}</span></div>`;
   }).join('');
 }
 
@@ -2001,6 +2035,10 @@ window.submitContribution = async function(){
   if(!document.getElementById('cf-own').checked) return fail('Please confirm the content is yours or that you have permission to share it.');
   btn.disabled = true; btn.textContent = 'Submitting…'; st.textContent = '';
   if(uploading){
+    try{
+      const { count: todayCount } = await supabase.from('contributions').select('id', { count:'exact', head:true }).eq('user_id', s.id).gte('created_at', new Date(Date.now() - 86400000).toISOString());
+      if((todayCount || 0) >= CONTRIB_MAX_PER_DAY){ btn.disabled = false; btn.textContent = 'Submit for review'; return fail(`You can send up to ${CONTRIB_MAX_PER_DAY} contributions a day. Please try again tomorrow.`); }
+    }catch(e){}
     const bar = document.getElementById('cf-bar'), fill = document.getElementById('cf-bar-fill');
     bar.style.display = 'block'; st.style.color = 'var(--text2)';
     try{

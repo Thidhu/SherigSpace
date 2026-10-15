@@ -895,7 +895,7 @@ async function openChatPane(){
 }
 
 // ── Live classes (a teacher's Google Meet / Zoom / Teams link) ──
-let liveClassIds = [], liveClassNames = {}, liveData = [], liveNowCount = 0;
+let liveClassIds = [], liveClassNames = {}, liveData = [], liveRecs = [], liveNowCount = 0;
 const liveStartMs = l => new Date(l.starts_at).getTime();
 const liveEndMs = l => liveStartMs(l) + (Number(l.duration_min)||60)*60000;
 const liveSafeLink = u => { try{ const x = new URL(String(u)); return /^https?:$/.test(x.protocol) ? x.href : ''; }catch(e){ return ''; } };
@@ -919,9 +919,27 @@ function renderLiveCards(){
       <div class="lv-main"><div class="lv-title">${isLive ? '<span class="lv-badge">● ' + T('LIVE NOW','LIVE NOW') + '</span>' : ''}${esc(l.title)}</div>
         <div class="lv-meta">${cls ? '🏫 ' + esc(cls) + ' · ' : ''}🗓 ${esc(when)} · ⏱ ${esc(l.duration_min)} min · ${isLive ? T('ends in ','ends in ') + liveIn(liveEndMs(l) - now) : T('starts in ','starts in ') + liveIn(liveStartMs(l) - now)}</div>
         ${l.note ? `<div class="lv-note">📝 ${esc(l.note)}</div>` : ''}</div>
-      <div>${link && canJoin ? `<a class="btn btn-gold btn-sm" href="${esc(link)}" target="_blank" rel="noopener noreferrer">${T('Join class →','Join class →')}</a>` : `<span class="lv-wait">${T('Join button opens 10 min before','Join button opens 10 min before')}</span>`}</div></div>`;
-  }).join('');
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">${link && canJoin ? `<a class="btn btn-gold btn-sm" href="${esc(link)}" target="_blank" rel="noopener noreferrer" onclick="liveJoined('${esc(l.id)}')">${T('Join class →','Join class →')}</a>` : `<span class="lv-wait">${T('Join button opens 10 min before','Join button opens 10 min before')}</span>`}
+        <button type="button" class="btn btn-ghost btn-sm" onclick="liveIcs('${esc(l.id)}')" title="${T('Add to my calendar','Add to my calendar')}">📅</button></div></div>`;
+  }).join('') + (liveRecs.length ? `<div class="lv-card" style="border-left-color:#8a94a6;flex-direction:column;align-items:stretch"><div class="lv-title">🎞 ${T('Recordings','Recordings')}</div>${liveRecs.map(l => { const r = liveSafeLink(l.recording_url); return r ? `<div style="display:flex;justify-content:space-between;gap:.8rem;flex-wrap:wrap;padding:.3rem 0;border-top:1px dashed var(--border,#ddd)"><span>${esc(l.title)} <small style="color:var(--text2)">· ${esc(new Date(l.starts_at).toLocaleDateString(undefined,{day:'numeric',month:'short'}))}</small></span><a class="btn btn-gold btn-sm" href="${esc(r)}" target="_blank" rel="noopener noreferrer">▶ ${T('Watch','Watch')}</a></div>` : ''; }).join('')}</div>` : '');
 }
+// remember that this student pressed “Join class” (teacher sees it; silently skipped if the table is not created yet)
+window.liveJoined = async function(id){
+  try{ await supabase.from('live_attendance').upsert({ live_id: id, student_id: me.id }, { onConflict:'live_id,student_id', ignoreDuplicates:true }); }catch(e){}
+};
+// “Add to calendar”: downloads a small .ics file that opens in Google / Apple / Outlook calendar
+window.liveIcs = function(id){
+  const l = liveData.find(x => String(x.id) === String(id)); if(!l) return;
+  const f = ms => new Date(ms).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  const cls = liveClassNames[String(l.class_id)] || '';
+  const text = v => String(v||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;');
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SherigSpace//Live class//EN','BEGIN:VEVENT',
+    'UID:' + l.id + '@sherigspace','DTSTAMP:' + f(Date.now()),'DTSTART:' + f(liveStartMs(l)),'DTEND:' + f(liveEndMs(l)),
+    'SUMMARY:' + text('Live class: ' + l.title), 'DESCRIPTION:' + text((cls ? cls + '\n' : '') + (l.note ? l.note + '\n' : '') + 'Join: ' + l.link), 'URL:' + l.link,
+    'BEGIN:VALARM','TRIGGER:-PT10M','ACTION:DISPLAY','DESCRIPTION:Live class starts in 10 minutes','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type:'text/calendar' }));
+  a.download = 'live-class.ics'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
 function addAlertSection(sec){
   const box = document.getElementById('newtask-pop');
   if(!box){ showAlerts([sec], false); return; }
@@ -931,10 +949,11 @@ function addAlertSection(sec){
 }
 async function loadLiveClasses(){
   if(!liveClassIds.length) return;
-  const { data, error } = await supabase.from('live_classes').select('*').in('class_id', liveClassIds).order('starts_at', { ascending:true });
+  const { data, error } = await supabase.from('live_classes').select('*').in('class_id', liveClassIds).gte('starts_at', new Date(Date.now() - 21*86400000).toISOString()).order('starts_at', { ascending:true });
   if(error) return;   // table not created yet → nothing to show
   const now = Date.now();
   liveData = (data || []).filter(l => liveEndMs(l) > now && liveStartMs(l) - now < 14*86400000).slice(0, 8);
+  liveRecs = (data || []).filter(l => liveEndMs(l) <= now && l.recording_url).sort((a,b) => liveStartMs(b) - liveStartMs(a)).slice(0, 4);
   renderLiveCards();
   // tell the student once when a class is about to start (within 15 min) and once when it goes live
   const st = getStore(); st.liveAnn = st.liveAnn || [];
@@ -1170,6 +1189,7 @@ async function renderAssignments(){
   }));
   wireAnswerBoxes(wrap);
   mountAssignmentInteractiveVideos(wrap);
+  mountLibInteractiveVideos(wrap);
   renderTaskStats(assignments);
   applyAssignmentFilters();
   updateTaskBadge();
@@ -1252,6 +1272,40 @@ function applyAssignmentFilters(){
   if(empty) empty.style.display=cards.length && !visible.length?'block':'none';
 }
 
+function ytIdOf(url){
+  try{
+    const u = new URL(String(url || '').trim()), h = u.hostname.replace(/^www\./, '').toLowerCase();
+    if(h === 'youtu.be') return u.pathname.slice(1).split('/')[0] || '';
+    if(h.endsWith('youtube.com')){
+      if(u.pathname === '/watch') return u.searchParams.get('v') || '';
+      const m = u.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]{6,})/); if(m) return m[1];
+    }
+  }catch(e){}
+  return '';
+}
+// Library videos used in a task: interactive (with the questions the admin added) when they have questions, a normal player otherwise.
+async function mountLibInteractiveVideos(root){
+  for(const host of root.querySelectorAll('.lib-interactive-video[data-video-id]')){
+    if(host.dataset.mounted === '1') continue;
+    host.dataset.mounted = '1';
+    const vid = host.dataset.videoId, yt = host.dataset.yt, embed = host.dataset.embed;
+    const plain = () => { host.innerHTML = embed ? `<div class="task-embed"><iframe src="${esc(embed)}" title="" loading="lazy" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>` : ''; };
+    let qs = [];
+    try{
+      const { data, error } = await supabase.from('interactive_questions').select('*').eq('video_id', vid).order('timestamp_seconds', { ascending:true });
+      if(!error) qs = (data || []).filter(q => q.enabled !== false).map(q => ({ ...q, timestamp: q.timestamp_seconds ?? q.timestamp ?? q.time ?? 0, type: q.question_type ?? q.type ?? 'multiple_choice', correctAnswer: q.correct_answer ?? q.correctAnswer, accepted_answers: q.accepted_answers ?? q.acceptedAnswers, points: q.points ?? 1 }));
+    }catch(e){}
+    if(!qs.length || !yt || !window.SherigInteractiveVideo){ plain(); continue; }
+    try{
+      host.innerHTML = '';
+      new window.SherigInteractiveVideo({
+        container: host, videoId: yt, questions: qs,
+        onAnswer: async r => { try{ await supabase.from('video_interactions').insert({ video_id: vid, question_id: r.questionId, user_id: me.id, answer: r.answer, is_correct: r.isCorrect, points_earned: r.points }); }catch(e){} },
+        onProgress: async p => { try{ await supabase.from('video_progress').upsert({ video_id: vid, user_id: me.id, watch_seconds: p.watchSeconds, completion_percentage: p.completionPercentage, completed: p.completed, updated_at: new Date().toISOString() }, { onConflict:'video_id,user_id' }); }catch(e){} }
+      });
+    }catch(e){ plain(); }
+  }
+}
 async function mountAssignmentInteractiveVideos(root){
   const nodes = root.querySelectorAll('.assignment-interactive-video[data-assignment-id][data-resource-key]');
   for(const host of nodes){
@@ -1768,7 +1822,7 @@ function dueChip(a, state){
 }
 
 async function renderAssignmentCard(a, done){
-  let title, desc, lockedNote = '', resources = readAttachments(a);
+  let title, desc, lockedNote = '', resources = readAttachments(a), libVideo = null;
 
   if(a.kind === 'custom'){
     title = a.title || T('Task','ལཱ་ཁག');
@@ -1785,15 +1839,31 @@ async function renderAssignmentCard(a, done){
       if(!legacy.error) item = legacy.data;
       else itemError = itemError || legacy.error;
     }
+    if(!item){   // last try: read the item directly (works when the table allows students to read it)
+      const direct = await supabase.from(String(a.item_type || '')).select('*').eq('id', a.item_id).maybeSingle();
+      if(!direct.error && direct.data) item = direct.data;
+      else itemError = itemError || direct.error;
+    }
+    if(!item) console.warn('Library task item could not be loaded:', a.item_type, a.item_id, itemError && (itemError.message || itemError));
     title = a.title || (item ? `${TYPE_ICON[a.item_type]||'📄'} ${item.title}` : T('(content unavailable)','(ནང་དོན་མིན་འདུག)'));
     desc = [a.description, item?.description].filter(Boolean).join('\n\n');
+    if(!item){
+      lockedNote = `<div class="locked-note">⚠️ ${T('We could not load the content for this task. Please tell your teacher — they may need to run the setup (ASSIGNED_CONTENT_SETUP.sql) or assign it again.','We could not load the content for this task. Please tell your teacher — they may need to run the setup (ASSIGNED_CONTENT_SETUP.sql) or assign it again.')}</div>`;
+    }
     if(item){
       if(item.is_premium && !item.url){
         lockedNote = `<div class="locked-note">🔒 ${T('This is premium content — visit the','འདི་གོང་ཅན་གྱི་ནང་དོན་ཨིན —')} <a href="index.html" style="color:var(--gold-text,var(--gold))">TLM Store</a> ${T('to unlock it first.','ལུ་འགྱོ་སྟེ་དང་པ་ཁ་ཕྱེ།')}</div>`;
       } else {
-        resources = parseAttachments({ attachment_url: item.url }).concat(resources);
+        const yid = a.item_type === 'videos' ? ytIdOf(item.url) : '';
+        if(yid){   // a library video: plays here, with its questions if it has any (the player is mounted after the card is drawn)
+          const emb = classifyUrl(safeUrl(item.url)).embed || '';
+          libVideo = { id: String(item.id), yt: yid, embed: emb, title: item.title || '' };
+        } else {
+          resources = parseAttachments({ attachment_url: item.url }).concat(resources);
+        }
       }
     }
+    { const _u = new Set(); resources = resources.filter(r => { if(_u.has(r.url)) return false; _u.add(r.url); return true; }); }
   }
   // Links the teacher typed inside the description also become resource tiles (images/videos show right in the task).
   const seen = new Set(resources.map(r => r.url));
@@ -1849,6 +1919,7 @@ async function renderAssignmentCard(a, done){
     </div>
     <div class="tk-body">
       ${desc ? `<div class="tk-sec"><div class="tk-sec-h">${T('Instructions','ལམ་སྟོན།')}</div><div class="assign-desc">${linkify(desc)}</div></div>` : ''}
+      ${libVideo ? `<div class="tk-sec"><div class="tk-sec-h">🎥 ${esc(libVideo.title || T('Video','བརྙན་ཐུང་།'))}</div><div class="lib-interactive-video" data-video-id="${esc(libVideo.id)}" data-yt="${esc(libVideo.yt)}" data-embed="${esc(libVideo.embed)}" style="max-width:640px"></div></div>` : ''}
       ${resources.length ? `<div class="tk-sec"><div class="tk-sec-h">📎 ${T('Resources for this task','ལཱ་ཁག་འདིའི་དོན་ལུ་ཡིག་ཆ')}</div>${resourcesHtml(resources, a.id)}</div>` : ''}
       ${lockedNote ? `<div class="tk-sec">${lockedNote}</div>` : ''}
       ${work ? `<div class="tk-sec"><div class="tk-sec-h">✍️ ${hasQ ? T('Your answers','ཁྱོད་ཀྱི་ལན་ཚུ') : T('Your work','ཁྱོད་ཀྱི་ལཱ།')}</div>${work}</div>` : ''}

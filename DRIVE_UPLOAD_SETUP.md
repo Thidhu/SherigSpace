@@ -33,7 +33,7 @@ Using the Supabase CLI in your project folder:
 supabase secrets set GOOGLE_CLIENT_ID=xxxx GOOGLE_CLIENT_SECRET=xxxx GOOGLE_REFRESH_TOKEN=xxxx
 supabase functions deploy drive-upload
 ```
-(Optional: `supabase secrets set DRIVE_MAX_MB=500` to change the 300 MB limit.)
+(Optional: `supabase secrets set DRIVE_MAX_MB=500` changes the 300 MB limit, and `CONTRIB_MAX_PER_DAY=5` changes how many contributions one person can send per day.)
 
 ## 4. Upload the website files
 Upload the new `index.html`, `admin.html` and `video-drive-upload.js` (keep it in the same folder as `index.html`). Your existing `drive-upload.js` stays as it is.

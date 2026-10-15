@@ -18,6 +18,7 @@ const corsHeaders = {
 }
 const MAX_MB = Math.max(1, Number(Deno.env.get('DRIVE_MAX_MB') || 300))
 const MAX_PENDING = Math.max(1, Number(Deno.env.get('CONTRIB_MAX_PENDING') || 3))
+const MAX_PER_DAY = Math.max(1, Number(Deno.env.get('CONTRIB_MAX_PER_DAY') || 5))
 const FOLDER_CONTRIB = 'SherigSpace Contributions'
 const FOLDER_ADMIN = 'SherigSpace Admin Uploads'
 
@@ -87,6 +88,9 @@ export default {
         if (purpose === 'contribution' && !isAdmin) {
           const { count } = await ctx.supabase.from('contributions').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending')
           if ((count ?? 0) >= MAX_PENDING) return json({ ok: false, error: `You already have ${MAX_PENDING} submissions waiting for review. Please wait until they are reviewed.` }, 429)
+          const since = new Date(Date.now() - 86400000).toISOString()
+          const { count: today } = await ctx.supabase.from('contributions').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', since)
+          if ((today ?? 0) >= MAX_PER_DAY) return json({ ok: false, error: `You can send up to ${MAX_PER_DAY} contributions a day. Please try again tomorrow.` }, 429)
         }
 
         const token = await accessToken()
