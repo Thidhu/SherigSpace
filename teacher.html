@@ -1502,7 +1502,8 @@ async function renderAssignments(){
   await Promise.all(['lessons','resources','videos','articles'].map(async t => {
     const itemIds = data.filter(a => a.kind === 'tlm' && a.item_type === t).map(a => a.item_id);
     if(!itemIds.length) return;
-    const { data: items } = await supabase.from(t+'_public').select('id,title').in('id', itemIds);
+    let { data: items, error: itemsErr } = await supabase.from(t).select('id,title').in('id', itemIds);
+    if(itemsErr) ({ data: items } = await supabase.from(t+'_public').select('id,title').in('id', itemIds));   // older setups only
     (items||[]).forEach(i => { tlmTitles[t+':'+i.id] = i.title; });
   }));
 
@@ -2007,11 +2008,41 @@ window.previewTaskQuestions = function(onlyIndex){
   if(!items.length){ if(!errors.length) toast(T('Add a question first, then preview it.','དང་པ་དྲི་བ་ཁ་སྐོང་འབད། དེ་ལས་སྔོན་བལྟ།'), true); return; }
   openQuestionPreview(items, { title: T('This is how students will see the questions. Nothing here is saved.','སློབ་ཕྲུག་གིས་དྲི་བ་འདི་བལྟ་སྟངས་འདི་ཨིན། ཁ་སྐོང་འདི་སྲུང་བཞག་མི་འབད།') });
 };
+// A task without written questions (e.g. one built from a library video or resource): show what students get — the item and the attached links.
+async function previewTaskContent(a){
+  let item = null;
+  if(a.kind === 'tlm' && a.item_type && a.item_id){
+    let r = await supabase.from(String(a.item_type)).select('*').eq('id', a.item_id).maybeSingle();
+    if(r.error || !r.data) r = await supabase.from(String(a.item_type) + '_public').select('*').eq('id', a.item_id).maybeSingle();
+    item = r.data || null;
+  }
+  const links = parseAttachments(a);
+  if(!item && !links.length && !(a.description || a.instructions)) return false;
+  const yt = u => { try{ const x = new URL(u), h = x.hostname.replace(/^www\./,''); if(h === 'youtu.be') return x.pathname.slice(1); if(h.endsWith('youtube.com')) return x.searchParams.get('v') || (x.pathname.match(/\/(?:embed|shorts)\/([\w-]+)/)||[])[1] || ''; }catch(e){} return ''; };
+  const row = (label, url) => `<div style="padding:.35rem 0;border-bottom:1px dashed var(--border)">📎 <a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">${esc(label || url)}</a></div>`;
+  const itemUrl = item && /^https?:\/\//i.test(String(item.url || '')) ? item.url : '';
+  const vid = itemUrl ? yt(itemUrl) : '';
+  const html = `<div style="font-size:.78rem;color:var(--text2);margin-bottom:.6rem">${T('This is what students get for this task. Nothing here is saved.','This is what students get for this task. Nothing here is saved.')}</div>
+    <h3 style="margin:.1rem 0 .4rem">${esc(a.title || (item && item.title) || 'Task')}</h3>
+    ${(a.description || a.instructions) ? `<p style="white-space:pre-wrap">${esc(a.description || a.instructions)}</p>` : ''}
+    ${item ? `<div style="margin:.5rem 0"><b>${esc(item.title || '')}</b>${item.description ? `<div style="color:var(--text2);font-size:.85rem">${esc(item.description)}</div>` : ''}</div>` : ''}
+    ${vid ? `<div style="position:relative;padding-top:56.25%;margin:.5rem 0;border-radius:12px;overflow:hidden;background:#000"><iframe src="https://www.youtube.com/embed/${esc(vid)}" title="" loading="lazy" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>` : ''}
+    ${itemUrl && !vid ? row(item.title || itemUrl, itemUrl) : ''}
+    ${links.map(l => row(l.label, l.url)).join('')}
+    ${a.kind === 'tlm' && !item ? `<div style="color:#e5252a;font-size:.85rem;margin-top:.5rem">⚠️ ${T('The library item behind this task could not be found. It may have been deleted — assign it again.','The library item behind this task could not be found. It may have been deleted — assign it again.')}</div>` : ''}`;
+  document.getElementById('tp-overlay')?.remove();
+  const ov = document.createElement('div'); ov.id = 'tp-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:1rem';
+  ov.innerHTML = `<div style="background:var(--surface,#fff);color:var(--text,#222);border-radius:16px;max-width:620px;width:100%;max-height:88vh;overflow:auto;padding:1.2rem 1.3rem;box-shadow:0 20px 60px rgba(0,0,0,.4)">${html}<div style="text-align:right;margin-top:1rem"><button type="button" class="btn btn-gold btn-sm">${T('Close','Close')}</button></div></div>`;
+  ov.addEventListener('click', e => { if(e.target === ov || e.target.closest('button')) ov.remove(); });
+  document.body.appendChild(ov);
+  return true;
+}
 window.previewSavedTask = async function(id){
   const { data: a, error } = await supabase.from('assignments').select('*').eq('id', id).maybeSingle();
   if(error || !a){ toast('Could not open this task: ' + (error ? error.message : 'not found'), true); return; }
   const qs = parseQuestions(a);
-  if(!qs.length){ toast(T('This task has no questions to preview.','ལཱ་འདི་ལུ་སྔོན་བལྟ་ནིའི་དྲི་བ་མིན་འདུག'), true); return; }
+  if(!qs.length){ if(await previewTaskContent(a)) return; toast(T('This task has no questions and no content to preview.','ལཱ་འདི་ལུ་སྔོན་བལྟ་ནིའི་དྲི་བ་དང་ནང་དོན་མིན་འདུག'), true); return; }
   let keyMap = {};
   try{ const r = await supabase.from('assignment_keys').select('answers').eq('assignment_id', id).maybeSingle(); keyMap = (r.data && r.data.answers) || {}; }catch(e){}
   openQuestionPreview(qs.map(q => ({ q, key: keyMap[q.id] == null ? null : keyMap[q.id] })), { title: a.title || '' });
