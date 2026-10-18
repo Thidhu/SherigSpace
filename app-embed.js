@@ -24,7 +24,7 @@
   var LOGIN_PAGE = './login.html';
   // Apps the "Open in SherigSpace" button may open automatically. Sub-addresses of sherigspace.com are always allowed.
   // If your apps live on a github.io address, add that exact host here, e.g. ['yourname.github.io'].
-  var TRUSTED_APP_HOSTS = [];
+  var TRUSTED_APP_HOSTS = [thidhu.github.io];
   var PENDING_KEY = 'sherig_pending_app';
 
   var SUPABASE_URL = 'https://kgqlcjdjdhssactfezwi.supabase.co';   // public values, the same ones every SherigSpace page already uses
