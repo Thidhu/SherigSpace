@@ -24,7 +24,7 @@
   var LOGIN_PAGE = './login.html';
   // Apps the "Open in SherigSpace" button may open automatically. Sub-addresses of sherigspace.com are always allowed.
   // If your apps live on a github.io address, add that exact host here, e.g. ['yourname.github.io'].
-  var TRUSTED_APP_HOSTS = [thidhu.github.io];
+  var TRUSTED_APP_HOSTS = [];
   var PENDING_KEY = 'sherig_pending_app';
 
   var SUPABASE_URL = 'https://kgqlcjdjdhssactfezwi.supabase.co';   // public values, the same ones every SherigSpace page already uses
@@ -37,7 +37,7 @@
     var h = x.hostname.toLowerCase();
     if (EXTRA_HOSTS.indexOf(h) !== -1) return true;
     if (GITHUB_PAGES && /\.github\.io$/.test(h)) return true;
-    if (SHERIG_SUBDOMAINS && /\.sherigspace\.com$/.test(h) && h !== 'https://sherigspace.com') return true;
+    if (SHERIG_SUBDOMAINS && /\.sherigspace\.com$/.test(h) && h !== 'www.sherigspace.com') return true;
     return false;
   }
 
@@ -107,6 +107,7 @@
 
   function open(url, title) {
     var x = parse(url); if (!x) return null;
+    if (x.protocol === 'http:') x.protocol = 'https:';      // a secure (https) site cannot show an insecure (http) app, so always use https
     if (REQUIRE_SIGN_IN && !readSession()) return signInPrompt();
     close();
     var d = win.document;
@@ -123,7 +124,6 @@
     var frame = d.createElement('iframe');
     frame.title = title || 'App';
     frame.setAttribute('allow', 'fullscreen; autoplay; clipboard-write; encrypted-media; accelerometer; gyroscope; picture-in-picture');
-    frame.setAttribute('allowfullscreen', '');
     frame.setAttribute('referrerpolicy', 'origin');     // tells the app "I am sherigspace.com" (needed by the app guard in Firefox)
     frame.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent';
     stage.appendChild(loading); stage.appendChild(frame);
