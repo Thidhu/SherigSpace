@@ -30,7 +30,7 @@
   var ALLOWED_ORIGINS = [
     'https://sherigspace.com',
     'https://www.sherigspace.com'
-    // 'http://localhost:5500'     // ← remove the leading // only while you test on your own computer
+    // 'https://localhost:5500'     // ← remove the leading // only while you test on your own computer
   ];
   var REQUIRE_SIGN_IN = true;                 // false = only the "inside sherigspace.com" rule, no sign-in needed
   var LOGIN_URL = 'https://sherigspace.com/login.html';
