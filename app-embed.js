@@ -37,7 +37,7 @@
     var h = x.hostname.toLowerCase();
     if (EXTRA_HOSTS.indexOf(h) !== -1) return true;
     if (GITHUB_PAGES && /\.github\.io$/.test(h)) return true;
-    if (SHERIG_SUBDOMAINS && /\.sherigspace\.com$/.test(h) && h !== 'www.sherigspace.com') return true;
+    if (SHERIG_SUBDOMAINS && /\.sherigspace\.com$/.test(h) && h !== 'https://sherigspace.com') return true;
     return false;
   }
 
