@@ -1,15 +1,18 @@
-/* SherigSpace — opens protected apps (games / tools hosted on GitHub Pages) INSIDE a viewer on this website,
-   and gives each app a one-time "signed-in" ticket.  Works together with sherig-app-guard.js (inside every app).
+/* SherigSpace — opens apps (games / tools hosted on GitHub Pages) INSIDE a viewer on this website and applies the
+   rules you set in  Admin → Settings → "Apps & games protection"  (which can follow Free Mode).
+   Works together with sherig-app-guard.js (inside every app).
 
    What it does
-     • Any link or window.open() that points to a protected app is shown in a full-screen viewer (an iframe)
-       instead of a new browser tab, so the app's address is never visited directly.
-     • Visitors who are not signed in are asked to sign in first (when REQUIRE_SIGN_IN is true).
-     • The app asks this page for a ticket; this page gets one from the database (only possible when signed in)
-       and passes it on.  The app never receives the visitor's login token.
+     • Any link or window.open() that points to an app is shown in a full-screen viewer (an iframe) instead of a
+       new browser tab, so the app's address is never "visited" directly.
+     • Not protected (for example Free Mode is ON): the viewer simply opens the app for everyone.
+     • Protected: the visitor must be signed in, and (if you chose "paid members") must be a member, teacher, admin
+       or a student in a class. Otherwise they see a clear message instead of the app.
+     • The app asks this page for a one-time ticket; this page gets one from the database (only when the visitor is
+       allowed) and passes it on. The app never receives the visitor's login token.
      • Everything else (YouTube, Google Drive, normal websites) opens exactly as before.
 
-   Which addresses count as protected apps (edit the list below if needed):
+   Which addresses count as apps (edit the list below if needed):
      • anything on  *.github.io
      • any sub-address of sherigspace.com other than www   (for example tugofwar.sherigspace.com)
      • plus the extra hosts you list in EXTRA_HOSTS */
@@ -20,7 +23,6 @@
   var GITHUB_PAGES = true;
   var SHERIG_SUBDOMAINS = true;
   var EXTRA_HOSTS = [];            // e.g. ['games.mydomain.org']
-  var REQUIRE_SIGN_IN = true;      // must match REQUIRE_SIGN_IN in sherig-app-guard.js
   var LOGIN_PAGE = './login.html';
   // Apps the "Open in SherigSpace" button may open automatically. Sub-addresses of sherigspace.com are always allowed.
   // If your apps live on a github.io address, add that exact host here, e.g. ['yourname.github.io'].
@@ -52,36 +54,66 @@
   function valid(s) { return !!s && (!s.expires_at || s.expires_at * 1000 > Date.now() + 5000); }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   async function freshSession() {            // the page's own sign-in code renews the session in the background; wait for it if needed
-    var s = readSession(); if (valid(s)) return s;
+    var s = readSession(); if (!s) return null;
+    if (valid(s)) return s;
     for (var i = 0; i < 8; i++) { await sleep(500); s = readSession(); if (valid(s)) return s; }
     return null;
   }
-  async function getTicket() {
-    var s = await freshSession(); if (!s) return { ticket: null, reason: 'signin' };
+  function rpc(name, bearer) {
+    return win.fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+      method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + (bearer || SUPABASE_KEY), 'Content-Type': 'application/json' }, body: '{}'
+    });
+  }
+
+  // ── the rules from Admin → Settings (and Free Mode) ──
+  var policy = null, policyAt = 0;
+  function cachedPolicy() { return policy && Date.now() - policyAt < 60000 ? policy : null; }
+  async function getPolicy() {
+    var c = cachedPolicy(); if (c) return c;
+    var p = { protect: true, audience: 'signed_in' };                       // if we cannot find out, stay protected
     try {
-      var r = await win.fetch(SUPABASE_URL + '/rest/v1/rpc/sherig_app_ticket', {
-        method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + s.access_token, 'Content-Type': 'application/json' }, body: '{}'
-      });
+      var r = await rpc('sherig_app_policy');
+      if (r.ok) { var j = await r.json(); if (j && typeof j.protect === 'boolean') p = j; }
+    } catch (e) {}
+    policy = p; policyAt = Date.now(); return p;
+  }
+  // may THIS visitor open protected apps?  → { allowed, reason }
+  async function checkAccess() {
+    var s = await freshSession();
+    if (!s) return { allowed: false, reason: 'signin' };
+    try {
+      var r = await rpc('sherig_app_access', s.access_token);
+      if (r.status === 404) return { allowed: false, reason: 'setup' };
+      if (!r.ok) return { allowed: false, reason: 'signin' };
+      var d = await r.json(); return { allowed: !!(d && d.allowed), reason: (d && d.reason) || '' };
+    } catch (e) { return { allowed: false, reason: 'error' }; }
+  }
+  // what the app gets when it asks: { free } or { ticket } or { ticket:null, reason }
+  async function getPass() {
+    var s = await freshSession();
+    try {
+      var r = await rpc('sherig_app_pass', s ? s.access_token : null);
       if (r.status === 404) return { ticket: null, reason: 'setup' };
-      if (r.status === 401 || r.status === 403) return { ticket: null, reason: 'signin' };
-      if (!r.ok) return { ticket: null, reason: 'error' };
-      var t = await r.json();
-      return t ? { ticket: t } : { ticket: null, reason: 'signin' };
+      if (!r.ok) return { ticket: null, reason: s ? 'error' : 'signin' };
+      var d = await r.json();
+      if (d && d.protect === false) return { free: true };
+      if (d && d.allowed && d.ticket) return { ticket: d.ticket };
+      return { ticket: null, reason: (d && d.reason) || 'signin' };
     } catch (e) { return { ticket: null, reason: 'error' }; }
   }
 
-  // an app (inside an iframe on THIS page) asks "is a signed-in person here?"
+  // an app (inside an iframe on THIS page) asks "may I run?"
   win.addEventListener('message', function (e) {
     var d = e.data; if (!d || d.type !== 'sherig-app-hello' || !e.origin || e.origin === 'null') return;
     var frames = win.document.querySelectorAll('iframe'), mine = false;
     for (var i = 0; i < frames.length; i++) { try { if (frames[i].contentWindow === e.source) { mine = true; break; } } catch (x) {} }
     if (!mine) return;                                       // only answer frames that are on this page
-    getTicket().then(function (r) {
-      try { e.source.postMessage({ type: 'sherig-app-ticket', ticket: r.ticket || null, reason: r.reason || '' }, e.origin); } catch (x) {}
+    getPass().then(function (r) {
+      try { e.source.postMessage({ type: 'sherig-app-ticket', ticket: r.ticket || null, reason: r.reason || '', free: !!r.free }, e.origin); } catch (x) {}
     });
   });
 
-  // ── the viewer ──
+  // ── the viewer and the small message boxes ──
   var current = null;
   function close() {
     if (!current) return;
@@ -91,24 +123,34 @@
     win.document.removeEventListener('keydown', current.onKey, true);
     current = null;
   }
-  function signInPrompt() {
+  function promptBox(icon, title, text, btnLabel, onBtn) {
     close();
-    var d = win.document, ov = d.createElement('div'); ov.id = 'sherig-app-viewer';
+    var d = win.document, old = d.getElementById('sherig-app-viewer'); if (old) old.remove();
+    var ov = d.createElement('div'); ov.id = 'sherig-app-viewer';
     ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:1rem;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
     ov.innerHTML = '<div style="background:#1a2340;color:#e8e4dc;border-radius:16px;max-width:380px;width:100%;padding:1.5rem;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">' +
-      '<div style="font-size:2.4rem">🔒</div><h3 style="margin:.4rem 0;color:#c9a84c">Please sign in</h3>' +
-      '<p style="color:#9aa3b8;line-height:1.6;margin:0 0 1.1rem;font-size:.92rem">This app is for signed-in SherigSpace members. Sign in, then open it again.</p>' +
-      '<a data-sg="login" href="' + LOGIN_PAGE + '" style="display:inline-block;padding:10px 22px;background:#c9a84c;color:#1a2340;border-radius:8px;text-decoration:none;font-weight:700;margin-right:.5rem">Sign in</a>' +
+      '<div style="font-size:2.4rem">' + icon + '</div><h3 style="margin:.4rem 0;color:#c9a84c">' + title + '</h3>' +
+      '<p style="color:#9aa3b8;line-height:1.6;margin:0 0 1.1rem;font-size:.92rem">' + text + '</p>' +
+      '<button data-sg="go" type="button" style="padding:10px 22px;background:#c9a84c;color:#1a2340;border:0;border-radius:8px;font-weight:700;cursor:pointer;margin-right:.5rem">' + btnLabel + '</button>' +
       '<button data-sg="cancel" type="button" style="padding:10px 18px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#e8e4dc;border-radius:8px;cursor:pointer">Cancel</button></div>';
-    ov.addEventListener('click', function (e) { if (e.target === ov || (e.target.getAttribute && e.target.getAttribute('data-sg') === 'cancel')) ov.remove(); });
+    ov.addEventListener('click', function (e) {
+      var k = e.target.getAttribute && e.target.getAttribute('data-sg');
+      if (e.target === ov || k === 'cancel') ov.remove();
+      else if (k === 'go') { ov.remove(); onBtn(); }
+    });
     d.body.appendChild(ov);
     return null;
   }
+  function signInPrompt() { return promptBox('🔒', 'Please sign in', 'This app is for signed-in SherigSpace members. Sign in, then open it again.', 'Sign in', function () { win.location.href = LOGIN_PAGE; }); }
+  function membersPrompt() {
+    return promptBox('⭐', 'Members only', 'This app is for SherigSpace members. Become a member to open it.', 'See membership', function () {
+      if (typeof win.openPaymentModal === 'function') win.openPaymentModal('membership', 'general', 'Site Membership', typeof win.membershipPrice === 'function' ? win.membershipPrice() : 0);
+      else win.location.href = './index.html';
+    });
+  }
+  function setupPrompt() { return promptBox('⚙️', 'Setup not finished', 'The website owner still needs to run APP_CONTROL_SETUP.sql in Supabase. Please tell them.', 'OK', function () {}); }
 
-  function open(url, title) {
-    var x = parse(url); if (!x) return null;
-    if (x.protocol === 'http:') x.protocol = 'https:';      // a secure (https) site cannot show an insecure (http) app, so always use https
-    if (REQUIRE_SIGN_IN && !readSession()) return signInPrompt();
+  function showViewer(x, title) {
     close();
     var d = win.document;
     var overlay = d.createElement('div'); overlay.id = 'sherig-app-viewer'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true');
@@ -140,6 +182,28 @@
     return frame;
   }
 
+  // open an app, applying the rules from Admin → Settings
+  function decide(x, title, pol) {
+    if (!pol.protect) return showViewer(x, title);                              // not protected (e.g. Free Mode ON)
+    if (!readSession()) return signInPrompt();                                  // protected: must be signed in
+    if (pol.audience === 'signed_in') return showViewer(x, title);              // ...any signed-in member is enough
+    checkAccess().then(function (a) {                                           // ...paid members, teachers, admins, class students
+      if (a.allowed) showViewer(x, title);
+      else if (a.reason === 'members') membersPrompt();
+      else if (a.reason === 'setup') setupPrompt();
+      else signInPrompt();
+    });
+    return null;
+  }
+  function open(url, title) {
+    var x = parse(url); if (!x) return null;
+    if (x.protocol === 'http:') x.protocol = 'https:';      // a secure (https) site cannot show an insecure (http) app, so always use https
+    var c = cachedPolicy();
+    if (c) return decide(x, title, c);
+    getPolicy().then(function (p) { decide(x, title, p); });
+    return null;
+  }
+
   // 1) normal links:  <a href="https://tugofwar.sherigspace.com/"> …
   win.document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -155,7 +219,6 @@
     if (url && shouldEmbed(url)) { open(url); return null; }
     return nativeOpen.apply(win, arguments);
   };
-
 
   // ── "Open in SherigSpace": a copied app link sends the visitor here with ?openapp=<the app address> ──
   function deepLinkAllowed(u) {
@@ -177,13 +240,15 @@
     if (wanted) {
       try { url.searchParams.delete('openapp'); win.history.replaceState(null, '', url.pathname + url.search + url.hash); } catch (e) {}   // tidy the address bar
       if (!deepLinkAllowed(wanted)) return;
+      var pol = await getPolicy();
+      if (!pol.protect) { open(wanted); return; }
       if (await waitForSession(1200)) { win.localStorage.removeItem(PENDING_KEY); open(wanted); }
-      else { stashPending(wanted); signInPrompt(); }                                // sign in, then we open it for you
+      else { stashPending(wanted); signInPrompt(); }                            // sign in, then we open it for you
       return;
     }
-    var p = takePending();                                                           // came back after signing in?
-    if (!p) return;
-    if (!deepLinkAllowed(p)) return;
+    getPolicy();                                                                 // warm up, so the first click opens instantly
+    var p = takePending();                                                       // came back after signing in?
+    if (!p || !deepLinkAllowed(p)) return;
     if (await waitForSession(4000)) open(p); else stashPending(p);
   }
   if (win.document.readyState === 'loading') win.document.addEventListener('DOMContentLoaded', init); else init();

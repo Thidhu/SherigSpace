@@ -1,27 +1,28 @@
 /* ===========================================================================================
    SherigSpace APP GUARD — put this in every app / game you host on GitHub Pages.
 
-   What it does
-     1) The app works ONLY when it is open inside an iframe on sherigspace.com.
-        Copied link opened in a browser tab, or your app embedded on another website  →  "Permission denied".
-     2) The visitor must also be SIGNED IN to SherigSpace.  The site hands the app a one-time ticket
-        (valid for 2 minutes, usable once) that proves a signed-in visitor opened it.
-        The app never sees the visitor's password or login token.
+   The rules are controlled from  Admin → Settings → "Apps & games protection"  (and follow Free Mode):
+     • Not protected (for example Free Mode is ON):  the app opens normally, anywhere.
+     • Protected:  the app works ONLY inside an iframe on sherigspace.com, and only for the people you allow
+       (any signed-in member, or paid members / teachers / admins / students in a class).
+       A copied link opened in a browser tab, another website embedding the app, or a visitor who is not allowed
+       →  the page is replaced by a clear message and the app never starts.
 
-   How to use (2 lines, as the FIRST things inside <head> of the app's index.html):
+   How to use (3 lines, as the FIRST things inside <head> of the app's index.html):
 
      <style id="sg-guard-hide">html{visibility:hidden!important}</style>
      <script src="https://sherigspace.com/sherig-app-guard.js"></script>
+     <script>setTimeout(function(){if(!window.SherigAppGuard){var d=document,s=d.getElementById('sg-guard-hide');if(s)s.remove();d.title='Cannot verify access';d.documentElement.innerHTML='<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f1623;color:#e8e4dc;font-family:system-ui,sans-serif;text-align:center;padding:1.5rem"><div style="max-width:420px"><div style="font-size:3rem">🔒</div><h2 style="color:#c9a84c">Cannot verify access</h2><p style="color:#9aa3b8;line-height:1.6">The security check could not be reached. Please open this app from <a style="color:#c9a84c" href="https://sherigspace.com">sherigspace.com</a>.</p></div></body>'}},5000)</script>
 
    The <style> line keeps the page invisible until the checks pass, so if this script is ever blocked or fails to
    load, the app stays hidden instead of leaking.  Because the script is loaded from sherigspace.com, you can update
    this file ONCE and every app follows.
 
-   Needs APP_ACCESS_SETUP.sql to have been run once in Supabase (only when REQUIRE_SIGN_IN is true).
+   Needs APP_CONTROL_SETUP.sql to have been run once in Supabase.
 
-   Honest limit: this stops normal people (copied links, other websites embedding your app, signed-out visitors).
-   It is a browser-side check, so a technical person who downloads the app files from a public GitHub repository can
-   still run their own copy.  See APP_SECURITY_GUIDE.md for the stronger (server-side) option.
+   Honest limit: this stops normal people (copied links, other websites embedding your app, visitors who are not
+   allowed).  It is a browser-side check, so a technical person who downloads the app files from a public GitHub
+   repository can still run their own copy.  See APP_SECURITY_GUIDE.md for the stronger (server-side) option.
    =========================================================================================== */
 (function (win) {
   'use strict';
@@ -30,11 +31,10 @@
   var ALLOWED_ORIGINS = [
     'https://sherigspace.com',
     'https://www.sherigspace.com'
-    // 'https://localhost:5500'     // ← remove the leading // only while you test on your own computer
+    // 'http://localhost:5500'     // ← remove the leading // only while you test on your own computer
   ];
-  var REQUIRE_SIGN_IN = true;                 // false = only the "inside sherigspace.com" rule, no sign-in needed
   var LOGIN_URL = 'https://sherigspace.com/login.html';
-  var WAIT_MS = 8000;                         // how long to wait for the website to answer
+  var WAIT_MS = 8000;                         // how long to wait for the database / the website to answer
 
   var SUPABASE_URL = 'https://kgqlcjdjdhssactfezwi.supabase.co';      // public values, the same ones every SherigSpace page already uses
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncWxjamRqZGhzc2FjdGZlendpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTE2MzQsImV4cCI6MjA5NTAyNzYzNH0.6hJpg9Zput8wnuDfq7wzb5dRC2KkuRmkmaz870U0Lto';
@@ -81,9 +81,11 @@
   function deny() {
     showMessage('🔒', 'Permission denied', 'This app can only be opened from inside SherigSpace. Tap the button and it will open there (you may be asked to sign in first).', 'Open in SherigSpace', homeLink(), true);
   }
-  function needSignIn(reason) {
+  function needAccess(reason) {
     if (reason === 'setup') {
-      showMessage('⚙️', 'Sign-in check not set up', 'The website owner still needs to finish one setup step (APP_ACCESS_SETUP.sql). Please tell them.', 'Go to SherigSpace', 'https://sherigspace.com', true);
+      showMessage('⚙️', 'Setup not finished', 'The website owner still needs to finish one setup step (APP_CONTROL_SETUP.sql). Please tell them.', 'Go to SherigSpace', 'https://sherigspace.com', true);
+    } else if (reason === 'members') {
+      showMessage('⭐', 'Members only', 'This app is for SherigSpace members. Open SherigSpace to see how to become a member.', 'Open SherigSpace', homeLink(), true);
     } else {
       showMessage('🔒', 'Please sign in', 'This app is for signed-in SherigSpace members. Sign in on the website, then open the app from there.', 'Sign in to SherigSpace', LOGIN_URL, true);
     }
@@ -95,7 +97,26 @@
     if (h && h.parentNode) h.parentNode.removeChild(h);
   }
 
-  // Ask the website (our parent frame) for a one-time ticket.  Resolves { ticket, reason }.
+  function rpc(name, body) {
+    return win.fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+  }
+  // Is protection on right now? (Admin → Settings, and Free Mode.)  If we cannot find out, stay protected.
+  function getPolicy() {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(p) { if (done) return; done = true; clearTimeout(timer); resolve(p && typeof p.protect === 'boolean' ? p : { protect: true }); }
+      var timer = setTimeout(function () { finish({ protect: true }); }, WAIT_MS);
+      try {
+        rpc('sherig_app_policy').then(function (r) { return r.status === 404 ? { protect: true } : (r.ok ? r.json() : { protect: true }); })
+          .then(finish, function () { finish({ protect: true }); });
+      } catch (e) { finish({ protect: true }); }
+    });
+  }
+  // Ask the website (our parent frame) for a one-time ticket.  Resolves { ticket, reason, free }.
   function askParent(parentOrigin) {
     return new Promise(function (resolve) {
       var done = false;
@@ -103,7 +124,7 @@
         if (e.source !== win.parent || !inList(e.origin)) return;     // only the real sherigspace.com parent may answer
         var d = e.data; if (!d || d.type !== 'sherig-app-ticket') return;
         done = true; win.removeEventListener('message', onMsg);
-        resolve({ ticket: d.ticket || null, reason: d.reason || '' });
+        resolve({ ticket: d.ticket || null, reason: d.reason || '', free: !!d.free });
       }
       win.addEventListener('message', onMsg);
       try { win.parent.postMessage({ type: 'sherig-app-hello' }, parentOrigin); } catch (e) {}
@@ -112,11 +133,7 @@
   }
   // Ask the database whether that ticket is genuine (it can be used only once, within 2 minutes).
   function redeem(ticket) {
-    return win.fetch(SUPABASE_URL + '/rest/v1/rpc/sherig_app_redeem', {
-      method: 'POST',
-      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ p_ticket: ticket })
-    }).then(function (r) { if (r.status === 404) return 'setup'; return r.ok ? r.json() : false; });
+    return rpc('sherig_app_redeem', { p_ticket: ticket }).then(function (r) { if (r.status === 404) return 'setup'; return r.ok ? r.json() : false; });
   }
 
   win.SherigAppGuard = { isAllowed: isAllowed };   // exposed only so the rule can be tested
@@ -127,15 +144,17 @@
     (win.document.head || win.document.documentElement).appendChild(st);
   }
 
-  var env = readEnv();
-  if (!isAllowed(env)) { deny(); return; }
-  if (!REQUIRE_SIGN_IN) { allow(); return; }
-
-  var po = (env.ancestors && env.ancestors.length) ? env.ancestors[0] : originOf(env.referrer);
-  askParent(po).then(function (a) {
-    if (!a.ticket) { needSignIn(a.reason === 'setup' ? 'setup' : 'signin'); return; }
-    return redeem(a.ticket).then(function (ok) {
-      if (ok === true) allow(); else needSignIn(ok === 'setup' ? 'setup' : 'signin');
+  var env = readEnv(), originOk = isAllowed(env);
+  getPolicy().then(function (pol) {
+    if (!pol.protect) { allow(); return; }                      // not protected right now (for example Free Mode is ON)
+    if (!originOk) { deny(); return; }                          // protected: only inside sherigspace.com
+    var po = (env.ancestors && env.ancestors.length) ? env.ancestors[0] : originOf(env.referrer);
+    return askParent(po).then(function (a) {
+      if (a.free) { allow(); return; }
+      if (!a.ticket) { needAccess(a.reason === 'setup' ? 'setup' : a.reason === 'members' ? 'members' : 'signin'); return; }
+      return redeem(a.ticket).then(function (ok) {
+        if (ok === true) allow(); else needAccess(ok === 'setup' ? 'setup' : 'signin');
+      });
     });
-  }).catch(function () { needSignIn('signin'); });
+  }).catch(function () { needAccess('signin'); });
 })(window);
