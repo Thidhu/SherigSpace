@@ -6,7 +6,6 @@
 <title>SherigSpace</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="fonts.css">
-<script src="./app-embed.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#00BFFF;--gold-light:#e8c97a;--gold-text:#00BFFF;--gold-soft:rgba(201,168,76,.08);--on-accent:#1a2340;--media-bg:linear-gradient(135deg,#1a2340,#253056);--shadow:0 6px 22px rgba(0,0,0,.28);--shadow-hover:0 16px 38px rgba(0,0,0,.4);--font-en:'DM Sans','DDC Joyig',sans-serif;--font-dz:'DDC Joyig','Noto Serif Tibetan',sans-serif}
@@ -1196,6 +1195,7 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 
 <script src="./interactive-video.js"></script>
 <script src="./video-drive-upload.js"></script>
+<script src="./app-embed.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { AUTH_OPTIONS } from './auth-storage.js';
@@ -2753,6 +2753,19 @@ syncSessionAndRender();
   const loader = document.getElementById('gate-loader');
   const app = document.getElementById('app');
   if(!loader || !app) return;
+
+  // Play the intro only the first time in this browser tab. Coming back to the home page (from login,
+  // a class, the dashboard or an app) skips it and shows the page straight away.
+  let alreadySeen = false;
+  try{
+    alreadySeen = sessionStorage.getItem('sherig_intro_seen') === '1';
+    sessionStorage.setItem('sherig_intro_seen', '1');
+  }catch(e){ alreadySeen = false; }
+  if(alreadySeen){
+    loader.remove();
+    app.style.visibility = 'visible';
+    return;
+  }
 
   const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const duration = reduced ? 350 : 2450;
