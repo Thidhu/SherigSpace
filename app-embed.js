@@ -34,6 +34,20 @@
   var STORAGE_KEY = 'sb-' + (function () { try { return new URL(SUPABASE_URL).hostname.split('.')[0]; } catch (e) { return ''; } })() + '-auth-token';
 
   function parse(u) { try { return new URL(String(u), win.location.href); } catch (e) { return null; } }
+  // the app's address as the rules know it: "lpgenerator.sherigspace.com", or "name.github.io/project" for GitHub project pages
+  function appKey(u) {
+    var x = parse(u); if (!x) return null; var h = x.hostname.toLowerCase();
+    if (/\.github\.io$/.test(h)) { var seg = (x.pathname.split('/').filter(Boolean)[0] || '').toLowerCase(); if (/^[a-z0-9._-]+$/.test(seg)) return h + '/' + seg; }
+    return h;
+  }
+  // a random id for THIS browser, used only to count how many devices share one paid membership
+  function deviceId() {
+    try {
+      var d = win.localStorage.getItem('sherig_device_id');
+      if (!d) { d = (win.crypto && win.crypto.randomUUID) ? win.crypto.randomUUID() : ('d' + Math.random().toString(36).slice(2) + Date.now().toString(36)); win.localStorage.setItem('sherig_device_id', d); }
+      return d;
+    } catch (ex) { return 'no-storage-device'; }
+  }
   function shouldEmbed(u) {
     var x = parse(u); if (!x || !/^https?:$/.test(x.protocol)) return false;
     var h = x.hostname.toLowerCase();
@@ -59,40 +73,40 @@
     for (var i = 0; i < 8; i++) { await sleep(500); s = readSession(); if (valid(s)) return s; }
     return null;
   }
-  function rpc(name, bearer) {
+  function rpc(name, bearer, body) {
     return win.fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
-      method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + (bearer || SUPABASE_KEY), 'Content-Type': 'application/json' }, body: '{}'
+      method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + (bearer || SUPABASE_KEY), 'Content-Type': 'application/json' }, body: JSON.stringify(body || {})
     });
   }
 
   // ── the rules from Admin → Settings (and Free Mode) ──
-  var policy = null, policyAt = 0;
-  function cachedPolicy() { return policy && Date.now() - policyAt < 60000 ? policy : null; }
-  async function getPolicy() {
-    var c = cachedPolicy(); if (c) return c;
+  var policies = {};                           // one cached rule per app address, for 60 seconds
+  function cachedPolicy(key) { var c = policies[key]; return c && Date.now() - c.at < 60000 ? c.p : null; }
+  async function getPolicy(key) {
+    var c = cachedPolicy(key); if (c) return c;
     var p = { protect: true, audience: 'signed_in' };                       // if we cannot find out, stay protected
     try {
-      var r = await rpc('sherig_app_policy');
+      var r = await rpc('sherig_app_policy', null, { p_key: key });
       if (r.ok) { var j = await r.json(); if (j && typeof j.protect === 'boolean') p = j; }
-    } catch (e) {}
-    policy = p; policyAt = Date.now(); return p;
+    } catch (ex) {}
+    policies[key] = { p: p, at: Date.now() }; return p;
   }
   // may THIS visitor open protected apps?  → { allowed, reason }
-  async function checkAccess() {
+  async function checkAccess(key) {
     var s = await freshSession();
     if (!s) return { allowed: false, reason: 'signin' };
     try {
-      var r = await rpc('sherig_app_access', s.access_token);
+      var r = await rpc('sherig_app_access', s.access_token, { p_key: key });
       if (r.status === 404) return { allowed: false, reason: 'setup' };
       if (!r.ok) return { allowed: false, reason: 'signin' };
       var d = await r.json(); return { allowed: !!(d && d.allowed), reason: (d && d.reason) || '' };
     } catch (e) { return { allowed: false, reason: 'error' }; }
   }
   // what the app gets when it asks: { free } or { ticket } or { ticket:null, reason }
-  async function getPass() {
+  async function getPass(key) {
     var s = await freshSession();
     try {
-      var r = await rpc('sherig_app_pass', s ? s.access_token : null);
+      var r = await rpc('sherig_app_pass', s ? s.access_token : null, { p_key: key, p_device: deviceId() });
       if (r.status === 404) return { ticket: null, reason: 'setup' };
       if (!r.ok) return { ticket: null, reason: s ? 'error' : 'signin' };
       var d = await r.json();
@@ -105,10 +119,10 @@
   // an app (inside an iframe on THIS page) asks "may I run?"
   win.addEventListener('message', function (e) {
     var d = e.data; if (!d || d.type !== 'sherig-app-hello' || !e.origin || e.origin === 'null') return;
-    var frames = win.document.querySelectorAll('iframe'), mine = false;
-    for (var i = 0; i < frames.length; i++) { try { if (frames[i].contentWindow === e.source) { mine = true; break; } } catch (x) {} }
+    var frames = win.document.querySelectorAll('iframe'), mine = null;
+    for (var i = 0; i < frames.length; i++) { try { if (frames[i].contentWindow === e.source) { mine = frames[i]; break; } } catch (x) {} }
     if (!mine) return;                                       // only answer frames that are on this page
-    getPass().then(function (r) {
+    getPass(appKey(mine.src)).then(function (r) {
       try { e.source.postMessage({ type: 'sherig-app-ticket', ticket: r.ticket || null, reason: r.reason || '', free: !!r.free }, e.origin); } catch (x) {}
     });
   });
@@ -150,6 +164,9 @@
   }
   function setupPrompt() { return promptBox('⚙️', 'Setup not finished', 'The website owner still needs to run APP_CONTROL_SETUP.sql in Supabase. Please tell them.', 'OK', function () {}); }
 
+  function logOpen(x) {                      // which app was opened (best effort; never blocks anything)
+    try { var s = readSession(); rpc('sherig_app_log', s && valid(s) ? s.access_token : null, { p_key: appKey(x.href) }).catch(function () {}); } catch (ex) {}
+  }
   function showViewer(x, title) {
     close();
     var d = win.document;
@@ -178,16 +195,17 @@
     d.addEventListener('keydown', onKey, true);
     d.body.appendChild(overlay);
     frame.src = x.href;
+    logOpen(x);
     current = { overlay: overlay, prevOverflow: prevOverflow, onKey: onKey };
     return frame;
   }
 
   // open an app, applying the rules from Admin → Settings
-  function decide(x, title, pol) {
+  function decide(x, title, pol, key) {
     if (!pol.protect) return showViewer(x, title);                              // not protected (e.g. Free Mode ON)
     if (!readSession()) return signInPrompt();                                  // protected: must be signed in
     if (pol.audience === 'signed_in') return showViewer(x, title);              // ...any signed-in member is enough
-    checkAccess().then(function (a) {                                           // ...paid members, teachers, admins, class students
+    checkAccess(key).then(function (a) {                                           // ...paid members, teachers, admins, class students
       if (a.allowed) showViewer(x, title);
       else if (a.reason === 'members') membersPrompt();
       else if (a.reason === 'setup') setupPrompt();
@@ -198,9 +216,9 @@
   function open(url, title) {
     var x = parse(url); if (!x) return null;
     if (x.protocol === 'http:') x.protocol = 'https:';      // a secure (https) site cannot show an insecure (http) app, so always use https
-    var c = cachedPolicy();
-    if (c) return decide(x, title, c);
-    getPolicy().then(function (p) { decide(x, title, p); });
+    var key = appKey(x.href), c = cachedPolicy(key);
+    if (c) return decide(x, title, c, key);
+    getPolicy(key).then(function (p) { decide(x, title, p, key); });
     return null;
   }
 
@@ -240,18 +258,17 @@
     if (wanted) {
       try { url.searchParams.delete('openapp'); win.history.replaceState(null, '', url.pathname + url.search + url.hash); } catch (e) {}   // tidy the address bar
       if (!deepLinkAllowed(wanted)) return;
-      var pol = await getPolicy();
+      var pol = await getPolicy(appKey(wanted));
       if (!pol.protect) { open(wanted); return; }
       if (await waitForSession(1200)) { win.localStorage.removeItem(PENDING_KEY); open(wanted); }
       else { stashPending(wanted); signInPrompt(); }                            // sign in, then we open it for you
       return;
     }
-    getPolicy();                                                                 // warm up, so the first click opens instantly
     var p = takePending();                                                       // came back after signing in?
     if (!p || !deepLinkAllowed(p)) return;
     if (await waitForSession(4000)) open(p); else stashPending(p);
   }
   if (win.document.readyState === 'loading') win.document.addEventListener('DOMContentLoaded', init); else init();
 
-  win.SherigApps = { shouldEmbed: shouldEmbed, open: open, close: close };
+  win.SherigApps = { shouldEmbed: shouldEmbed, open: open, close: close, appKey: appKey };
 })(window);

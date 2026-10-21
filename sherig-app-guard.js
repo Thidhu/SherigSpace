@@ -39,6 +39,14 @@
   var SUPABASE_URL = 'https://kgqlcjdjdhssactfezwi.supabase.co';      // public values, the same ones every SherigSpace page already uses
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncWxjamRqZGhzc2FjdGZlendpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTE2MzQsImV4cCI6MjA5NTAyNzYzNH0.6hJpg9Zput8wnuDfq7wzb5dRC2KkuRmkmaz870U0Lto';
 
+  // this app's address as the rules know it: "lpgenerator.sherigspace.com", or "name.github.io/project" for GitHub project pages
+  function appKey(u) {
+    try {
+      var x = new URL(u, win.location.href), h = x.hostname.toLowerCase();
+      if (/\.github\.io$/.test(h)) { var seg = (x.pathname.split('/').filter(Boolean)[0] || '').toLowerCase(); if (/^[a-z0-9._-]+$/.test(seg)) return h + '/' + seg; }
+      return h;
+    } catch (e) { return null; }
+  }
   function originOf(u) { try { return new URL(u).origin; } catch (e) { return ''; } }
   function inList(o) { return ALLOWED_ORIGINS.indexOf(o) !== -1; }
 
@@ -84,6 +92,8 @@
   function needAccess(reason) {
     if (reason === 'setup') {
       showMessage('⚙️', 'Setup not finished', 'The website owner still needs to finish one setup step (APP_CONTROL_SETUP.sql). Please tell them.', 'Go to SherigSpace', 'https://sherigspace.com', true);
+    } else if (reason === 'devices') {
+      showMessage('📱', 'Too many devices', 'This membership is being used on too many devices right now. Please close it on another device, or try again in a little while.', 'Open SherigSpace', homeLink(), true);
     } else if (reason === 'members') {
       showMessage('⭐', 'Members only', 'This app is for SherigSpace members. Open SherigSpace to see how to become a member.', 'Open SherigSpace', homeLink(), true);
     } else {
@@ -111,7 +121,7 @@
       function finish(p) { if (done) return; done = true; clearTimeout(timer); resolve(p && typeof p.protect === 'boolean' ? p : { protect: true }); }
       var timer = setTimeout(function () { finish({ protect: true }); }, WAIT_MS);
       try {
-        rpc('sherig_app_policy').then(function (r) { return r.status === 404 ? { protect: true } : (r.ok ? r.json() : { protect: true }); })
+        rpc('sherig_app_policy', { p_key: appKey(win.location.href) }).then(function (r) { return r.status === 404 ? { protect: true } : (r.ok ? r.json() : { protect: true }); })
           .then(finish, function () { finish({ protect: true }); });
       } catch (e) { finish({ protect: true }); }
     });
@@ -136,7 +146,7 @@
     return rpc('sherig_app_redeem', { p_ticket: ticket }).then(function (r) { if (r.status === 404) return 'setup'; return r.ok ? r.json() : false; });
   }
 
-  win.SherigAppGuard = { isAllowed: isAllowed };   // exposed only so the rule can be tested
+  win.SherigAppGuard = { isAllowed: isAllowed, appKey: appKey };   // exposed only so the rule can be tested
 
   // keep the page hidden while we decide, even if the <style> line was forgotten
   if (!win.document.getElementById('sg-guard-hide')) {
@@ -151,7 +161,7 @@
     var po = (env.ancestors && env.ancestors.length) ? env.ancestors[0] : originOf(env.referrer);
     return askParent(po).then(function (a) {
       if (a.free) { allow(); return; }
-      if (!a.ticket) { needAccess(a.reason === 'setup' ? 'setup' : a.reason === 'members' ? 'members' : 'signin'); return; }
+      if (!a.ticket) { needAccess(a.reason === 'setup' ? 'setup' : a.reason === 'members' ? 'members' : a.reason === 'devices' ? 'devices' : 'signin'); return; }
       return redeem(a.ticket).then(function (ok) {
         if (ok === true) allow(); else needAccess(ok === 'setup' ? 'setup' : 'signin');
       });
