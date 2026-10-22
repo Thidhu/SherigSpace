@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="./app-embed.js"></script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <link rel="icon" type="image/x-icon" href="favicon.ico"/>
@@ -522,7 +521,7 @@ a.btn{text-decoration:none;display:inline-block}
       <input id="assignment-search" class="assignment-search" type="search" placeholder="🔎 Search assignments…" aria-label="Search assignments"/>
       <select id="assignment-filter" class="assignment-filter" aria-label="Filter assignments">
         <option value="all">All tasks</option>
-        <option value="todo">To do</option>
+        <option value="todo" selected>To do</option>
         <option value="submitted">Submitted (waiting for review)</option>
         <option value="reviewed">Reviewed</option>
         <option value="overdue">Overdue</option>
@@ -563,6 +562,7 @@ a.btn{text-decoration:none;display:inline-block}
 <div class="vm-overlay" id="vm-overlay"><div class="vm-box"><div class="vm-head"><span id="vm-title"></span><span><a id="vm-open" href="#" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a> &nbsp; <button type="button" id="vm-close">✕ Close</button></span></div><div class="vm-frame" id="vm-frame"></div></div></div>
 </div>
 
+<script src="./app-embed.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { AUTH_OPTIONS } from './auth-storage.js';
@@ -1205,7 +1205,17 @@ async function renderAssignments(){
     const open = !card.classList.contains('open');
     card.classList.toggle('open', open); head.setAttribute('aria-expanded', open ? 'true' : 'false');
     cardOpen[card.dataset.cardId] = open;
-    if(open){ markTaskSeen(card.dataset.cardId); card.querySelector('.tk-new')?.remove(); }
+    if(open){
+      // one task at a time: opening this one closes the others
+      wrap.querySelectorAll('.tk.open').forEach(o=>{
+        if(o===card) return;
+        o.classList.remove('open');
+        const oh=o.querySelector('.tk-head'); if(oh) oh.setAttribute('aria-expanded','false');
+        cardOpen[o.dataset.cardId]=false;
+      });
+      markTaskSeen(card.dataset.cardId); card.querySelector('.tk-new')?.remove();
+      setTimeout(()=>{ try{ card.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} }, 60);
+    }
   };
   wrap.addEventListener('click', e => { const h = e.target.closest('.tk-head'); if(h && !e.target.closest('a,button')) toggle(h); });
   wrap.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('tk-head')){ e.preventDefault(); toggle(e.target); } });
@@ -1242,7 +1252,9 @@ function applyAssignmentFilters(){
     const status = card.dataset.status || 'todo';
     const overdue = card.dataset.overdue === 'true';
     const matchText = !q || (card.dataset.search || title).includes(q);
-    const matchStatus = filter==='all' || (filter==='overdue' ? overdue : status===filter);
+    const finished = status==='submitted' || status==='reviewed';
+    const matchStatus = filter==='all' ? (!finished || window.__showFinished===true)
+                                       : (filter==='overdue' ? overdue : status===filter);
     card.style.display = matchText && matchStatus ? '' : 'none';
   });
   const visible = cards.filter(c=>c.style.display!=='none');
@@ -1269,8 +1281,23 @@ function applyAssignmentFilters(){
   document.querySelectorAll('[data-stat-filter]').forEach(b=>b.classList.toggle('on', b.dataset.statFilter===filter));
   const count=document.getElementById('assignment-count');
   if(count) count.textContent=`Showing ${visible.length} of ${cards.length} task${cards.length===1?'':'s'}`;
+  const finishedCount=cards.filter(c=>c.dataset.status==='submitted' || c.dataset.status==='reviewed').length;
+  let fb=document.getElementById('finished-toggle');
+  if(!fb){
+    fb=document.createElement('button'); fb.type='button'; fb.id='finished-toggle';
+    fb.className='btn btn-ghost btn-sm'; fb.style.margin='.6rem 0';
+    fb.onclick=()=>{ window.__showFinished = !window.__showFinished; applyAssignmentFilters(); };
+    wrap.after(fb);
+  }
+  fb.style.display=(filter==='all' && finishedCount)?'':'none';
+  fb.textContent=window.__showFinished ? '▴ Hide finished tasks' : `✅ Show ${finishedCount} finished task${finishedCount===1?'':'s'}`;
   const empty=document.getElementById('no-filter-results');
-  if(empty) empty.style.display=cards.length && !visible.length?'block':'none';
+  if(empty){
+    if(cards.length && !visible.length){
+      empty.style.display='block';
+      empty.textContent = filter==='todo' ? '🎉 Nothing to do right now. Well done! Your finished tasks are under “All tasks”.' : '🔎 No assignments match your filter.';
+    } else empty.style.display='none';
+  }
 }
 
 function ytIdOf(url){
