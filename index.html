@@ -914,6 +914,72 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
 .dash-wrap .lesson-card,.dash-wrap .resource-card{padding:0}
 .dash-wrap #about{padding:.8rem 0 1.6rem}
 #membership-notice:not([style*="none"]){margin-bottom:.8rem}
+/* SEARCH: while searching, show only the results, all together at the top */
+#search-results{display:none}
+body.searching #search-results{display:block}
+body.searching .dash-wrap>.banner,
+body.searching #membership-notice,
+body.searching .dash-content>section:not(#search-results){display:none!important}
+.search-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem}
+.search-grid>*{min-width:0;width:auto;flex:none}
+.search-grid .empty-state{grid-column:1/-1}
+/* ── OVERLAY CARDS: picture fills the card, dark gradient from the bottom keeps the text clear ── */
+:root{--card-ratio:4/5}   /* make cards taller/shorter here: 3/4 = taller, 1/1 = square */
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card){
+  position:relative;display:block!important;aspect-ratio:var(--card-ratio);padding:0!important;border:0!important;
+  border-radius:24px!important;overflow:hidden;background:#141b36;box-shadow:0 10px 26px rgba(8,12,28,.26)}
+html[data-theme] .dash-wrap :is(.lesson-card .card-media,.resource-card .card-media,.video-card .video-thumb){
+  position:absolute!important;inset:0;width:100%;height:100%!important;aspect-ratio:auto!important;border-radius:0}
+html[data-theme] .dash-wrap :is(.lesson-card .card-body,.resource-card .card-body,.video-card .video-body){
+  position:absolute;left:0;right:0;bottom:0;z-index:2;margin:0;
+  padding:4rem 1.15rem 1.05rem!important;
+  background:linear-gradient(to top,rgba(6,10,26,.95) 0%,rgba(6,10,26,.84) 40%,rgba(6,10,26,.45) 74%,rgba(6,10,26,0) 100%)}
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card).is-locked :is(.card-body,.video-body){padding-bottom:3.5rem!important}
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card) .lock-bar{z-index:3}
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card) :is(h3,h4){
+  color:#fff!important;font-size:1.12rem;line-height:1.35;margin:0 0 .3rem;text-shadow:0 1px 10px rgba(0,0,0,.55)}
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card) .card-body p,
+html[data-theme] .dash-wrap .video-card .video-body p{
+  color:rgba(255,255,255,.9)!important;font-size:.84rem;line-height:1.5;margin:0 0 .45rem;-webkit-line-clamp:2;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+html[data-theme] .dash-wrap :is(.lesson-meta,.video-meta,.lesson-meta span,.video-meta span,.resource-type){color:rgba(255,255,255,.82)!important;margin-top:0}
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card) .credit{color:#8fdcff;margin-top:.3rem}
+html[data-theme] .dash-wrap .video-card .play-btn{display:none}   /* thumbnails stay plain */
+/* labels (class, subject, interactive) now sit at the bottom, above the title */
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card) .pill-row{position:static;display:flex;flex-wrap:wrap;gap:.3rem;margin:0 0 .5rem}
+html[data-theme] .dash-wrap .pill-row:empty{display:none}
+/* the shadow sits on a wrapper, because the tag's pointed shape (clip-path) would cut off its own shadow */
+html[data-theme] .dash-wrap .video-card .int-wrap{position:absolute;top:.9rem;right:0;z-index:3;display:block;filter:drop-shadow(0 4px 7px rgba(0,0,0,.6)) drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+html[data-theme] .dash-wrap .video-card .int-badge{position:relative;top:auto;right:auto;left:auto;bottom:auto;
+  display:flex;align-items:center;gap:.35rem;font-family:var(--font-en);font-size:.82rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  color:#1a2340;background:linear-gradient(135deg,#ffd466,#f5a623);padding:.5rem .95rem .5rem 1.95rem;border-radius:0;box-shadow:none;
+  clip-path:polygon(.9rem 0,100% 0,100% 100%,.9rem 100%,0 50%)}
+html[data-theme] .dash-wrap .video-card .int-badge::before{content:'';position:absolute;left:.85rem;top:50%;width:.4rem;height:.4rem;margin-top:-.2rem;border-radius:50%;background:rgba(26,35,64,.55)}
+/* HOVER: card lifts, picture zooms a little, a blue ring lights up, the text brightens */
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card){
+  transition:opacity .6s,transform .32s cubic-bezier(.2,.7,.2,1),box-shadow .32s ease}
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card) :is(img.thumb-img,.cover){
+  transition:transform .6s cubic-bezier(.2,.7,.2,1),filter .4s ease}
+html[data-theme] .dash-wrap :is(.lesson-card .card-body,.resource-card .card-body,.video-card .video-body)::after{
+  content:'Open →';display:block;max-height:0;opacity:0;overflow:hidden;font-family:var(--font-en);font-size:.78rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:#8fdcff;transition:max-height .32s ease,opacity .32s ease,margin .32s ease}
+@media(hover:hover){
+  html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):hover{
+    transform:translateY(-8px)!important;
+    box-shadow:0 22px 44px rgba(8,12,28,.45),0 0 0 2px var(--gold)!important}
+  html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):hover :is(img.thumb-img,.cover){transform:scale(1.08);filter:brightness(1.08) saturate(1.1)}
+  html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):hover :is(.card-body,.video-body)::after{max-height:1.6rem;opacity:1;margin-top:.45rem}
+  html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card).is-locked:hover :is(.card-body,.video-body)::after{max-height:0;opacity:0;margin-top:0}
+  html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):hover :is(h3,h4){color:#cfeeff!important}
+  html[data-theme] .dash-wrap .video-card:hover .int-wrap{transform:translateX(-4px)}
+}
+html[data-theme] .dash-wrap .int-wrap{transition:transform .3s ease}
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):active{transform:translateY(-3px) scale(.985)!important}
+html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){
+  html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card),
+  html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card) *{transition:none!important}
+  html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):hover :is(img.thumb-img,.cover){transform:none}
+}
 /* DESKTOP: cards sit in 2 rows; the row only becomes swipeable once both rows are full (see layoutTracks) */
 @media(min-width:901px){
   .dash-wrap .scroll-track.two-rows{display:grid;grid-template-columns:repeat(var(--cols,1),var(--cw,270px));grid-auto-rows:auto;gap:1rem;align-items:stretch}
@@ -1004,6 +1070,18 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
       <div class="dash-content">
 
 <!-- VIDEOS -->
+<!-- SEARCH RESULTS: shown (alone, at the top) while something is typed in the search bar -->
+<section id="search-results">
+  <div class="inner">
+    <div class="fade-in visible">
+      <p class="section-label" id="sr-label">✦ Search</p>
+      <h2 class="section-title" id="sr-title">Search results</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="search-grid" id="search-grid"></div>
+  </div>
+</section>
+
 <section id="videos">
   <div class="inner">
     <div class="fade-in">
@@ -1042,7 +1120,7 @@ html[data-theme="dark"] .topbar-search:focus-within{border-color:var(--gold)!imp
   <div class="inner">
     <div class="fade-in">
       <p class="section-label" data-en="✦ Curriculum" data-dz="✦ རྩ་གཞུང་།">✦ Curriculum</p>
-      <h2 class="section-title" data-en="Teaching Lessons" data-dz="སློབ་སྟོན།">Teaching Lessons</h2>
+      <h2 class="section-title" data-en="Digital Lessons" data-dz="གློག་རིག་སློབ་ཚན།">Digital Lessons</h2>
       <div class="divider"></div>
       <p class="section-desc" data-en="Structured lessons designed for clarity and deep understanding." data-dz="གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།">Structured lessons designed for clarity and deep understanding.</p>
     </div>
@@ -2091,9 +2169,8 @@ async function renderLessons(){
     const state = accessState('lessons', l);
     return `<div class="lesson-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-id="${esc(l.id)}" data-state="${state}" data-title="${esc(title)}" data-price="${esc(l.price||0)}" data-premium="${l.is_premium?'1':''}">
       <div class="card-media">${coverHtml(lk, lk==='lesson' ? icon : null)}${thumb ? thumbImg(thumb) : ''}
-        <div class="pill-row"><span class="pill">${esc(l.subject||'General')}</span>${l.class_level && l.class_level!=='All Classes' ? `<span class="pill">${esc(l.class_level)}</span>` : ''}</div>
       </div>
-      <div class="card-body">
+      <div class="card-body"><div class="pill-row"><span class="pill">${esc(l.subject||'General')}</span>${l.class_level && l.class_level!=='All Classes' ? `<span class="pill">${esc(l.class_level)}</span>` : ''}</div>
         <h3>${esc(title)}</h3>
         <p>${esc(l.description||'')}</p>
         <div class="lesson-meta">${l.duration?`<span>⏱ ${esc(l.duration)}</span>`:''}${l.slides?`<span>📄 ${esc(l.slides)}</span>`:''}${l.level?`<span>🎯 ${esc(l.level)}</span>`:''}</div>
@@ -2136,9 +2213,8 @@ async function renderResources(){
     const overlay = lockOverlayHtml(state, r);
     return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(r.id)}" data-title="${esc(title)}" data-price="${esc(r.price||0)}">
       <div class="card-media">${coverHtml(rk)}${thumb ? thumbImg(thumb) : ''}
-        <div class="pill-row">${r.rtype?`<span class="pill">${esc(r.rtype)}</span>`:''}${r.class_level && r.class_level!=='All Classes'?`<span class="pill">${esc(r.class_level)}</span>`:''}</div>
       </div>
-      <div class="card-body"><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.filesize||'')}</div>${creditHtml(r)}</div>
+      <div class="card-body"><div class="pill-row">${r.rtype?`<span class="pill">${esc(r.rtype)}</span>`:''}${r.class_level && r.class_level!=='All Classes'?`<span class="pill">${esc(r.class_level)}</span>`:''}</div><h4>${esc(title)}</h4><p>${esc(r.description||'')}</p><div class="resource-type">${esc(r.filesize||'')}</div>${creditHtml(r)}</div>
       ${overlay}
     </div>`;
   }).join('');
@@ -2192,9 +2268,8 @@ async function renderGames(){
     const state = accessState('games', gm);
     return `<div class="resource-card fade-in${lockCls(state)}" data-url="${esc(url)}" data-state="${state}" data-id="${esc(gm.id)}" data-title="${esc(title)}" data-price="${esc(gm.price||0)}" data-premium="${gm.is_premium?'1':''}">
       <div class="card-media">${coverHtml('game')}${thumb ? thumbImg(thumb) : ''}
-        <div class="pill-row">${gm.gtype?`<span class="pill">${esc(gm.gtype)}</span>`:''}${gm.class_level && gm.class_level!=='All Classes'?`<span class="pill">${esc(gm.class_level)}</span>`:''}</div>
       </div>
-      <div class="card-body"><h4>${esc(title)}</h4><p>${esc(gm.description||'')}</p></div>
+      <div class="card-body"><div class="pill-row">${gm.gtype?`<span class="pill">${esc(gm.gtype)}</span>`:''}${gm.class_level && gm.class_level!=='All Classes'?`<span class="pill">${esc(gm.class_level)}</span>`:''}</div><h4>${esc(title)}</h4><p>${esc(gm.description||'')}</p></div>
       ${lockOverlayHtml(state, gm)}
     </div>`;
   }).join('');
@@ -2252,8 +2327,8 @@ function videoCardHtml(v, interactiveSection=false){
   const state = accessState('videos', v);
   const isInt = interactiveIds.has(String(v.id));
   return `<div class="video-card fade-in${lockCls(state)}" data-id="${esc(v.id)}" data-url="${esc(url)}" data-title="${esc(title)}" data-state="${state}" data-price="${esc(v.price||0)}" data-premium="${v.is_premium?'1':''}">
-    <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="play-btn">▶</div><div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div>${interactiveSection?'<span class="int-badge">⚡ Interactive</span>':''}</div>
-    <div class="video-body"><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}${v.series?`<span>📚 ${esc(v.series)}</span>`:''}</div>${creditHtml(v)}</div>
+    <div class="video-thumb"><div class="cover cover-video"></div>${thumb ? thumbImg(thumb) : ''}<div class="play-btn">▶</div>${interactiveSection?'<span class="int-wrap"><span class="int-badge">⚡ Interactive</span></span>':''}</div>
+    <div class="video-body"><div class="pill-row">${v.subject?`<span class="pill">${esc(v.subject)}</span>`:''}${v.class_level && v.class_level!=='All Classes'?`<span class="pill">${esc(v.class_level)}</span>`:''}</div><h3>${esc(title)}</h3><p>${esc(v.description||'')}</p><div class="video-meta">${v.duration?`<span>⏱ ${esc(v.duration)}</span>`:''}${v.series?`<span>📚 ${esc(v.series)}</span>`:''}</div>${creditHtml(v)}</div>
     ${lockOverlayHtml(state, v)}
   </div>`;
 }
@@ -2506,16 +2581,47 @@ async function renderAll(){
   renderNav();   // teacher access is loaded above, so refresh the Teacher Dashboard link
   renderMembershipNotice();
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames(), renderBanner()]);
+  showSearchResults();
   observeFadeIns();
   if(!viewRestored){ viewRestored = true; restoreView(); }   // put the visitor back where they were before the refresh
 }
 
 // ── SEARCH ──
+// While something is typed, every match (videos, lessons, resources, games, articles…) is
+// gathered into one "Search results" area at the very top, whatever section it came from.
+function showSearchResults(){
+  const grid = document.getElementById('search-grid');
+  const searching = !!searchQuery;
+  document.body.classList.toggle('searching', searching);
+  grid.innerHTML = '';
+  if(!searching) return;
+  const seenVideos = new Set();
+  ['videos-grid','interactive-grid','lessons-grid','resources-grid','games-grid','blog-grid'].forEach(id => {
+    const g = document.getElementById(id);
+    if(!g) return;
+    Array.from(g.children).forEach(card => {
+      if(card.classList.contains('empty-state')) return;
+      if(card.classList.contains('video-card')){            // a video listed in both Watch & Learn and Interactive: show it once
+        const vid = card.getAttribute('data-id');
+        if(seenVideos.has(vid)) return;
+        seenVideos.add(vid);
+      }
+      grid.appendChild(card);                                // move (not copy) so clicking keeps working
+    });
+  });
+  const n = grid.children.length;
+  const q = searchInput.value.trim();
+  document.getElementById('sr-title').textContent = lang()==='dz' ? 'འཚོལ་བཤེར་གྱི་འབྲས་བུ།' : (n ? `${n} result${n===1?'':'s'} for “${q}”` : 'Search results');
+  if(!n) grid.innerHTML = `<div class="empty-state"><div class="ei">🔍</div><p>Nothing found for “${esc(q)}”</p></div>`;
+}
+
 const searchInput = document.getElementById('searchInput');
 let searchTimer = null;
 async function runSearch(){
   searchQuery = searchInput.value.trim().toLowerCase();
   await Promise.all([renderLessons(), renderResources(), renderVideos(), renderArticles(), renderGames()]);
+  showSearchResults();
+  if(searchQuery) window.scrollTo({ top:0, behavior:'instant' });   // results are at the top
   observeFadeIns();
 }
 searchInput.addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 250); });
@@ -2523,10 +2629,7 @@ searchInput.addEventListener('keydown', e=>{
   if(e.key === 'Escape'){ searchInput.value=''; if(searchQuery) runSearch(); searchInput.blur(); }
   if(e.key === 'Enter'){
     clearTimeout(searchTimer);
-    runSearch().then(()=>{
-      const hit = [['videos','.video-card'],['interactive','.video-card'],['lessons','.lesson-card'],['resources','.resource-card'],['games','.resource-card'],['blog','.blog-card']].find(([id,c])=>document.querySelector('#'+id+' '+c));
-      if(hit) document.getElementById(hit[0]).scrollIntoView({behavior:'smooth'});
-    });
+    runSearch().then(()=>{ document.getElementById('search-results').scrollIntoView({behavior:'smooth'}); });
   }
 });
 
@@ -2539,7 +2642,7 @@ const DEFAULT_BANNERS = [
     description:'Browse lessons, download resources, watch videos, and join the learning community.',
     description_dz:'རྫོང་ཁའི་སློབ་སྟོན་མཁོ་ཆས་དང་ འཆར་གཞི། ཕན་ཚུན་འབྲེལ་བའི་བརྙན་ཐུང་གི་བང་མཛོད།', image_url:null, _default:true },
   { title:'Structured Lessons for <span>Every Class</span>', dz:'<span>འཛིན་གྲྭ་རེ་རེ</span>བཞིན་གྱི་སློབ་སྟོན།',
-    tag:'✦ Teaching Lessons', tag_dz:'✦ སློབ་སྟོན།',
+    tag:'✦ Digital Lessons', tag_dz:'✦ གློག་རིག་སློབ་ཚན།',
     description:'Clear, well-organized lessons designed for real classroom understanding.',
     description_dz:'གསལ་ཏོག་ཏོ་དང་འཐེབ་སྦེ་ ཤེས་ཚུགས་པའི་ཐབས་ལུ་ བཟོ་ཡོད་པའི་སློབ་ཚན།', image_url:null, _default:true },
   { title:'Worksheets, Guides & <span>Video Lessons</span>', dz:'ཡིག་ཆ་དང་<span>བརྙན་ཐུང་།</span>',
@@ -2647,7 +2750,7 @@ function saveView(patch){
 }
 function sectionEls(){ return Array.from(document.querySelectorAll('.dash-wrap section[id], #home')); }
 function saveScroll(){
-  if(scrollLock) return;
+  if(scrollLock || searchQuery) return;
   let cur = null;
   sectionEls().forEach(s => { if(window.scrollY >= s.getBoundingClientRect().top + window.scrollY - 140) cur = s; });
   if(!cur) cur = document.getElementById('home');
@@ -2675,7 +2778,7 @@ async function restoreView(){
   const stop = () => { userMoved = true; };
   ['wheel','touchstart','keydown','mousedown'].forEach(ev => window.addEventListener(ev, stop, { once:true, passive:true }));
   const place = () => {
-    if(userMoved) return;
+    if(userMoved || searchQuery) return;
     let top = null;
     if(v.sec){
       const el = document.getElementById(v.sec);
