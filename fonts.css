@@ -12,3 +12,8 @@
   font-display:swap;
   unicode-range:U+0F00-0FFF,U+200B-200D,U+00A0;
 }
+
+/* English font: Baloo Bhaijaan 2 (loaded from Google Fonts in each page's <head>).
+   Its natural line spacing is tall, so give body text a comfortable default;
+   any element that sets its own line-height keeps it. */
+body{line-height:1.5}

@@ -39,7 +39,7 @@
     /* ── toggle button ── */
     '.sherig-theme-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;cursor:pointer;user-select:none;-webkit-user-select:none;',
     'border:1px solid var(--border);background:rgba(201,168,76,.10);color:var(--gold-text,var(--gold));padding:7px 13px;border-radius:999px;',
-    "font:600 .78rem/1.2 'DM Sans',sans-serif;transition:background .2s;white-space:nowrap}",
+    "font:600 .78rem/1.2 'Baloo Bhaijaan 2',sans-serif;transition:background .2s;white-space:nowrap}",
     '.sherig-theme-btn:hover{background:rgba(201,168,76,.22)}',
     '.sfoot .sherig-theme-btn{display:flex;border-radius:4px;padding:8px;font-size:.8rem}',
     '.sherig-theme-float{position:fixed;top:14px;right:14px;z-index:3000;box-shadow:0 6px 20px rgba(0,0,0,.25);background:var(--surface)}',
@@ -153,7 +153,7 @@
 
   var css = [
     "",
-    ":root{--font-en:'DM Sans','DDC Joyig',sans-serif;--font-dz:'DDC Joyig','Noto Serif Tibetan',sans-serif}",
+    ":root{--font-en:'Baloo Bhaijaan 2','DDC Joyig',sans-serif;--font-dz:'DDC Joyig','Noto Serif Tibetan',sans-serif}",
     '[data-lang="dz"] :is(h1,h2,h3,h4,h5,p,span,a,li,button,label,div,td,th,option){font-family:var(--font-dz)}',
     '[data-lang="dz"] input,[data-lang="dz"] textarea,[data-lang="dz"] select{font-family:var(--font-dz)}',
 
