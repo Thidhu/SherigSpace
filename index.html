@@ -1785,7 +1785,7 @@ function lockOverlayHtml(state, item){
     const waText = encodeURIComponent(`Hi Thinley, I already submitted payment for "${item.title || 'an item'}" — could you please review it?`);
     return `<div class="lock-bar pending"><span>⏳ Payment under review</span><a class="lb-cta" href="https://wa.me/${CONTACT_PHONE}?text=${waText}" target="_blank" rel="noopener">💬 Notify me</a></div>`;
   }
-  if(state === 'locked-anon') return `<div class="lock-bar"><span>${left}</span><a class="lb-cta" href="login.html">Log in to unlock →</a></div>`;
+  if(state === 'locked-anon') return `<div class="lock-bar" style="cursor:pointer"><span>🔑 Sign in to unlock</span><a class="lb-cta" href="login.html">Log in / Sign up →</a></div>`;
   if(state === 'locked-sub') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">Subscribe to unlock →</span></div>`;
   if(state === 'locked-pay') return `<div class="lock-bar" style="cursor:pointer"><span>${left}</span><span class="lb-cta">${myMembership.status === 'expired' ? 'Renew to unlock' : 'Tap to unlock'} →</span></div>`;
   return '';
