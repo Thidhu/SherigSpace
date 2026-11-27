@@ -186,8 +186,8 @@ body{font-family:'Baloo Bhaijaan 2','DDC Joyig',sans-serif;background:var(--navy
   <div class="gate-bg" id="gateBg"><div class="gate-shade"></div></div>
   <div class="gate-card" id="gate-inner">
     <div class="gate-icon">🍎</div>
-    <h2 data-en="Checking access…" data-dz="འཛུལ་སྒོ་ཞིབ་དཔྱད་འབད་བཞིནམ...">Checking access…</h2>
-    <p data-en="One moment…" data-dz="སྐར་ཆ་ཅིག...">One moment…</p>
+    <h2 data-en="Checking access…" data-dz="གནང་བ་འདུག་ག་བལྟ་གེ་...">Checking access…</h2>
+    <p data-en="One moment…" data-dz="ཨ་ཚི་བསྒུག་གནང་...">One moment…</p>
   </div>
 </div>
 
@@ -195,23 +195,23 @@ body{font-family:'Baloo Bhaijaan 2','DDC Joyig',sans-serif;background:var(--navy
   <aside class="sidebar">
     <div class="logo"><h2>SherigSpace</h2><small data-en="Teacher Dashboard" data-dz="སློབ་དཔོན་ཌེཤ་བོརཌི།">Teacher Dashboard</small></div>
     <nav class="sidenav">
-      <div class="sitem on" onclick="go('classes')">🏫 &nbsp;<span data-en="My Classes" data-dz="ང་གི་དཔྱེ་སློབ།">My Classes</span></div>
-      <div class="sitem" onclick="go('analytics')">📊 &nbsp;<span data-en="Analytics" data-dz="གྲངས་ཐོ་དབྱེ་ཞིབ།">Analytics</span></div>
-      <div class="sitem" onclick="go('ai')">🤖 &nbsp;<span data-en="AI Teaching Tools" data-dz="AI སློབ་ཁྲིད་ལག་ཆས།">AI Teaching Tools</span></div>
+      <div class="sitem on" onclick="go('classes')">🏫 &nbsp;<span data-en="My Classes" data-dz="ངེ་གི་སློབ་ཁང་།">My Classes</span></div>
+      <div class="sitem" onclick="go('analytics')">📊 &nbsp;<span data-en="Analytics" data-dz="དབྱེ་ཞིབ།">Analytics</span></div>
+      <div class="sitem" onclick="go('ai')">🤖 &nbsp;<span data-en="AI Teaching Tools" data-dz="AI སློབ་སྟོན་མཁོ་ཆས།">AI Teaching Tools</span></div>
       <div class="sitem" onclick="go('shortcuts')">🔗 &nbsp;<span data-en="My Shortcuts" data-dz="My Shortcuts">My Shortcuts</span></div>
-      <div class="sitem" onclick="go('billing')">💳 &nbsp;<span data-en="Subscription" data-dz="འོས་སྦྱོར།">Subscription</span></div>
+      <div class="sitem" onclick="go('billing')">💳 &nbsp;<span data-en="Subscription" data-dz="འཐུས་ཁྲལ།/Subscription">Subscription</span></div>
     </nav>
     <div class="sfoot">
       <div data-lang-slot></div>
       <div data-theme-slot></div>
-      <a href="index.html" data-en="↗ View Website" data-dz="↗ ཝེབ་ས་ཁོངས་བལྟ།">↗ View Website</a>
+      <a href="index.html" data-en="↗ View Website" data-dz="↗ View Website">↗ View Website</a>
       <button class="logout" onclick="logout()" data-en="🔒 Log Out" data-dz="🔒 ཕྱིར་འཐོན།">🔒 Log Out</button>
     </div>
   </aside>
 
   <main class="main">
     <div class="page on" id="p-classes">
-      <div class="phead"><div><div class="ptitle" data-en="My Classes" data-dz="ང་གི་དཔྱེ་སློབ།">My Classes</div><div class="psub" data-en="Create a class, enroll students, and assign work" data-dz="དཔྱེ་སློབ་གསར་བསྐྲུན་འབད། སློབ་ཕྲུག་ཐོ་བཀོད་འབད། དེ་ལས་ལཱ་སྤྲོད་འབད།">Create a class, enroll students, and assign work</div></div><button class="btn btn-gold" onclick="openClassForm()" data-en="+ New Class" data-dz="+ དཔྱེ་སློབ་གསརཔ།">+ New Class</button></div>
+      <div class="phead"><div><div class="ptitle" data-en="My Classes" data-dz="ངེ་གི་སློབ་ཁང་།">My Classes</div><div class="psub" data-en="Create a class, enroll students, and assign work" data-dz=",སློབ་ཁང་གསརཔ་བཟོ་སྟེ་ སློབ་ཕྲུག་ཐོ་བཀོད་འབད། དེ་ལས་ སྦྱོང་ལཱ་བྱིན།">Create a class, enroll students, and assign work</div></div><button class="btn btn-gold" onclick="openClassForm()" data-en="+ New Class" data-dz="+ སློབ་ཁང་་གསརཔ།">+ New Class</button></div>
       <div id="plan-note-classes" style="font-size:.82rem;color:var(--text2);margin:-.6rem 0 1rem"></div>
       <div id="classes-list" class="classes-grid"></div>
     </div>
@@ -219,22 +219,22 @@ body{font-family:'Baloo Bhaijaan 2','DDC Joyig',sans-serif;background:var(--navy
     <div class="page" id="p-class-detail">
       <div class="phead">
         <div>
-          <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem" data-en="← Back to Classes" data-dz="← དཔྱེ་སློབ་ལུ་ལོག">← Back to Classes</button>
-          <button class="btn btn-edit btn-sm" onclick="openEditClassForm()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="✏ Edit Class" data-dz="✏ ཞུན་དག">✏ Edit Class</button>
-          <button class="btn btn-del btn-sm" onclick="deleteCurrentClass()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="🗑 Delete Class" data-dz="🗑 དཔྱེ་སློབ་བཏོན་གཏང">🗑 Delete Class</button>
+          <button class="btn btn-ghost btn-sm" onclick="go('classes')" style="margin-bottom:.6rem" data-en="← Back to Classes" data-dz="← ལོག་སློབ་ཁང་ནང་འགྱོ།">← Back to Classes</button>
+          <button class="btn btn-edit btn-sm" onclick="openEditClassForm()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="✏ Edit Class" data-dz="✏ སློབ་ཁང་ཞུན་དག་འབད།">✏ Edit Class</button>
+          <button class="btn btn-del btn-sm" onclick="deleteCurrentClass()" style="margin-bottom:.6rem;margin-left:.5rem" data-en="🗑 Delete Class" data-dz="🗑 སློབ་ཁང་མེདཔ་བཟོ།">🗑 Delete Class</button>
           <div class="ptitle" id="detail-class-name">Class</div>
-          <div class="psub"><span data-en="Students log in with this class name:" data-dz="སློབ་ཕྲུག་ཚུ་གིས་འ་ནི་དཔྱེ་སློབ་མིང་འདི་གིས་ནང་འཛུལ་འབད:">Students log in with this class name:</span> <span class="class-code-badge" id="detail-class-code">—</span></div>
+          <div class="psub"><span data-en="Students log in with this class name:" data-dz="སློབ་ཕྲུག་ཚུ་གིས་ འ་ནི་ སློབ་ཁང་གི་མིང་གིས་སྦེ་ ་འཛུལ་ཞུགས་འབདཝ་ཨིན།">Students log in with this class name:</span> <span class="class-code-badge" id="detail-class-code">—</span></div>
         </div>
       </div>
       <div class="card"><div class="card-head"><h3 data-en="Students" data-dz="སློབ་ཕྲུག">Students</h3><button class="btn btn-gold btn-sm" onclick="openStudentForm()" data-en="+ Add Student" data-dz="+ སློབ་ཕྲུག་ཁ་སྐོང་།">+ Add Student</button></div><div id="plan-note-students" style="font-size:.82rem;color:var(--text2);padding:0 1rem .4rem"></div><div id="students-list"></div></div>
       <div class="card" id="chat-card"><div class="card-head"><h3>💬 Class Chat</h3><label class="lib-switch" title="Let students in this class chat with each other"><input type="checkbox" id="chat-enabled" onchange="toggleChat(this.checked)"/><span id="chat-enabled-text">Off</span></label></div><div id="chat-body" style="padding:1rem 1.4rem"><div class="lib-note">Loading…</div></div></div>
       <div class="card" id="library-card"><div class="card-head"><h3>📚 Learning Library</h3><label class="lib-switch" title="Show videos and resources to this class"><input type="checkbox" id="lib-enabled" onchange="toggleLibrary(this.checked)"/><span id="lib-enabled-text">On</span></label></div><div id="library-body"><div class="lib-note">Loading…</div></div></div>
       <div class="card" id="live-card"><div class="card-head"><h3>🎥 Live Classes</h3><button class="btn btn-gold btn-sm" onclick="openLiveForm()">＋ Schedule Live Class</button></div><div id="live-list" style="padding:.2rem 1rem 1rem"></div></div>
-      <div class="card"><div class="card-head"><h3 data-en="Assignments" data-dz="ལཱ་ཁག">Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()" data-en="＋ Assign Task" data-dz="＋ ལཱ་སྤྲོད་">＋ Assign Task</button></div><div id="assignments-list"></div></div>
+      <div class="card"><div class="card-head"><h3 data-en="Assignments" data-dz="ལཱ་ཁག">Assignments</h3><button class="btn btn-gold btn-sm" onclick="openAssignmentForm()" data-en="＋ Assign Task" data-dz="＋ སྦྱོང་ལཱ་སྤྲོད་">＋ Assign Task</button></div><div id="assignments-list"></div></div>
     </div>
 
     <div class="page" id="p-analytics">
-      <div class="phead"><div><div class="ptitle" data-en="Learning Analytics" data-dz="ཤེས་ཡོན་གྲངས་ཐོ་དབྱེ་ཞིབ།">Learning Analytics</div><div class="psub" data-en="See how your classes and students are progressing" data-dz="ཁྱོད་ཀྱི་དཔྱེ་སློབ་དང་སློབ་ཕྲུག་གི་ཡར་རྒྱས་བལྟ།">See how your classes and students are progressing</div></div></div>
+      <div class="phead"><div><div class="ptitle" data-en="Learning Analytics" data-dz="ལྷབ་སྦྱང་་དབྱེ་ཞིབ།">Learning Analytics</div><div class="psub" data-en="See how your classes and students are progressing" data-dz="སློབ་ཕྲུག་ཚུ་གི་ ལྷབ་སྦྱང་ཡར་རྒྱས་བལྟ།">See how your classes and students are progressing</div></div></div>
       <div class="card"><div class="card-head"><h3>Class</h3><select id="analytics-class-select" style="max-width:260px"></select></div></div>
       <div id="analytics-stats" class="stats"></div>
       <div class="card"><div class="card-head"><h3>Assignment performance</h3><div style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" id="gradebook-open">📘 Gradebook</button><button class="btn btn-ghost btn-sm" id="class-gradebook-open">📊 Class Gradebook</button><button class="btn btn-ghost btn-sm" id="report-card-open">📄 Report Cards</button><button class="btn btn-ghost btn-sm" id="analytics-export">⬇ Export CSV</button></div></div><div id="analytics-assignments" style="overflow-x:auto"></div></div>
@@ -310,12 +310,12 @@ body{font-family:'Baloo Bhaijaan 2','DDC Joyig',sans-serif;background:var(--navy
 <!-- Student login card (shown once, after creating a student) -->
 <div class="overlay" id="login-card-overlay">
   <div class="modal" style="max-width:420px">
-    <div class="mhead"><h3 data-en="✅ Student Created" data-dz="✅ སློབ་ཕྲུག་གསར་བསྐྲུན་འབད་ཡོད།">✅ Student Created</h3><button class="mclose" onclick="document.getElementById('login-card-overlay').classList.remove('open')">✕</button></div>
+    <div class="mhead"><h3 data-en="✅ Student Created" data-dz="✅ སློབ་ཕྲུག་ཐོ་བཀོད་གྲུབ་ཅི།">✅ Student Created</h3><button class="mclose" onclick="document.getElementById('login-card-overlay').classList.remove('open')">✕</button></div>
     <div class="mbody">
-      <p style="font-size:.85rem;color:var(--text2)" data-en="Give these details to the student. The Student ID is used for login. The PIN is shown here in full so you can give both to the student." data-dz="གནད་སྡུད་འདི་ཚུ་སློབ་ཕྲུག་ལུ་སྤྲོད། Student ID འདི་ནང་འཛུལ་ལུ་ལག་ལེན་འབད། PIN འདི་ཡང་སྟོན་ཡོདཔ་ལས་གཉིས་ཆ་ར་སློབ་ཕྲུག་ལུ་སྤྲོད།">Give these details to the student. The Student ID is used for login. The PIN is shown here in full so you can give both to the student.</p>
+      <p style="font-size:.85rem;color:var(--text2)" data-en="Give these details to the student. The Student ID is used for login. The PIN is shown here in full so you can give both to the student." data-dz="གསང་ཨང་འདི་ སློབ་ཕྲུག་ལུ་སྤྲོད། Student ID འདི་ནང་འཛུལ་ལུ་ལག་ལེན་འཐབ། PIN འདི་ཡང་སྟོན་ཡོདཔ་ལས་ གཉིས་ཆ་ར་སློབ་ཕྲུག་ལུ་སྤྲོད།">Give these details to the student. The Student ID is used for login. The PIN is shown here in full so you can give both to the student.</p>
       <div class="login-card" id="login-card-body"></div>
     </div>
-    <div class="mfoot"><button class="btn btn-gold" onclick="document.getElementById('login-card-overlay').classList.remove('open')" data-en="Done" data-dz="མཇུག་བསྡུ།">Done</button></div>
+    <div class="mfoot"><button class="btn btn-gold" onclick="document.getElementById('login-card-overlay').classList.remove('open')" data-en="Done" data-dz="གྲུབ།།">Done</button></div>
   </div>
 </div>
 
@@ -409,7 +409,7 @@ function showAccessError(err){
   console.error('SherigSpace teacher access error:', err);
   gate.innerHTML = `
     <div class="gate-icon">⚠️</div>
-    <h2>${typeof T==='function' ? T('Could not check access','འཛུལ་སྒོ་ཞིབ་དཔྱད་འབད་མ་ཚུགས།') : 'Could not check access'}</h2>
+    <h2>${typeof T==='function' ? T('Could not check access','གནང་བ་འདུག་ག་མིན་འདུག་ ཞིབ་དཔྱད་འབད་མ་ཚུགས།') : 'Could not check access'}</h2>
     <p>${typeof T==='function' ? T('SherigSpace could not connect to the account service. Please try again.','SherigSpace གིས་ཁ་ཡིག་ཞབས་ཏོག་ལུ་མཐུད་མ་ཚུགས། ལོག་སྟེ་འབད་གནང་།') : 'SherigSpace could not connect to the account service. Please try again.'}</p>
     <div style="font-size:.74rem;color:var(--text2);margin:-.5rem 0 1rem;word-break:break-word">${esc(msg)}</div>
     <div style="display:flex;gap:.6rem;flex-direction:column">
@@ -421,13 +421,13 @@ function showAccessError(err){
 async function checkAccess(){
   const gate = document.getElementById('gate-inner');
   try {
-    gate.innerHTML = `<div class="gate-icon">🍎</div><h2>${typeof T==='function' ? T('Checking access…','འཛུལ་སྒོ་ཞིབ་དཔྱད་འབད་བཞིནམ...') : 'Checking access…'}</h2><p>${typeof T==='function' ? T('One moment…','སྐར་ཆ་ཅིག...') : 'One moment…'}</p>`;
+    gate.innerHTML = `<div class="gate-icon">🍎</div><h2>${typeof T==='function' ? T('Checking access…','གནང་བ་འདུག་ག་བལྟ་དོ་...') : 'Checking access…'}</h2><p>${typeof T==='function' ? T('One moment…','སྐར་ཆ་ཅིག...') : 'One moment…'}</p>`;
 
     const sessionResult = await withTimeout(supabase.auth.getSession(), 12000, 'Authentication check');
     const session = sessionResult?.data?.session || null;
 
     if(!session){
-      gate.innerHTML = `<div class="gate-icon">🔒</div><h2>${T('Please log in','ནང་འཛུལ་གནང་།')}</h2><p>${T('Log in with your SherigSpace account first, then come back here to set up your teacher plan.','དང་པ་ SherigSpace ཀྱི་ཐོ་བཀོད་ཐོག་ནང་འཛུལ་འབད་ཞིནམ་ལས་ལོག་འོང་སྟེ་སློབ་དཔོན་གྱི་འཆར་གཞི་གཞི་བཙུགས་འབད།')}</p><a class="gate-btn" href="login.html">${T('Go to Login','ནང་འཛུལ་ལུ་འགྱོ།')}</a>`;
+      gate.innerHTML = `<div class="gate-icon">🔒</div><h2>${T('Please log in','འཛུལ་ཞུགས་འབད་གནང་།')}</h2><p>${T('Log in with your SherigSpace account first, then come back here to set up your teacher plan.','དང་པ་ SherigSpace ཀྱི་ཐོ་བཀོད་ཐོག་ནང་འཛུལ་འབད་ཞིནམ་ལས་ལོག་འོང་སྟེ་སློབ་དཔོན་གྱི་འཆར་གཞི་གཞི་བཙུགས་འབད།')}</p><a class="gate-btn" href="login.html">${T('Go to Login','ནང་འཛུལ་ལུ་འགྱོ།')}</a>`;
       return;
     }
 
