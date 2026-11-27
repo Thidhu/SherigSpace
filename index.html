@@ -980,6 +980,23 @@ html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):focus-v
   html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card) *{transition:none!important}
   html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):hover :is(img.thumb-img,.cover){transform:none}
 }
+/* CONTRIBUTE: interactive-question builder */
+.cf-iv-toggle{display:flex;gap:.6rem;align-items:flex-start;padding:.75rem .85rem;border:1px dashed var(--gold);border-radius:12px;background:var(--gold-soft);cursor:pointer;font-size:.84rem;color:var(--text);line-height:1.45}
+.cf-iv-toggle input{width:auto!important;margin-top:.2rem}
+#cf-iv-box{display:none;margin-top:.7rem}
+#cf-preview{width:100%;max-height:230px;border-radius:12px;background:#000;margin-bottom:.6rem;display:none}
+.cf-q{border:1px solid var(--card-border);border-radius:14px;padding:.8rem;margin-bottom:.7rem;background:var(--card-bg)}
+.cf-q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;font-size:.82rem;font-weight:700;color:var(--text)}
+.cf-q-x{background:none;border:0;color:#e05c5c;font-size:.78rem;font-weight:700;cursor:pointer}
+.cf-q input[type=text]{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--card-border);background:var(--input-bg,var(--card-bg));color:var(--text);font:400 .88rem 'Baloo Bhaijaan 2',sans-serif;margin-bottom:.45rem}
+.cf-q-time{display:flex;gap:.45rem;align-items:center;margin-bottom:.45rem}
+.cf-q-time input{max-width:110px;margin:0!important}
+.cf-q-time button,.cf-addq{padding:8px 12px;border-radius:9px;border:1px solid var(--gold);background:transparent;color:var(--text);font-weight:600;font-size:.78rem;cursor:pointer}
+.cf-addq{width:100%;border-style:dashed}
+.cf-opt{display:flex;gap:.45rem;align-items:center}
+.cf-opt input[type=radio]{width:auto;flex:none;accent-color:var(--gold)}
+.cf-opt input[type=text]{margin-bottom:.35rem}
+.cf-q-lbl{font-size:.72rem;color:var(--text2);margin:.1rem 0 .3rem}
 /* DESKTOP: cards sit in 2 rows; the row only becomes swipeable once both rows are full (see layoutTracks) */
 @media(min-width:901px){
   .dash-wrap .scroll-track.two-rows{display:grid;grid-template-columns:repeat(var(--cols,1),var(--cw,270px));grid-auto-rows:auto;gap:1rem;align-items:stretch}
@@ -1273,6 +1290,7 @@ html[data-theme] .dash-wrap :is(.lesson-card,.video-card,.resource-card):focus-v
 
 <script src="./interactive-video.js"></script>
 <script src="./video-drive-upload.js"></script>
+<script src="./youtube-upload.js"></script>
 <script src="./app-embed.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -2001,7 +2019,7 @@ function renderContribForm(type){
     <div class="cf-note">Share a video, worksheet or article with other learners. Our team reviews every submission before it goes live. If it is published, you are credited by name and your membership is <b>extended as a thank-you</b>.</div>
     <div class="cf-field"><label>What are you sharing?</label>
       <select id="cf-type" onchange="renderContribForm(this.value)">
-        <option value="video"${type==='video'?' selected':''}>🎥 Video (upload or YouTube link)</option>
+        <option value="video"${type==='video'?' selected':''}>🎥 Video (upload or YouTube link, can be interactive)</option>
         <option value="resource"${type==='resource'?' selected':''}>📁 Resource / worksheet (Google Drive link)</option>
         <option value="article"${type==='article'?' selected':''}>✍️ Article (link)</option>
         <option value="feedback">💬 Feedback / suggestion</option>
@@ -2009,8 +2027,15 @@ function renderContribForm(type){
     <div class="cf-field"><label>Title *</label><input id="cf-title" maxlength="140" placeholder="e.g. Dzongkha alphabet song"/></div>
     ${type==='video' ? `<div class="cf-field"><label>Video *</label>
       <div class="cf-tabs"><button type="button" id="cf-mode-upload" class="on" onclick="setCfMode('upload')">📤 Upload a file</button><button type="button" id="cf-mode-link" onclick="setCfMode('link')">🔗 YouTube / link</button></div>
-      <div id="cf-up-box"><input type="file" id="cf-file" accept="video/*"/><div class="cf-hint">Short videos work best (MP4, MOV or WebM). It is saved to our Google Drive and only goes live if our team approves it. For a long video, use the “YouTube / link” option.</div><div class="cf-bar" id="cf-bar"><i id="cf-bar-fill"></i></div></div>
-      <div id="cf-link-box" style="display:none"><input id="cf-url" placeholder="https://…  (make sure anyone with the link can view it)"/></div></div>`
+      <div id="cf-up-box"><input type="file" id="cf-file" accept="video/*"/><video id="cf-preview" controls playsinline></video><div class="cf-hint" id="cf-up-hint">Short videos work best (MP4, MOV or WebM). It is saved to our Google Drive and only goes live if our team approves it. For a long video, use the “YouTube / link” option.</div><div class="cf-bar" id="cf-bar"><i id="cf-bar-fill"></i></div></div>
+      <div id="cf-link-box" style="display:none"><input id="cf-url" placeholder="https://…  (make sure anyone with the link can view it)"/></div></div>
+    <div class="cf-field" id="cf-iv-wrap">
+      <label class="cf-iv-toggle"><input type="checkbox" id="cf-iv" onchange="toggleCfInteractive()"/><span>⚡ <b>Make it interactive</b> — the video pauses and asks learners questions while they watch.</span></label>
+      <div id="cf-iv-box">
+        <div class="cf-hint" id="cf-iv-hint"></div>
+        <div id="cf-iv-list"></div>
+        <button type="button" class="cf-addq" onclick="addCfQuestion()">＋ Add a question</button>
+      </div></div>`
     : `<div class="cf-field"><label>Link *</label><input id="cf-url" placeholder="https://…  (make sure anyone with the link can view it)"/></div>`}
     <div class="cf-field"><label>Short description</label><textarea id="cf-desc" maxlength="600" placeholder="What will learners get from this?"></textarea></div>
     ${contribFields(type)}
@@ -2020,13 +2045,107 @@ function renderContribForm(type){
     <button class="btn-primary" id="cf-submit" style="width:100%;border:none;cursor:pointer" onclick="submitContribution()">Submit for review</button>
     <div class="cf-mine" id="cf-mine"></div>`;
   loadMyContributions();
+  cfQuestionCount = 0; cfMode = 'upload';
+  if(type === 'video'){
+    const fileEl = document.getElementById('cf-file');
+    if(fileEl) fileEl.addEventListener('change', cfShowPreview);
+    if(window.SherigYouTube){
+      SherigYouTube.available(supabase).then(ok => {
+        cfYouTube = ok;
+        const h = document.getElementById('cf-up-hint');
+        if(ok && h) h.textContent = 'MP4, MOV or WebM. It is uploaded to our YouTube channel (as an unlisted video) and only goes public on SherigSpace if our team approves it.';
+        refreshCfIvHint();
+      });
+    } else refreshCfIvHint();
+  }
 }
 window.renderContribForm = renderContribForm;
+let cfYouTube = false;            // true when the YouTube upload service is set up
+let cfQuestionCount = 0;
+
+// ── Interactive questions (contributors build them here; the admin reviews them with the video) ──
+function refreshCfIvHint(){
+  const h = document.getElementById('cf-iv-hint'); if(!h) return;
+  const uploading = cfMode === 'upload';
+  h.textContent = uploading
+    ? (cfYouTube ? 'Play your video above, pause where you want a question, and press “📍 Use current time”. Add a question and its answers, and tick the correct one.'
+                 : 'Interactive videos need YouTube. Switch to “🔗 YouTube / link” and paste your YouTube video link, then add your questions with the time each one should appear (like 01:20).')
+    : 'Paste your YouTube video link above. For each question type the time it should appear (like 01:20), the question and the answers, and tick the correct one.';
+  document.querySelectorAll('.cf-q-time button').forEach(b => b.style.display = (uploading && cfYouTube) ? '' : 'none');
+}
+function cfShowPreview(){
+  const f = document.getElementById('cf-file').files[0], v = document.getElementById('cf-preview');
+  if(!v) return;
+  if(v.dataset.url){ URL.revokeObjectURL(v.dataset.url); v.dataset.url = ''; }
+  if(f){ const u = URL.createObjectURL(f); v.dataset.url = u; v.src = u; v.style.display = document.getElementById('cf-iv') && document.getElementById('cf-iv').checked ? 'block' : 'none'; }
+  else { v.removeAttribute('src'); v.style.display = 'none'; }
+}
+window.toggleCfInteractive = function(){
+  const on = document.getElementById('cf-iv').checked;
+  document.getElementById('cf-iv-box').style.display = on ? 'block' : 'none';
+  const v = document.getElementById('cf-preview');
+  if(v) v.style.display = (on && cfMode === 'upload' && v.getAttribute('src')) ? 'block' : 'none';
+  if(on && !document.querySelector('.cf-q')) addCfQuestion();
+  refreshCfIvHint();
+};
+window.addCfQuestion = function(){
+  const list = document.getElementById('cf-iv-list'); if(!list) return;
+  if(list.querySelectorAll('.cf-q').length >= 12){ return; }
+  const n = ++cfQuestionCount, k = 'q' + n + '_' + Date.now().toString(36);
+  list.insertAdjacentHTML('beforeend', `<div class="cf-q" data-k="${k}">
+    <div class="cf-q-top"><span class="cf-q-num">Question</span><button type="button" class="cf-q-x" onclick="removeCfQuestion(this)">✕ Remove</button></div>
+    <div class="cf-q-lbl">When should it appear?</div>
+    <div class="cf-q-time"><input type="text" class="cq-time" placeholder="mm:ss" maxlength="8"/><button type="button" onclick="cfUseTime(this)">📍 Use current time</button></div>
+    <div class="cf-q-lbl">Question</div>
+    <input type="text" class="cq-text" maxlength="200" placeholder="e.g. Which colour is the flag’s dragon?"/>
+    <div class="cf-q-lbl">Answers — tick the correct one</div>
+    ${[0,1,2,3].map(i => `<div class="cf-opt"><input type="radio" name="${k}" value="${i}"${i===0?' checked':''}/><input type="text" class="cq-opt" maxlength="120" placeholder="${i<2?'Answer '+(i+1)+' *':'Answer '+(i+1)+' (optional)'}"/></div>`).join('')}
+    <div class="cf-q-lbl">Explanation shown after answering (optional)</div>
+    <input type="text" class="cq-exp" maxlength="200" placeholder="e.g. The dragon is white."/></div>`);
+  renumberCfQuestions(); refreshCfIvHint();
+};
+function renumberCfQuestions(){ document.querySelectorAll('.cf-q .cf-q-num').forEach((e,i) => e.textContent = 'Question ' + (i+1)); }
+window.removeCfQuestion = function(btn){ btn.closest('.cf-q').remove(); renumberCfQuestions(); };
+window.cfUseTime = function(btn){
+  const v = document.getElementById('cf-preview');
+  if(!v || !v.getAttribute('src')){ return; }
+  const t = Math.floor(v.currentTime || 0);
+  btn.closest('.cf-q-time').querySelector('.cq-time').value = Math.floor(t/60) + ':' + String(t%60).padStart(2,'0');
+};
+function parseCfTime(str){
+  const t = String(str||'').trim(); if(!t) return NaN;
+  if(/^\d+$/.test(t)) return Number(t);
+  const m = t.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/); if(!m) return NaN;
+  return (Number(m[1]||0))*3600 + Number(m[2])*60 + Number(m[3]);
+}
+// returns { questions:[…] } or { error:'…' }
+function collectCfQuestions(){
+  const out = [], rows = Array.from(document.querySelectorAll('.cf-q'));
+  for(let i=0;i<rows.length;i++){
+    const r = rows[i], no = 'Question ' + (i+1) + ': ';
+    const ts = parseCfTime(r.querySelector('.cq-time').value);
+    const text = r.querySelector('.cq-text').value.trim();
+    if(!Number.isFinite(ts)) return { error: no + 'please add the time it should appear (like 01:20).' };
+    if(!text) return { error: no + 'please write the question.' };
+    const opts = [], optInputs = Array.from(r.querySelectorAll('.cq-opt'));
+    const checked = r.querySelector('input[type=radio]:checked');
+    const correctIdx = checked ? Number(checked.value) : -1;
+    let correct = '';
+    optInputs.forEach((inp,idx) => { const v = inp.value.trim(); if(v){ opts.push(v); if(idx === correctIdx) correct = v; } });
+    if(opts.length < 2) return { error: no + 'please give at least two answers.' };
+    if(!correct) return { error: no + 'please tick which answer is correct (and fill that answer in).' };
+    out.push({ timestamp_seconds: ts, question: text, options: opts, correct, explanation: r.querySelector('.cq-exp').value.trim() || null });
+  }
+  out.sort((a,b) => a.timestamp_seconds - b.timestamp_seconds);
+  return { questions: out };
+}
+const isYouTubeLink = u => /^https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(String(u||''));
 let cfMode = 'upload';
 window.setCfMode = function(m){
   cfMode = m;
   document.getElementById('cf-mode-upload').classList.toggle('on', m==='upload');
   document.getElementById('cf-mode-link').classList.toggle('on', m==='link');
+  if(typeof refreshCfIvHint === 'function'){ refreshCfIvHint(); const pv = document.getElementById('cf-preview'); const ivOn = document.getElementById('cf-iv') && document.getElementById('cf-iv').checked; if(pv) pv.style.display = (m==='upload' && ivOn && pv.getAttribute('src')) ? 'block' : 'none'; }
   document.getElementById('cf-up-box').style.display = m==='upload' ? '' : 'none';
   document.getElementById('cf-link-box').style.display = m==='link' ? '' : 'none';
 };
@@ -2109,9 +2228,19 @@ window.submitContribution = async function(){
   const uploading = type === 'video' && cfMode === 'upload' && !!document.getElementById('cf-file');
   const file = uploading ? document.getElementById('cf-file').files[0] : null;
   if(!title) return fail('Please add a title.');
-  if(uploading){ if(!file) return fail('Please choose your video file.'); if(!window.SherigDrive) return fail('The upload tool did not load. Please refresh the page.'); }
+  if(uploading){ if(!file) return fail('Please choose your video file.'); if(!window.SherigDrive && !(cfYouTube && window.SherigYouTube)) return fail('The upload tool did not load. Please refresh the page.'); }
   else if(!safeUrl(url) || !/^https?:\/\//i.test(url)) return fail('Please paste a full link starting with https://');
   if(!document.getElementById('cf-own').checked) return fail('Please confirm the content is yours or that you have permission to share it.');
+  // interactive questions (videos only)
+  let questions = null;
+  if(type === 'video' && document.getElementById('cf-iv') && document.getElementById('cf-iv').checked){
+    if(uploading && !cfYouTube) return fail('Interactive videos need YouTube. Please switch to “🔗 YouTube / link”, paste your YouTube link, then add your questions.');
+    if(!uploading && !isYouTubeLink(url)) return fail('For an interactive video, please paste a YouTube link (youtube.com or youtu.be).');
+    const c = collectCfQuestions();
+    if(c.error) return fail(c.error);
+    if(!c.questions.length) return fail('Please add at least one question, or untick “Make it interactive”.');
+    questions = c.questions;
+  }
   btn.disabled = true; btn.textContent = 'Submitting…'; st.textContent = '';
   if(uploading){
     try{
@@ -2122,22 +2251,32 @@ window.submitContribution = async function(){
     bar.style.display = 'block'; st.style.color = 'var(--text2)';
     try{
       btn.textContent = 'Uploading…';
-      const up = await SherigDrive.upload(supabase, file, { purpose:'contribution', onProgress: pct => { fill.style.width = pct + '%'; st.textContent = 'Uploading your video… ' + pct + '% (please keep this window open)'; } });
-      url = up.viewUrl; st.textContent = '';
+      const prog = pct => { fill.style.width = pct + '%'; st.textContent = 'Uploading your video… ' + pct + '% (please keep this window open)'; };
+      if(cfYouTube && window.SherigYouTube){
+        const up = await SherigYouTube.upload(supabase, file, { title, description: g('cf-desc'), onProgress: prog });
+        url = up.url;
+      } else {
+        const up = await SherigDrive.upload(supabase, file, { purpose:'contribution', onProgress: prog });
+        url = up.viewUrl;
+      }
+      st.textContent = '';
     }catch(e){
       btn.disabled = false; btn.textContent = 'Submit for review'; bar.style.display = 'none'; fill.style.width = '0';
       return fail(e.message || 'The upload failed. Please try again.');
     }
     btn.textContent = 'Submitting…';
   }
-  const { error } = await supabase.from('contributions').insert({
+  const row = {
     user_id: s.id, contributor_name: s.name, content_type: type, title, url,
     description: g('cf-desc'), subject: g('cf-subject') || null, detail: g('cf-detail') || null,
     class_level: g('cf-class') || 'All Classes', owner_confirmed: true
-  });
+  };
+  if(questions) row.interactive_questions = questions;
+  const { error } = await supabase.from('contributions').insert(row);
   btn.disabled = false; btn.textContent = 'Submit for review';
   if(error){
     const tooMany = /row-level security|policy/i.test(error.message || '');
+    if(/interactive_questions/i.test(error.message||'')) return fail('Interactive questions are not switched on yet. Please tell the admin to run CONTRIB_YOUTUBE_SETUP.sql.');
     return fail(tooMany ? `You already have ${CONTRIB_MAX_PENDING} submissions waiting for review. Please wait until they are reviewed.` : 'Could not submit: ' + error.message);
   }
   document.getElementById('contrib-body').innerHTML = `

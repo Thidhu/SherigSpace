@@ -743,12 +743,22 @@ async function renderContributions(){
   document.getElementById('l-contrib-pending').innerHTML = pending.length ? pending.map(contribRow).join('') : empty('🤝','No submissions waiting for review');
   document.getElementById('l-contrib-reviewed').innerHTML = reviewed.length ? reviewed.map(c=>`<div class="irow"><div><div class="iname">${CONTRIB_ICON[c.content_type]||''} ${esc(c.title)}</div><div class="imeta">${esc(c.contributor_name||'Unknown')} · ${c.status==='approved'?'✅ Published · 🎁 +'+esc(c.reward_days)+' days':'❌ Rejected'}${c.admin_note?' · '+esc(c.admin_note):''}</div></div><div class="ibtns"><button class="btn btn-del btn-sm" onclick="deleteContribution('${esc(c.id)}')">✕</button></div></div>`).join('') : empty('📋','Nothing reviewed yet');
 }
+const fmtT = t => { t = Math.max(0, Math.floor(Number(t)||0)); const h = Math.floor(t/3600), m = Math.floor(t%3600/60), sec = t%60; return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(sec).padStart(2,'0'); };
+function contribQuestionsHtml(c){
+  const qs = Array.isArray(c.interactive_questions) ? c.interactive_questions : [];
+  if(!qs.length) return '';
+  return `<div style="margin-top:.5rem;padding:.6rem .75rem;border:1px dashed var(--gold);border-radius:10px">
+    <div class="imeta" style="font-weight:700;color:var(--text)">⚡ Interactive — ${qs.length} question${qs.length===1?'':'s'} from the contributor (saved with the video when you approve)</div>
+    ${qs.map(q=>`<div class="imeta" style="margin-top:.35rem"><b>${fmtT(q.timestamp_seconds)}</b> · ${esc(q.question)}<br>${(q.options||[]).map(o=>(o===q.correct?'✅ ':'▫️ ')+esc(o)).join(' &nbsp; ')}${q.explanation?'<br><i>'+esc(q.explanation)+'</i>':''}</div>`).join('')}
+  </div>`;
+}
 function contribRow(c){
   const safe = isValidUrl(c.url) ? c.url : '';
   return `<div class="irow" style="grid-template-columns:1fr;gap:.6rem">
     <div><div class="iname">${CONTRIB_ICON[c.content_type]||''} ${esc(c.title)}</div>
     <div class="imeta">by <b>${esc(c.contributor_name||'Unknown')}</b> · ${esc(c.content_type)} · ${esc(c.class_level||'All Classes')}${c.subject?' · '+esc(c.subject):''}${c.detail?' · '+esc(c.detail):''} · ${new Date(c.created_at).toLocaleDateString()}</div>
     ${c.description?`<div class="imeta" style="margin-top:.3rem;white-space:pre-line">${esc(c.description)}</div>`:''}
+    ${contribQuestionsHtml(c)}
     ${safe?`<div style="margin-top:.35rem"><a href="${esc(safe)}" target="_blank" rel="noopener" style="color:var(--gold)">🔗 Open the link to check it first</a></div>`:'<div class="imeta" style="color:var(--red)">Link is not a valid http(s) URL</div>'}</div>
     <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center">
       <label class="imeta">🎁 Reward
@@ -787,6 +797,17 @@ window.approveContribution = async function(id){
     ({ error } = await supabase.from(table).insert(rest));
   }
   if(error){ toast('Could not publish: '+error.message, true); return; }
+
+  // 1b) interactive questions the contributor built → saved with the new video
+  if(c.content_type==='video' && Array.isArray(c.interactive_questions) && c.interactive_questions.length){
+    const rows = c.interactive_questions.map((q,i)=>({
+      id:null, timestamp_seconds:Math.max(0,Number(q.timestamp_seconds)||0), question:String(q.question||'').trim(),
+      question_type:'multiple_choice', options:Array.isArray(q.options)?q.options:[], accepted_answers:[q.correct],
+      explanation:q.explanation||null, points:1, replay_before_seconds:30, require_correct:true, enabled:true, sort_order:i
+    })).filter(q=>q.question && q.options.length>=2 && q.accepted_answers[0]);
+    const { error: iqErr } = await supabase.rpc('save_interactive_questions_admin', { p_video_id:String(newId), p_rows:rows });
+    if(iqErr) toast('Video published, but its interactive questions could not be saved: '+iqErr.message+' — add them in Videos → Edit.', true);
+  }
 
   // 2) reward: bonus days for members, and extend the teacher plan if they have one
   let rewardMsg = '';
