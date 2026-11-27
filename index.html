@@ -2064,12 +2064,17 @@ let cfYouTube = false;            // true when the YouTube upload service is set
 let cfQuestionCount = 0;
 
 // ── Interactive questions (contributors build them here; the admin reviews them with the video) ──
+// only the admin sees the technical reason why direct YouTube upload is off
+function cfAdminWhy(){
+  const s = session(); const why = window.SherigYouTube && SherigYouTube.reason;
+  return (s && String(s.role||'').toLowerCase() === 'admin' && why) ? '  [Admin only: ' + why + ' See YOUTUBE_UPLOAD_SETUP.md.]' : '';
+}
 function refreshCfIvHint(){
   const h = document.getElementById('cf-iv-hint'); if(!h) return;
   const uploading = cfMode === 'upload';
   h.textContent = uploading
     ? (cfYouTube ? 'Play your video above, pause where you want a question, and press “📍 Use current time”. Add a question and its answers, and tick the correct one.'
-                 : 'Interactive videos need YouTube. Switch to “🔗 YouTube / link” and paste your YouTube video link, then add your questions with the time each one should appear (like 01:20).')
+                 : 'Direct upload to our YouTube channel is not switched on yet, so a video file cannot be made interactive right now. Please use “🔗 YouTube / link” and paste your YouTube link, then add your questions with the time each one should appear (like 01:20).' + cfAdminWhy())
     : 'Paste your YouTube video link above. For each question type the time it should appear (like 01:20), the question and the answers, and tick the correct one.';
   document.querySelectorAll('.cf-q-time button').forEach(b => b.style.display = (uploading && cfYouTube) ? '' : 'none');
 }
@@ -2234,7 +2239,7 @@ window.submitContribution = async function(){
   // interactive questions (videos only)
   let questions = null;
   if(type === 'video' && document.getElementById('cf-iv') && document.getElementById('cf-iv').checked){
-    if(uploading && !cfYouTube) return fail('Interactive videos need YouTube. Please switch to “🔗 YouTube / link”, paste your YouTube link, then add your questions.');
+    if(uploading && !cfYouTube) return fail('Direct YouTube upload is not switched on yet. To make a video interactive for now, please use “🔗 YouTube / link” and paste your YouTube link.' + cfAdminWhy());
     if(!uploading && !isYouTubeLink(url)) return fail('For an interactive video, please paste a YouTube link (youtube.com or youtu.be).');
     const c = collectCfQuestions();
     if(c.error) return fail(c.error);

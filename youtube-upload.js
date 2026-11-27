@@ -20,8 +20,15 @@
   }
   async function available(supabase){
     if(readyCache !== null) return readyCache;
-    try{ const d = await call(supabase, { action:'status' }); readyCache = !!d.ready; }
-    catch(e){ readyCache = false; }
+    try{
+      const d = await call(supabase, { action:'status' });
+      readyCache = !!d.ready;
+      if(!readyCache) window.SherigYouTube.reason = 'The function is running, but the three YOUTUBE_ secrets are not all set (YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN).';
+    }catch(e){
+      readyCache = false;
+      window.SherigYouTube.reason = 'The youtube-upload function did not answer: ' + (e.message || e);
+      console.warn('[SherigYouTube]', window.SherigYouTube.reason);
+    }
     return readyCache;
   }
   async function upload(supabase, file, opts){
@@ -45,5 +52,5 @@
     if(!result || !result.id) throw new Error('Upload finished but the video id is missing.');
     return { videoId: result.id, url: 'https://www.youtube.com/watch?v=' + result.id };
   }
-  window.SherigYouTube = { available, upload };
+  window.SherigYouTube = { available, upload, reason:'' };
 })();
