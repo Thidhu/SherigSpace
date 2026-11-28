@@ -1650,8 +1650,8 @@ window.viewProgress=async function(assignmentId){
 window.deleteAssignment = async function(id){
   if(!confirm(T('Delete this assignment? Students\' answers for it will be deleted too.','ལཱ་ཁག་འདི་བཏོན་གཏང་ནི་ག? སློབ་ཕྲུག་གི་ལན་ཡང་བཏོན་གཏང་འོང་།'))) return;
   const { error } = await supabase.from('assignments').delete().eq('id', id);
-  if(error){ toast(T('Error: ','འཛོལ་བ: ')+error.message, true); return; }
-  toast(T('Deleted.','བཏོན་གཏང་ཡོད།')); renderAssignments();
+  if(error){ toast(T('Error: ','འཛོལ་བ་འདུག: ')+error.message, true); return; }
+  toast(T('Deleted.','བཏོན་བཏང་ཡི།')); renderAssignments();
 };
 
 // ── Create / edit a task ──
@@ -1684,7 +1684,7 @@ window.openAssignmentForm = async function(editId){
     if(noKey) setTimeout(() => toast(noKey + ' question' + (noKey === 1 ? '' : 's') + ' (sorting / matching / blanks): the saved correct answers could not be loaded' + (cfg.keys ? '' : ' (answer-key table missing)') + '. Re-enter the correct answers before saving, otherwise they will be wrong.', true), 300);
   }
 
-  document.getElementById('m-title').textContent = editing ? T('Edit Task','ལཱ་ཞུན་དག') : T('Assign a Task','ལཱ་སྤྲོད་');
+  document.getElementById('m-title').textContent = editing ? T('Edit Task','སྦྱོང་ལཱ་ཞུན་དག') : T('Assign a Task','སྦྱོང་ལཱ་་སྤྲོད་');
   document.querySelector('#overlay .modal').style.maxWidth = '700px';
   document.getElementById('m-body').innerHTML = `
     <div class="field"><label>${T('Type','དབྱེ་བ།')}</label>
@@ -1706,7 +1706,7 @@ window.openAssignmentForm = async function(editId){
     <div class="field"><label>${T('Title','མགོ་མིང་།')}</label><input id="f-custom-title" placeholder="e.g. Read Chapter 3 and answer the questions"/></div>
     <div class="field"><label>${T('Instructions','ལམ་སྟོན།')}</label><textarea id="f-custom-desc" style="min-height:100px" placeholder="What should students do? Add tips, reading notes or steps here."></textarea></div>
 
-    <div class="field"><label>${T('Resources for students (optional)','སློབ་ཕྲུག་གི་དོན་ལུ་ཡིག་ཆ (དགོས་མཁོ་མེད་ཡང་རུང)')}</label>
+    <div class="field"><label>${T('Resources for students (optional)','སློབ་ཕྲུག་གི་དོན་ལུ་ཡིག་ཆ (དགོས་མཁོ་མེད།)')}</label>
       <div id="task-attach-list"></div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem">
         <input id="f-link-input" placeholder="Paste a link — YouTube, Google Docs / Slides / Drive, any website…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskLink()}"/>
@@ -1871,7 +1871,7 @@ window.openAssignmentForm = async function(editId){
       payload.item_type = fv('f-item-type');
       payload.item_id = itemId;
     } else if(!title){
-      toast(T('Please enter a title.','མགོ་མིང་བཙུགས་གནང་།'), true); return;
+      toast(T('Please enter a title.','དོན་ཚན་ཅིག་བཙུགས་གནང་།'), true); return;
     }
 
     // Sorting / matching / blanks questions cannot work without the answer-key table: without it the
@@ -1900,7 +1900,7 @@ window.openAssignmentForm = async function(editId){
         } else if(q.type === 'choice'){
           const opts = []; let correct = null;
           q.options.forEach((o, j) => { const t = o.trim(); if(!t) return; if(j === q.correct) correct = t; opts.push(t); });
-          if(opts.length < 2){ toast(T('Multiple-choice question "','གདམ་ཁ་མང་པོའི་དྲི་བ "') + text.slice(0,30) + T('" needs at least two options.','" ལུ་གདམ་ཁ་གཉིས་ཡང་ན་དེ་ལས་མང་བ་དགོ'), true); return; }
+          if(opts.length < 2){ toast(T('Multiple-choice question "','གདམ་ཁ་ཅན་གྱི་དྲི་བ "') + text.slice(0,30) + T('" needs at least two options.','" ཉུང་ཤོས་གདམ་ཁ་ ༢ དགོ།'), true); return; }
           item.options = opts;
           if(correct) keyOut[q.id] = correct;
         } else if(q.type === 'truefalse'){
@@ -2006,8 +2006,8 @@ window.previewTaskQuestions = function(onlyIndex){
   const list = typeof onlyIndex === 'number' ? [taskQuestions[onlyIndex]].filter(Boolean) : taskQuestions;
   const { items, errors } = itemsFromBuilder(list);
   if(errors.length) toast(errors[0], true);
-  if(!items.length){ if(!errors.length) toast(T('Add a question first, then preview it.','དང་པ་དྲི་བ་ཁ་སྐོང་འབད། དེ་ལས་སྔོན་བལྟ།'), true); return; }
-  openQuestionPreview(items, { title: T('This is how students will see the questions. Nothing here is saved.','སློབ་ཕྲུག་གིས་དྲི་བ་འདི་བལྟ་སྟངས་འདི་ཨིན། ཁ་སྐོང་འདི་སྲུང་བཞག་མི་འབད།') });
+  if(!items.length){ if(!errors.length) toast(T('Add a question first, then preview it.','དང་པ་དྲི་བ་བཟོ། དེ་ལས་ ག་དེ་སྦེ་མཐོང་དོ་ག་བལྟ།།'), true); return; }
+  openQuestionPreview(items, { title: T('This is how students will see the questions. Nothing here is saved.','སློབ་ཕྲུག་ཚུ་གིས་ དྲི་བ་འདི་ དེ་སྦེ་མཐོང་ནི་ཨིན།') });
 };
 // A task without written questions (e.g. one built from a library video or resource): show what students get — the item and the attached links.
 async function previewTaskContent(a){
@@ -2043,7 +2043,7 @@ window.previewSavedTask = async function(id){
   const { data: a, error } = await supabase.from('assignments').select('*').eq('id', id).maybeSingle();
   if(error || !a){ toast('Could not open this task: ' + (error ? error.message : 'not found'), true); return; }
   const qs = parseQuestions(a);
-  if(!qs.length){ if(await previewTaskContent(a)) return; toast(T('This task has no questions and no content to preview.','ལཱ་འདི་ལུ་སྔོན་བལྟ་ནིའི་དྲི་བ་དང་ནང་དོན་མིན་འདུག'), true); return; }
+  if(!qs.length){ if(await previewTaskContent(a)) return; toast(T('This task has no questions and no content to preview.','སྦྱོང་ལཱ་འདི་ལུ་ སྟོན་ནི་གི་ ་དྲི་བ་དང་ནང་དོན་ར་མིན་འདུག'), true); return; }
   let keyMap = {};
   try{ const r = await supabase.from('assignment_keys').select('answers').eq('assignment_id', id).maybeSingle(); keyMap = (r.data && r.data.answers) || {}; }catch(e){}
   openQuestionPreview(qs.map(q => ({ q, key: keyMap[q.id] == null ? null : keyMap[q.id] })), { title: a.title || '' });
@@ -2068,19 +2068,19 @@ function renderQuestionBuilder(){
       <div class="qb-head">
         <b>${T('Question','དྲི་བ')} ${i+1}</b><span class="qb-type">${esc(isDragFill(q) ? typeLabelFor(q) : Q_TYPE_LABEL[q.type])}</span>
         <span class="qb-tools">
-          <button type="button" class="btn btn-ghost btn-sm" data-q-preview title="${T('Preview this question','དྲི་བ་འདི་སྔོན་བལྟ།')}">👁</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-q-up title="${T('Move up','ཡར་སྤོ')}" ${i===0?'disabled':''}>↑</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-q-down title="${T('Move down','མར་སྤོ')}" ${i===taskQuestions.length-1?'disabled':''}>↓</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-q-preview title="${T('Preview this question','དྲི་བ་འདི་ སློབ་ཕྲུག་གིས་ ག་དེ་སྦེ་མཐོང་མས་ག་བལྟ།')}">👁</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-q-up title="${T('Move up','ཡར་འཐེན།')}" ${i===0?'disabled':''}>↑</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-q-down title="${T('Move down','མར་འཐེན།')}" ${i===taskQuestions.length-1?'disabled':''}>↓</button>
           <button type="button" class="btn btn-ghost btn-sm" data-q-savebank title="Save this question to your private question bank">📚</button>
-          <button type="button" class="btn btn-del btn-sm" data-q-del title="${T('Remove question','དྲི་བ་བཏོན་གཏང')}">✕</button>
+          <button type="button" class="btn btn-del btn-sm" data-q-del title="${T('Remove question','དྲི་བ་བཏོན་གཏང་།')}">✕</button>
         </span>
       </div>
-      <div style="display:flex;gap:.5rem;align-items:center"><input data-q-text value="${esc(q.text)}" placeholder="${T('Type your question…','ཁྱོད་ཀྱི་དྲི་བ་བྲིས…')}" style="flex:1"/><label style="display:flex;align-items:center;gap:.25rem;font-size:.78rem;white-space:nowrap">${T('Points','ཐོབ་ཐང')} <input data-q-points type="number" min="0" step="1" value="${Math.max(0,Number(q.points??1)||0)}" style="width:70px"/></label></div>
+      <div style="display:flex;gap:.5rem;align-items:center"><input data-q-text value="${esc(q.text)}" placeholder="${T('Type your question…','དྲི་བ་མཛུབ་བསྣོན་རྐྱབ།…')}" style="flex:1"/><label style="display:flex;align-items:center;gap:.25rem;font-size:.78rem;white-space:nowrap">${T('Points','ཐོབ་ཐང')} <input data-q-points type="number" min="0" step="1" value="${Math.max(0,Number(q.points??1)||0)}" style="width:70px"/></label></div>
       ${q.type === 'choice' ? `<div class="qb-opts">
         ${q.options.map((o,j)=>`<div class="qb-opt">
-          ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="${T('Mark as the correct option','ལེགས་ཤོམ་གྱི་གདམ་ཁ་སྦེ་རྟགས་བཞག')}"/>` : ''}
-          <input data-q-opt="${j}" value="${esc(o)}" placeholder="${T('Option','གདམ་ཁ')} ${j+1}"/>
-          <button type="button" class="btn btn-del btn-sm" data-q-optdel="${j}" title="${T('Remove option','གདམ་ཁ་བཏོན་གཏང')}">✕</button>
+          ${v2.keys ? `<input type="radio" name="qc-${i}" data-q-correct="${j}" ${q.correct===j?'checked':''} title="${T('Mark as the correct option','འདི་ཨིནམ་སྦེ་རྟགས་བཀལ།')}"/>` : ''}
+          <input data-q-opt="${j}" value="${esc(o)}" placeholder="${T('Option','གདམ་ཁ།')} ${j+1}"/>
+          <button type="button" class="btn btn-del btn-sm" data-q-optdel="${j}" title="${T('Remove option','གདམ་ཁ་བཏོན་གཏང་།')}">✕</button>
         </div>`).join('')}
         <button type="button" class="btn btn-ghost btn-sm" data-q-optadd>${T('＋ Add option','＋ གདམ་ཁ་ཁ་སྐོང')}</button>
       </div>` : ''}
@@ -2131,7 +2131,7 @@ function wireQuestionBuilder(){
     else if(b.hasAttribute('data-q-optadd')) q.options.push('');
     else if(b.hasAttribute('data-q-savebank')){ saveQuestionToBank(q); return; }
     else if(b.hasAttribute('data-q-optdel')){
-      if(q.options.length <= 2){ toast(T('A multiple-choice question needs at least two options.','གདམ་ཁ་མང་པོའི་དྲི་བ་ལུ་གདམ་ཁ་གཉིས་ཡང་ན་དེ་ལས་མང་བ་དགོ'), true); return; }
+      if(q.options.length <= 2){ toast(T('A multiple-choice question needs at least two options.','གདམ་ཁ་ཅན་གྱི་དྲི་བའི་དོན་ལུ་ གདམ་ཁ་གཉིས་ལས་མངམ་དགོ།'), true); return; }
       const j = Number(b.getAttribute('data-q-optdel'));
       q.options.splice(j, 1);
       if(q.correct === j) q.correct = null; else if(q.correct != null && q.correct > j) q.correct--;
@@ -2222,7 +2222,7 @@ window.viewAnswers = async function(assignmentId){
   document.getElementById('m-title').textContent = T('Student answers','སློབ་ཕྲུག་གི་ལན།');
   document.querySelector('#overlay .modal').style.maxWidth = '700px';
   const body = document.getElementById('m-body');
-  body.innerHTML = `<div class="empty"><p>${T('Loading…','འདྲེན་བཞིནམ...')}</p></div>`;
+  body.innerHTML = `<div class="empty"><p>${T('Loading…','Loading…')}</p></div>`;
   const btn = document.getElementById('m-save-btn');
   btn.textContent = T('Close','ཁ་བསྡམས།'); btn.disabled = false; btn.onclick = closeModal;
   const cancelBtn = document.querySelector('#overlay .mfoot .btn-ghost'); if(cancelBtn) cancelBtn.style.display = 'none';
@@ -2236,8 +2236,8 @@ window.viewAnswers = async function(assignmentId){
     cfg.keys ? supabase.from('assignment_keys').select('answers').eq('assignment_id', assignmentId).maybeSingle() : Promise.resolve({ data: null })
   ]);
   const students = stuRes.data, rows = rowRes.data, error = rowRes.error;
-  if(error){ body.innerHTML = `<div class="empty"><p>${T('Could not load answers: ','ལན་འདྲེན་མ་ཚུགས: ')}${esc(error.message)}</p></div>`; return; }
-  if(!(students||[]).length){ body.innerHTML = `<div class="empty"><p>${T('No students in this class yet.','དཔྱེ་སློབ་འདི་ནང་ད་ལྟོ་སློབ་ཕྲུག་མིན་འདུག')}</p></div>`; return; }
+  if(error){ body.innerHTML = `<div class="empty"><p>${T('Could not load answers: ','ལན་སྟོན་མ་ཚུགས: ')}${esc(error.message)}</p></div>`; return; }
+  if(!(students||[]).length){ body.innerHTML = `<div class="empty"><p>${T('No students in this class yet.','སློབ་ཁང་འདི་ནང་ སློབ་ཕྲུག་མིན་འདུག')}</p></div>`; return; }
 
   const asg = asgRes.data || {};
   const questions = parseQuestions(asg);
@@ -2248,7 +2248,7 @@ window.viewAnswers = async function(assignmentId){
 
   const cards = await Promise.all(students.map(async st => {
     const r = byStudent[st.student_id];
-    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">✗ ${T('Not submitted','སྙན་ཞུ་མ་འབད་བར')}</span></div></div>`;
+    if(!r) return `<div class="ans-card"><div class="ans-head"><b>${esc(st.display_name)}</b><span class="ans-badge none">✗ ${T('Not submitted','སྤྲོད་མ་ཚུགས།')}</span></div></div>`;
 
     const links = String(r.answer_links || '').split(/\s*\n\s*/).map(safeUrl).filter(Boolean);
     const paths = String(r.answer_files || '').split(/\s*\n\s*/).filter(Boolean);
@@ -2263,31 +2263,31 @@ window.viewAnswers = async function(assignmentId){
       let mark = '';
       if(isStructured(q.type) && key[q.id] != null){
         const r = checkAnswer(q, ans, key[q.id]); autoTotal++;
-        if(r.status === 'correct'){ autoOk++; mark = `<span class="qa-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>`; }
-        else mark = `<span class="qa-mark bad">${r.status === 'partial' ? '◐ ' + r.ok + '/' + r.total + ' · ' : '✗ '}${T('Correct:','ལེགས་ཤོམ:')} ${esc(answerText(q, key[q.id]))}</span>`;
+        if(r.status === 'correct'){ autoOk++; mark = `<span class="qa-mark ok">✓ ${T('Correct','བདེན་')}</span>`; }
+        else mark = `<span class="qa-mark bad">${r.status === 'partial' ? '◐ ' + r.ok + '/' + r.total + ' · ' : '✗ '}${T('Correct:','བདེན་:')} ${esc(answerText(q, key[q.id]))}</span>`;
       } else if((q.type === 'choice' || q.type === 'truefalse') && key[q.id] != null){
         autoTotal++;
-        if(ans && ans === key[q.id]){ autoOk++; mark = `<span class="qa-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>`; }
-        else mark = `<span class="qa-mark bad">✗ ${T('Correct:','ལེགས་ཤོམ:')} ${esc(key[q.id])}</span>`;
+        if(ans && ans === key[q.id]){ autoOk++; mark = `<span class="qa-mark ok">✓ ${T('Correct','བདེན་')}</span>`; }
+        else mark = `<span class="qa-mark bad">✗ ${T('Correct:','བདེན་:')} ${esc(key[q.id])}</span>`;
       }
       return `<div class="qa"><div class="qa-q">${i+1}. ${esc(q.text)}</div><div class="qa-a">${ans ? esc(answerText(q, ans)) : `<i style="color:var(--text2)">${T('No answer','ལན་མིན་འདུག')}</i>`}${mark}</div></div>`;
     }).join('');
 
     const hasAnswer = answeredQ || (r.answer_text || '').trim() || links.length || paths.length;
-    const badge = hasAnswer ? `<span class="ans-badge sub">✓ ${T('Submitted','སྙན་ཞུ་འབད་ཡོད')}</span>` : `<span class="ans-badge plain">● ${T('Marked complete','མཇུག་བསྡུ་སྦེ་རྟགས་བཞག')}</span>`;
-    const late = (asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ` <span class="ans-badge none">⏰ ${T('Late','དུས་ལས་བརྒལ')}</span>` : '')
+    const badge = hasAnswer ? `<span class="ans-badge sub">✓ ${T('Submitted','སྤྲོད་ཚུགས་ཅི།')}</span>` : `<span class="ans-badge plain">● ${T('Marked complete','མཇུག་བསྡུ་སྦེ་དབྱེ་ཞིབ་འབད་ཚར་ནུག།')}</span>`;
+    const late = (asg.due_date && r.submitted_at && new Date(r.submitted_at) > new Date(asg.due_date + 'T23:59:59') ? ` <span class="ans-badge none">⏰ ${T('Late','ཕྱིས་སོ་ནུག')}</span>` : '')
       + (Number(r.over_time_seconds) > 60 ? ` <span class="ans-badge none">⏱ ${T('Finished','Finished')} ${Math.ceil(Number(r.over_time_seconds) / 60)} ${T('min after time was up','min after time was up')}</span>` : '');
 
     return `<div class="ans-card">
       <div class="ans-head"><b>${esc(st.display_name)}</b><span>${badge}${late}</span>
-        <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">${T('🖥 Present to class','🖥 དཔྱེ་སློབ་ལུ་སྟོན')}</button></div>
+        <button type="button" class="btn btn-ghost btn-sm" data-present-student="${esc(st.student_id)}">${T('🖥 Present to class','🖥 སློབ་ཁང་ལུ་སྤྱན་ཞུ་འབད།')}</button></div>
       ${qaHtml}
-      ${autoTotal ? `<div class="ans-auto">${T('Auto-checked:','རང་བཞིན་ཞིབ་དཔྱད:')} ${autoOk} / ${autoTotal} ${T('multiple-choice correct','གདམ་ཁ་མང་པོ་ལེགས་ཤོམ')}</div>` : ''}
+      ${autoTotal ? `<div class="ans-auto">${T('Auto-checked:','Auto-checked::')} ${autoOk} / ${autoTotal} ${T('multiple-choice correct','གདམ་ཁ་ཕོག་མི་')}</div>` : ''}
       ${(r.answer_text || '').trim() ? `<div class="ans-text">${esc(r.answer_text)}</div>` : ''}
       ${(links.length || fileLinks.length) ? `<div class="ans-links">${links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(u.replace(/^https?:\/\//,'').slice(0,40))}</a>`).join('')}${fileLinks.join('')}</div>` : ''}
       <div class="ans-review${cfg.extras ? '' : ' no-marks'}">
       ${cfg.extras ? `<div class="ans-grade"><input data-score-input="${esc(st.student_id)}" placeholder="${T('Marks (e.g. 8/10)','ལེན་ཐང (དཔེར་ན 8/10)')}" value="${esc(r.score || '')}"/></div>` : ''}
-      <div class="ans-fb"><textarea data-fb-input="${esc(st.student_id)}" placeholder="${T('Feedback for','དོན་ལུ་བསམ་བཀོད')} ${esc(st.display_name)}…">${esc(r.teacher_feedback || '')}</textarea>
+      <div class="ans-fb"><textarea data-fb-input="${esc(st.student_id)}" placeholder="${T('Feedback for','བསམ་འབཀོད་')} ${esc(st.display_name)}…">${esc(r.teacher_feedback || '')}</textarea>
         <button type="button" class="btn btn-gold btn-sm" data-fb-save="${esc(st.student_id)}">${T('Save','སྲུང་བཞག')}</button></div>
 
       </div>
@@ -2468,7 +2468,7 @@ function renderTaskAttachments(){
         const hasInteractive = !!a.interactive && Array.isArray(a.interactiveQuestions) && a.interactiveQuestions.length;
         return `<div class="task-att" style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap"><span>${(KIND_META[a.type] || KIND_META.link).icon}</span><input class="att-label" data-att-label="${i}" value="${esc(a.label)}" aria-label="Resource title" style="flex:1;min-width:150px"/>${canInteractive ? `<button type="button" class="btn btn-ghost btn-sm" data-interactive-att="${i}">${hasInteractive ? '✨ Edit interactive' : '✨ Make interactive'}</button>` : ''}<button type="button" class="btn btn-del btn-sm" data-rm-att="${i}">✕</button>${hasInteractive ? `<span style="font-size:.72rem;color:var(--green)">${a.interactiveQuestions.length} question${a.interactiveQuestions.length===1?'':'s'}</span>` : ''}</div>`;
       }).join('')
-    : `<div class="hint">${T('Nothing added yet.','ད་ལྟོ་ག་ནི་ཡང་ཁ་སྐོང་མ་འབད་བར')}</div>`;
+    : `<div class="hint">${T('Nothing added yet.','ད་ལྟོ་ག་ནི་ཡང་ཁ་སྐོང་མ་འབད་བས།')}</div>`;
   el.querySelectorAll('[data-rm-att]').forEach(b => b.addEventListener('click', () => {
     taskAttachments.splice(Number(b.getAttribute('data-rm-att')), 1);
     renderTaskAttachments();
@@ -2681,11 +2681,11 @@ async function planUsage(){
 
 async function renderBilling(sub){
   const el = document.getElementById('billing-status');
-  el.innerHTML = `<p>${T('Loading…','འདྲེན་བཞིནམ...')}</p>`;
+  el.innerHTML = `<p>${T('Loading…','Loading…...')}</p>`;
 
   if(subActive){
     el.innerHTML = `
-      <p><b style="color:var(--green)">${T('✅ Active','✅ ཤུགས་ལྡན')}</b></p>
+      <p><b style="color:var(--green)">${T('✅ Active','✅ Active')}</b></p>
       <p style="color:var(--text2);font-size:.85rem;margin-top:.3rem">${T('Unlimited classes and students.','དཔྱེ་སློབ་དང་སློབ་ཕྲུག་ཚད་མེད།')}</p>
       ${sub?.expires_at?`<p style="color:var(--text2);font-size:.85rem;margin-top:.4rem">${T('Renews/expires:','གསར་བསྐྱར/དུས་ཡོལ:')} ${esc(new Date(sub.expires_at).toLocaleDateString())}</p>`:''}
     `;
@@ -2701,7 +2701,7 @@ async function renderBilling(sub){
   el.innerHTML = `
     <div style="background:rgba(201,168,76,.06);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;margin-bottom:1.2rem">
       <b style="color:var(--gold-text,var(--gold))">${T('🆓 Free Plan','🆓 རིན་མེད་འཆར་གཞི')}</b>
-      <p style="color:var(--text2);font-size:.85rem;margin-top:.4rem">${T('Classes:','དཔྱེ་སློབ:')} ${usage.classCount} / ${FREE_MAX_CLASSES} &nbsp;·&nbsp; ${T('Students:','སློབ་ཕྲུག:')} ${usage.studentCount} / ${FREE_MAX_STUDENTS}</p>
+      <p style="color:var(--text2);font-size:.85rem;margin-top:.4rem">${T('Classes:','སློབ་ཁང་:')} ${usage.classCount} / ${FREE_MAX_CLASSES} &nbsp;·&nbsp; ${T('Students:','སློབ་ཕྲུག:')} ${usage.studentCount} / ${FREE_MAX_STUDENTS}</p>
     </div>
     <h4 style="margin-bottom:.6rem">${T('Upgrade for unlimited classes and students','དཔྱེ་སློབ་དང་སློབ་ཕྲུག་ཚད་མེད་དོན་ལུ་འོས་སྦྱོར')}</h4>
     <p>${T('Subscribe for','འོས་སྦྱོར་འབད')} Nu. ${esc(siteSettings.teacher_plan_price || 'X')}${T('/month.','/ཟླཝ་རེ།')}</p>
