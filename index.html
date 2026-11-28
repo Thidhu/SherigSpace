@@ -2054,6 +2054,7 @@ function renderContribForm(type){
         cfYouTube = ok;
         const h = document.getElementById('cf-up-hint');
         if(ok && h) h.textContent = 'MP4, MOV or WebM. It is uploaded to our YouTube channel (as an unlisted video) and only goes public on SherigSpace if our team approves it.';
+        if(!ok && h && cfAdminWhy()) h.textContent += cfAdminWhy();
         refreshCfIvHint();
       });
     } else refreshCfIvHint();
@@ -2066,8 +2067,14 @@ let cfQuestionCount = 0;
 // ── Interactive questions (contributors build them here; the admin reviews them with the video) ──
 // only the admin sees the technical reason why direct YouTube upload is off
 function cfAdminWhy(){
-  const s = session(); const why = window.SherigYouTube && SherigYouTube.reason;
-  return (s && String(s.role||'').toLowerCase() === 'admin' && why) ? '  [Admin only: ' + why + ' See YOUTUBE_UPLOAD_SETUP.md.]' : '';
+  const s = session();
+  const why = !window.SherigYouTube
+    ? 'The file youtube-upload.js did not load (it must be uploaded to the website next to index.html).'
+    : (SherigYouTube.reason || '');
+  if(why) console.warn('[SherigYouTube] YouTube upload is off:', why);
+  // shown to the admin, or to anyone who opens the site with ?ytdebug=1 at the end of the address
+  const allowed = (s && String(s.role||'').toLowerCase() === 'admin') || /[?&]ytdebug\b/.test(location.search);
+  return (allowed && why) ? '  [Why: ' + why + ' See YOUTUBE_UPLOAD_SETUP.md.]' : '';
 }
 function refreshCfIvHint(){
   const h = document.getElementById('cf-iv-hint'); if(!h) return;
@@ -2267,7 +2274,10 @@ window.submitContribution = async function(){
       st.textContent = '';
     }catch(e){
       btn.disabled = false; btn.textContent = 'Submit for review'; bar.style.display = 'none'; fill.style.width = '0';
-      return fail(e.message || 'The upload failed. Please try again.');
+      let msg = e.message || 'The upload failed. Please try again.';
+      if(!cfYouTube && /approved teacher|teachers? (and|or) admin|admins? only|only .*admin|not allowed/i.test(msg))
+        msg = 'Uploading video files is not switched on yet for contributors. Please upload your video to YouTube as “Unlisted” and use the “🔗 YouTube / link” option instead.' + cfAdminWhy();
+      return fail(msg);
     }
     btn.textContent = 'Submitting…';
   }
