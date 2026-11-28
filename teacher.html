@@ -2286,17 +2286,17 @@ window.viewAnswers = async function(assignmentId){
       ${(r.answer_text || '').trim() ? `<div class="ans-text">${esc(r.answer_text)}</div>` : ''}
       ${(links.length || fileLinks.length) ? `<div class="ans-links">${links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(u.replace(/^https?:\/\//,'').slice(0,40))}</a>`).join('')}${fileLinks.join('')}</div>` : ''}
       <div class="ans-review${cfg.extras ? '' : ' no-marks'}">
-      ${cfg.extras ? `<div class="ans-grade"><input data-score-input="${esc(st.student_id)}" placeholder="${T('Marks (e.g. 8/10)','ལེན་ཐང (དཔེར་ན 8/10)')}" value="${esc(r.score || '')}"/></div>` : ''}
+      ${cfg.extras ? `<div class="ans-grade"><input data-score-input="${esc(st.student_id)}" placeholder="${T('Marks (e.g. 8/10)','སྐུགས་ (དཔེར་ན ༨/༡༠)')}" value="${esc(r.score || '')}"/></div>` : ''}
       <div class="ans-fb"><textarea data-fb-input="${esc(st.student_id)}" placeholder="${T('Feedback for','བསམ་འབཀོད་')} ${esc(st.display_name)}…">${esc(r.teacher_feedback || '')}</textarea>
-        <button type="button" class="btn btn-gold btn-sm" data-fb-save="${esc(st.student_id)}">${T('Save','སྲུང་བཞག')}</button></div>
+        <button type="button" class="btn btn-gold btn-sm" data-fb-save="${esc(st.student_id)}">${T('Save','Save འབད།')}</button></div>
 
       </div>
     </div>`;
   }));
 
-  body.innerHTML = (needsSetup ? `<div class="hint" style="margin-bottom:.7rem">${T('Written answers are not switched on yet — run','ལན་བྲིས་ད་ལྟོ་ཁ་ཕྱེ་མིན་འདུག —')} <b>sherigspace_task_answers.sql</b> ${T('in Supabase to enable them.','Supabase ནང་ལག་ལེན་འཐབ')}</div>` : '')
-    + `<div class="hint" style="margin-bottom:.5rem">${submittedCount} ${T('of','/')} ${students.length} ${T('students have submitted.','སློབ་ཕྲུག་གིས་སྙན་ཞུ་འབད་ཡོད')}</div>`
-    + `<div style="margin-bottom:.9rem"><button type="button" class="btn btn-gold btn-sm" id="present-all-btn">${T('🖥 Present to Class','🖥 དཔྱེ་སློབ་ལུ་སྟོན')}</button></div>`
+  body.innerHTML = (needsSetup ? `<div class="hint" style="margin-bottom:.7rem">${T('Written answers are not switched on yet — run','ལན་བྲིས་ཡོད་མི་ཚུ་ ད་ལྟོ་ཁ་ཕྱེ་ཏེ་མིན་འདུག —')} <b>sherigspace_task_answers.sql</b> ${T('in Supabase to enable them.','Supabase ནང་ལག་ལེན་འཐབ')}</div>` : '')
+    + `<div class="hint" style="margin-bottom:.5rem">${submittedCount} ${T('of','/')} ${students.length} ${T('students have submitted.','སློབ་ཕྲུག་གིས་ སྤྲོད་ནུག།')}</div>`
+    + `<div style="margin-bottom:.9rem"><button type="button" class="btn btn-gold btn-sm" id="present-all-btn">${T('🖥 Present to Class','🖥 སློབ་ཁང་ལུ་སྤྱན་ཞུ་འབད།')}</button></div>`
     + cards.join('');
 
   const pCtx = { assignmentId, asg, students, rows: byStudent, questions, key, idx: 0 };
@@ -2313,9 +2313,9 @@ window.viewAnswers = async function(assignmentId){
     const { error: upErr } = await supabase.from('assignment_status').update(patch)
       .eq('assignment_id', assignmentId).eq('student_id', sid);
     b.disabled = false;
-    if(upErr){ toast(T('Could not save: ','སྲུང་བཞག་མ་ཚུགས: ') + upErr.message, true); return; }
-    toast(T('Feedback saved ✓','བསམ་བཀོད་སྲུང་བཞག་འབད་ཡོད ✓'));
-    const keep = b.textContent; b.textContent = T('✓ Saved','✓ སྲུང་ཡོད'); b.classList.add('saved');
+    if(upErr){ toast(T('Could not save: ','Save འབད་མ་ཚུགས: ') + upErr.message, true); return; }
+    toast(T('Feedback saved ✓','བསམ་བཀོད་Saveའབད་ཡོད ✓'));
+    const keep = b.textContent; b.textContent = T('✓ Saved','✓ Save་འབད་ཡི།'); b.classList.add('saved');
     setTimeout(() => { b.textContent = keep; b.classList.remove('saved'); }, 2000);
   }));
 };
@@ -2352,8 +2352,8 @@ async function loadPresentCtx(assignmentId){
     supabase.from('assignment_status').select('*').eq('assignment_id', assignmentId),
     cfg.keys ? supabase.from('assignment_keys').select('answers').eq('assignment_id', assignmentId).maybeSingle() : Promise.resolve({ data: null })
   ]);
-  if(rowRes.error){ toast(T('Could not load answers: ','ལན་འདྲེན་མ་ཚུགས: ') + rowRes.error.message, true); return null; }
-  if(!(stuRes.data||[]).length){ toast(T('No students in this class yet.','དཔྱེ་སློབ་འདི་ནང་ད་ལྟོ་སློབ་ཕྲུག་མིན་འདུག'), true); return null; }
+  if(rowRes.error){ toast(T('Could not load answers: ','ལན་བལྟ་མ་་ཚུགས: ') + rowRes.error.message, true); return null; }
+  if(!(stuRes.data||[]).length){ toast(T('No students in this class yet.','སློབ་ཁང་འདི་ནང་ ་ད་ལྟོ་སློབ་ཕྲུག་མིན་འདུག'), true); return null; }
   const byStudent = {}; (rowRes.data||[]).forEach(r => { byStudent[r.student_id] = r; });
   const asg = asgRes.data || {};
   return { assignmentId, asg, students: stuRes.data, rows: byStudent, questions: parseQuestions(asg), key: (keyRes.data && keyRes.data.answers) || {}, idx: 0 };
@@ -2390,9 +2390,9 @@ async function presentAnswerHtml(ctx, idx){
     let mark = '';
     if(isStructured(q.type) && ctx.key[q.id] != null){
       const r = checkAnswer(q, ans, ctx.key[q.id]);
-      mark = r.status === 'correct' ? `<span class="present-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>` : `<span class="present-mark bad">${r.status === 'partial' ? '◐ ' + r.ok + '/' + r.total + ' · ' : '✗ '}${T('Correct answer:','ལེགས་ཤོམ་གྱི་ལན:')} ${esc(answerText(q, ctx.key[q.id]))}</span>`;
+      mark = r.status === 'correct' ? `<span class="present-mark ok">✓ ${T('Correct','བདེན་པ།')}</span>` : `<span class="present-mark bad">${r.status === 'partial' ? '◐ ' + r.ok + '/' + r.total + ' · ' : '✗ '}${T('Correct answer:','ལན་ངོ་མ།:')} ${esc(answerText(q, ctx.key[q.id]))}</span>`;
     } else if((q.type === 'choice' || q.type === 'truefalse') && ctx.key[q.id] != null){
-      mark = ans && ans === ctx.key[q.id] ? `<span class="present-mark ok">✓ ${T('Correct','ལེགས་ཤོམ')}</span>` : `<span class="present-mark bad">✗ ${T('Correct answer:','ལེགས་ཤོམ་གྱི་ལན:')} ${esc(ctx.key[q.id])}</span>`;
+      mark = ans && ans === ctx.key[q.id] ? `<span class="present-mark ok">✓ ${T('Correct','བདེན་པ།')}</span>` : `<span class="present-mark bad">✗ ${T('Correct answer:','ལན་ངོ་མ།:')} ${esc(ctx.key[q.id])}</span>`;
     }
     return `<div class="present-qa"><div class="present-q">${i+1}. ${esc(q.text)}</div><div class="present-a">${ans ? esc(answerText(q, ans)) : `<i>${T('No answer','ལན་མིན་འདུག')}</i>`}${mark}</div></div>`;
   }).join('');
@@ -2419,7 +2419,7 @@ async function renderPresent(){
   document.getElementById('present-next').disabled = ctx.idx >= ctx.students.length - 1;
   document.getElementById('present-jump').innerHTML = ctx.students.map((s,i) =>
     `<option value="${esc(s.student_id)}" ${i===ctx.idx?'selected':''}>${esc(s.display_name)}${ctx.rows[s.student_id]?'':T(' (not submitted)',' (སྙན་ཞུ་མ་འབད་བར)')}</option>`).join('');
-  document.getElementById('present-body').innerHTML = `<div class="present-loading">${T('Loading…','འདྲེན་བཞིནམ...')}</div>`;
+  document.getElementById('present-body').innerHTML = `<div class="present-loading">${T('Loading…','Loading…')}</div>`;
   document.getElementById('present-body').innerHTML = await presentAnswerHtml(ctx, ctx.idx);
 }
 
@@ -2468,7 +2468,7 @@ function renderTaskAttachments(){
         const hasInteractive = !!a.interactive && Array.isArray(a.interactiveQuestions) && a.interactiveQuestions.length;
         return `<div class="task-att" style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap"><span>${(KIND_META[a.type] || KIND_META.link).icon}</span><input class="att-label" data-att-label="${i}" value="${esc(a.label)}" aria-label="Resource title" style="flex:1;min-width:150px"/>${canInteractive ? `<button type="button" class="btn btn-ghost btn-sm" data-interactive-att="${i}">${hasInteractive ? '✨ Edit interactive' : '✨ Make interactive'}</button>` : ''}<button type="button" class="btn btn-del btn-sm" data-rm-att="${i}">✕</button>${hasInteractive ? `<span style="font-size:.72rem;color:var(--green)">${a.interactiveQuestions.length} question${a.interactiveQuestions.length===1?'':'s'}</span>` : ''}</div>`;
       }).join('')
-    : `<div class="hint">${T('Nothing added yet.','ད་ལྟོ་ག་ནི་ཡང་ཁ་སྐོང་མ་འབད་བས།')}</div>`;
+    : `<div class="hint">${T('Nothing added yet.','Nothing added yet.')}</div>`;
   el.querySelectorAll('[data-rm-att]').forEach(b => b.addEventListener('click', () => {
     taskAttachments.splice(Number(b.getAttribute('data-rm-att')), 1);
     renderTaskAttachments();
